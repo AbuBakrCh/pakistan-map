@@ -1,6 +1,6 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { readDataFrames } from './rdata.ts';
+import { decompressRData, readDataFrames } from './rdata.ts';
 
 /**
  * A byte-level builder for R's XDR serialization, used to hand-build fixtures.
@@ -202,5 +202,37 @@ describe('readDataFrames', () => {
 
   it('rejects a file that is not XDR-serialized R data', () => {
     expect(() => readDataFrames(Uint8Array.from([1, 2, 3, 4, 5, 6, 7, 8]))).toThrow(/XDR/);
+  });
+});
+
+describe('decompressRData', () => {
+  /**
+   * `xz -9` of the eight bytes `hello xz\n`, base64.
+   *
+   * A literal because nothing in Node can produce one — `zlib` decompresses xz nowhere and
+   * compresses it nowhere either, which is the whole reason `decompressRData` exists. Reproduce
+   * with: `printf 'hello xz\n' | xz -9 | base64`.
+   */
+  const XZ_HELLO =
+    '/Td6WFoAAATm1rRGBMANCSEBHAAAAAAAAAAAAJbfEfMBAAhoZWxsbyB4egoAAAAAwUk6+mNSFFoAASkJZJIcHR+2830BAAAAAARZWg==';
+  const xzBytes = Uint8Array.from(Buffer.from(XZ_HELLO, 'base64'));
+
+  it('unwraps an xz container, which is how PakPC2023 ships its numbered tables', async () => {
+    expect(new TextDecoder().decode(await decompressRData(xzBytes))).toBe('hello xz\n');
+  });
+
+  it('leaves gzip and plain bytes exactly as they arrived', async () => {
+    // `readDataFrames` unwraps gzip itself, synchronously. Touching it here would mean two
+    // places deciding what a gzip `.RData` is.
+    const gzipped = Uint8Array.from(gzipSync(Uint8Array.from([1, 2, 3])));
+    expect(await decompressRData(gzipped)).toBe(gzipped);
+    const plain = Uint8Array.from([0x52, 0x44, 0x58]);
+    expect(await decompressRData(plain)).toBe(plain);
+  });
+
+  it('refuses to read an xz file synchronously rather than failing further in', () => {
+    // The decoder is streaming, so `readDataFrames` cannot unwrap this one itself. Saying so
+    // here beats the "not XDR-serialized" it would otherwise report about a perfectly good file.
+    expect(() => readDataFrames(xzBytes)).toThrow(/xz-compressed/);
   });
 });

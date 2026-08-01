@@ -15,7 +15,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
-import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
+import {
+  CENSUS_DISTRICTS,
+  CENSUS_DISTRICT_COUNT,
+  ROSTER,
+  ROSTER_DISTRICT_COUNT,
+} from './roster.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
@@ -28,6 +33,13 @@ interface DistrictStatisticsRecord {
   households: number;
   division: string;
   province: string;
+  motherTongue: {
+    dominant: string | null;
+    dominantShare: number | null;
+    residualShare: number;
+    counted: number;
+    speakers: Record<string, number>;
+  };
 }
 
 const districts = statistics.districts as Record<string, DistrictStatisticsRecord>;
@@ -53,8 +65,7 @@ const PUBLISHED_NATIONAL_TOTAL = 241_499_431;
 describe('statistics coverage', () => {
   it('carries every one of the 136 census districts, exactly once', () => {
     expect(entries).toHaveLength(CENSUS_DISTRICT_COUNT);
-    const censusAtom = ROSTER.filter((p) => p.kind !== 'territory').flatMap((p) => p.districts);
-    for (const district of censusAtom) expect(districts[district]).toBeDefined();
+    for (const district of CENSUS_DISTRICTS) expect(districts[district]).toBeDefined();
   });
 
   it('gives every district a real population, never null and never zero', () => {
@@ -72,6 +83,7 @@ describe('statistics coverage', () => {
       expect(Object.keys(record).sort(), name).toEqual([
         'division',
         'households',
+        'motherTongue',
         'population',
         'province',
       ]);
@@ -134,6 +146,140 @@ describe('statistics totals', () => {
   });
 });
 
+/**
+ * Mother tongue as PBS printed it — Census-2023 Table 11 (national),
+ * https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_11_national.pdf
+ *
+ * The same discipline as the population totals above: typed out, not read back off the artifact,
+ * so the check is against the published table rather than against the build's own arithmetic.
+ * One column per language kept short of the full 15 × 6 grid — these are the four that decide
+ * what the map is shaded, plus the national universe, and the build reconciles every column.
+ */
+const PUBLISHED_LANGUAGE_TOTALS: Record<string, Record<string, number>> = {
+  Punjab: { Punjabi: 85_309_591, Saraiki: 26_282_637 },
+  Sindh: { Sindhi: 33_462_299, Urdu: 12_409_745 },
+  'Khyber Pakhtunkhwa': { Pushto: 32_919_592, Hindko: 3_815_327 },
+  Balochistan: { Balochi: 5_811_185, Brahvi: 2_507_157 },
+  'Islamabad Capital Territory': { Punjabi: 1_154_540, Urdu: 358_922 },
+};
+const PUBLISHED_MOTHER_TONGUE_UNIVERSE = 240_458_089;
+/** The census's own fifteen categories, in the census's own spelling — Kohiostani included. */
+const CENSUS_LANGUAGES = [
+  'Urdu', 'Punjabi', 'Sindhi', 'Pushto', 'Balochi', 'Kashmiri', 'Saraiki', 'Hindko', 'Brahvi',
+  'Shina', 'Balti', 'Mewati', 'Kalasha', 'Kohiostani', 'Others',
+];
+
+describe('statistics mother tongue', () => {
+  it('gives every census district a distribution over the census\'s own categories', () => {
+    for (const [name, record] of entries) {
+      expect(Object.keys(record.motherTongue.speakers).sort(), name).toEqual(
+        [...CENSUS_LANGUAGES].sort(),
+      );
+      // A published zero is a figure. Every category is present for every district, so a
+      // missing key can never pass for "nobody here speaks it".
+      for (const language of CENSUS_LANGUAGES) {
+        expect(Number.isInteger(record.motherTongue.speakers[language]), `${name}/${language}`)
+          .toBe(true);
+      }
+      expect(record.motherTongue.counted, name).toBeGreaterThan(0);
+    }
+  });
+
+  it('sums the speakers it lists to the district total it publishes', () => {
+    for (const [name, record] of entries) {
+      const summed = CENSUS_LANGUAGES.reduce(
+        (sum, l) => sum + (record.motherTongue.speakers[l] ?? 0),
+        0,
+      );
+      expect(summed, name).toBe(record.motherTongue.counted);
+    }
+  });
+
+  it('sums districts to the language totals PBS published for each province', () => {
+    // The check that makes summing tehsils into districts safe. PBS publishes Table 11 at tehsil
+    // level only, so the district tier is added up here; a tehsil added to the wrong district
+    // inside a province moves whole languages and would show up as an exact difference.
+    const summed = new Map<string, Record<string, number>>();
+    for (const record of Object.values(districts)) {
+      const totals = summed.get(record.province) ?? {};
+      for (const language of CENSUS_LANGUAGES) {
+        totals[language] = (totals[language] ?? 0) + (record.motherTongue.speakers[language] ?? 0);
+      }
+      summed.set(record.province, totals);
+    }
+    for (const [province, published] of Object.entries(PUBLISHED_LANGUAGE_TOTALS)) {
+      for (const [language, count] of Object.entries(published)) {
+        expect(summed.get(province)?.[language], `${province}/${language}`).toBe(count);
+      }
+    }
+  });
+
+  it("counts Table 11's own universe, which is not the census population", () => {
+    // 1,041,342 fewer people than Table 1. Asserted rather than tolerated: if a rebuild ever
+    // closed the gap, something would have started inventing a residual to make it close.
+    const counted = Object.values(districts).reduce((sum, d) => sum + d.motherTongue.counted, 0);
+    expect(counted).toBe(PUBLISHED_MOTHER_TONGUE_UNIVERSE);
+    expect(statistics.motherTongue.universe.counted).toBe(PUBLISHED_MOTHER_TONGUE_UNIVERSE);
+    expect(statistics.motherTongue.universe.difference).toBe(
+      PUBLISHED_MOTHER_TONGUE_UNIVERSE - PUBLISHED_NATIONAL_TOTAL,
+    );
+  });
+
+  it('names a dominant language only where the census names one', () => {
+    for (const [name, record] of entries) {
+      const { dominant, dominantShare, speakers, counted } = record.motherTongue;
+      if (dominant === null) {
+        // The residual won. Both districts that reach this are in Chitral, where Khowar has no
+        // column; the alternative is printing "Urdu" on a district where 150 people speak it.
+        expect(dominantShare, name).toBeNull();
+        expect(record.motherTongue.residualShare, name).toBeGreaterThan(0.5);
+        continue;
+      }
+      expect(dominant, name).not.toBe('Others');
+      const largest = Math.max(
+        ...CENSUS_LANGUAGES.filter((l) => l !== 'Others').map((l) => speakers[l] ?? 0),
+      );
+      expect(speakers[dominant], name).toBe(largest);
+      expect(speakers[dominant], name).toBeGreaterThanOrEqual(speakers['Others'] ?? 0);
+      expect(dominantShare, name).toBeCloseTo((speakers[dominant] ?? 0) / counted, 5);
+    }
+  });
+
+  it('lists the districts where the census names no majority tongue', () => {
+    const unnamed = statistics.motherTongue.districtsWithoutNamedDominant as {
+      district: string;
+      residualShare: number;
+    }[];
+    expect(unnamed.map((d) => d.district).sort()).toEqual(['Lower Chitral', 'Upper Chitral']);
+    for (const district of unnamed) expect(districts[district.district]?.motherTongue.dominant).toBeNull();
+  });
+
+  it('names the districts PBS counts above their own population, rather than smoothing them', () => {
+    // A table cannot cover more people than live somewhere. Where Table 11 does, upstream
+    // disagrees with itself, and the artifact says which districts and by how much.
+    const above = statistics.motherTongue.districtsCountedAbovePopulation as {
+      district: string;
+      excess: number;
+    }[];
+    for (const record of above) {
+      expect(districts[record.district]?.motherTongue.counted, record.district).toBe(
+        (districts[record.district]?.population ?? 0) + record.excess,
+      );
+    }
+    const names = new Set(above.map((d) => d.district));
+    for (const [name, record] of entries) {
+      if (record.motherTongue.counted > record.population) expect(names, name).toContain(name);
+    }
+  });
+
+  it('states where the mother-tongue figures came from, table and all', () => {
+    expect(statistics.motherTongue.source).toMatch(/Table 11/);
+    expect(statistics.motherTongue.source).toMatch(/table_11_national\.pdf/);
+    expect(statistics.motherTongue.categories).toEqual(CENSUS_LANGUAGES);
+    expect(statistics.motherTongue.residualCategory).toBe('Others');
+  });
+});
+
 describe('statistics folds', () => {
   const folds = statistics.folds.into as Record<string, string>;
 
@@ -145,6 +291,19 @@ describe('statistics folds', () => {
     for (const [child, parent] of Object.entries(folds)) {
       expect(districts[parent] ?? absent.has(parent), `${child} -> ${parent}`).toBeTruthy();
       expect(districts[child], `${child} must not be counted separately`).toBeUndefined();
+    }
+  });
+
+  it('leaves every folded district reading its mother tongue off its 2023 parent', () => {
+    // The vintage rule, applied to Table 11: a district created after the census has no row of
+    // its own in it either, so the distribution it inherits is its parent's — which is the same
+    // thing as saying it is drawn as part of that parent. Nothing carries a distribution of its
+    // own here; the check is that the parent has one to inherit.
+    const absent = new Set(statistics.withoutCensusData.districts as string[]);
+    for (const [child, parent] of Object.entries(folds)) {
+      expect(districts[child], `${child} must not carry its own distribution`).toBeUndefined();
+      if (absent.has(parent)) continue; // AJK/GB parents are drawn but never shaded (D25).
+      expect(districts[parent]?.motherTongue.speakers, `${child} -> ${parent}`).toBeDefined();
     }
   });
 
@@ -186,9 +345,11 @@ describe('statistics provenance', () => {
   });
 
   it('pins the census cache it was built from, so the numbers are traceable to bytes', () => {
-    for (const digest of Object.values(statistics.provenance.cacheDigests as Record<string, string>)) {
-      expect(digest).toMatch(/^sha256:[0-9a-f]{64}$/);
-    }
+    const digests = statistics.provenance.cacheDigests as Record<string, string>;
+    // One per table read, mother tongue included — a cache file nobody digests is a file that
+    // can change under the artifact without the diff saying so.
+    expect(Object.keys(digests).sort()).toEqual(['district', 'division', 'motherTongue', 'province']);
+    for (const digest of Object.values(digests)) expect(digest).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
   it('carries all three district counts, so none of them reads as a bug', () => {

@@ -1,5 +1,5 @@
 /**
- * Join the PBS 2023 Digital Census onto the 2023 district set (#9).
+ * Join the PBS 2023 Digital Census onto the 2023 district set (#9, #10).
  *
  *   npm run build:data:census
  *
@@ -14,7 +14,8 @@
  * The build stops on any of:
  *   - a census row that matches no district, or a district no census row covers;
  *   - a district population that does not sum to the division total published above it;
- *   - a province, or the national total, that the districts do not sum to.
+ *   - a province, or the national total, that the districts do not sum to;
+ *   - a mother-tongue column that does not sum to the province figure PBS printed for it.
  *
  * The totals check is the strongest one available: a fold that double-counts a district or a
  * name that resolved to the wrong one lands as an exact arithmetic difference rather than as a
@@ -31,6 +32,16 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  CENSUS_LANGUAGES,
+  RESIDUAL_CATEGORY,
+  joinMotherTongue,
+  sumLanguages,
+  sumLanguagesByProvince,
+  zeroedLanguages,
+  type LanguageTotals,
+  type MotherTongueRow,
+} from './lib/mother-tongue.ts';
+import {
   joinCensus,
   reconcileTotals,
   resolveCensusDivision,
@@ -46,7 +57,7 @@ import {
   ROSTER,
   ROSTER_DISTRICT_COUNT,
 } from './lib/roster.ts';
-import { readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
+import { decompressRData, readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const RAW_DIR = resolve(ROOT, 'data/raw');
@@ -63,6 +74,9 @@ const CACHE = {
   district: { file: 'pakpc2023-district.RData', frame: 'PakPC2023PakDist' },
   division: { file: 'pakpc2023-division.RData', frame: 'PakPC2023PakDiv' },
   province: { file: 'pakpc2023-province.RData', frame: 'PakPC2023Pak' },
+  // Table 11 is the one table the package ships xz-compressed rather than gzip; `rdata.ts`
+  // unwraps it, which is why reading the cache is asynchronous.
+  motherTongue: { file: 'pakpc2023-table-11.RData', frame: 'TABLE_11' },
 } as const;
 
 const SOURCE_URLS = {
@@ -74,6 +88,11 @@ const SOURCE_URLS = {
     'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf' +
     ' — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban ' +
     'proportion, household size and growth rate',
+  motherTongue:
+    'PBS Census-2023 Table 11 — population by mother tongue, sex and rural/urban. Published at ' +
+    'tehsil level in PakPC2023 (object TABLE_11); the province and national figures checked ' +
+    'against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/' +
+    'table_11_national.pdf',
   folds: 'data/reference/post-census-district-folds.json',
   roster:
     'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
@@ -97,14 +116,151 @@ const PUBLISHED_PROVINCE_TOTALS: Readonly<Record<string, number>> = {
 };
 const PUBLISHED_NATIONAL_TOTAL = 241_499_431;
 
+/**
+ * Table 11 as PBS printed it, typed from `table_11_national.pdf` — every category, for each
+ * province and for Pakistan.
+ *
+ * This is the anchor that makes summing tehsils into districts safe. The package publishes
+ * Table 11 at tehsil level only, so the district tier this project needs does not exist upstream
+ * and has to be added up; adding up the wrong tehsil, or dropping one, would produce a district
+ * distribution that looks entirely plausible. Checking the sums against these figures catches it
+ * — and column by column rather than on the total, because a tehsil assigned to the wrong
+ * district within a province moves whole languages while leaving the total untouched.
+ *
+ * Six rows of sixteen figures each, and they check each other: the fifteen categories sum to the
+ * printed total in every row, and the five provinces sum to Pakistan in every column.
+ */
+const PUBLISHED_MOTHER_TONGUE: Readonly<Record<string, Readonly<LanguageTotals>>> = {
+  Punjab: {
+    Urdu: 9_143_466,
+    Punjabi: 85_309_591,
+    Sindhi: 352_686,
+    Pushto: 2_387_378,
+    Balochi: 1_063_324,
+    Kashmiri: 155_088,
+    Saraiki: 26_282_637,
+    Hindko: 779_667,
+    Brahvi: 3_506,
+    Shina: 16_161,
+    Balti: 12_922,
+    Mewati: 1_035_687,
+    Kalasha: 793,
+    Kohiostani: 21_910,
+    Others: 768_489,
+  },
+  Sindh: {
+    Urdu: 12_409_745,
+    Punjabi: 2_265_471,
+    Sindhi: 33_462_299,
+    Pushto: 2_955_893,
+    Balochi: 1_208_147,
+    Kashmiri: 53_249,
+    Saraiki: 913_418,
+    Hindko: 830_581,
+    Brahvi: 265_769,
+    Shina: 22_273,
+    Balti: 27_193,
+    Mewati: 57_059,
+    Kalasha: 777,
+    Kohiostani: 14_885,
+    Others: 1_151_650,
+  },
+  'Khyber Pakhtunkhwa': {
+    Urdu: 259_925,
+    Punjabi: 99_485,
+    Sindhi: 10_019,
+    Pushto: 32_919_592,
+    Balochi: 30_636,
+    Kashmiri: 6_471,
+    Saraiki: 1_288_200,
+    Hindko: 3_815_327,
+    Brahvi: 1_570,
+    Shina: 70_140,
+    Balti: 858,
+    Mewati: 93,
+    Kalasha: 5_632,
+    Kohiostani: 996_182,
+    Others: 1_136_990,
+  },
+  Balochistan: {
+    Urdu: 77_249,
+    Punjabi: 86_457,
+    Sindhi: 555_198,
+    Pushto: 4_955_245,
+    Balochi: 5_811_185,
+    Kashmiri: 7_352,
+    Saraiki: 319_054,
+    Hindko: 24_204,
+    Brahvi: 2_507_157,
+    Shina: 1_278,
+    Balti: 846,
+    Mewati: 285,
+    Kalasha: 82,
+    Kohiostani: 1_014,
+    Others: 215_405,
+  },
+  'Islamabad Capital Territory': {
+    Urdu: 358_922,
+    Punjabi: 1_154_540,
+    Sindhi: 21_362,
+    Pushto: 415_838,
+    Balochi: 4_503,
+    Kashmiri: 51_920,
+    Saraiki: 46_270,
+    Hindko: 140_780,
+    Brahvi: 668,
+    Shina: 7_099,
+    Balti: 10_315,
+    Mewati: 1_095,
+    Kalasha: 182,
+    Kohiostani: 5_016,
+    Others: 64_734,
+  },
+};
+
+/**
+ * Table 11's own universe: 240,458,089, which is **1,041,342 short of the census population**.
+ *
+ * Not an error, and not something this build reconciles. PBS prints the same universe for
+ * Table 10 (nationality), so the two published tables agree with each other and disagree with
+ * Table 1 by a figure PBS does not explain. Reported in the artifact as a stated difference
+ * rather than closed by inventing a residual category — the shares this app shades by are shares
+ * of the universe the table itself publishes.
+ */
+const PUBLISHED_MOTHER_TONGUE_NATIONAL: Readonly<LanguageTotals> = {
+  Urdu: 22_249_307,
+  Punjabi: 88_915_544,
+  Sindhi: 34_401_564,
+  Pushto: 43_633_946,
+  Balochi: 8_117_795,
+  Kashmiri: 274_080,
+  Saraiki: 28_849_579,
+  Hindko: 5_590_559,
+  Brahvi: 2_778_670,
+  Shina: 116_951,
+  Balti: 52_134,
+  Mewati: 1_094_219,
+  Kalasha: 7_466,
+  Kohiostani: 1_039_007,
+  Others: 3_337_268,
+};
+
 function fail(message: string): never {
   console.error(`\n✗ ${message}`);
   process.exit(1);
 }
 
-function readCache(which: keyof typeof CACHE): { frame: DataFrame; digest: string } {
+/**
+ * Read one cached table, digesting the file exactly as committed.
+ *
+ * The digest is over the bytes on disk rather than the decompressed payload, because those are
+ * the bytes CRAN publishes: `pakpc2023-table-11.RData` carries the MD5 the package's own manifest
+ * lists for it, so the provenance is checkable in one command and rests on no conversion of ours.
+ * Unwrapping the container is `rdata.ts`'s job.
+ */
+async function readCache(which: keyof typeof CACHE): Promise<{ frame: DataFrame; digest: string }> {
   const bytes = readFileSync(resolve(RAW_DIR, CACHE[which].file));
-  const frame = readDataFrames(bytes).get(CACHE[which].frame);
+  const frame = readDataFrames(await decompressRData(bytes)).get(CACHE[which].frame);
   if (frame === undefined) fail(`${CACHE[which].file} holds no table named ${CACHE[which].frame}`);
   return { frame, digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}` };
 }
@@ -112,6 +268,22 @@ function readCache(which: keyof typeof CACHE): { frame: DataFrame; digest: strin
 /** Read a published population out of a census row, refusing anything that is not a count. */
 function count(row: Readonly<Record<string, Cell>>, column: string): number {
   const value = row[column];
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    fail(`census row has no usable ${column}: ${JSON.stringify(row)}`);
+  }
+  return value;
+}
+
+/**
+ * Read a published count that PBS may have left empty.
+ *
+ * Table 11 prints a cell for every language in every tehsil, most of them blank, and blank there
+ * means nobody rather than unknown. Kept apart from `count` so that a blank cannot pass for a
+ * figure anywhere the census does publish one.
+ */
+function optionalCount(row: Readonly<Record<string, Cell>>, column: string): number | null {
+  const value = row[column];
+  if (value === null || value === undefined) return null;
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
     fail(`census row has no usable ${column}: ${JSON.stringify(row)}`);
   }
@@ -144,12 +316,13 @@ function report(tier: string, discrepancies: readonly Discrepancy[]): void {
 const format = (value: number | null): string =>
   value === null ? '—'.padStart(13) : value.toLocaleString('en-US').padStart(13);
 
-function main(): void {
+async function main(): Promise<void> {
   console.log('Joining the 2023 census onto the 2023 district set');
 
-  const districtTable = readCache('district');
-  const divisionTable = readCache('division');
-  const provinceTable = readCache('province');
+  const districtTable = await readCache('district');
+  const divisionTable = await readCache('division');
+  const provinceTable = await readCache('province');
+  const motherTongueTable = await readCache('motherTongue');
 
   // ---- 1. Census rows -> districts -----------------------------------------------------------
   const rows: CensusRow[] = districtTable.frame.rows.map((row) => ({
@@ -190,6 +363,62 @@ function main(): void {
       `(${join.withoutCensusData.length} drawn without census data)`,
   );
 
+  // ---- 1b. Table 11 -> districts (#10) --------------------------------------------------------
+  // Summed from tehsils: PakPC2023 republishes Table 11 at tehsil level only, so the district
+  // tier this project shades by does not exist upstream and is added up here — under the
+  // province-by-language reconciliation below, which is what makes adding it up safe.
+  const motherTongueRows: MotherTongueRow[] = motherTongueTable.frame.rows.map((row) => ({
+    district: text(row, 'DISTRICT'),
+    tehsil: text(row, 'TEHSIL'),
+    language: text(row, 'LANGUAGE'),
+    speakers: optionalCount(row, 'ALL_SEXES_OVERALL'),
+    // The table also carries male, female, transgender and rural/urban splits. Not read: nothing
+    // in this app shades by them, and an unused column in the bundle is a figure nobody checks.
+  }));
+
+  const motherTongue = joinMotherTongue(motherTongueRows);
+
+  if (motherTongue.unknownCategories.length > 0) {
+    fail(
+      `Table 11 publishes ${motherTongue.unknownCategories.length} mother-tongue category(ies) ` +
+        `this build does not know: ${motherTongue.unknownCategories.join(', ')}. Add them to ` +
+        `CENSUS_LANGUAGES in scripts/lib/mother-tongue.ts — never let one fall into Others, ` +
+        `which would publish a distribution silently missing a language PBS chose to name.`,
+    );
+  }
+  if (motherTongue.unmatched.length > 0) {
+    fail(
+      `${motherTongue.unmatched.length} Table 11 district(s) matched no district in the 2023 ` +
+        `roster: ${motherTongue.unmatched.join(', ')}`,
+    );
+  }
+  if (motherTongue.collisions.length > 0) {
+    fail(
+      `two Table 11 district names resolved to one district, so their tehsils were summed ` +
+        `together and some other district is now missing:\n` +
+        motherTongue.collisions
+          .map((c) => `    ${c.district.padEnd(28)} ← ${c.publishedNames.join(', ')}`)
+          .join('\n'),
+    );
+  }
+  if (motherTongue.missing.length > 0) {
+    fail(
+      `${motherTongue.missing.length} census district(s) have no mother-tongue rows: ` +
+        `${motherTongue.missing.join(', ')}`,
+    );
+  }
+  if (motherTongue.empty.length > 0) {
+    fail(
+      `${motherTongue.empty.length} district(s) carry Table 11 rows with every figure empty: ` +
+        `${motherTongue.empty.join(', ')}. That is a district with no data wearing the shape of ` +
+        `a distribution; shading it would paint whichever language sorts first.`,
+    );
+  }
+  console.log(
+    `  mother tongue: ${motherTongueRows.length} published cells → ` +
+      `${motherTongue.districts.size} districts × ${CENSUS_LANGUAGES.length} categories`,
+  );
+
   // ---- 2. Do the districts still add up? -----------------------------------------------------
   const byProvince = sumBy(districts, 'province');
   const byDivision = sumBy(districts, 'division');
@@ -216,6 +445,31 @@ function main(): void {
   // Anchored outside the package: these six figures are typed from the PBS table itself.
   report('province (PBS Table 1)', reconcileTotals(byProvince, new Map(Object.entries(PUBLISHED_PROVINCE_TOTALS))));
 
+  // Table 11, column by column. Anchored outside the package: every figure on the right is typed
+  // from the PBS PDF, so this checks the package as well as the join.
+  const motherTongueByProvince = sumLanguagesByProvince(motherTongue.districts.values());
+  const motherTongueNational = zeroedLanguages();
+  for (const language of CENSUS_LANGUAGES) {
+    const summed = new Map(
+      [...motherTongueByProvince].map(([province, totals]) => [province, totals[language]]),
+    );
+    const published = new Map(
+      Object.entries(PUBLISHED_MOTHER_TONGUE).map(([province, totals]) => [
+        province,
+        totals[language],
+      ]),
+    );
+    report(`province ${language} (PBS Table 11)`, reconcileTotals(summed, published));
+    motherTongueNational[language] = [...summed.values()].reduce((sum, n) => sum + n, 0);
+    if (motherTongueNational[language] !== PUBLISHED_MOTHER_TONGUE_NATIONAL[language]) {
+      fail(
+        `districts sum to ${motherTongueNational[language].toLocaleString('en-US')} ${language} ` +
+          `speakers, but PBS published ` +
+          `${PUBLISHED_MOTHER_TONGUE_NATIONAL[language].toLocaleString('en-US')}`,
+      );
+    }
+  }
+
   const national = districts.reduce((sum, d) => sum + d.population, 0);
   if (national !== PUBLISHED_NATIONAL_TOTAL) {
     fail(
@@ -223,6 +477,21 @@ function main(): void {
         `${PUBLISHED_NATIONAL_TOTAL.toLocaleString('en-US')} for Pakistan`,
     );
   }
+
+  // A published table cannot count more people than live there. Where it does, upstream disagrees
+  // with itself; the build records which districts and by how much rather than smoothing it away.
+  const countedAbovePopulation = districts
+    .map((d) => {
+      // Every census district has a distribution by here — `motherTongue.missing` stopped the
+      // build otherwise. Defaulting a missing one to zero would quietly drop it from this check
+      // instead, which is the one place a hole could still hide.
+      const counted = motherTongue.districts.get(d.district);
+      if (counted === undefined) fail(`${d.district} has no mother-tongue distribution`);
+      return { district: d.district, counted: counted.total, population: d.population };
+    })
+    .filter((d) => d.counted > d.population)
+    .map((d) => ({ ...d, excess: d.counted - d.population }))
+    .sort((a, b) => b.excess - a.excess);
 
   // ---- 3. Emit -------------------------------------------------------------------------------
   const statistics = {
@@ -236,6 +505,7 @@ function main(): void {
         district: districtTable.digest,
         division: divisionTable.digest,
         province: provinceTable.digest,
+        motherTongue: motherTongueTable.digest,
       },
       counts: {
         censusDistricts: join.districts.size,
@@ -256,15 +526,35 @@ function main(): void {
       districts
         .slice()
         .sort((a, b) => a.district.localeCompare(b.district))
-        .map((d) => [
-          d.district,
-          {
-            population: d.population,
-            households: d.households,
-            division: d.division,
-            province: d.province,
-          },
-        ]),
+        .map((d) => {
+          const languages = motherTongue.districts.get(d.district);
+          if (languages === undefined) fail(`${d.district} has no mother-tongue distribution`);
+          return [
+            d.district,
+            {
+              population: d.population,
+              households: d.households,
+              division: d.division,
+              province: d.province,
+              motherTongue: {
+                // `null` where the residual outweighs every named language — the census names no
+                // majority tongue for this district, and the map has to be able to say so.
+                dominant: languages.dominant,
+                // Rounded to six places: the app shows one decimal of a percentage, and a full
+                // float here would churn the committed diff on every rebuild for no reader.
+                dominantShare:
+                  languages.dominantShare === null
+                    ? null
+                    : Number(languages.dominantShare.toFixed(6)),
+                residualShare: Number(languages.residualShare.toFixed(6)),
+                // Table 11's own universe for this district, not its population — the two differ
+                // nationally by 1,041,342 and district by district by more. See `counted` below.
+                counted: languages.total,
+                speakers: languages.speakers,
+              },
+            },
+          ];
+        }),
     ),
     withoutCensusData: {
       reason:
@@ -274,6 +564,80 @@ function main(): void {
         'figure from PBS. AJK population exists only as relayed by the AJK Bureau of ' +
         'Statistics, never direct from PBS, and is out of scope here. Absent, not zero.',
       districts: join.withoutCensusData,
+    },
+    motherTongue: {
+      source: SOURCE_URLS.motherTongue,
+      unit: 'district — summed from the tehsil rows PakPC2023 publishes',
+      /**
+       * The categories, in the census's own order and the census's own spelling — `Kohiostani`
+       * included, which is how PBS prints Kohistani. Nothing merged, nothing renamed: which
+       * tongues are one language and which are two is a live argument in Pakistan, and this app
+       * reports the census's answer rather than adjudicating (D4/D5).
+       */
+      categories: CENSUS_LANGUAGES,
+      residualCategory: RESIDUAL_CATEGORY,
+      dominance:
+        `The largest category excluding ${RESIDUAL_CATEGORY}, which is a residual and not a ` +
+        `language: shading a district by it would assert a mother tongue the census did not ` +
+        `record. Where ${RESIDUAL_CATEGORY} outweighs every named category the dominant ` +
+        `language is null instead — the census names no majority tongue there, and handing the ` +
+        `label to the largest remaining category would print a false claim. Ties go to the ` +
+        `category the census prints first.`,
+      /**
+       * Districts with no census-nameable majority tongue. Both are in Chitral, where Khowar has
+       * no column of its own: 194,851 of Upper Chitral's 195,161 people are counted under
+       * `Others`, against 150 Urdu speakers. Listed so the omission is a documented property of
+       * the source rather than a hole a reader discovers in the fill.
+       */
+      districtsWithoutNamedDominant: [...motherTongue.districts.values()]
+        .filter((d) => d.dominant === null)
+        .map((d) => ({ district: d.district, residualShare: Number(d.residualShare.toFixed(6)) }))
+        .sort((a, b) => b.residualShare - a.residualShare),
+      universe: {
+        counted: sumLanguages(motherTongueNational),
+        population: PUBLISHED_NATIONAL_TOTAL,
+        difference: sumLanguages(motherTongueNational) - PUBLISHED_NATIONAL_TOTAL,
+        note:
+          'Table 11 counts 240,458,089 people, 1,041,342 fewer than the 241,499,431 of Table 1. ' +
+          'PBS prints the same universe for Table 10 (nationality), so the two tables agree with ' +
+          'each other and differ from Table 1 by an amount PBS does not explain. Stated here ' +
+          'rather than reconciled: shares are shares of the universe the table itself publishes, ' +
+          'and no residual has been invented to close the gap. The difference is not spread ' +
+          'evenly — see districtsCountedAbovePopulation and, for the largest shortfalls, ' +
+          'docs/research/mother-tongue-table-11.md.',
+      },
+      /**
+       * Districts where Table 11 counts *more* people than Table 1 publishes as living there.
+       * A published table cannot cover more than everybody, so this is upstream disagreeing with
+       * itself — most likely a tehsil attributed to a neighbouring district. Named rather than
+       * smoothed: the province columns all reconcile exactly, so whatever moved stayed inside its
+       * province, and a reader comparing this app to PBS should find the same oddity.
+       */
+      districtsCountedAbovePopulation: countedAbovePopulation,
+      reconciliation: {
+        method:
+          'District sums checked against PBS Table 11 (national) column by column — every one ' +
+          'of the fifteen categories, for each of the five provinces and for Pakistan. Column ' +
+          'by column rather than on the total because a tehsil summed into the wrong district ' +
+          'inside a province moves whole languages while leaving the total untouched. The ' +
+          'figures are typed from the PBS PDF, i.e. from outside the PakPC2023 package, so this ' +
+          'checks the package as well as the join.',
+        source: SOURCE_URLS.motherTongue,
+        national: Object.fromEntries(
+          CENSUS_LANGUAGES.map((language) => [
+            language,
+            {
+              summed: motherTongueNational[language],
+              published: PUBLISHED_MOTHER_TONGUE_NATIONAL[language],
+            },
+          ]),
+        ),
+        provinces: [...motherTongueByProvince.keys()].sort().map((name) => ({
+          name,
+          summed: motherTongueByProvince.get(name),
+          published: PUBLISHED_MOTHER_TONGUE[name] ?? null,
+        })),
+      },
     },
     folds: {
       reason:
@@ -342,6 +706,26 @@ function main(): void {
       `   folds: ${Object.keys(POST_CENSUS_DISTRICT_FOLDS).length}`,
   );
 
+  console.log('\nMother tongue (summed from tehsils, against PBS Table 11 national)');
+  for (const language of CENSUS_LANGUAGES) {
+    console.log(
+      `  ${language.padEnd(28)} ${format(motherTongueNational[language])}  = ` +
+        `${format(PUBLISHED_MOTHER_TONGUE_NATIONAL[language])}`,
+    );
+  }
+  console.log(
+    `  ${'counted'.padEnd(28)} ${format(sumLanguages(motherTongueNational))}  ` +
+      `vs ${format(PUBLISHED_NATIONAL_TOTAL)} population — Table 11's own universe`,
+  );
+  if (countedAbovePopulation.length > 0) {
+    console.log(
+      `\n  ${countedAbovePopulation.length} district(s) counted above their population by PBS:`,
+    );
+    for (const d of countedAbovePopulation) {
+      console.log(`    ${d.district.padEnd(28)} +${d.excess.toLocaleString('en-US')}`);
+    }
+  }
+
   const bytes = readFileSync(OUT_FILE).byteLength;
   console.log(
     `\n✓ ${OUT_FILE.replace(`${ROOT}/`, '')} — ${districts.length} districts, ` +
@@ -352,4 +736,4 @@ function main(): void {
 const sorted = (totals: ReadonlyMap<string, number>): Record<string, number> =>
   Object.fromEntries([...totals].sort(([a], [b]) => a.localeCompare(b)));
 
-main();
+await main();

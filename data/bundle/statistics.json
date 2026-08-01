@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T14:58:21.400Z",
+    "generated": "2026-08-01T16:52:38.088Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -9,13 +9,15 @@
       "censusPackage": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication",
       "censusPackageLicence": "GPL-2",
       "publishedTotals": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate",
+      "motherTongue": "PBS Census-2023 Table 11 — population by mother tongue, sex and rural/urban. Published at tehsil level in PakPC2023 (object TABLE_11); the province and national figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_11_national.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
     },
     "cacheDigests": {
       "district": "sha256:a1a3469e2938a80038041a61f51785dc3eb8c424884c2f814b665d7802112895",
       "division": "sha256:d9e1b80e74405a568411d86bb566271519b134a7ac75f5d8a3c3be8cc17788ae",
-      "province": "sha256:5f25ec14649c45f03c28c8dc629789238dfef5ae4bcb14043e5518d3d2be6abe"
+      "province": "sha256:5f25ec14649c45f03c28c8dc629789238dfef5ae4bcb14043e5518d3d2be6abe",
+      "motherTongue": "sha256:842498bb8b0fd19813e47136c9e328308191f9f7def4a6bbf2e9c09a3665540c"
     },
     "counts": {
       "censusDistricts": 136,
@@ -32,817 +34,3945 @@
       "population": 1419072,
       "households": 237020,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Hindko",
+        "dominantShare": 0.874333,
+        "residualShare": 0.016131,
+        "counted": 1397587,
+        "speakers": {
+          "Urdu": 42734,
+          "Punjabi": 10401,
+          "Sindhi": 730,
+          "Pushto": 81731,
+          "Balochi": 269,
+          "Kashmiri": 1080,
+          "Saraiki": 1722,
+          "Hindko": 1221957,
+          "Brahvi": 521,
+          "Shina": 1971,
+          "Balti": 160,
+          "Mewati": 14,
+          "Kalasha": 8,
+          "Kohiostani": 11744,
+          "Others": 22545
+        }
+      }
     },
     "Attock": {
       "population": 2170423,
       "households": 354235,
       "division": "Rawalpindi",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.652265,
+        "residualShare": 0.008177,
+        "counted": 2133005,
+        "speakers": {
+          "Urdu": 57123,
+          "Punjabi": 1391285,
+          "Sindhi": 6379,
+          "Pushto": 332481,
+          "Balochi": 1105,
+          "Kashmiri": 4224,
+          "Saraiki": 8665,
+          "Hindko": 307305,
+          "Brahvi": 125,
+          "Shina": 782,
+          "Balti": 171,
+          "Mewati": 100,
+          "Kalasha": 20,
+          "Kohiostani": 5798,
+          "Others": 17442
+        }
+      }
     },
     "Awaran": {
       "population": 178958,
       "households": 27808,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.985807,
+        "residualShare": 0.000503,
+        "counted": 178958,
+        "speakers": {
+          "Urdu": 219,
+          "Punjabi": 12,
+          "Sindhi": 30,
+          "Pushto": 8,
+          "Balochi": 176418,
+          "Kashmiri": 82,
+          "Saraiki": 2,
+          "Hindko": 2,
+          "Brahvi": 2095,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 90
+        }
+      }
     },
     "Badin": {
       "population": 1947081,
       "households": 398066,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.938528,
+        "residualShare": 0.0032,
+        "counted": 1945417,
+        "speakers": {
+          "Urdu": 14320,
+          "Punjabi": 53514,
+          "Sindhi": 1825829,
+          "Pushto": 8424,
+          "Balochi": 4335,
+          "Kashmiri": 166,
+          "Saraiki": 7650,
+          "Hindko": 21626,
+          "Brahvi": 1419,
+          "Shina": 5,
+          "Balti": 0,
+          "Mewati": 1683,
+          "Kalasha": 0,
+          "Kohiostani": 221,
+          "Others": 6225
+        }
+      }
     },
     "Bahawalnagar": {
       "population": 3550342,
       "households": 558333,
       "division": "Bahawalpur",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.940751,
+        "residualShare": 0.002677,
+        "counted": 3544911,
+        "speakers": {
+          "Urdu": 118783,
+          "Punjabi": 3334877,
+          "Sindhi": 4668,
+          "Pushto": 10959,
+          "Balochi": 708,
+          "Kashmiri": 57,
+          "Saraiki": 61735,
+          "Hindko": 958,
+          "Brahvi": 71,
+          "Shina": 0,
+          "Balti": 12,
+          "Mewati": 2592,
+          "Kalasha": 2,
+          "Kohiostani": 1,
+          "Others": 9488
+        }
+      }
     },
     "Bahawalpur": {
       "population": 4284964,
       "households": 674155,
       "division": "Bahawalpur",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.678707,
+        "residualShare": 0.006831,
+        "counted": 4264457,
+        "speakers": {
+          "Urdu": 233348,
+          "Punjabi": 1031590,
+          "Sindhi": 5627,
+          "Pushto": 21320,
+          "Balochi": 3420,
+          "Kashmiri": 1630,
+          "Saraiki": 2894315,
+          "Hindko": 23805,
+          "Brahvi": 356,
+          "Shina": 205,
+          "Balti": 193,
+          "Mewati": 19477,
+          "Kalasha": 3,
+          "Kohiostani": 36,
+          "Others": 29132
+        }
+      }
     },
     "Bajaur": {
       "population": 1287960,
       "households": 181721,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.998525,
+        "residualShare": 0.000125,
+        "counted": 1283113,
+        "speakers": {
+          "Urdu": 372,
+          "Punjabi": 145,
+          "Sindhi": 86,
+          "Pushto": 1281221,
+          "Balochi": 1059,
+          "Kashmiri": 15,
+          "Saraiki": 12,
+          "Hindko": 21,
+          "Brahvi": 1,
+          "Shina": 4,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 17,
+          "Others": 160
+        }
+      }
     },
     "Bannu": {
       "population": 1357890,
       "households": 183246,
       "division": "Bannu",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.990936,
+        "residualShare": 0.000178,
+        "counted": 1354674,
+        "speakers": {
+          "Urdu": 4511,
+          "Punjabi": 4395,
+          "Sindhi": 379,
+          "Pushto": 1342395,
+          "Balochi": 1309,
+          "Kashmiri": 138,
+          "Saraiki": 1131,
+          "Hindko": 165,
+          "Brahvi": 1,
+          "Shina": 7,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 1,
+          "Others": 241
+        }
+      }
     },
     "Barkhan": {
       "population": 210249,
       "households": 23069,
       "division": "Loralai",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.986231,
+        "residualShare": 0.000266,
+        "counted": 210249,
+        "speakers": {
+          "Urdu": 126,
+          "Punjabi": 173,
+          "Sindhi": 1,
+          "Pushto": 1138,
+          "Balochi": 207354,
+          "Kashmiri": 127,
+          "Saraiki": 1274,
+          "Hindko": 0,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 56
+        }
+      }
     },
     "Batagram": {
       "population": 554133,
       "households": 86224,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.81942,
+        "residualShare": 0.118767,
+        "counted": 553285,
+        "speakers": {
+          "Urdu": 340,
+          "Punjabi": 42,
+          "Sindhi": 36,
+          "Pushto": 453373,
+          "Balochi": 300,
+          "Kashmiri": 321,
+          "Saraiki": 3,
+          "Hindko": 21319,
+          "Brahvi": 1,
+          "Shina": 181,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 3,
+          "Kohiostani": 11654,
+          "Others": 65712
+        }
+      }
     },
     "Bhakkar": {
       "population": 1957470,
       "households": 313559,
       "division": "Sargodha",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.79419,
+        "residualShare": 0.006021,
+        "counted": 1956971,
+        "speakers": {
+          "Urdu": 146694,
+          "Punjabi": 190358,
+          "Sindhi": 490,
+          "Pushto": 47246,
+          "Balochi": 777,
+          "Kashmiri": 544,
+          "Saraiki": 1554207,
+          "Hindko": 1322,
+          "Brahvi": 5,
+          "Shina": 7,
+          "Balti": 15,
+          "Mewati": 3499,
+          "Kalasha": 0,
+          "Kohiostani": 24,
+          "Others": 11783
+        }
+      }
     },
     "Buner": {
       "population": 1016869,
       "households": 118692,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.95907,
+        "residualShare": 0.01794,
+        "counted": 1016674,
+        "speakers": {
+          "Urdu": 396,
+          "Punjabi": 162,
+          "Sindhi": 90,
+          "Pushto": 975062,
+          "Balochi": 662,
+          "Kashmiri": 9,
+          "Saraiki": 51,
+          "Hindko": 21023,
+          "Brahvi": 11,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 969,
+          "Others": 18239
+        }
+      }
     },
     "Chagai": {
       "population": 269192,
       "households": 38234,
       "division": "Rakhshan",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.737702,
+        "residualShare": 0.000082,
+        "counted": 268611,
+        "speakers": {
+          "Urdu": 225,
+          "Punjabi": 181,
+          "Sindhi": 153,
+          "Pushto": 23984,
+          "Balochi": 198155,
+          "Kashmiri": 76,
+          "Saraiki": 679,
+          "Hindko": 30,
+          "Brahvi": 45099,
+          "Shina": 6,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 22
+        }
+      }
     },
     "Chakwal": {
       "population": 1734854,
       "households": 288997,
       "division": "Rawalpindi",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.920369,
+        "residualShare": 0.000248,
+        "counted": 1731689,
+        "speakers": {
+          "Urdu": 28677,
+          "Punjabi": 1593793,
+          "Sindhi": 3439,
+          "Pushto": 94711,
+          "Balochi": 666,
+          "Kashmiri": 1084,
+          "Saraiki": 5623,
+          "Hindko": 2541,
+          "Brahvi": 2,
+          "Shina": 325,
+          "Balti": 123,
+          "Mewati": 13,
+          "Kalasha": 3,
+          "Kohiostani": 260,
+          "Others": 429
+        }
+      }
     },
     "Chaman": {
       "population": 466218,
       "households": 61942,
       "division": "Quetta",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.993666,
+        "residualShare": 0.000425,
+        "counted": 466218,
+        "speakers": {
+          "Urdu": 502,
+          "Punjabi": 892,
+          "Sindhi": 143,
+          "Pushto": 463265,
+          "Balochi": 412,
+          "Kashmiri": 22,
+          "Saraiki": 333,
+          "Hindko": 435,
+          "Brahvi": 15,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 198
+        }
+      }
     },
     "Charsadda": {
       "population": 1835504,
       "households": 263993,
       "division": "Peshawar",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.996562,
+        "residualShare": 0.001113,
+        "counted": 1835136,
+        "speakers": {
+          "Urdu": 991,
+          "Punjabi": 338,
+          "Sindhi": 155,
+          "Pushto": 1828826,
+          "Balochi": 1313,
+          "Kashmiri": 38,
+          "Saraiki": 32,
+          "Hindko": 396,
+          "Brahvi": 0,
+          "Shina": 7,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 13,
+          "Kohiostani": 984,
+          "Others": 2042
+        }
+      }
     },
     "Chiniot": {
       "population": 1563024,
       "households": 256660,
       "division": "Faisalabad",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.950808,
+        "residualShare": 0.000324,
+        "counted": 1563024,
+        "speakers": {
+          "Urdu": 53224,
+          "Punjabi": 1486135,
+          "Sindhi": 2217,
+          "Pushto": 17751,
+          "Balochi": 191,
+          "Kashmiri": 954,
+          "Saraiki": 1629,
+          "Hindko": 56,
+          "Brahvi": 0,
+          "Shina": 24,
+          "Balti": 10,
+          "Mewati": 6,
+          "Kalasha": 0,
+          "Kohiostani": 321,
+          "Others": 506
+        }
+      }
     },
     "Dadu": {
       "population": 1742320,
       "households": 340665,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.990251,
+        "residualShare": 0.000244,
+        "counted": 1742307,
+        "speakers": {
+          "Urdu": 4118,
+          "Punjabi": 1962,
+          "Sindhi": 1725321,
+          "Pushto": 1262,
+          "Balochi": 5974,
+          "Kashmiri": 11,
+          "Saraiki": 2072,
+          "Hindko": 401,
+          "Brahvi": 760,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 425
+        }
+      }
     },
     "Dera Bugti": {
       "population": 355274,
       "households": 62298,
       "division": "Sibi",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.989374,
+        "residualShare": 0.000065,
+        "counted": 355274,
+        "speakers": {
+          "Urdu": 271,
+          "Punjabi": 259,
+          "Sindhi": 267,
+          "Pushto": 449,
+          "Balochi": 351499,
+          "Kashmiri": 201,
+          "Saraiki": 2281,
+          "Hindko": 15,
+          "Brahvi": 2,
+          "Shina": 6,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 23
+        }
+      }
     },
     "Dera Ghazi Khan": {
       "population": 3393705,
       "households": 454711,
       "division": "Dera Ghazi Khan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.815491,
+        "residualShare": 0.000162,
+        "counted": 3386575,
+        "speakers": {
+          "Urdu": 81282,
+          "Punjabi": 12438,
+          "Sindhi": 1699,
+          "Pushto": 21261,
+          "Balochi": 505950,
+          "Kashmiri": 1121,
+          "Saraiki": 2761721,
+          "Hindko": 492,
+          "Brahvi": 22,
+          "Shina": 5,
+          "Balti": 3,
+          "Mewati": 30,
+          "Kalasha": 2,
+          "Kohiostani": 0,
+          "Others": 549
+        }
+      }
     },
     "Dera Ismail Khan": {
       "population": 1829811,
       "households": 270189,
       "division": "Dera Ismail Khan",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.657662,
+        "residualShare": 0.000287,
+        "counted": 1822916,
+        "speakers": {
+          "Urdu": 31152,
+          "Punjabi": 4765,
+          "Sindhi": 863,
+          "Pushto": 582703,
+          "Balochi": 791,
+          "Kashmiri": 490,
+          "Saraiki": 1198862,
+          "Hindko": 2738,
+          "Brahvi": 5,
+          "Shina": 18,
+          "Balti": 2,
+          "Mewati": 0,
+          "Kalasha": 3,
+          "Kohiostani": 0,
+          "Others": 524
+        }
+      }
     },
     "Duki": {
       "population": 205044,
       "households": 43069,
       "division": "Loralai",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.932722,
+        "residualShare": 0.004024,
+        "counted": 205044,
+        "speakers": {
+          "Urdu": 224,
+          "Punjabi": 175,
+          "Sindhi": 470,
+          "Pushto": 191249,
+          "Balochi": 9944,
+          "Kashmiri": 29,
+          "Saraiki": 708,
+          "Hindko": 6,
+          "Brahvi": 1409,
+          "Shina": 3,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 825
+        }
+      }
     },
     "Faisalabad": {
       "population": 9075819,
       "households": 1384668,
       "division": "Faisalabad",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.941335,
+        "residualShare": 0.000151,
+        "counted": 9065306,
+        "speakers": {
+          "Urdu": 407344,
+          "Punjabi": 8533486,
+          "Sindhi": 19316,
+          "Pushto": 58115,
+          "Balochi": 1394,
+          "Kashmiri": 910,
+          "Saraiki": 41536,
+          "Hindko": 1220,
+          "Brahvi": 57,
+          "Shina": 72,
+          "Balti": 178,
+          "Mewati": 211,
+          "Kalasha": 3,
+          "Kohiostani": 99,
+          "Others": 1365
+        }
+      }
     },
     "Ghotki": {
       "population": 1772609,
       "households": 331132,
       "division": "Sukkur",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.957873,
+        "residualShare": 0.000637,
+        "counted": 1760761,
+        "speakers": {
+          "Urdu": 31493,
+          "Punjabi": 13605,
+          "Sindhi": 1686586,
+          "Pushto": 4141,
+          "Balochi": 13576,
+          "Kashmiri": 34,
+          "Saraiki": 5812,
+          "Hindko": 3799,
+          "Brahvi": 304,
+          "Shina": 5,
+          "Balti": 1,
+          "Mewati": 283,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 1122
+        }
+      }
     },
     "Gujranwala": {
       "population": 5959750,
       "households": 849524,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.923192,
+        "residualShare": 0.000204,
+        "counted": 5940173,
+        "speakers": {
+          "Urdu": 368882,
+          "Punjabi": 5483918,
+          "Sindhi": 14367,
+          "Pushto": 46040,
+          "Balochi": 2089,
+          "Kashmiri": 14716,
+          "Saraiki": 5323,
+          "Hindko": 1730,
+          "Brahvi": 17,
+          "Shina": 103,
+          "Balti": 97,
+          "Mewati": 1468,
+          "Kalasha": 16,
+          "Kohiostani": 196,
+          "Others": 1211
+        }
+      }
     },
     "Gujrat": {
       "population": 3219375,
       "households": 489589,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.934668,
+        "residualShare": 0.000736,
+        "counted": 3216000,
+        "speakers": {
+          "Urdu": 111956,
+          "Punjabi": 3005893,
+          "Sindhi": 9877,
+          "Pushto": 69402,
+          "Balochi": 971,
+          "Kashmiri": 2329,
+          "Saraiki": 9445,
+          "Hindko": 1857,
+          "Brahvi": 25,
+          "Shina": 369,
+          "Balti": 187,
+          "Mewati": 66,
+          "Kalasha": 14,
+          "Kohiostani": 1243,
+          "Others": 2366
+        }
+      }
     },
     "Gwadar": {
       "population": 305160,
       "households": 50376,
       "division": "Mekran",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.976561,
+        "residualShare": 0.002047,
+        "counted": 302831,
+        "speakers": {
+          "Urdu": 1209,
+          "Punjabi": 1282,
+          "Sindhi": 1362,
+          "Pushto": 786,
+          "Balochi": 295733,
+          "Kashmiri": 224,
+          "Saraiki": 313,
+          "Hindko": 224,
+          "Brahvi": 1064,
+          "Shina": 2,
+          "Balti": 7,
+          "Mewati": 3,
+          "Kalasha": 0,
+          "Kohiostani": 2,
+          "Others": 620
+        }
+      }
     },
     "Hafizabad": {
       "population": 1319909,
       "households": 197277,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.957436,
+        "residualShare": 0.000289,
+        "counted": 1319651,
+        "speakers": {
+          "Urdu": 41661,
+          "Punjabi": 1263482,
+          "Sindhi": 2128,
+          "Pushto": 7956,
+          "Balochi": 74,
+          "Kashmiri": 3113,
+          "Saraiki": 423,
+          "Hindko": 136,
+          "Brahvi": 0,
+          "Shina": 8,
+          "Balti": 3,
+          "Mewati": 200,
+          "Kalasha": 0,
+          "Kohiostani": 85,
+          "Others": 382
+        }
+      }
     },
     "Hangu": {
       "population": 528902,
       "households": 61163,
       "division": "Kohat",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.995858,
+        "residualShare": 0.000093,
+        "counted": 525623,
+        "speakers": {
+          "Urdu": 393,
+          "Punjabi": 1001,
+          "Sindhi": 70,
+          "Pushto": 523446,
+          "Balochi": 436,
+          "Kashmiri": 61,
+          "Saraiki": 33,
+          "Hindko": 24,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 2,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 107,
+          "Others": 49
+        }
+      }
     },
     "Haripur": {
       "population": 1174783,
       "households": 192658,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Hindko",
+        "dominantShare": 0.803177,
+        "residualShare": 0.013297,
+        "counted": 1173056,
+        "speakers": {
+          "Urdu": 23423,
+          "Punjabi": 11854,
+          "Sindhi": 827,
+          "Pushto": 172471,
+          "Balochi": 271,
+          "Kashmiri": 985,
+          "Saraiki": 1390,
+          "Hindko": 942172,
+          "Brahvi": 334,
+          "Shina": 563,
+          "Balti": 79,
+          "Mewati": 7,
+          "Kalasha": 12,
+          "Kohiostani": 3070,
+          "Others": 15598
+        }
+      }
     },
     "Harnai": {
       "population": 127571,
       "households": 16400,
       "division": "Sibi",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.892389,
+        "residualShare": 0.001803,
+        "counted": 127571,
+        "speakers": {
+          "Urdu": 586,
+          "Punjabi": 701,
+          "Sindhi": 949,
+          "Pushto": 113843,
+          "Balochi": 10470,
+          "Kashmiri": 8,
+          "Saraiki": 563,
+          "Hindko": 73,
+          "Brahvi": 146,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 1,
+          "Others": 230
+        }
+      }
     },
     "Hyderabad": {
       "population": 2432540,
       "households": 448479,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.459191,
+        "residualShare": 0.023177,
+        "counted": 2432540,
+        "speakers": {
+          "Urdu": 1117001,
+          "Punjabi": 75959,
+          "Sindhi": 1048906,
+          "Pushto": 68878,
+          "Balochi": 17558,
+          "Kashmiri": 575,
+          "Saraiki": 19442,
+          "Hindko": 18546,
+          "Brahvi": 5479,
+          "Shina": 236,
+          "Balti": 83,
+          "Mewati": 3205,
+          "Kalasha": 122,
+          "Kohiostani": 170,
+          "Others": 56380
+        }
+      }
     },
     "Islamabad": {
       "population": 2363863,
       "households": 411518,
       "division": "Islamabad",
-      "province": "Islamabad Capital Territory"
+      "province": "Islamabad Capital Territory",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.505658,
+        "residualShare": 0.028352,
+        "counted": 2283244,
+        "speakers": {
+          "Urdu": 358922,
+          "Punjabi": 1154540,
+          "Sindhi": 21362,
+          "Pushto": 415838,
+          "Balochi": 4503,
+          "Kashmiri": 51920,
+          "Saraiki": 46270,
+          "Hindko": 140780,
+          "Brahvi": 668,
+          "Shina": 7099,
+          "Balti": 10315,
+          "Mewati": 1095,
+          "Kalasha": 182,
+          "Kohiostani": 5016,
+          "Others": 64734
+        }
+      }
     },
     "Jacobabad": {
       "population": 1174097,
       "households": 195161,
       "division": "Larkana",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.896744,
+        "residualShare": 0.000451,
+        "counted": 1174097,
+        "speakers": {
+          "Urdu": 3916,
+          "Punjabi": 2543,
+          "Sindhi": 1052864,
+          "Pushto": 3510,
+          "Balochi": 76552,
+          "Kashmiri": 55,
+          "Saraiki": 8444,
+          "Hindko": 553,
+          "Brahvi": 25113,
+          "Shina": 3,
+          "Balti": 5,
+          "Mewati": 10,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 529
+        }
+      }
     },
     "Jaffarabad": {
       "population": 594558,
       "households": 81580,
       "division": "Nasirabad",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.519097,
+        "residualShare": 0.003485,
+        "counted": 594558,
+        "speakers": {
+          "Urdu": 1071,
+          "Punjabi": 752,
+          "Sindhi": 114911,
+          "Pushto": 2207,
+          "Balochi": 308633,
+          "Kashmiri": 192,
+          "Saraiki": 91835,
+          "Hindko": 1046,
+          "Brahvi": 71750,
+          "Shina": 69,
+          "Balti": 0,
+          "Mewati": 3,
+          "Kalasha": 17,
+          "Kohiostani": 0,
+          "Others": 2072
+        }
+      }
     },
     "Jamshoro": {
       "population": 1117308,
       "households": 213639,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.894268,
+        "residualShare": 0.001868,
+        "counted": 1117216,
+        "speakers": {
+          "Urdu": 40965,
+          "Punjabi": 26141,
+          "Sindhi": 999091,
+          "Pushto": 20880,
+          "Balochi": 16348,
+          "Kashmiri": 229,
+          "Saraiki": 4613,
+          "Hindko": 4372,
+          "Brahvi": 1992,
+          "Shina": 2,
+          "Balti": 5,
+          "Mewati": 397,
+          "Kalasha": 0,
+          "Kohiostani": 94,
+          "Others": 2087
+        }
+      }
     },
     "Jhal Magsi": {
       "population": 203368,
       "households": 30967,
       "division": "Nasirabad",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.754273,
+        "residualShare": 0.000452,
+        "counted": 203368,
+        "speakers": {
+          "Urdu": 189,
+          "Punjabi": 22,
+          "Sindhi": 33218,
+          "Pushto": 322,
+          "Balochi": 153395,
+          "Kashmiri": 99,
+          "Saraiki": 11716,
+          "Hindko": 72,
+          "Brahvi": 4243,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 92
+        }
+      }
     },
     "Jhang": {
       "population": 3077720,
       "households": 494761,
       "division": "Faisalabad",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.933338,
+        "residualShare": 0.00082,
+        "counted": 3065639,
+        "speakers": {
+          "Urdu": 144468,
+          "Punjabi": 2861278,
+          "Sindhi": 5289,
+          "Pushto": 15435,
+          "Balochi": 752,
+          "Kashmiri": 5105,
+          "Saraiki": 19333,
+          "Hindko": 1743,
+          "Brahvi": 32,
+          "Shina": 5,
+          "Balti": 3,
+          "Mewati": 9662,
+          "Kalasha": 0,
+          "Kohiostani": 20,
+          "Others": 2514
+        }
+      }
     },
     "Jhelum": {
       "population": 1382308,
       "households": 229227,
       "division": "Rawalpindi",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.888186,
+        "residualShare": 0.03242,
+        "counted": 1366297,
+        "speakers": {
+          "Urdu": 57980,
+          "Punjabi": 1213526,
+          "Sindhi": 4730,
+          "Pushto": 37268,
+          "Balochi": 603,
+          "Kashmiri": 1746,
+          "Saraiki": 3649,
+          "Hindko": 1786,
+          "Brahvi": 11,
+          "Shina": 176,
+          "Balti": 140,
+          "Mewati": 33,
+          "Kalasha": 11,
+          "Kohiostani": 343,
+          "Others": 44295
+        }
+      }
     },
     "Kachhi (Bolan)": {
       "population": 442612,
       "households": 50035,
       "division": "Nasirabad",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.588763,
+        "residualShare": 0.001861,
+        "counted": 442674,
+        "speakers": {
+          "Urdu": 1444,
+          "Punjabi": 1631,
+          "Sindhi": 75238,
+          "Pushto": 2492,
+          "Balochi": 260630,
+          "Kashmiri": 362,
+          "Saraiki": 54408,
+          "Hindko": 159,
+          "Brahvi": 45355,
+          "Shina": 46,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 85,
+          "Others": 824
+        }
+      }
     },
     "Kalat": {
       "population": 272506,
       "households": 33415,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Brahvi",
+        "dominantShare": 0.732229,
+        "residualShare": 0.000619,
+        "counted": 271560,
+        "speakers": {
+          "Urdu": 240,
+          "Punjabi": 37,
+          "Sindhi": 937,
+          "Pushto": 1826,
+          "Balochi": 69320,
+          "Kashmiri": 25,
+          "Saraiki": 14,
+          "Hindko": 74,
+          "Brahvi": 198844,
+          "Shina": 71,
+          "Balti": 0,
+          "Mewati": 1,
+          "Kalasha": 3,
+          "Kohiostani": 0,
+          "Others": 168
+        }
+      }
     },
     "Kambar Shahdadkot": {
       "population": 1514869,
       "households": 267684,
       "division": "Larkana",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.962106,
+        "residualShare": 0.000106,
+        "counted": 1514869,
+        "speakers": {
+          "Urdu": 1828,
+          "Punjabi": 967,
+          "Sindhi": 1457464,
+          "Pushto": 1364,
+          "Balochi": 11317,
+          "Kashmiri": 10,
+          "Saraiki": 1955,
+          "Hindko": 385,
+          "Brahvi": 39034,
+          "Shina": 3,
+          "Balti": 0,
+          "Mewati": 380,
+          "Kalasha": 2,
+          "Kohiostani": 0,
+          "Others": 160
+        }
+      }
     },
     "Karachi Central": {
       "population": 3822325,
       "households": 652776,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.801959,
+        "residualShare": 0.026395,
+        "counted": 3820388,
+        "speakers": {
+          "Urdu": 3063793,
+          "Punjabi": 154238,
+          "Sindhi": 84881,
+          "Pushto": 177748,
+          "Balochi": 33638,
+          "Kashmiri": 6493,
+          "Saraiki": 148299,
+          "Hindko": 31693,
+          "Brahvi": 6111,
+          "Shina": 2205,
+          "Balti": 2438,
+          "Mewati": 4134,
+          "Kalasha": 109,
+          "Kohiostani": 3767,
+          "Others": 100841
+        }
+      }
     },
     "Karachi East": {
       "population": 3950031,
       "households": 665452,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.489764,
+        "residualShare": 0.049659,
+        "counted": 3913656,
+        "speakers": {
+          "Urdu": 1916767,
+          "Punjabi": 407425,
+          "Sindhi": 501156,
+          "Pushto": 453464,
+          "Balochi": 71312,
+          "Kashmiri": 14077,
+          "Saraiki": 231523,
+          "Hindko": 91034,
+          "Brahvi": 4742,
+          "Shina": 6314,
+          "Balti": 12297,
+          "Mewati": 6738,
+          "Kalasha": 172,
+          "Kohiostani": 2285,
+          "Others": 194350
+        }
+      }
     },
     "Karachi South": {
       "population": 2329764,
       "households": 426224,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.347016,
+        "residualShare": 0.133904,
+        "counted": 2329764,
+        "speakers": {
+          "Urdu": 808465,
+          "Punjabi": 190438,
+          "Sindhi": 363930,
+          "Pushto": 219474,
+          "Balochi": 269872,
+          "Kashmiri": 5370,
+          "Saraiki": 61543,
+          "Hindko": 86498,
+          "Brahvi": 8434,
+          "Shina": 498,
+          "Balti": 1169,
+          "Mewati": 1501,
+          "Kalasha": 56,
+          "Kohiostani": 551,
+          "Others": 311965
+        }
+      }
     },
     "Karachi West": {
       "population": 2679380,
       "households": 465197,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.554007,
+        "residualShare": 0.015255,
+        "counted": 2679380,
+        "speakers": {
+          "Urdu": 1484395,
+          "Punjabi": 130596,
+          "Sindhi": 103826,
+          "Pushto": 653129,
+          "Balochi": 73542,
+          "Kashmiri": 5434,
+          "Saraiki": 92741,
+          "Hindko": 64030,
+          "Brahvi": 19374,
+          "Shina": 772,
+          "Balti": 1765,
+          "Mewati": 6714,
+          "Kalasha": 131,
+          "Kohiostani": 2058,
+          "Others": 40873
+        }
+      }
     },
     "Karak": {
       "population": 815878,
       "households": 96026,
       "division": "Kohat",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.997794,
+        "residualShare": 0.000064,
+        "counted": 815150,
+        "speakers": {
+          "Urdu": 349,
+          "Punjabi": 243,
+          "Sindhi": 103,
+          "Pushto": 813352,
+          "Balochi": 882,
+          "Kashmiri": 15,
+          "Saraiki": 150,
+          "Hindko": 3,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 52
+        }
+      }
     },
     "Kashmore": {
       "population": 1233957,
       "households": 208980,
       "division": "Larkana",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.940683,
+        "residualShare": 0.00025,
+        "counted": 1233957,
+        "speakers": {
+          "Urdu": 779,
+          "Punjabi": 852,
+          "Sindhi": 1160762,
+          "Pushto": 3653,
+          "Balochi": 64208,
+          "Kashmiri": 36,
+          "Saraiki": 2684,
+          "Hindko": 275,
+          "Brahvi": 395,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 2,
+          "Others": 309
+        }
+      }
     },
     "Kasur": {
       "population": 4084286,
       "households": 645838,
       "division": "Lahore",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.842924,
+        "residualShare": 0.003209,
+        "counted": 4081568,
+        "speakers": {
+          "Urdu": 137059,
+          "Punjabi": 3440450,
+          "Sindhi": 7041,
+          "Pushto": 7855,
+          "Balochi": 584,
+          "Kashmiri": 242,
+          "Saraiki": 3854,
+          "Hindko": 296,
+          "Brahvi": 15,
+          "Shina": 66,
+          "Balti": 76,
+          "Mewati": 470749,
+          "Kalasha": 131,
+          "Kohiostani": 53,
+          "Others": 13097
+        }
+      }
     },
     "Keamari": {
       "population": 2068451,
       "households": 319555,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.331429,
+        "residualShare": 0.058794,
+        "counted": 2066574,
+        "speakers": {
+          "Urdu": 455771,
+          "Punjabi": 223919,
+          "Sindhi": 191220,
+          "Pushto": 684923,
+          "Balochi": 146835,
+          "Kashmiri": 6485,
+          "Saraiki": 56474,
+          "Hindko": 160190,
+          "Brahvi": 13069,
+          "Shina": 1101,
+          "Balti": 603,
+          "Mewati": 1199,
+          "Kalasha": 29,
+          "Kohiostani": 3254,
+          "Others": 121502
+        }
+      }
     },
     "Kech": {
       "population": 1060931,
       "households": 253526,
       "division": "Mekran",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.997308,
+        "residualShare": 0.000205,
+        "counted": 1060814,
+        "speakers": {
+          "Urdu": 1046,
+          "Punjabi": 79,
+          "Sindhi": 134,
+          "Pushto": 128,
+          "Balochi": 1057958,
+          "Kashmiri": 955,
+          "Saraiki": 21,
+          "Hindko": 6,
+          "Brahvi": 269,
+          "Shina": 0,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 217
+        }
+      }
     },
     "Khairpur": {
       "population": 2597535,
       "households": 452588,
       "division": "Sukkur",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.977254,
+        "residualShare": 0.000812,
+        "counted": 2597448,
+        "speakers": {
+          "Urdu": 10745,
+          "Punjabi": 17339,
+          "Sindhi": 2538366,
+          "Pushto": 3864,
+          "Balochi": 13248,
+          "Kashmiri": 15,
+          "Saraiki": 5454,
+          "Hindko": 4442,
+          "Brahvi": 1722,
+          "Shina": 9,
+          "Balti": 87,
+          "Mewati": 15,
+          "Kalasha": 0,
+          "Kohiostani": 32,
+          "Others": 2110
+        }
+      }
     },
     "Khanewal": {
       "population": 3364077,
       "households": 526609,
       "division": "Multan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.704115,
+        "residualShare": 0.00726,
+        "counted": 3363589,
+        "speakers": {
+          "Urdu": 270684,
+          "Punjabi": 2368354,
+          "Sindhi": 4574,
+          "Pushto": 36657,
+          "Balochi": 819,
+          "Kashmiri": 385,
+          "Saraiki": 652794,
+          "Hindko": 2289,
+          "Brahvi": 10,
+          "Shina": 0,
+          "Balti": 31,
+          "Mewati": 2567,
+          "Kalasha": 2,
+          "Kohiostani": 2,
+          "Others": 24421
+        }
+      }
     },
     "Kharan": {
       "population": 260352,
       "households": 35879,
       "division": "Rakhshan",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.912357,
+        "residualShare": 0.000077,
+        "counted": 260352,
+        "speakers": {
+          "Urdu": 60,
+          "Punjabi": 83,
+          "Sindhi": 54,
+          "Pushto": 245,
+          "Balochi": 237534,
+          "Kashmiri": 151,
+          "Saraiki": 76,
+          "Hindko": 9,
+          "Brahvi": 22119,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 20
+        }
+      }
     },
     "Khushab": {
       "population": 1501089,
       "households": 248449,
       "division": "Sargodha",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.923784,
+        "residualShare": 0.002889,
+        "counted": 1500835,
+        "speakers": {
+          "Urdu": 21405,
+          "Punjabi": 1386448,
+          "Sindhi": 2157,
+          "Pushto": 30712,
+          "Balochi": 216,
+          "Kashmiri": 1645,
+          "Saraiki": 35855,
+          "Hindko": 252,
+          "Brahvi": 6,
+          "Shina": 54,
+          "Balti": 14,
+          "Mewati": 17727,
+          "Kalasha": 7,
+          "Kohiostani": 1,
+          "Others": 4336
+        }
+      }
     },
     "Khuzdar": {
       "population": 997214,
       "households": 161594,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Brahvi",
+        "dominantShare": 0.789321,
+        "residualShare": 0.000405,
+        "counted": 997214,
+        "speakers": {
+          "Urdu": 1096,
+          "Punjabi": 400,
+          "Sindhi": 12161,
+          "Pushto": 8188,
+          "Balochi": 186571,
+          "Kashmiri": 200,
+          "Saraiki": 341,
+          "Hindko": 435,
+          "Brahvi": 787122,
+          "Shina": 288,
+          "Balti": 1,
+          "Mewati": 7,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 404
+        }
+      }
     },
     "Khyber": {
       "population": 1146267,
       "households": 166829,
       "division": "Peshawar",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.997032,
+        "residualShare": 0.000686,
+        "counted": 1145982,
+        "speakers": {
+          "Urdu": 620,
+          "Punjabi": 765,
+          "Sindhi": 96,
+          "Pushto": 1142581,
+          "Balochi": 1043,
+          "Kashmiri": 20,
+          "Saraiki": 6,
+          "Hindko": 48,
+          "Brahvi": 4,
+          "Shina": 2,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 11,
+          "Others": 786
+        }
+      }
     },
     "Killa Abdullah": {
       "population": 361971,
       "households": 67308,
       "division": "Quetta",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.9924,
+        "residualShare": 0.001019,
+        "counted": 361971,
+        "speakers": {
+          "Urdu": 236,
+          "Punjabi": 87,
+          "Sindhi": 81,
+          "Pushto": 359220,
+          "Balochi": 1246,
+          "Kashmiri": 15,
+          "Saraiki": 60,
+          "Hindko": 5,
+          "Brahvi": 652,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 369
+        }
+      }
     },
     "Killa Saifullah": {
       "population": 380200,
       "households": 70021,
       "division": "Zhob",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.99521,
+        "residualShare": 0.0003,
+        "counted": 380200,
+        "speakers": {
+          "Urdu": 296,
+          "Punjabi": 484,
+          "Sindhi": 29,
+          "Pushto": 378379,
+          "Balochi": 606,
+          "Kashmiri": 43,
+          "Saraiki": 232,
+          "Hindko": 17,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 114
+        }
+      }
     },
     "Kohat": {
       "population": 1234661,
       "households": 169734,
       "division": "Kohat",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.859043,
+        "residualShare": 0.000248,
+        "counted": 1234579,
+        "speakers": {
+          "Urdu": 10263,
+          "Punjabi": 6601,
+          "Sindhi": 548,
+          "Pushto": 1060557,
+          "Balochi": 1086,
+          "Kashmiri": 181,
+          "Saraiki": 1400,
+          "Hindko": 153441,
+          "Brahvi": 60,
+          "Shina": 76,
+          "Balti": 26,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 33,
+          "Others": 306
+        }
+      }
     },
     "Kohlu": {
       "population": 260220,
       "households": 38115,
       "division": "Sibi",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.956072,
+        "residualShare": 0.000492,
+        "counted": 260220,
+        "speakers": {
+          "Urdu": 423,
+          "Punjabi": 243,
+          "Sindhi": 26,
+          "Pushto": 10324,
+          "Balochi": 248789,
+          "Kashmiri": 192,
+          "Saraiki": 91,
+          "Hindko": 1,
+          "Brahvi": 2,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 128
+        }
+      }
     },
     "Kolai Pallas Kohistan": {
       "population": 280162,
       "households": 40393,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Kohiostani",
+        "dominantShare": 0.851854,
+        "residualShare": 0.040262,
+        "counted": 236726,
+        "speakers": {
+          "Urdu": 429,
+          "Punjabi": 7,
+          "Sindhi": 12,
+          "Pushto": 6647,
+          "Balochi": 16,
+          "Kashmiri": 25,
+          "Saraiki": 10,
+          "Hindko": 19,
+          "Brahvi": 2,
+          "Shina": 18337,
+          "Balti": 13,
+          "Mewati": 8,
+          "Kalasha": 14,
+          "Kohiostani": 201656,
+          "Others": 9531
+        }
+      }
     },
     "Korangi": {
       "population": 3128971,
       "households": 493504,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Urdu",
+        "dominantShare": 0.704808,
+        "residualShare": 0.030984,
+        "counted": 3127976,
+        "speakers": {
+          "Urdu": 2204623,
+          "Punjabi": 298075,
+          "Sindhi": 172684,
+          "Pushto": 134924,
+          "Balochi": 22574,
+          "Kashmiri": 6056,
+          "Saraiki": 85428,
+          "Hindko": 82491,
+          "Brahvi": 1422,
+          "Shina": 6752,
+          "Balti": 6924,
+          "Mewati": 8247,
+          "Kalasha": 59,
+          "Kohiostani": 800,
+          "Others": 96917
+        }
+      }
     },
     "Kurram": {
       "population": 785434,
       "households": 94575,
       "division": "Kohat",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.991938,
+        "residualShare": 0.004549,
+        "counted": 785434,
+        "speakers": {
+          "Urdu": 627,
+          "Punjabi": 569,
+          "Sindhi": 238,
+          "Pushto": 779102,
+          "Balochi": 940,
+          "Kashmiri": 159,
+          "Saraiki": 101,
+          "Hindko": 62,
+          "Brahvi": 4,
+          "Shina": 40,
+          "Balti": 13,
+          "Mewati": 5,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 3573
+        }
+      }
     },
     "Lahore": {
       "population": 13004135,
       "households": 2012526,
       "division": "Lahore",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.735759,
+        "residualShare": 0.001208,
+        "counted": 12978661,
+        "speakers": {
+          "Urdu": 2742020,
+          "Punjabi": 9549169,
+          "Sindhi": 27074,
+          "Pushto": 267809,
+          "Balochi": 4266,
+          "Kashmiri": 12165,
+          "Saraiki": 62016,
+          "Hindko": 33061,
+          "Brahvi": 176,
+          "Shina": 1282,
+          "Balti": 2675,
+          "Mewati": 260544,
+          "Kalasha": 179,
+          "Kohiostani": 543,
+          "Others": 15682
+        }
+      }
     },
     "Lakki Marwat": {
       "population": 1040856,
       "households": 131894,
       "division": "Bannu",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.996584,
+        "residualShare": 0.000034,
+        "counted": 1036300,
+        "speakers": {
+          "Urdu": 453,
+          "Punjabi": 855,
+          "Sindhi": 95,
+          "Pushto": 1032760,
+          "Balochi": 893,
+          "Kashmiri": 9,
+          "Saraiki": 705,
+          "Hindko": 488,
+          "Brahvi": 1,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 6,
+          "Kohiostani": 0,
+          "Others": 35
+        }
+      }
     },
     "Larkana": {
       "population": 1784453,
       "households": 321837,
       "division": "Larkana",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.989391,
+        "residualShare": 0.000081,
+        "counted": 1784453,
+        "speakers": {
+          "Urdu": 847,
+          "Punjabi": 274,
+          "Sindhi": 1765521,
+          "Pushto": 1376,
+          "Balochi": 3201,
+          "Kashmiri": 55,
+          "Saraiki": 375,
+          "Hindko": 258,
+          "Brahvi": 10199,
+          "Shina": 3,
+          "Balti": 1,
+          "Mewati": 2198,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 144
+        }
+      }
     },
     "Lasbela": {
       "population": 680977,
       "households": 115635,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.753187,
+        "residualShare": 0.023353,
+        "counted": 680816,
+        "speakers": {
+          "Urdu": 1695,
+          "Punjabi": 3536,
+          "Sindhi": 67822,
+          "Pushto": 17421,
+          "Balochi": 512782,
+          "Kashmiri": 362,
+          "Saraiki": 4467,
+          "Hindko": 1425,
+          "Brahvi": 55063,
+          "Shina": 47,
+          "Balti": 8,
+          "Mewati": 242,
+          "Kalasha": 23,
+          "Kohiostani": 24,
+          "Others": 15899
+        }
+      }
     },
     "Layyah": {
       "population": 2102386,
       "households": 341276,
       "division": "Dera Ghazi Khan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.668945,
+        "residualShare": 0.001857,
+        "counted": 2102361,
+        "speakers": {
+          "Urdu": 57906,
+          "Punjabi": 579622,
+          "Sindhi": 1391,
+          "Pushto": 47448,
+          "Balochi": 1810,
+          "Kashmiri": 449,
+          "Saraiki": 1406363,
+          "Hindko": 1282,
+          "Brahvi": 20,
+          "Shina": 12,
+          "Balti": 427,
+          "Mewati": 1725,
+          "Kalasha": 1,
+          "Kohiostani": 1,
+          "Others": 3904
+        }
+      }
     },
     "Lodhran": {
       "population": 1928299,
       "households": 324020,
       "division": "Multan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.737979,
+        "residualShare": 0.016889,
+        "counted": 1926357,
+        "speakers": {
+          "Urdu": 123484,
+          "Punjabi": 293310,
+          "Sindhi": 500,
+          "Pushto": 4919,
+          "Balochi": 478,
+          "Kashmiri": 566,
+          "Saraiki": 1421611,
+          "Hindko": 6482,
+          "Brahvi": 253,
+          "Shina": 2,
+          "Balti": 3,
+          "Mewati": 42196,
+          "Kalasha": 12,
+          "Kohiostani": 6,
+          "Others": 32535
+        }
+      }
     },
     "Loralai": {
       "population": 272432,
       "households": 38284,
       "division": "Loralai",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.962512,
+        "residualShare": 0.002246,
+        "counted": 269364,
+        "speakers": {
+          "Urdu": 1435,
+          "Punjabi": 1929,
+          "Sindhi": 118,
+          "Pushto": 259266,
+          "Balochi": 3052,
+          "Kashmiri": 88,
+          "Saraiki": 2607,
+          "Hindko": 117,
+          "Brahvi": 136,
+          "Shina": 5,
+          "Balti": 0,
+          "Mewati": 3,
+          "Kalasha": 0,
+          "Kohiostani": 3,
+          "Others": 605
+        }
+      }
     },
     "Lower Chitral": {
       "population": 320407,
       "households": 46050,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": null,
+        "dominantShare": null,
+        "residualShare": 0.87765,
+        "counted": 318234,
+        "speakers": {
+          "Urdu": 2357,
+          "Punjabi": 138,
+          "Sindhi": 6,
+          "Pushto": 29799,
+          "Balochi": 17,
+          "Kashmiri": 7,
+          "Saraiki": 8,
+          "Hindko": 66,
+          "Brahvi": 0,
+          "Shina": 52,
+          "Balti": 2,
+          "Mewati": 1,
+          "Kalasha": 5065,
+          "Kohiostani": 1418,
+          "Others": 279298
+        }
+      }
     },
     "Lower Dir": {
       "population": 1650183,
       "households": 202899,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.995389,
+        "residualShare": 0.002341,
+        "counted": 1648620,
+        "speakers": {
+          "Urdu": 849,
+          "Punjabi": 331,
+          "Sindhi": 175,
+          "Pushto": 1641018,
+          "Balochi": 1313,
+          "Kashmiri": 109,
+          "Saraiki": 96,
+          "Hindko": 281,
+          "Brahvi": 0,
+          "Shina": 13,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 18,
+          "Kohiostani": 557,
+          "Others": 3860
+        }
+      }
     },
     "Lower Kohistan": {
       "population": 340017,
       "households": 52318,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Kohiostani",
+        "dominantShare": 0.922632,
+        "residualShare": 0.00544,
+        "counted": 303305,
+        "speakers": {
+          "Urdu": 4373,
+          "Punjabi": 69,
+          "Sindhi": 13,
+          "Pushto": 17187,
+          "Balochi": 18,
+          "Kashmiri": 7,
+          "Saraiki": 6,
+          "Hindko": 8,
+          "Brahvi": 0,
+          "Shina": 82,
+          "Balti": 22,
+          "Mewati": 0,
+          "Kalasha": 31,
+          "Kohiostani": 279839,
+          "Others": 1650
+        }
+      }
     },
     "Malakand": {
       "population": 826250,
       "households": 113159,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.983122,
+        "residualShare": 0.013892,
+        "counted": 825377,
+        "speakers": {
+          "Urdu": 462,
+          "Punjabi": 461,
+          "Sindhi": 115,
+          "Pushto": 811446,
+          "Balochi": 839,
+          "Kashmiri": 39,
+          "Saraiki": 42,
+          "Hindko": 46,
+          "Brahvi": 1,
+          "Shina": 12,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 447,
+          "Others": 11466
+        }
+      }
     },
     "Malir": {
       "population": 2403959,
       "households": 416512,
       "division": "Karachi",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.349828,
+        "residualShare": 0.031705,
+        "counted": 2419736,
+        "speakers": {
+          "Urdu": 382091,
+          "Punjabi": 240591,
+          "Sindhi": 846492,
+          "Pushto": 428486,
+          "Balochi": 190579,
+          "Kashmiri": 7067,
+          "Saraiki": 77895,
+          "Hindko": 137791,
+          "Brahvi": 22841,
+          "Shina": 4218,
+          "Balti": 1710,
+          "Mewati": 1842,
+          "Kalasha": 58,
+          "Kohiostani": 1358,
+          "Others": 76717
+        }
+      }
     },
     "Mandi Bahauddin": {
       "population": 1829486,
       "households": 286168,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.931955,
+        "residualShare": 0.000327,
+        "counted": 1829152,
+        "speakers": {
+          "Urdu": 83586,
+          "Punjabi": 1704687,
+          "Sindhi": 3248,
+          "Pushto": 32304,
+          "Balochi": 734,
+          "Kashmiri": 153,
+          "Saraiki": 2800,
+          "Hindko": 129,
+          "Brahvi": 1,
+          "Shina": 40,
+          "Balti": 27,
+          "Mewati": 17,
+          "Kalasha": 0,
+          "Kohiostani": 827,
+          "Others": 599
+        }
+      }
     },
     "Mansehra": {
       "population": 1797177,
       "households": 294113,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Hindko",
+        "dominantShare": 0.662187,
+        "residualShare": 0.115607,
+        "counted": 1789624,
+        "speakers": {
+          "Urdu": 20789,
+          "Punjabi": 1800,
+          "Sindhi": 115,
+          "Pushto": 321518,
+          "Balochi": 232,
+          "Kashmiri": 675,
+          "Saraiki": 388,
+          "Hindko": 1185065,
+          "Brahvi": 368,
+          "Shina": 6775,
+          "Balti": 101,
+          "Mewati": 8,
+          "Kalasha": 14,
+          "Kohiostani": 44883,
+          "Others": 206893
+        }
+      }
     },
     "Mardan": {
       "population": 2744898,
       "households": 400904,
       "division": "Mardan",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.990653,
+        "residualShare": 0.003716,
+        "counted": 2740692,
+        "speakers": {
+          "Urdu": 3861,
+          "Punjabi": 3323,
+          "Sindhi": 353,
+          "Pushto": 2715074,
+          "Balochi": 2315,
+          "Kashmiri": 90,
+          "Saraiki": 236,
+          "Hindko": 2531,
+          "Brahvi": 13,
+          "Shina": 28,
+          "Balti": 2,
+          "Mewati": 0,
+          "Kalasha": 4,
+          "Kohiostani": 2677,
+          "Others": 10185
+        }
+      }
     },
     "Mastung": {
       "population": 313271,
       "households": 43736,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Brahvi",
+        "dominantShare": 0.890517,
+        "residualShare": 0.005685,
+        "counted": 312378,
+        "speakers": {
+          "Urdu": 191,
+          "Punjabi": 210,
+          "Sindhi": 1738,
+          "Pushto": 6631,
+          "Balochi": 22473,
+          "Kashmiri": 19,
+          "Saraiki": 796,
+          "Hindko": 212,
+          "Brahvi": 278178,
+          "Shina": 154,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 1776
+        }
+      }
     },
     "Matiari": {
       "population": 849383,
       "households": 158559,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.929479,
+        "residualShare": 0.005756,
+        "counted": 849351,
+        "speakers": {
+          "Urdu": 22605,
+          "Punjabi": 3893,
+          "Sindhi": 789454,
+          "Pushto": 3599,
+          "Balochi": 11322,
+          "Kashmiri": 8,
+          "Saraiki": 1963,
+          "Hindko": 11128,
+          "Brahvi": 488,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 1,
+          "Kalasha": 1,
+          "Kohiostani": 0,
+          "Others": 4889
+        }
+      }
     },
     "Mianwali": {
       "population": 1798268,
       "households": 296614,
       "division": "Sargodha",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.736898,
+        "residualShare": 0.003123,
+        "counted": 1795897,
+        "speakers": {
+          "Urdu": 56636,
+          "Punjabi": 139823,
+          "Sindhi": 1855,
+          "Pushto": 203759,
+          "Balochi": 572,
+          "Kashmiri": 579,
+          "Saraiki": 1323393,
+          "Hindko": 62794,
+          "Brahvi": 40,
+          "Shina": 20,
+          "Balti": 5,
+          "Mewati": 775,
+          "Kalasha": 1,
+          "Kohiostani": 37,
+          "Others": 5608
+        }
+      }
     },
     "Mirpur Khas": {
       "population": 1681386,
       "households": 313141,
       "division": "Mirpur Khas",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.737048,
+        "residualShare": 0.025889,
+        "counted": 1680980,
+        "speakers": {
+          "Urdu": 200500,
+          "Punjabi": 105442,
+          "Sindhi": 1238963,
+          "Pushto": 11620,
+          "Balochi": 27659,
+          "Kashmiri": 49,
+          "Saraiki": 11437,
+          "Hindko": 27319,
+          "Brahvi": 5009,
+          "Shina": 5,
+          "Balti": 2,
+          "Mewati": 9322,
+          "Kalasha": 1,
+          "Kohiostani": 133,
+          "Others": 43519
+        }
+      }
     },
     "Mohmand": {
       "population": 553933,
       "households": 63982,
       "division": "Peshawar",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.998009,
+        "residualShare": 0.000217,
+        "counted": 553933,
+        "speakers": {
+          "Urdu": 152,
+          "Punjabi": 255,
+          "Sindhi": 36,
+          "Pushto": 552830,
+          "Balochi": 405,
+          "Kashmiri": 10,
+          "Saraiki": 13,
+          "Hindko": 9,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 103,
+          "Others": 120
+        }
+      }
     },
     "Multan": {
       "population": 5362305,
       "households": 887304,
       "division": "Multan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.638934,
+        "residualShare": 0.00451,
+        "counted": 5340762,
+        "speakers": {
+          "Urdu": 946368,
+          "Punjabi": 854421,
+          "Sindhi": 4051,
+          "Pushto": 36574,
+          "Balochi": 6287,
+          "Kashmiri": 1782,
+          "Saraiki": 3412395,
+          "Hindko": 4563,
+          "Brahvi": 87,
+          "Shina": 58,
+          "Balti": 94,
+          "Mewati": 49954,
+          "Kalasha": 10,
+          "Kohiostani": 32,
+          "Others": 24086
+        }
+      }
     },
     "Musa Khel": {
       "population": 182275,
       "households": 31257,
       "division": "Loralai",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.858318,
+        "residualShare": 0.01427,
+        "counted": 182275,
+        "speakers": {
+          "Urdu": 69,
+          "Punjabi": 16,
+          "Sindhi": 10,
+          "Pushto": 156450,
+          "Balochi": 21881,
+          "Kashmiri": 18,
+          "Saraiki": 1228,
+          "Hindko": 1,
+          "Brahvi": 1,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 2601
+        }
+      }
     },
     "Muzaffargarh": {
       "population": 5015325,
       "households": 804783,
       "division": "Dera Ghazi Khan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.893715,
+        "residualShare": 0.001187,
+        "counted": 5012124,
+        "speakers": {
+          "Urdu": 199967,
+          "Punjabi": 260641,
+          "Sindhi": 1921,
+          "Pushto": 46187,
+          "Balochi": 14333,
+          "Kashmiri": 1610,
+          "Saraiki": 4479408,
+          "Hindko": 1129,
+          "Brahvi": 16,
+          "Shina": 15,
+          "Balti": 93,
+          "Mewati": 843,
+          "Kalasha": 2,
+          "Kohiostani": 11,
+          "Others": 5948
+        }
+      }
     },
     "Nankana Sahib": {
       "population": 1634871,
       "households": 247121,
       "division": "Lahore",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.972448,
+        "residualShare": 0.00032,
+        "counted": 1634871,
+        "speakers": {
+          "Urdu": 30713,
+          "Punjabi": 1589827,
+          "Sindhi": 3706,
+          "Pushto": 4890,
+          "Balochi": 137,
+          "Kashmiri": 52,
+          "Saraiki": 953,
+          "Hindko": 218,
+          "Brahvi": 0,
+          "Shina": 18,
+          "Balti": 6,
+          "Mewati": 3827,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 523
+        }
+      }
     },
     "Narowal": {
       "population": 1950954,
       "households": 281628,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.942853,
+        "residualShare": 0.000272,
+        "counted": 1950769,
+        "speakers": {
+          "Urdu": 59478,
+          "Punjabi": 1839288,
+          "Sindhi": 3489,
+          "Pushto": 2204,
+          "Balochi": 54,
+          "Kashmiri": 58,
+          "Saraiki": 1032,
+          "Hindko": 95,
+          "Brahvi": 1,
+          "Shina": 12,
+          "Balti": 22,
+          "Mewati": 44491,
+          "Kalasha": 14,
+          "Kohiostani": 1,
+          "Others": 530
+        }
+      }
     },
     "Nasirabad": {
       "population": 563377,
       "households": 87540,
       "division": "Nasirabad",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.432071,
+        "residualShare": 0.001031,
+        "counted": 563315,
+        "speakers": {
+          "Urdu": 643,
+          "Punjabi": 239,
+          "Sindhi": 119187,
+          "Pushto": 1787,
+          "Balochi": 243392,
+          "Kashmiri": 136,
+          "Saraiki": 68454,
+          "Hindko": 596,
+          "Brahvi": 128273,
+          "Shina": 25,
+          "Balti": 0,
+          "Mewati": 2,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 581
+        }
+      }
     },
     "Naushahro Feroze": {
       "population": 1777082,
       "households": 319938,
       "division": "Shaheed Benazirabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.921348,
+        "residualShare": 0.001029,
+        "counted": 1776459,
+        "speakers": {
+          "Urdu": 70688,
+          "Punjabi": 37916,
+          "Sindhi": 1636737,
+          "Pushto": 2463,
+          "Balochi": 4815,
+          "Kashmiri": 17,
+          "Saraiki": 9501,
+          "Hindko": 4216,
+          "Brahvi": 8186,
+          "Shina": 4,
+          "Balti": 0,
+          "Mewati": 80,
+          "Kalasha": 0,
+          "Kohiostani": 8,
+          "Others": 1828
+        }
+      }
     },
     "North Waziristan": {
       "population": 693332,
       "households": 99625,
       "division": "Bannu",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.996597,
+        "residualShare": 0.000035,
+        "counted": 693137,
+        "speakers": {
+          "Urdu": 725,
+          "Punjabi": 520,
+          "Sindhi": 174,
+          "Pushto": 690778,
+          "Balochi": 694,
+          "Kashmiri": 14,
+          "Saraiki": 121,
+          "Hindko": 87,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 24
+        }
+      }
     },
     "Nowshera": {
       "population": 1740705,
       "households": 259911,
       "division": "Peshawar",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.950357,
+        "residualShare": 0.002279,
+        "counted": 1735689,
+        "speakers": {
+          "Urdu": 17226,
+          "Punjabi": 18749,
+          "Sindhi": 2003,
+          "Pushto": 1649524,
+          "Balochi": 1962,
+          "Kashmiri": 617,
+          "Saraiki": 1039,
+          "Hindko": 39058,
+          "Brahvi": 60,
+          "Shina": 113,
+          "Balti": 58,
+          "Mewati": 18,
+          "Kalasha": 56,
+          "Kohiostani": 1250,
+          "Others": 3956
+        }
+      }
     },
     "Nushki": {
       "population": 207834,
       "households": 31268,
       "division": "Rakhshan",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Brahvi",
+        "dominantShare": 0.568682,
+        "residualShare": 0.000101,
+        "counted": 207200,
+        "speakers": {
+          "Urdu": 292,
+          "Punjabi": 80,
+          "Sindhi": 92,
+          "Pushto": 8984,
+          "Balochi": 79697,
+          "Kashmiri": 20,
+          "Saraiki": 126,
+          "Hindko": 40,
+          "Brahvi": 117831,
+          "Shina": 16,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 21
+        }
+      }
     },
     "Okara": {
       "population": 3515490,
       "households": 550057,
       "division": "Sahiwal",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.941576,
+        "residualShare": 0.000138,
+        "counted": 3503451,
+        "speakers": {
+          "Urdu": 162585,
+          "Punjabi": 3298765,
+          "Sindhi": 7353,
+          "Pushto": 12389,
+          "Balochi": 2175,
+          "Kashmiri": 228,
+          "Saraiki": 1243,
+          "Hindko": 535,
+          "Brahvi": 18,
+          "Shina": 363,
+          "Balti": 211,
+          "Mewati": 17043,
+          "Kalasha": 28,
+          "Kohiostani": 31,
+          "Others": 484
+        }
+      }
     },
     "Orakzai": {
       "population": 387561,
       "households": 52108,
       "division": "Kohat",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.998656,
+        "residualShare": 0.000046,
+        "counted": 387561,
+        "speakers": {
+          "Urdu": 209,
+          "Punjabi": 9,
+          "Sindhi": 34,
+          "Pushto": 387040,
+          "Balochi": 240,
+          "Kashmiri": 5,
+          "Saraiki": 3,
+          "Hindko": 0,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 2,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 18
+        }
+      }
     },
     "Pakpattan": {
       "population": 2136170,
       "households": 344744,
       "division": "Sahiwal",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.954202,
+        "residualShare": 0.004986,
+        "counted": 2135511,
+        "speakers": {
+          "Urdu": 74823,
+          "Punjabi": 2037708,
+          "Sindhi": 2962,
+          "Pushto": 6963,
+          "Balochi": 1449,
+          "Kashmiri": 44,
+          "Saraiki": 367,
+          "Hindko": 25,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 521,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 10648
+        }
+      }
     },
     "Panjgur": {
       "population": 509781,
       "households": 117157,
       "division": "Mekran",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.996279,
+        "residualShare": 0.000457,
+        "counted": 509781,
+        "speakers": {
+          "Urdu": 448,
+          "Punjabi": 61,
+          "Sindhi": 52,
+          "Pushto": 212,
+          "Balochi": 507884,
+          "Kashmiri": 737,
+          "Saraiki": 73,
+          "Hindko": 29,
+          "Brahvi": 47,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 4,
+          "Others": 233
+        }
+      }
     },
     "Peshawar": {
       "population": 4758762,
       "households": 691505,
       "division": "Peshawar",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.930721,
+        "residualShare": 0.005229,
+        "counted": 4750388,
+        "speakers": {
+          "Urdu": 85332,
+          "Punjabi": 26133,
+          "Sindhi": 1621,
+          "Pushto": 4421285,
+          "Balochi": 5070,
+          "Kashmiri": 634,
+          "Saraiki": 3229,
+          "Hindko": 179879,
+          "Brahvi": 161,
+          "Shina": 332,
+          "Balti": 318,
+          "Mewati": 24,
+          "Kalasha": 278,
+          "Kohiostani": 1253,
+          "Others": 24839
+        }
+      }
     },
     "Pishin": {
       "population": 835482,
       "households": 147241,
       "division": "Quetta",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.990688,
+        "residualShare": 0.000276,
+        "counted": 835482,
+        "speakers": {
+          "Urdu": 403,
+          "Punjabi": 1070,
+          "Sindhi": 159,
+          "Pushto": 827702,
+          "Balochi": 967,
+          "Kashmiri": 58,
+          "Saraiki": 319,
+          "Hindko": 32,
+          "Brahvi": 4540,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 231
+        }
+      }
     },
     "Quetta": {
       "population": 2595492,
       "households": 288690,
       "division": "Quetta",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.599522,
+        "residualShare": 0.081895,
+        "counted": 2271290,
+        "speakers": {
+          "Urdu": 58050,
+          "Punjabi": 67098,
+          "Sindhi": 30361,
+          "Pushto": 1361688,
+          "Balochi": 167621,
+          "Kashmiri": 2567,
+          "Saraiki": 24870,
+          "Hindko": 18609,
+          "Brahvi": 352241,
+          "Shina": 398,
+          "Balti": 827,
+          "Mewati": 24,
+          "Kalasha": 37,
+          "Kohiostani": 892,
+          "Others": 186007
+        }
+      }
     },
     "Rahim Yar Khan": {
       "population": 5564703,
       "households": 827525,
       "division": "Bahawalpur",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.649209,
+        "residualShare": 0.01721,
+        "counted": 5561720,
+        "speakers": {
+          "Urdu": 162775,
+          "Punjabi": 1330624,
+          "Sindhi": 141327,
+          "Pushto": 46868,
+          "Balochi": 90533,
+          "Kashmiri": 1469,
+          "Saraiki": 3610719,
+          "Hindko": 76789,
+          "Brahvi": 1131,
+          "Shina": 725,
+          "Balti": 100,
+          "Mewati": 2678,
+          "Kalasha": 61,
+          "Kohiostani": 202,
+          "Others": 95719
+        }
+      }
     },
     "Rajanpur": {
       "population": 2381049,
       "households": 354271,
       "division": "Dera Ghazi Khan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Saraiki",
+        "dominantShare": 0.766748,
+        "residualShare": 0.000761,
+        "counted": 2323980,
+        "speakers": {
+          "Urdu": 60567,
+          "Punjabi": 53062,
+          "Sindhi": 2102,
+          "Pushto": 8795,
+          "Balochi": 413077,
+          "Kashmiri": 726,
+          "Saraiki": 1781906,
+          "Hindko": 548,
+          "Brahvi": 22,
+          "Shina": 0,
+          "Balti": 7,
+          "Mewati": 1399,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 1769
+        }
+      }
     },
     "Rawalpindi": {
       "population": 6118911,
       "households": 999347,
       "division": "Rawalpindi",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.593685,
+        "residualShare": 0.063192,
+        "counted": 6058540,
+        "speakers": {
+          "Urdu": 1029015,
+          "Punjabi": 3596866,
+          "Sindhi": 17362,
+          "Pushto": 630908,
+          "Balochi": 3911,
+          "Kashmiri": 89835,
+          "Saraiki": 40031,
+          "Hindko": 236986,
+          "Brahvi": 370,
+          "Shina": 11101,
+          "Balti": 7652,
+          "Mewati": 522,
+          "Kalasha": 208,
+          "Kohiostani": 10921,
+          "Others": 382852
+        }
+      }
     },
     "Sahiwal": {
       "population": 2881811,
       "households": 446787,
       "division": "Sahiwal",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.969457,
+        "residualShare": 0.000648,
+        "counted": 2878122,
+        "speakers": {
+          "Urdu": 65700,
+          "Punjabi": 2790216,
+          "Sindhi": 4716,
+          "Pushto": 14073,
+          "Balochi": 530,
+          "Kashmiri": 75,
+          "Saraiki": 729,
+          "Hindko": 119,
+          "Brahvi": 7,
+          "Shina": 3,
+          "Balti": 42,
+          "Mewati": 47,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 1865
+        }
+      }
     },
     "Sanghar": {
       "population": 2308465,
       "households": 407265,
       "division": "Shaheed Benazirabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.761299,
+        "residualShare": 0.022345,
+        "counted": 2307831,
+        "speakers": {
+          "Urdu": 200438,
+          "Punjabi": 124273,
+          "Sindhi": 1756949,
+          "Pushto": 21789,
+          "Balochi": 47418,
+          "Kashmiri": 138,
+          "Saraiki": 32944,
+          "Hindko": 36173,
+          "Brahvi": 32524,
+          "Shina": 39,
+          "Balti": 2,
+          "Mewati": 3416,
+          "Kalasha": 30,
+          "Kohiostani": 130,
+          "Others": 51568
+        }
+      }
     },
     "Sargodha": {
       "population": 4334448,
       "households": 684799,
       "division": "Sargodha",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.907855,
+        "residualShare": 0.00018,
+        "counted": 4327263,
+        "speakers": {
+          "Urdu": 329224,
+          "Punjabi": 3928529,
+          "Sindhi": 7246,
+          "Pushto": 54316,
+          "Balochi": 357,
+          "Kashmiri": 2340,
+          "Saraiki": 3353,
+          "Hindko": 564,
+          "Brahvi": 2,
+          "Shina": 48,
+          "Balti": 54,
+          "Mewati": 31,
+          "Kalasha": 1,
+          "Kohiostani": 419,
+          "Others": 779
+        }
+      }
     },
     "Shaheed Benazirabad": {
       "population": 1845102,
       "households": 334596,
       "division": "Shaheed Benazirabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.852025,
+        "residualShare": 0.002515,
+        "counted": 1844627,
+        "speakers": {
+          "Urdu": 113785,
+          "Punjabi": 66878,
+          "Sindhi": 1571669,
+          "Pushto": 6073,
+          "Balochi": 29025,
+          "Kashmiri": 41,
+          "Saraiki": 13665,
+          "Hindko": 7915,
+          "Brahvi": 30303,
+          "Shina": 10,
+          "Balti": 14,
+          "Mewati": 610,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 4639
+        }
+      }
     },
     "Shangla": {
       "population": 891252,
       "households": 125551,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.953962,
+        "residualShare": 0.034168,
+        "counted": 890846,
+        "speakers": {
+          "Urdu": 378,
+          "Punjabi": 58,
+          "Sindhi": 107,
+          "Pushto": 849833,
+          "Balochi": 555,
+          "Kashmiri": 13,
+          "Saraiki": 4,
+          "Hindko": 250,
+          "Brahvi": 0,
+          "Shina": 19,
+          "Balti": 8,
+          "Mewati": 6,
+          "Kalasha": 2,
+          "Kohiostani": 9175,
+          "Others": 30438
+        }
+      }
     },
     "Sheikhupura": {
       "population": 4049418,
       "households": 593506,
       "division": "Lahore",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.934019,
+        "residualShare": 0.000603,
+        "counted": 4049377,
+        "speakers": {
+          "Urdu": 198075,
+          "Punjabi": 3782194,
+          "Sindhi": 8223,
+          "Pushto": 38427,
+          "Balochi": 457,
+          "Kashmiri": 1525,
+          "Saraiki": 4775,
+          "Hindko": 2001,
+          "Brahvi": 517,
+          "Shina": 45,
+          "Balti": 79,
+          "Mewati": 10566,
+          "Kalasha": 16,
+          "Kohiostani": 34,
+          "Others": 2443
+        }
+      }
     },
     "Sherani": {
       "population": 191687,
       "households": 36108,
       "division": "Zhob",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.998737,
+        "residualShare": 0.000021,
+        "counted": 191673,
+        "speakers": {
+          "Urdu": 49,
+          "Punjabi": 8,
+          "Sindhi": 24,
+          "Pushto": 191431,
+          "Balochi": 149,
+          "Kashmiri": 2,
+          "Saraiki": 5,
+          "Hindko": 1,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 4
+        }
+      }
     },
     "Shikarpur": {
       "population": 1386330,
       "households": 214901,
       "division": "Larkana",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.971367,
+        "residualShare": 0.000166,
+        "counted": 1386330,
+        "speakers": {
+          "Urdu": 5749,
+          "Punjabi": 270,
+          "Sindhi": 1346635,
+          "Pushto": 1193,
+          "Balochi": 10856,
+          "Kashmiri": 9,
+          "Saraiki": 2672,
+          "Hindko": 322,
+          "Brahvi": 17934,
+          "Shina": 1,
+          "Balti": 0,
+          "Mewati": 459,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 230
+        }
+      }
     },
     "Sialkot": {
       "population": 4499394,
       "households": 671589,
       "division": "Gujranwala",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.920087,
+        "residualShare": 0.001014,
+        "counted": 4472462,
+        "speakers": {
+          "Urdu": 217351,
+          "Punjabi": 4115055,
+          "Sindhi": 10151,
+          "Pushto": 54699,
+          "Balochi": 632,
+          "Kashmiri": 794,
+          "Saraiki": 10159,
+          "Hindko": 1530,
+          "Brahvi": 7,
+          "Shina": 213,
+          "Balti": 158,
+          "Mewati": 56787,
+          "Kalasha": 40,
+          "Kohiostani": 353,
+          "Others": 4533
+        }
+      }
     },
     "Sibi": {
       "population": 224148,
       "households": 31303,
       "division": "Sibi",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.441543,
+        "residualShare": 0.000674,
+        "counted": 224148,
+        "speakers": {
+          "Urdu": 2938,
+          "Punjabi": 2786,
+          "Sindhi": 52684,
+          "Pushto": 30036,
+          "Balochi": 98971,
+          "Kashmiri": 97,
+          "Saraiki": 29938,
+          "Hindko": 25,
+          "Brahvi": 6517,
+          "Shina": 5,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 151
+        }
+      }
     },
     "Sohbatpur": {
       "population": 240106,
       "households": 33738,
       "division": "Nasirabad",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.673873,
+        "residualShare": 0.001591,
+        "counted": 240106,
+        "speakers": {
+          "Urdu": 247,
+          "Punjabi": 70,
+          "Sindhi": 42335,
+          "Pushto": 646,
+          "Balochi": 161801,
+          "Kashmiri": 57,
+          "Saraiki": 15311,
+          "Hindko": 209,
+          "Brahvi": 19009,
+          "Shina": 39,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 382
+        }
+      }
     },
     "South Waziristan": {
       "population": 888675,
       "households": 178665,
       "division": "Dera Ismail Khan",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.979891,
+        "residualShare": 0.018461,
+        "counted": 888675,
+        "speakers": {
+          "Urdu": 398,
+          "Punjabi": 49,
+          "Sindhi": 110,
+          "Pushto": 870805,
+          "Balochi": 696,
+          "Kashmiri": 35,
+          "Saraiki": 169,
+          "Hindko": 6,
+          "Brahvi": 0,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 16406
+        }
+      }
     },
     "Sujawal": {
       "population": 839292,
       "households": 158917,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.993976,
+        "residualShare": 0.000702,
+        "counted": 839292,
+        "speakers": {
+          "Urdu": 331,
+          "Punjabi": 772,
+          "Sindhi": 834236,
+          "Pushto": 1283,
+          "Balochi": 1144,
+          "Kashmiri": 5,
+          "Saraiki": 178,
+          "Hindko": 707,
+          "Brahvi": 45,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 2,
+          "Others": 589
+        }
+      }
     },
     "Sukkur": {
       "population": 1639897,
       "households": 268755,
       "division": "Sukkur",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.860777,
+        "residualShare": 0.00392,
+        "counted": 1625467,
+        "speakers": {
+          "Urdu": 145838,
+          "Punjabi": 28352,
+          "Sindhi": 1399164,
+          "Pushto": 12168,
+          "Balochi": 15162,
+          "Kashmiri": 193,
+          "Saraiki": 12936,
+          "Hindko": 3002,
+          "Brahvi": 2007,
+          "Shina": 79,
+          "Balti": 67,
+          "Mewati": 111,
+          "Kalasha": 0,
+          "Kohiostani": 16,
+          "Others": 6372
+        }
+      }
     },
     "Surab": {
       "population": 278092,
       "households": 51021,
       "division": "Kalat",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Brahvi",
+        "dominantShare": 0.967535,
+        "residualShare": 0.000455,
+        "counted": 279038,
+        "speakers": {
+          "Urdu": 140,
+          "Punjabi": 3,
+          "Sindhi": 153,
+          "Pushto": 321,
+          "Balochi": 8102,
+          "Kashmiri": 5,
+          "Saraiki": 15,
+          "Hindko": 120,
+          "Brahvi": 269979,
+          "Shina": 72,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 1,
+          "Kohiostani": 0,
+          "Others": 127
+        }
+      }
     },
     "Swabi": {
       "population": 1894600,
       "households": 279035,
       "division": "Mardan",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.972251,
+        "residualShare": 0.002117,
+        "counted": 1890230,
+        "speakers": {
+          "Urdu": 1811,
+          "Punjabi": 3843,
+          "Sindhi": 334,
+          "Pushto": 1837778,
+          "Balochi": 1321,
+          "Kashmiri": 223,
+          "Saraiki": 462,
+          "Hindko": 38842,
+          "Brahvi": 11,
+          "Shina": 27,
+          "Balti": 11,
+          "Mewati": 0,
+          "Kalasha": 2,
+          "Kohiostani": 1563,
+          "Others": 4002
+        }
+      }
     },
     "Swat": {
       "population": 2687384,
       "households": 381246,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.921815,
+        "residualShare": 0.060966,
+        "counted": 2686076,
+        "speakers": {
+          "Urdu": 2220,
+          "Punjabi": 1151,
+          "Sindhi": 244,
+          "Pushto": 2476066,
+          "Balochi": 2161,
+          "Kashmiri": 173,
+          "Saraiki": 92,
+          "Hindko": 491,
+          "Brahvi": 1,
+          "Shina": 126,
+          "Balti": 11,
+          "Mewati": 0,
+          "Kalasha": 17,
+          "Kohiostani": 39565,
+          "Others": 163758
+        }
+      }
     },
     "Tando Allah Yar": {
       "population": 922012,
       "households": 177534,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.853424,
+        "residualShare": 0.007273,
+        "counted": 922012,
+        "speakers": {
+          "Urdu": 66805,
+          "Punjabi": 22976,
+          "Sindhi": 786867,
+          "Pushto": 6136,
+          "Balochi": 10552,
+          "Kashmiri": 185,
+          "Saraiki": 6835,
+          "Hindko": 9241,
+          "Brahvi": 1920,
+          "Shina": 7,
+          "Balti": 1,
+          "Mewati": 3780,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 6706
+        }
+      }
     },
     "Tando Mohammad Khan": {
       "population": 726119,
       "households": 143956,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.935433,
+        "residualShare": 0.009355,
+        "counted": 725923,
+        "speakers": {
+          "Urdu": 10175,
+          "Punjabi": 5308,
+          "Sindhi": 679052,
+          "Pushto": 2798,
+          "Balochi": 1107,
+          "Kashmiri": 288,
+          "Saraiki": 4234,
+          "Hindko": 14561,
+          "Brahvi": 1340,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 269,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 6791
+        }
+      }
     },
     "Tank": {
       "population": 470293,
       "households": 70694,
       "division": "Dera Ismail Khan",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.833249,
+        "residualShare": 0.000485,
+        "counted": 470293,
+        "speakers": {
+          "Urdu": 465,
+          "Punjabi": 373,
+          "Sindhi": 118,
+          "Pushto": 391871,
+          "Balochi": 311,
+          "Kashmiri": 27,
+          "Saraiki": 76666,
+          "Hindko": 187,
+          "Brahvi": 1,
+          "Shina": 3,
+          "Balti": 3,
+          "Mewati": 0,
+          "Kalasha": 38,
+          "Kohiostani": 2,
+          "Others": 228
+        }
+      }
     },
     "Tharparkar": {
       "population": 1778407,
       "households": 327677,
       "division": "Mirpur Khas",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.993584,
+        "residualShare": 0.00261,
+        "counted": 1778123,
+        "speakers": {
+          "Urdu": 1061,
+          "Punjabi": 854,
+          "Sindhi": 1766714,
+          "Pushto": 1410,
+          "Balochi": 342,
+          "Kashmiri": 11,
+          "Saraiki": 346,
+          "Hindko": 2736,
+          "Brahvi": 7,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 1,
+          "Others": 4641
+        }
+      }
     },
     "Thatta": {
       "population": 1083191,
       "households": 206281,
       "division": "Hyderabad",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.950077,
+        "residualShare": 0.001375,
+        "counted": 1083191,
+        "speakers": {
+          "Urdu": 13685,
+          "Punjabi": 9284,
+          "Sindhi": 1029115,
+          "Pushto": 12131,
+          "Balochi": 10748,
+          "Kashmiri": 112,
+          "Saraiki": 1344,
+          "Hindko": 1872,
+          "Brahvi": 3380,
+          "Shina": 0,
+          "Balti": 19,
+          "Mewati": 12,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 1489
+        }
+      }
     },
     "Toba Tek Singh": {
       "population": 2511963,
       "households": 391861,
       "division": "Faisalabad",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.962042,
+        "residualShare": 0.000208,
+        "counted": 2524044,
+        "speakers": {
+          "Urdu": 62683,
+          "Punjabi": 2428237,
+          "Sindhi": 5756,
+          "Pushto": 10675,
+          "Balochi": 475,
+          "Kashmiri": 110,
+          "Saraiki": 3836,
+          "Hindko": 2445,
+          "Brahvi": 7,
+          "Shina": 2,
+          "Balti": 9,
+          "Mewati": 9283,
+          "Kalasha": 1,
+          "Kohiostani": 0,
+          "Others": 525
+        }
+      }
     },
     "Torghar": {
       "population": 200445,
       "households": 29417,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.968465,
+        "residualShare": 0.007249,
+        "counted": 200445,
+        "speakers": {
+          "Urdu": 93,
+          "Punjabi": 6,
+          "Sindhi": 16,
+          "Pushto": 194124,
+          "Balochi": 111,
+          "Kashmiri": 0,
+          "Saraiki": 1,
+          "Hindko": 4583,
+          "Brahvi": 1,
+          "Shina": 3,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 53,
+          "Others": 1453
+        }
+      }
     },
     "Umerkot": {
       "population": 1159831,
       "households": 222649,
       "division": "Mirpur Khas",
-      "province": "Sindh"
+      "province": "Sindh",
+      "motherTongue": {
+        "dominant": "Sindhi",
+        "dominantShare": 0.951274,
+        "residualShare": 0.00495,
+        "counted": 1158284,
+        "speakers": {
+          "Urdu": 16168,
+          "Punjabi": 20815,
+          "Sindhi": 1101845,
+          "Pushto": 3730,
+          "Balochi": 3328,
+          "Kashmiri": 25,
+          "Saraiki": 2959,
+          "Hindko": 3005,
+          "Brahvi": 216,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 453,
+          "Kalasha": 6,
+          "Kohiostani": 1,
+          "Others": 5733
+        }
+      }
     },
     "Upper Chitral": {
       "population": 195528,
       "households": 26368,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": null,
+        "dominantShare": null,
+        "residualShare": 0.998412,
+        "counted": 195161,
+        "speakers": {
+          "Urdu": 150,
+          "Punjabi": 17,
+          "Sindhi": 1,
+          "Pushto": 107,
+          "Balochi": 3,
+          "Kashmiri": 0,
+          "Saraiki": 2,
+          "Hindko": 2,
+          "Brahvi": 0,
+          "Shina": 12,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 16,
+          "Others": 194851
+        }
+      }
     },
     "Upper Dir": {
       "population": 1083566,
       "households": 149557,
       "division": "Malakand",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.910217,
+        "residualShare": 0.036925,
+        "counted": 1082416,
+        "speakers": {
+          "Urdu": 358,
+          "Punjabi": 48,
+          "Sindhi": 111,
+          "Pushto": 985233,
+          "Balochi": 1098,
+          "Kashmiri": 232,
+          "Saraiki": 6,
+          "Hindko": 12,
+          "Brahvi": 0,
+          "Shina": 6,
+          "Balti": 1,
+          "Mewati": 0,
+          "Kalasha": 16,
+          "Kohiostani": 55327,
+          "Others": 39968
+        }
+      }
     },
     "Upper Kohistan": {
       "population": 422947,
       "households": 71543,
       "division": "Hazara",
-      "province": "Khyber Pakhtunkhwa"
+      "province": "Khyber Pakhtunkhwa",
+      "motherTongue": {
+        "dominant": "Kohiostani",
+        "dominantShare": 0.876053,
+        "residualShare": 0.011182,
+        "counted": 374183,
+        "speakers": {
+          "Urdu": 664,
+          "Punjabi": 9,
+          "Sindhi": 5,
+          "Pushto": 49,
+          "Balochi": 5,
+          "Kashmiri": 15,
+          "Saraiki": 9,
+          "Hindko": 48,
+          "Brahvi": 8,
+          "Shina": 41331,
+          "Balti": 22,
+          "Mewati": 2,
+          "Kalasha": 28,
+          "Kohiostani": 327804,
+          "Others": 4184
+        }
+      }
     },
     "Vehari": {
       "population": 3430421,
       "households": 543384,
       "division": "Multan",
-      "province": "Punjab"
+      "province": "Punjab",
+      "motherTongue": {
+        "dominant": "Punjabi",
+        "dominantShare": 0.740984,
+        "residualShare": 0.004125,
+        "counted": 3428191,
+        "speakers": {
+          "Urdu": 199940,
+          "Punjabi": 2540236,
+          "Sindhi": 4255,
+          "Pushto": 8002,
+          "Balochi": 738,
+          "Kashmiri": 723,
+          "Saraiki": 655441,
+          "Hindko": 584,
+          "Brahvi": 77,
+          "Shina": 1,
+          "Balti": 2,
+          "Mewati": 4038,
+          "Kalasha": 5,
+          "Kohiostani": 8,
+          "Others": 14141
+        }
+      }
     },
     "Washuk": {
       "population": 302623,
       "households": 49080,
       "division": "Rakhshan",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Balochi",
+        "dominantShare": 0.682918,
+        "residualShare": 0.000112,
+        "counted": 302367,
+        "speakers": {
+          "Urdu": 206,
+          "Punjabi": 52,
+          "Sindhi": 120,
+          "Pushto": 55,
+          "Balochi": 206492,
+          "Kashmiri": 138,
+          "Saraiki": 54,
+          "Hindko": 55,
+          "Brahvi": 95144,
+          "Shina": 17,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 34
+        }
+      }
     },
     "Zhob": {
       "population": 355692,
       "households": 47925,
       "division": "Zhob",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.976504,
+        "residualShare": 0.000444,
+        "counted": 355556,
+        "speakers": {
+          "Urdu": 734,
+          "Punjabi": 1484,
+          "Sindhi": 128,
+          "Pushto": 347202,
+          "Balochi": 403,
+          "Kashmiri": 28,
+          "Saraiki": 5286,
+          "Hindko": 122,
+          "Brahvi": 7,
+          "Shina": 4,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 158
+        }
+      }
     },
     "Ziarat": {
       "population": 189535,
       "households": 22900,
       "division": "Sibi",
-      "province": "Balochistan"
+      "province": "Balochistan",
+      "motherTongue": {
+        "dominant": "Pushto",
+        "dominantShare": 0.988525,
+        "residualShare": 0.000649,
+        "counted": 189535,
+        "speakers": {
+          "Urdu": 246,
+          "Punjabi": 322,
+          "Sindhi": 51,
+          "Pushto": 187360,
+          "Balochi": 851,
+          "Kashmiri": 17,
+          "Saraiki": 558,
+          "Hindko": 2,
+          "Brahvi": 5,
+          "Shina": 0,
+          "Balti": 0,
+          "Mewati": 0,
+          "Kalasha": 0,
+          "Kohiostani": 0,
+          "Others": 123
+        }
+      }
     }
   },
   "withoutCensusData": {
@@ -869,6 +3999,324 @@
       "Astore",
       "Diamir"
     ]
+  },
+  "motherTongue": {
+    "source": "PBS Census-2023 Table 11 — population by mother tongue, sex and rural/urban. Published at tehsil level in PakPC2023 (object TABLE_11); the province and national figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_11_national.pdf",
+    "unit": "district — summed from the tehsil rows PakPC2023 publishes",
+    "categories": [
+      "Urdu",
+      "Punjabi",
+      "Sindhi",
+      "Pushto",
+      "Balochi",
+      "Kashmiri",
+      "Saraiki",
+      "Hindko",
+      "Brahvi",
+      "Shina",
+      "Balti",
+      "Mewati",
+      "Kalasha",
+      "Kohiostani",
+      "Others"
+    ],
+    "residualCategory": "Others",
+    "dominance": "The largest category excluding Others, which is a residual and not a language: shading a district by it would assert a mother tongue the census did not record. Where Others outweighs every named category the dominant language is null instead — the census names no majority tongue there, and handing the label to the largest remaining category would print a false claim. Ties go to the category the census prints first.",
+    "districtsWithoutNamedDominant": [
+      {
+        "district": "Upper Chitral",
+        "residualShare": 0.998412
+      },
+      {
+        "district": "Lower Chitral",
+        "residualShare": 0.87765
+      }
+    ],
+    "universe": {
+      "counted": 240458089,
+      "population": 241499431,
+      "difference": -1041342,
+      "note": "Table 11 counts 240,458,089 people, 1,041,342 fewer than the 241,499,431 of Table 1. PBS prints the same universe for Table 10 (nationality), so the two tables agree with each other and differ from Table 1 by an amount PBS does not explain. Stated here rather than reconciled: shares are shares of the universe the table itself publishes, and no residual has been invented to close the gap. The difference is not spread evenly — see districtsCountedAbovePopulation and, for the largest shortfalls, docs/research/mother-tongue-table-11.md."
+    },
+    "districtsCountedAbovePopulation": [
+      {
+        "district": "Malir",
+        "counted": 2419736,
+        "population": 2403959,
+        "excess": 15777
+      },
+      {
+        "district": "Toba Tek Singh",
+        "counted": 2524044,
+        "population": 2511963,
+        "excess": 12081
+      },
+      {
+        "district": "Surab",
+        "counted": 279038,
+        "population": 278092,
+        "excess": 946
+      },
+      {
+        "district": "Kachhi (Bolan)",
+        "counted": 442674,
+        "population": 442612,
+        "excess": 62
+      }
+    ],
+    "reconciliation": {
+      "method": "District sums checked against PBS Table 11 (national) column by column — every one of the fifteen categories, for each of the five provinces and for Pakistan. Column by column rather than on the total because a tehsil summed into the wrong district inside a province moves whole languages while leaving the total untouched. The figures are typed from the PBS PDF, i.e. from outside the PakPC2023 package, so this checks the package as well as the join.",
+      "source": "PBS Census-2023 Table 11 — population by mother tongue, sex and rural/urban. Published at tehsil level in PakPC2023 (object TABLE_11); the province and national figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_11_national.pdf",
+      "national": {
+        "Urdu": {
+          "summed": 22249307,
+          "published": 22249307
+        },
+        "Punjabi": {
+          "summed": 88915544,
+          "published": 88915544
+        },
+        "Sindhi": {
+          "summed": 34401564,
+          "published": 34401564
+        },
+        "Pushto": {
+          "summed": 43633946,
+          "published": 43633946
+        },
+        "Balochi": {
+          "summed": 8117795,
+          "published": 8117795
+        },
+        "Kashmiri": {
+          "summed": 274080,
+          "published": 274080
+        },
+        "Saraiki": {
+          "summed": 28849579,
+          "published": 28849579
+        },
+        "Hindko": {
+          "summed": 5590559,
+          "published": 5590559
+        },
+        "Brahvi": {
+          "summed": 2778670,
+          "published": 2778670
+        },
+        "Shina": {
+          "summed": 116951,
+          "published": 116951
+        },
+        "Balti": {
+          "summed": 52134,
+          "published": 52134
+        },
+        "Mewati": {
+          "summed": 1094219,
+          "published": 1094219
+        },
+        "Kalasha": {
+          "summed": 7466,
+          "published": 7466
+        },
+        "Kohiostani": {
+          "summed": 1039007,
+          "published": 1039007
+        },
+        "Others": {
+          "summed": 3337268,
+          "published": 3337268
+        }
+      },
+      "provinces": [
+        {
+          "name": "Balochistan",
+          "summed": {
+            "Urdu": 77249,
+            "Punjabi": 86457,
+            "Sindhi": 555198,
+            "Pushto": 4955245,
+            "Balochi": 5811185,
+            "Kashmiri": 7352,
+            "Saraiki": 319054,
+            "Hindko": 24204,
+            "Brahvi": 2507157,
+            "Shina": 1278,
+            "Balti": 846,
+            "Mewati": 285,
+            "Kalasha": 82,
+            "Kohiostani": 1014,
+            "Others": 215405
+          },
+          "published": {
+            "Urdu": 77249,
+            "Punjabi": 86457,
+            "Sindhi": 555198,
+            "Pushto": 4955245,
+            "Balochi": 5811185,
+            "Kashmiri": 7352,
+            "Saraiki": 319054,
+            "Hindko": 24204,
+            "Brahvi": 2507157,
+            "Shina": 1278,
+            "Balti": 846,
+            "Mewati": 285,
+            "Kalasha": 82,
+            "Kohiostani": 1014,
+            "Others": 215405
+          }
+        },
+        {
+          "name": "Islamabad Capital Territory",
+          "summed": {
+            "Urdu": 358922,
+            "Punjabi": 1154540,
+            "Sindhi": 21362,
+            "Pushto": 415838,
+            "Balochi": 4503,
+            "Kashmiri": 51920,
+            "Saraiki": 46270,
+            "Hindko": 140780,
+            "Brahvi": 668,
+            "Shina": 7099,
+            "Balti": 10315,
+            "Mewati": 1095,
+            "Kalasha": 182,
+            "Kohiostani": 5016,
+            "Others": 64734
+          },
+          "published": {
+            "Urdu": 358922,
+            "Punjabi": 1154540,
+            "Sindhi": 21362,
+            "Pushto": 415838,
+            "Balochi": 4503,
+            "Kashmiri": 51920,
+            "Saraiki": 46270,
+            "Hindko": 140780,
+            "Brahvi": 668,
+            "Shina": 7099,
+            "Balti": 10315,
+            "Mewati": 1095,
+            "Kalasha": 182,
+            "Kohiostani": 5016,
+            "Others": 64734
+          }
+        },
+        {
+          "name": "Khyber Pakhtunkhwa",
+          "summed": {
+            "Urdu": 259925,
+            "Punjabi": 99485,
+            "Sindhi": 10019,
+            "Pushto": 32919592,
+            "Balochi": 30636,
+            "Kashmiri": 6471,
+            "Saraiki": 1288200,
+            "Hindko": 3815327,
+            "Brahvi": 1570,
+            "Shina": 70140,
+            "Balti": 858,
+            "Mewati": 93,
+            "Kalasha": 5632,
+            "Kohiostani": 996182,
+            "Others": 1136990
+          },
+          "published": {
+            "Urdu": 259925,
+            "Punjabi": 99485,
+            "Sindhi": 10019,
+            "Pushto": 32919592,
+            "Balochi": 30636,
+            "Kashmiri": 6471,
+            "Saraiki": 1288200,
+            "Hindko": 3815327,
+            "Brahvi": 1570,
+            "Shina": 70140,
+            "Balti": 858,
+            "Mewati": 93,
+            "Kalasha": 5632,
+            "Kohiostani": 996182,
+            "Others": 1136990
+          }
+        },
+        {
+          "name": "Punjab",
+          "summed": {
+            "Urdu": 9143466,
+            "Punjabi": 85309591,
+            "Sindhi": 352686,
+            "Pushto": 2387378,
+            "Balochi": 1063324,
+            "Kashmiri": 155088,
+            "Saraiki": 26282637,
+            "Hindko": 779667,
+            "Brahvi": 3506,
+            "Shina": 16161,
+            "Balti": 12922,
+            "Mewati": 1035687,
+            "Kalasha": 793,
+            "Kohiostani": 21910,
+            "Others": 768489
+          },
+          "published": {
+            "Urdu": 9143466,
+            "Punjabi": 85309591,
+            "Sindhi": 352686,
+            "Pushto": 2387378,
+            "Balochi": 1063324,
+            "Kashmiri": 155088,
+            "Saraiki": 26282637,
+            "Hindko": 779667,
+            "Brahvi": 3506,
+            "Shina": 16161,
+            "Balti": 12922,
+            "Mewati": 1035687,
+            "Kalasha": 793,
+            "Kohiostani": 21910,
+            "Others": 768489
+          }
+        },
+        {
+          "name": "Sindh",
+          "summed": {
+            "Urdu": 12409745,
+            "Punjabi": 2265471,
+            "Sindhi": 33462299,
+            "Pushto": 2955893,
+            "Balochi": 1208147,
+            "Kashmiri": 53249,
+            "Saraiki": 913418,
+            "Hindko": 830581,
+            "Brahvi": 265769,
+            "Shina": 22273,
+            "Balti": 27193,
+            "Mewati": 57059,
+            "Kalasha": 777,
+            "Kohiostani": 14885,
+            "Others": 1151650
+          },
+          "published": {
+            "Urdu": 12409745,
+            "Punjabi": 2265471,
+            "Sindhi": 33462299,
+            "Pushto": 2955893,
+            "Balochi": 1208147,
+            "Kashmiri": 53249,
+            "Saraiki": 913418,
+            "Hindko": 830581,
+            "Brahvi": 265769,
+            "Shina": 22273,
+            "Balti": 27193,
+            "Mewati": 57059,
+            "Kalasha": 777,
+            "Kohiostani": 14885,
+            "Others": 1151650
+          }
+        }
+      ]
+    }
   },
   "folds": {
     "reason": "Districts created after the census date. A unit with no census row cannot carry a population, so it is neither drawn nor counted on its own: its people stay with the 2023 district it was carved out of. Look a post-census district up here to reach the district that carries it.",
