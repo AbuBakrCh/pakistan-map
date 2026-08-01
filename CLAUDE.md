@@ -76,7 +76,7 @@ drawing something.*
 | What | Source | Notes |
 |---|---|---|
 | Division boundaries | OSM `admin_level=5` | ~39 real + ICT injected; strays from India/Afghanistan filtered |
-| District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Join on relation id or census code, never on name** — PBS's own documents disagree with each other, and OSM's primary `name` on AJK districts is Urdu |
+| District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Names are never trusted alone.** Matching is normalized-name-plus-alias, with relation ids overriding it wherever a name lies or collides — Karachi's four renamed districts, and every AJK district, whose names recur across the Line of Control. Anything unmatched fails the build. PBS's own documents disagree with each other on spelling, and OSM's primary `name` on AJK districts is Urdu |
 | Population | PBS 2023 Digital Census | District level |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
 | Development | PBS 2023 Census | Literacy (10+), improved drinking water, improved sanitation — all published directly at district level. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage |
@@ -98,17 +98,35 @@ Consequence: the Balochistan restructuring of **8 July 2026** (divisions Pishin 
 Koh-e-Sulaiman; districts Quetta East/West, Barshore, Wadh, Tump, Upper Dera Bugti) is **noted
 in copy, not drawn**. The baseline is stale *on purpose*, and the app says so.
 
-Two district counts coexist and both belong in the bundle: **136** census districts across the
-four provinces and ICT — the statistical atom — and the larger current-day set OSM returns,
-which includes AJK, GB and post-census creations. See `docs/research/`.
+Three district counts coexist and all three belong in the bundle, because any one alone makes
+the others read as a bug:
+
+| Count | What it is |
+|---|---|
+| **136** | Census districts across the four provinces and ICT — the **statistical** atom |
+| **156** | Everything **drawn**: the 136 plus AJK's 10 and GB's 10, which have boundaries but no census indicators (D25) |
+| ~170 | Current-day district relations OSM returns, including post-census creations. Never drawn |
+
+See `docs/research/`.
 
 ### Pipeline
 
 Build-time bake, **artifacts committed** — not gitignored.
 
-`scripts/build-data.ts` fetches → filters → injects ICT → joins census indicators by district
-code → simplifies geometry → precomputes the adjacency graph and every variant's derived
-stats → emits one TopoJSON + JSON bundle stamped with generation date and source URLs.
+Split by failure mode, so network flakiness never contaminates geometry work:
+
+| Script | npm script | Does |
+|---|---|---|
+| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
+| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+
+Still to come: the census join (#9–#11), the adjacency graph (#16) and per-variant derived
+stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
+
+Every relation must be classified. A relation matching no 2023 district and no fold rule
+**fails the build** rather than being skipped — a silent discard is how the district set drifts
+without anyone noticing, and the point of committing the bundle is that boundary changes are
+reviewable diffs.
 
 Committing the output means **every boundary change is a reviewable diff with a date on it**.
 Runtime makes zero network calls.
