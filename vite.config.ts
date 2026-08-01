@@ -8,6 +8,14 @@ export default defineConfig({
     // object literal the bundler would otherwise inline, which is most of the page's startup.
     stringify: true,
   },
+  test: {
+    // Agent worktrees live under `.claude/worktrees/` and carry their own copy of every test.
+    // Left in, `npm test` runs the suite once per in-flight worktree and reports the total, so
+    // a count that should be a fixed property of the artifact drifts with whatever happens to
+    // be checked out. CI never sees this — there are no worktrees there — which is exactly why
+    // it has to be excluded here rather than noticed later.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,
