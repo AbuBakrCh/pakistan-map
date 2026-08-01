@@ -216,12 +216,26 @@ body {
   vector-effect: non-scaling-stroke;
 }
 
-/* The shape under the pointer. A wash, never an outline — see `showReadout` in map.ts. */
+/*
+ * The shapes under the pointer: the district, and the province it belongs to (#13). Washes,
+ * never outlines — an outline drawn under the pointer along AJK or GB would put a second, solid
+ * line along the ceasefire line, which is the one thing this map must not draw.
+ *
+ * The province is the fainter of the two on purpose: it is context for the district, not a
+ * second answer, and at full strength it would swamp the shape actually being named.
+ */
 .hover-wash {
   fill: var(--ink);
-  fill-opacity: 0.09;
   stroke: none;
   pointer-events: none;
+}
+
+.hover-wash-province {
+  fill-opacity: 0.045;
+}
+
+.hover-wash-district {
+  fill-opacity: 0.11;
 }
 
 .label {
@@ -256,50 +270,128 @@ body {
 }
 
 /*
- * What the pointer is over. Parked in the corner rather than following the cursor: the cursor
- * tooltip belongs to the district layer (#13), and two things chasing the pointer is one too
- * many. Its job here is that a territory can be interrogated and answers — with its standing,
- * and with the reason it has no figures.
+ * The district tooltip (#13). Follows the pointer, kept inside the frame by `placeTooltip`,
+ * which owns the arithmetic — nothing here decides where it goes.
+ *
+ * A card, not a bubble: no arrow, no shadow, no animation. Same paper, same hairline and same
+ * serif as the rest of the atlas, because it is a caption on a reference map and not a chip on
+ * a dashboard.
  */
-.readout {
+.tooltip {
   background: var(--paper);
   border: 1px solid var(--land-hatch);
   color: var(--ink-soft);
   display: none;
   font-size: 0.78rem;
-  left: 0.75rem;
-  line-height: 1.4;
-  max-width: 17rem;
-  padding: 0.45rem 0.6rem;
+  left: 0;
+  line-height: 1.35;
+  max-width: 15rem;
+  padding: 0.4rem 0.55rem;
+  /*
+   * Sized by its content and not by the room left to its right. Without this an absolutely
+   * positioned box shrinks to fit the space beyond its own `left`, so the same tooltip measures
+   * narrower near the frame's edge than in the middle — and a box whose width depends on where
+   * it is cannot be placed by measuring it first.
+   */
+  width: max-content;
+  /* Never a hit target: a box that takes the pointer takes it away from the map beneath it. */
   pointer-events: none;
   position: absolute;
-  top: 0.75rem;
+  top: 0;
+  /* Sits above the SVG and below nothing — the legend and colophon are outside the well. */
+  z-index: 1;
 }
 
-.readout.is-shown {
+.tooltip.is-shown {
   display: block;
 }
 
-.readout-name {
+.tooltip-name {
   color: var(--ink);
   display: block;
   font-size: 0.95rem;
 }
 
-.readout-status {
+/* Set as Urdu, in its own direction. Absent from the bundle today — see `tooltip.ts`. */
+.tooltip-name-urdu {
+  color: var(--ink);
+  display: block;
+  font-size: 0.95rem;
+}
+
+.tooltip-where {
   display: block;
   font-style: italic;
 }
 
-.readout-status-territory {
+/* Only set where the standing is not "Province": a territory says so, a province needs no line. */
+.tooltip-standing {
   color: var(--ink);
+  display: block;
+  font-style: italic;
 }
 
-.readout-note {
+.tooltip-figure {
   border-top: 1px solid var(--land-hatch);
   display: block;
   margin-top: 0.3rem;
   padding-top: 0.3rem;
+}
+
+.tooltip-label {
+  display: block;
+  font-size: 0.92em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tooltip-value {
+  color: var(--ink);
+  display: block;
+  font-size: 1.05rem;
+  /* Figures are read against each other district by district, so they are set to one width. */
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The share, or — where there is no value — the reason there is none. Set at the same weight as
+ * a note rather than as an error: "the census names no dominant language here" is an answer.
+ */
+.tooltip-note {
+  display: block;
+}
+
+.tooltip-source {
+  color: var(--ink-faint);
+  display: block;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+/*
+ * The census never reached this district (D25). Given the ink of a figure, because it is what
+ * this district has instead of one — a grey aside would read as a load that failed.
+ */
+.tooltip-absence {
+  border-top: 1px solid var(--land-hatch);
+  color: var(--ink);
+  display: block;
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+}
+
+/*
+ * The same words, spoken. `role="img"` on the map means assistive technology never reaches the
+ * paths, so this live region is the only way a hover says anything at all; it is not drawn
+ * because the tooltip is already saying it on screen.
+ */
+.readout {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .legend {

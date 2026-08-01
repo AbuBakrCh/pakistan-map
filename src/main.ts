@@ -13,7 +13,12 @@ import { renderBaselineMap } from './map.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
-const map = renderBaselineMap(mount, geographyTopology, motherTongueFills(censusStatistics));
+const map = renderBaselineMap(
+  mount,
+  geographyTopology,
+  censusStatistics,
+  motherTongueFills(censusStatistics),
+);
 
 /**
  * Temporary reach for the data stratum, pending #18.

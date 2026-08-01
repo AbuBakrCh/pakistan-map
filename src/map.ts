@@ -15,15 +15,12 @@
  * draws the Line of Control solid underneath its own dash — see `tierArcs` in `lib/geography.ts`.
  */
 
-import { geoContains, geoPath, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
+import { geoContains, geoPath, pointer, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { Topology } from 'topojson-specification';
-import {
-  describeKind,
-  linesFromArcs,
-  readDistricts,
-  readGeography,
-  tierArcs,
-} from './lib/geography.ts';
+import type { CensusStatistics } from './bundle.ts';
+import { linesFromArcs, readDistricts, readGeography, tierArcs } from './lib/geography.ts';
+import { districtLocator, type DistrictFeature } from './lib/hit-test.ts';
+import { districtTooltip, placeTooltip, type DistrictTooltip } from './lib/tooltip.ts';
 import type { DistrictFill } from './lib/mother-tongue.ts';
 import {
   baselineLabelSites,
@@ -112,6 +109,8 @@ export interface MapHandle {
 export function renderBaselineMap(
   container: HTMLElement,
   topology: Topology,
+  /** The census join, for the hover tooltip. Read here, decided in `lib/tooltip.ts`. */
+  statistics: CensusStatistics,
   /**
    * Stratum 1, per district, or null for a map with no data stratum at all. Passed in rather
    * than computed here: which basis is being shaded is not the renderer's decision, and the
@@ -121,6 +120,10 @@ export function renderBaselineMap(
 ): MapHandle {
   const geography = readGeography(topology);
   const districts = readDistricts(topology);
+  const locate = districtLocator(districts);
+  const provinceOf = new Map(
+    geography.provinces.features.map((f) => [f.properties.name, f] as const),
+  );
   const sites = baselineLabelSites(geography);
   const tierOf = new Map(sites.map((site) => [site.key, site.tier]));
   const kindOf = new Map(
@@ -238,10 +241,18 @@ export function renderBaselineMap(
   };
 
   /**
-   * A readout rather than a cursor tooltip. The tooltip is #13's, and it is about districts and
-   * their statistics; what belongs here is the one thing a territory can say for itself — its
-   * name and its standing — parked where it will not fight the pointer for the same pixels.
+   * The cursor tooltip (#13), and its spoken twin.
+   *
+   * The visible box follows the pointer, which is where a reader's attention already is. The
+   * readout beside it carries the same words to a screen reader and is not drawn: `role="img"`
+   * on the SVG means assistive technology never reaches the paths, so a live region is the only
+   * way a hover says anything at all. It was a visible corner panel until this ticket, when the
+   * tooltip took over saying it on screen — two boxes saying the same sentence is one too many.
    */
+  const tooltip = select(container)
+    .append('div')
+    .attr('class', 'tooltip')
+    .attr('aria-hidden', 'true');
   const readout = select(container)
     .append('div')
     .attr('class', 'readout')
@@ -260,6 +271,25 @@ export function renderBaselineMap(
     });
   svg.call(zoomBehaviour);
   hatch.attr('patternTransform', 'rotate(45) scale(1)');
+
+  /**
+   * Hover, asked of the geometry rather than of the DOM.
+   *
+   * The pointer is taken back through the zoom transform and then through the projection, and
+   * the district is found in lon/lat by `districtLocator` — so hover works identically whether
+   * stratum 1 is drawn or not, and the district paths keep `pointer-events: none`. Bound to the
+   * SVG rather than to 156 paths: one listener, and the sea answers as clearly as the land.
+   */
+  svg
+    .on('pointermove', (event: PointerEvent) => {
+      const at = pointer(event, svg.node()) as [number, number];
+      const ground = project.invert?.(zoomTransformOf().invert(at));
+      const found =
+        ground === undefined || ground === null ? null : locate.at(ground as [number, number]);
+      if (found === null) clearHover();
+      else showDistrict(found, at);
+    })
+    .on('pointerleave', clearHover);
 
   let project = fitProjection(geography.provinces, { width: 1, height: 1, padding: 0 });
   let size = { width: 0, height: 0 };
@@ -385,30 +415,111 @@ export function renderBaselineMap(
       .text((label) => label.text);
   }
 
+  /** The district the pointer is in, so a move inside one costs no rebuild. */
+  let hovered: string | null = null;
+  /** The tooltip's own size, measured once per district rather than once per pointer event. */
+  let tooltipSize = { width: 0, height: 0 };
+
   /**
-   * Name the shape under the pointer, and say what kind of thing it is.
+   * Show the district under the pointer: wash the district, wash the province it belongs to, and
+   * set the tooltip beside the cursor.
    *
-   * Territories are interactive and *say why they carry no numbers* — which is the whole
-   * difference between a unit the census does not reach and a unit whose data failed to load
-   * (D25). Nothing here is a statistic: the district tooltip and its figures are #13's, and
-   * AJK's population reaches this project only relayed through the AJK Bureau of Statistics, so
-   * there is no PBS figure for a territory to show even when there are figures to show.
+   * Both highlights are fills and neither is a stroke. An outline drawn under the pointer along
+   * Azad Kashmir or Gilgit-Baltistan would put a second, solid line along the ceasefire line,
+   * which is the one thing this map must not draw (D12).
    */
-  function showReadout(name: string, kind: Parameters<typeof describeKind>[0], d: string | null) {
-    const { status, coverage } = describeKind(kind);
-    readout
-      .classed('is-shown', true)
-      .html(
-        `<span class="readout-name">${name}</span>` +
-          `<span class="readout-status readout-status-${kind}">${status}</span>` +
-          (coverage === null ? '' : `<span class="readout-note">${coverage}</span>`),
-      );
-    hoverLayer.selectAll('path').data([d]).join('path').attr('class', 'hover-wash').attr('d', d);
+  function showDistrict(feature: DistrictFeature, at: [number, number]): void {
+    const path = geoPath(project);
+    if (feature.properties.name !== hovered) {
+      hovered = feature.properties.name;
+      // Standing comes from the province the district sits in; whether it has *figures* comes
+      // from whether the census has a row for it, which is `districtTooltip`'s question.
+      const kind = kindOf.get(feature.properties.province) ?? 'province';
+      const content = districtTooltip(feature.properties, kind, statistics);
+      renderTooltip(content);
+      readout.text(spoken(content));
+
+      const province = provinceOf.get(feature.properties.province);
+      hoverLayer
+        .selectAll<SVGPathElement, { role: string; d: string | null }>('path')
+        .data([
+          { role: 'province', d: province === undefined ? null : path(province) },
+          { role: 'district', d: path(feature) },
+        ])
+        .join('path')
+        .attr('class', (d) => `hover-wash hover-wash-${d.role}`)
+        .attr('d', (d) => d.d);
+    }
+    place(at);
   }
 
-  function clearReadout(): void {
-    readout.classed('is-shown', false).html('');
+  /**
+   * Where the box sits, recomputed on every move: the decision is `placeTooltip`'s.
+   *
+   * The box is measured when its content changes, not when it moves. Reading its rectangle on
+   * every pointer event forces a layout on every event, which is exactly the perceptible lag the
+   * ticket asks not to have.
+   */
+  function place(at: [number, number]): void {
+    const node = tooltip.node() as HTMLElement;
+    const placed = placeTooltip(at, tooltipSize, size, { gap: 14, margin: 8 });
+    node.style.left = `${placed.x}px`;
+    node.style.top = `${placed.y}px`;
+  }
+
+  function clearHover(): void {
+    hovered = null;
+    tooltip.classed('is-shown', false).text('');
+    readout.text('');
     hoverLayer.selectAll('path').remove();
+  }
+
+  /** The same content as one sentence, for the live region. */
+  function spoken(content: DistrictTooltip): string {
+    const where = `${content.name}, ${content.division} division, ${content.province}. ${content.standing}.`;
+    if (content.absence !== null) return `${where} ${content.absence}`;
+    return `${where} ${content.figures
+      .map((f) => (f.value === null ? `${f.label}: ${f.note ?? ''}` : `${f.label} ${f.value}`))
+      .join('. ')}.`;
+  }
+
+  /**
+   * Built as elements rather than as markup, so a district name is text and can never be read as
+   * HTML — and so the absences keep their own shapes. A figure with no value prints its note and
+   * no value at all: no dash, no "N/A", nothing that could be mistaken for a zero.
+   */
+  function renderTooltip(content: DistrictTooltip): void {
+    const node = tooltip.classed('is-shown', true).node() as HTMLElement;
+    node.replaceChildren();
+    const line = (className: string, text: string, parent: HTMLElement = node): HTMLElement => {
+      const element = parent.appendChild(document.createElement('span'));
+      element.className = className;
+      element.textContent = text;
+      return element;
+    };
+
+    line('tooltip-name', content.name);
+    if (content.nameUrdu !== null) {
+      const urdu = line('tooltip-name-urdu', content.nameUrdu);
+      urdu.lang = 'ur';
+      urdu.dir = 'rtl';
+    }
+    line('tooltip-where', `${content.division} division · ${content.province}`);
+    if (content.standing !== 'Province') line('tooltip-standing', content.standing);
+
+    for (const figure of content.figures) {
+      const row = node.appendChild(document.createElement('span'));
+      row.className = 'tooltip-figure';
+      line('tooltip-label', figure.label, row);
+      if (figure.value !== null) line('tooltip-value', figure.value, row);
+      if (figure.note !== null) line('tooltip-note', figure.note, row);
+      if (figure.source !== null) line('tooltip-source', figure.source, row);
+    }
+
+    if (content.absence !== null) line('tooltip-absence', content.absence);
+
+    const { width, height } = node.getBoundingClientRect();
+    tooltipSize = { width, height };
   }
 
   /** d3-zoom keeps the current transform on the node itself; a resize must not reset it. */
@@ -419,6 +530,9 @@ export function renderBaselineMap(
     const { width, height } = container.getBoundingClientRect();
     if (width < 1 || height < 1) return;
     size = { width, height };
+    // The washes were drawn against the old projection, and the tooltip was placed against the
+    // old frame. Both are about a pointer that is no longer where it was.
+    clearHover();
     svg.attr('viewBox', `0 0 ${width} ${height}`);
 
     // The whole country, not one province, decides the cone: the frame must hold every variant
@@ -432,9 +546,7 @@ export function renderBaselineMap(
       .data(geography.provinces.features)
       .join('path')
       .attr('class', (f) => `land land-${f.properties.kind}`)
-      .attr('d', (f) => path(f))
-      .on('pointerenter', (_event, f) => showReadout(f.properties.name, f.properties.kind, path(f)))
-      .on('pointerleave', clearReadout);
+      .attr('d', (f) => path(f));
 
     // `no-data` takes no fill and no stroke at all, so the unshaded baseline underneath shows
     // through: AJK and GB keep their land tone and their territory hatch, and the basis visibly
