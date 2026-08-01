@@ -96,7 +96,45 @@ same territory is 9 districts today.
 **Opposed by:** Pashtun nationalist parties (ANP), for whom KP's territorial integrity is tied
 to the province's Pashtun identity.
 
-### L5 · Mother-tongue majority applied everywhere (~13 units)
+### L5 · Karachi / urban Sindh (Urdu-speaking)
+
+**New unit: Karachi** — the 7 districts of Karachi Division: Karachi Central, Karachi East,
+Karachi South, Karachi West, Korangi, Malir, Keamari.
+
+**Status:** the long-standing MQM / MQM-P demand, raised repeatedly and as recently as 2026.
+Framed by its advocates as a province for **urban Sindh** rather than Karachi alone, on the
+basis of "mother tongue Sindh" and exchanged land. Their economic argument: one segment of
+Karachi's population generates the large majority of Sindh's tax revenue while provincial
+budget control sits elsewhere.
+**⚠ Footnote required:** MQM-P's "urban Sindh" framing extends beyond Karachi Division to urban
+Hyderabad, Sukkur and Mirpur Khas, but **no published district list exists** for that wider
+claim. We draw the expressible core — Karachi Division — and say so on the card rather than
+inventing the remainder.
+**Advocated by:** MQM-P; historically MQM.
+**Opposed by:** PPP, the Grand Democratic Alliance, and Awami Tehreek alike — Sindhi nationalist
+opinion rejects any division of Sindh outright. This is close to a cross-party consensus in
+rural Sindh and must be on the card.
+
+### L6 · Pashtun Balochistan separates
+
+**New unit:** the Pashto-plurality districts of northern Balochistan, determined from census
+Table 11 — covering the Quetta, Pishin, Zhob and Loralai division areas, and excluding
+Brahvi- and Balochi-plurality districts such as Mastung.
+
+**⚠ Boundary is data-determined, not transcribed.** Unlike L1–L5 there is no published district
+list for this claim, so the boundary follows census plurality. The card must say the line was
+drawn from census data rather than copied from a proposal.
+**Two readings, same territory:** advocates split between merging these districts into Khyber
+Pakhtunkhwa and constituting them as a separate province ("Southern Pakhtunkhwa"). Territory is
+identical either way, so it is one variant, with both readings named on the card.
+**Status:** live since 1970, when Quetta and Kalat Divisions were merged to form Balochistan.
+Khan Abdul Samad Khan Achakzai quit the National Awami Party in protest at the Pashtun belt
+being merged into Baloch areas under the name Balochistan.
+**Advocated by:** PkMAP and the Achakzai political tradition; Pashtun nationalist opinion.
+**Opposed by:** Baloch nationalist parties, for whom Balochistan's territorial integrity is
+foundational.
+
+### L7 · Mother-tongue majority applied everywhere (~13 units)
 
 Every district assigned by census plurality mother tongue, contiguity enforced.
 Produces: Seraiki belt · Hindko (Hazara) · Urdu (Karachi) · Pashto units absorbing northern
@@ -104,12 +142,12 @@ Balochistan · Brahvi (Khuzdar/Kalat) · Balochi (Makran, Rakhshan, Nasirabad).
 
 **Badge:** `census` · `synthesized` — a rule applied to census data, **not a proposal anyone
 advances.** Copy must say so plainly.
-**Real-world anchors it echoes:** Pashtun nationalist demands (Achakzai onward) that
-Balochistan's Pashtun belt join KP or form "Southern Pakhtunkhwa"; MQM-P's standing demand for
-an urban/Urdu-speaking province in Sindh.
-**Most contested unit:** Karachi (7 districts — Central, East, South, West, Korangi, Malir,
-Keamari). Sindhi nationalists across PPP, GDA and Awami Tehreek reject any division of Sindh
-outright. That line must appear on the card.
+**Relationship to L1–L6:** this is the only Language variant with no named advocate. Where its
+output coincides with a real claim — the Seraiki belt, Hazara, Karachi, Pashtun Balochistan —
+the card should point at the attributed variant rather than let the algorithm take credit for
+someone's politics.
+**Most contested unit:** Karachi. Sindhi nationalist opposition (PPP, GDA, Awami Tehreek)
+applies here exactly as in L5.
 
 ---
 
@@ -166,11 +204,11 @@ retaining internal self-government:
 | Chitral | Upper Chitral, Lower Chitral | ✅ clean |
 | **Hunza** | **Hunza** | ✅ **now its own district** |
 | **Nagar** | **Nagar** | ✅ **now its own district** |
-| Amb, Phulra | *sub-district* (within Mansehra / Haripur) | ⚠ **still unresolvable** |
+| Amb, Phulra | *sub-district* (within Mansehra / Haripur) | **omitted** |
 
-**Remaining ruling needed:** Amb and Phulra. Options — (a) omit with a footnote listing them,
-(b) render as labelled points rather than areas, (c) fold into Hazara silently. My
-recommendation: **(a)**, consistent with refusing to draw what we can't source.
+**Amb and Phulra are omitted**, with a footnote on the card naming them and stating why: they
+are smaller than any district, so we cannot draw them without inventing a boundary. Consistent
+with refusing to render what we can't source.
 
 **⚠ Hard rule for this scenario: attach no modern population figures.** 2023 census numbers do
 not describe 1947 boundaries. Card shows area and composition only.
@@ -193,15 +231,26 @@ province. Different bases, so the app never draws both — the Q8/Q9 behaviour w
 ---
 
 ## Basis 4 — Economic
-Source: district MPI (Planning Commission + OPHI, 15 indicators) · Badge: `survey 2014/15`
+Source: **national MPI, PSLM 2019-20** (Ministry of Planning, Development & Special Initiatives,
+with UNICEF and OPHI; published 2024) · Badge: `survey 2019/20`
 
-**Now on firmer ground:** MPI is published at district level *only*, so at division resolution
-we'd have been aggregating a survey to a resolution it was never published at. The district move
-fixes that.
+**Upgraded from the 2014/15 round.** PSLM 2019-20 sampled 195,000 households and was
+*purpose-built to produce district-level estimates* — so it is both five years newer and better
+matched to our join than the earlier round.
 
-**Still a reservation.** Deprivation is arguably the true engine of the debate — the South Punjab
-case is fundamentally economic, not linguistic — but it doesn't form contiguous blocs the way
-language does.
+**Deliberately not built from the 2023 census.** The census does carry literacy, housing
+materials, water, sanitation, electricity and cooking fuel at district level — enough to
+construct a 2023-vintage deprivation index. We don't, because choosing indicators and weights
+would be our own methodology, and every other surface in this app reports someone else's
+published figure. Official MPI stays authoritative; the badge carries the vintage honestly.
+
+**Now on firmer ground structurally too:** MPI is published at district level *only*, so at
+division resolution we'd have been aggregating a survey to a resolution it was never published
+at. The district move fixes that.
+
+**Reservation retained.** Deprivation is arguably the true engine of the debate — the South
+Punjab case is fundamentally economic, not linguistic — but it doesn't form contiguous blocs
+the way language does. Kept as a standalone basis with one variant.
 
 ### E1 · Deprivation fault lines *(recommended: the only Economic variant)*
 Split each province where its internal deprivation gradient is steepest — which independently
@@ -221,23 +270,29 @@ and Administrative as supporting evidence on their cards?
 
 | Basis | Variants |
 |---|---|
-| Language | 5 |
+| Language | 7 |
 | Administrative | 5 |
-| Historical | 4 (H2 pending the Amb/Phulra ruling) |
+| Historical | 4 |
 | Economic | 1 |
-| **Total** | **15** |
+| **Total** | **17** |
 
 ---
 
 ## Open items
 
-1. **H2 — Amb and Phulra** are sub-district. Omit with footnote *(recommended)*, render as
-   points, or fold into Hazara.
-2. **Economic** — keep as a standalone basis with one variant, or fold into the others?
-3. **AJK district list** (Muzaffarabad, Neelum, Hattian Bala, Mirpur, Bhimber, Kotli, Poonch,
-   Bagh, Haveli, Sudhanoti) is from memory — **verify at build time.**
-4. **Balochistan's 11-division / expanded-district set** needs verification against a primary
-   source; Wikipedia and OSM disagree and it's the most recently churned region.
+Both are verification tasks for build time, not decisions.
+
+1. **AJK district list** (Muzaffarabad, Neelum, Hattian Bala, Mirpur, Bhimber, Kotli, Poonch,
+   Bagh, Haveli, Sudhanoti) is from memory — **verify against a primary source.**
+2. **Balochistan's 11-division / expanded-district set** needs verification; Wikipedia and OSM
+   disagree and it is the most recently churned region in the country.
+
+## Resolved
+
+- **Amb and Phulra** — omitted with a footnote naming them (H2)
+- **Economic basis** — kept standalone, upgraded to MPI **2019-20**
+- **Karachi** and **Pashtun Balochistan** — promoted from algorithmic by-products of L7 to
+  attributed variants with named advocates and named opposition
 
 ## Resolved by moving to districts
 

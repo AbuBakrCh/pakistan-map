@@ -51,7 +51,7 @@ Basis (4)  →  Variant (3–4 each, ~14 total)  →  Units  →  Districts
 | **Language / dialect** | PBS 2023 Census Table 11, mother tongue by district | `census` · `proxy` |
 | **Administrative** | 2023 census population + derived geometry | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
-| **Economic** | District Multidimensional Poverty Index (Planning Commission + OPHI) | `survey 2014/15` |
+| **Economic** | National MPI, PSLM 2019-20 (Ministry of Planning + UNICEF + OPHI) | `survey 2019/20` |
 
 **Deliberately cut:**
 
@@ -79,7 +79,7 @@ drawing something.*
 | District boundaries | OSM `admin_level=6` | ~165. **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short |
 | Population | PBS 2023 Digital Census | District level |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
-| Deprivation | District MPI, PSLM 2014/15 | 15 indicators. **A decade older than everything else — must be badged** |
+| Deprivation | National MPI, PSLM **2019-20** | 195k households, purpose-built for district-level estimates. **Older than the census — must be badged.** Deliberately *not* rebuilt from 2023 census indicators: choosing weights would make it our methodology |
 
 Structured census extraction path: `PakPC2023` (CRAN, GPL-2, GitHub `myaseen208/PakPC2023`).
 PBS publishes primarily as PDF.
@@ -207,19 +207,17 @@ Numbered by the grilling question that settled each.
 
 ## Open items
 
-1. **`SCENARIOS-DRAFT.md` needs rewriting at district resolution.** Drafted at division level,
-   which broke on its first scenario. Mostly transcription now — the sources state districts.
-2. **L3 (Saraikistan Qaumi Council)** — resolved by districts. The claim names D.I. Khan and
-   Tank; D.I. Khan *Division* also contains the Waziristans (888,675 people, 95–98% Pashto-
-   speaking) which the claim excludes. At division resolution the app would have shaded those
-   districts Pashto while enclosing them in a Seraiki province — a visible self-contradiction.
-3. **H2 (princely states, 1947–55)** — mostly resolved by districts. Swat, Dir, Chitral, Kalat,
-   Las Bela, Kharan map cleanly. **Amb, Phulra, Hunza, Nagar are still sub-district.** Attach
-   no modern population figures to 1947 boundaries.
-4. **Economic basis** — may support only one honest variant (E2: split each province at its
-   internal deprivation fault line). Deprivation doesn't form contiguous blocs the way language
-   does. Consider folding it into other bases as supporting evidence rather than standing alone.
-5. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
+1. **AJK district list** is from memory — verify against a primary source at build time.
+2. **Balochistan's division and district set** needs verification; Wikipedia and OSM disagree
+   and it is the most recently churned region in the country.
+3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
+4. **`SCENARIOS-DRAFT.md` is temporary.** Once approved it becomes a typed data module and the
+   markdown is deleted — every field in it (rationale, advocacy, opposition, footnotes) is
+   rendered variant-card content, not documentation. Keeping both would be two sources of truth.
+
+**Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,
+Economic 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a
+boundary). Karachi and Pashtun Balochistan are attributed variants, not algorithmic by-products.
 
 ---
 
