@@ -11,7 +11,8 @@
 
 import { geoPath, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { Topology } from 'topojson-specification';
-import { readGeography } from './lib/geography.ts';
+import { readDistricts, readGeography } from './lib/geography.ts';
+import type { DistrictFill } from './lib/mother-tongue.ts';
 import {
   baselineLabelSites,
   labelKey,
@@ -39,8 +40,41 @@ const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }>
  */
 const padding = (width: number) => Math.max(12, Math.min(36, width * 0.05));
 
-export function renderBaselineMap(container: HTMLElement, topology: Topology): void {
+/** SVG fill for one district. `none` leaves the unshaded baseline showing through. */
+const fillPaint = (fill: DistrictFill | undefined): string => {
+  if (fill === undefined || fill.kind === 'no-data') return 'none';
+  return fill.kind === 'category' ? fill.colour : 'url(#no-dominant-stipple)';
+};
+
+/**
+ * Districts are stroked in their own fill colour, which closes the antialiasing seam between two
+ * that share a language — a language region has to read as one shape, not as a grid of tiles.
+ * The two absences are stroked by the stylesheet instead: a pattern makes a poor hairline.
+ */
+const strokePaint = (fill: DistrictFill | undefined): string | null =>
+  fill?.kind === 'category' ? fill.colour : null;
+
+/**
+ * What the caller gets back, so a later ticket can switch strata on without reaching into the
+ * DOM. #18 owns the basis selector and the fade-back; this is the seam it will drive.
+ */
+export interface MapHandle {
+  /** Turn stratum 1 — fill = data — on or off. Off is the baseline, unchanged. */
+  setDataFill(on: boolean): void;
+}
+
+export function renderBaselineMap(
+  container: HTMLElement,
+  topology: Topology,
+  /**
+   * Stratum 1, per district, or null for a map with no data stratum at all. Passed in rather
+   * than computed here: which basis is being shaded is not the renderer's decision, and the
+   * renderer is the one part of this app with no tests.
+   */
+  dataFill: ReadonlyMap<string, DistrictFill> | null = null,
+): MapHandle {
   const geography = readGeography(topology);
+  const districts = readDistricts(topology);
   const sites = baselineLabelSites(geography);
   const tierOf = new Map(sites.map((site) => [site.key, site.tier]));
 
@@ -48,7 +82,7 @@ export function renderBaselineMap(container: HTMLElement, topology: Topology): v
     .append('svg')
     .attr('class', 'map')
     .attr('role', 'img')
-    .attr('aria-label', 'Map of Pakistan showing current provinces, territories and divisions')
+    // The label says what is on screen, so it is set by `setDataFill` rather than fixed here.
     .attr('tabindex', 0);
 
   const defs = svg.append('defs');
@@ -67,8 +101,36 @@ export function renderBaselineMap(container: HTMLElement, topology: Topology): v
       pattern.append('line').attr('y2', 6).attr('class', 'hatch-rule');
     });
 
+  // The census counted this district and named no dominant tongue. A stipple, deliberately not a
+  // hatch: AJK and GB are already hatched, and the two absences must not look like one another.
+  // Dots read as "nothing recorded here"; a flat grey would read as a sixteenth category.
+  defs
+    .append('pattern')
+    .attr('id', 'no-dominant-stipple')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 5)
+    .attr('height', 5)
+    .call((pattern) => {
+      pattern.append('rect').attr('width', 5).attr('height', 5).attr('class', 'stipple-ground');
+      pattern
+        .append('circle')
+        .attr('class', 'stipple-dot')
+        .attr('cx', 1.5)
+        .attr('cy', 1.5)
+        .attr('r', 0.8);
+      pattern
+        .append('circle')
+        .attr('class', 'stipple-dot')
+        .attr('cx', 4)
+        .attr('cy', 4)
+        .attr('r', 0.8);
+    });
+
   const world = svg.append('g').attr('class', 'world');
   const landLayer = world.append('g').attr('class', 'stratum-land');
+  // Stratum 1 — fill = data, never unit membership (D14). Above the land so it replaces it, below
+  // the boundary rules so those keep reading over the top of it.
+  const fillLayer = world.append('g').attr('class', 'stratum-fill');
   const divisionLayer = world.append('g').attr('class', 'stratum-divisions');
   const provinceLayer = world.append('g').attr('class', 'stratum-provinces');
   // Labels live outside the zoomed group and are positioned in screen space, so type stays the
@@ -145,6 +207,20 @@ export function renderBaselineMap(container: HTMLElement, topology: Topology): v
       .attr('class', (f) => `land land-${f.properties.kind}`)
       .attr('d', (f) => path(f));
 
+    // `no-data` takes no fill and no stroke at all, so the unshaded baseline underneath shows
+    // through: AJK and GB keep their land tone and their territory hatch, and the basis visibly
+    // does not reach them. The stroke elsewhere is the fill's own colour — a hairline that closes
+    // the antialiasing seam between two districts that share a language, so a language region
+    // reads as one shape rather than as a grid of tiles.
+    fillLayer
+      .selectAll('path')
+      .data(districts.features)
+      .join('path')
+      .attr('class', (f) => `district district-${dataFill?.get(f.properties.name)?.kind ?? 'none'}`)
+      .attr('fill', (f) => fillPaint(dataFill?.get(f.properties.name)))
+      .attr('stroke', (f) => strokePaint(dataFill?.get(f.properties.name)))
+      .attr('d', (f) => path(f));
+
     divisionLayer
       .selectAll('path')
       .data(geography.divisions.features)
@@ -180,4 +256,19 @@ export function renderBaselineMap(container: HTMLElement, topology: Topology): v
 
   draw();
   new ResizeObserver(draw).observe(container);
+
+  // The whole of stratum 1 is one attribute on the root, so switching it on costs no re-layout
+  // and no re-projection — the paths are already drawn and already coloured.
+  const setDataFill = (on: boolean): void => {
+    const active = on && dataFill !== null;
+    svg.attr('data-data-fill', active ? 'on' : null);
+    svg.attr(
+      'aria-label',
+      active
+        ? 'Map of Pakistan, districts shaded by dominant mother tongue at the 2023 census'
+        : 'Map of Pakistan showing current provinces, territories and divisions',
+    );
+  };
+  setDataFill(false);
+  return { setDataFill };
 }

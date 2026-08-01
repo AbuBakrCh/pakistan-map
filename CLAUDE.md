@@ -211,6 +211,8 @@ What it holds:
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids | `bundle.test.ts` |
 | What the validator does when a partition is *wrong* — the one thing a valid bundle cannot demonstrate: the district named, both units named on an overlap, both answers to open item 2b expressible | `scenarios.test.ts` |
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
+| Palette — every census category coloured, colourblind separation re-derived from the hexes on the category pairs that actually share a border, the pairs it cannot separate named in the module | `src/lib/palette.test.ts` |
+| Fill = data — every drawn district decided, each category fill agreeing with the census figure, Chitral and the twenty AJK/GB districts as two different absences | `src/lib/mother-tongue.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
@@ -242,6 +244,14 @@ the active variant's unit outlines draw prominently on top.
 Fill shows data so each proposal is displayed *against its own evidence*. Where a unit outline
 disagrees with the shading beneath it, that disagreement is the most informative thing on the
 map — and it's why a scenario misrepresenting its advocates' claim can't be footnoted away.
+
+**Stratum 1 carries three outcomes, not one** (#17). Under the language basis a district is
+shaded by its dominant mother tongue, *or* stippled because the census counted it and names no
+dominant tongue (Chitral — Khowar has no column in Table 11), *or* left at the unshaded baseline
+because PBS published no row for it at all (AJK and GB, D25). The last two are drawn differently
+on purpose: one is an answer the census could not file, the other a question it did not ask
+here, and a single grey for both would say the map knows less than it does. Neither is `Others`
+— a residual is not a language, and the pipeline already refuses to let it win a dominance.
 
 **Hover** — highlights district, current province, and proposed unit at once; tooltip names
 all three. Resolution follows the active scenario's atom.
@@ -294,7 +304,13 @@ Contiguity is **flagged, never blocked**.
   categorical fills, hairline strokes, serif headings, one accent reserved for unit outlines.
   No dark mode in v1 — categorical palettes are harder to keep distinguishable on dark, and
   the editorial register signals *reference* rather than *toy* on a politically live subject.
-- Palette validated via the `dataviz` skill for colourblind safety.
+- Palette validated via the `dataviz` skill for colourblind safety — and the validation lives in
+  the suite (`src/lib/colour-vision.ts` + `palette.test.ts`), re-derived from the hexes on every
+  run, because a palette checked once at authoring time and never again is a palette nobody can
+  change safely. **Fifteen categories is past what any categorical palette separates pairwise**,
+  so the gate is held on the pairs that actually share a border on the map — geography, not a
+  scatter plot, decides which two fills a reader ever sees touching — and the pairs that fail
+  when any two swatches sit side by side are named in `palette.ts` rather than left to be found.
 - **Responsive, desktop-primary.** Hard bar: **map legible and variant switching functional
   at 390px.** Panel becomes a bottom sheet; hover becomes tap; `Space` becomes a button.
 

@@ -4,9 +4,11 @@
  * The bundle is imported, not fetched: it is a build artifact committed to the repo (D19), and
  * runtime makes zero network calls. Vite inlines it, so the browser never asks for it either.
  *
- * Only provinces and divisions are exposed. The district tier is in the same file — every unit
- * is composed from it — but the baseline map deliberately does not draw district lines, and a
- * reader that cannot return them cannot accidentally draw them.
+ * The baseline is provinces and divisions, and `readGeography` returns exactly those. Districts
+ * come back from a separate call, `readDistricts`, because they are not baseline furniture: they
+ * are the atom a basis shades (D23), and the baseline still draws no district *lines*. Two
+ * functions rather than one field so the split is visible at the call site — `renderBaselineMap`
+ * asking for districts is a deliberate act, not a property it happened to find on an object.
  */
 
 import { feature } from 'topojson-client';
@@ -26,6 +28,12 @@ export interface DivisionProperties {
   readonly province: string;
   /** ICT has no real division tier; one is injected so the tier covers the country. */
   readonly pseudo?: boolean;
+}
+
+export interface DistrictProperties {
+  readonly name: string;
+  readonly division: string;
+  readonly province: string;
 }
 
 export type Tier<P> = FeatureCollection<Polygon | MultiPolygon, P>;
@@ -74,4 +82,16 @@ export function readGeography(topology: Topology): Geography {
   }
 
   return { provinces, divisions };
+}
+
+/**
+ * All 156 drawn districts — the 136 the census publishes, plus AJK's ten and GB's ten, which
+ * have boundaries and no indicators. The caller decides what to do about the twenty; returning
+ * only the 136 here would leave holes in the country wherever a basis is active.
+ */
+export function readDistricts(topology: Topology): Tier<DistrictProperties> {
+  return feature(
+    topology,
+    topology.objects['districts'] as never,
+  ) as unknown as Tier<DistrictProperties>;
 }

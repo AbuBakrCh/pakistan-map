@@ -120,6 +120,50 @@ body {
   stroke-width: 1.4;
 }
 
+/*
+ * Stratum 1 — fill = data (D14). Off unless the root says otherwise: the baseline is provinces
+ * and divisions and nothing else, and #18 owns the control that turns this on.
+ */
+.stratum-fill {
+  display: none;
+}
+
+.map[data-data-fill='on'] .stratum-fill {
+  display: block;
+}
+
+.district {
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/*
+ * Two absences, drawn two ways on purpose.
+ *
+ * `no-data` — AJK and GB, which PBS did not publish (D25). No fill and no stroke, so the
+ * baseline land and its territory hatch show through untouched: the basis does not reach them.
+ *
+ * `no-dominant` — Chitral, which the census counted and named no dominant tongue for, because
+ * Khowar has no column in Table 11. A stipple over the paper, outlined so it reads as a district
+ * rather than as a hole. Not grey — a flat tone would sit in the legend as a sixteenth category.
+ */
+.district-no-data {
+  pointer-events: none;
+}
+
+.district-no-dominant {
+  stroke: var(--ink-faint);
+  stroke-width: 0.7;
+}
+
+.stipple-ground {
+  fill: var(--paper);
+}
+
+.stipple-dot {
+  fill: var(--ink-faint);
+}
+
 .division {
   fill: none;
   stroke: var(--rule-division);
@@ -197,6 +241,48 @@ body {
     var(--land) 0 3px,
     var(--land-hatch) 3px 4.4px
   );
+}
+
+.swatch-stipple {
+  border-color: var(--ink-faint);
+  background:
+    radial-gradient(var(--ink-faint) 0.9px, transparent 1px) 0 0 / 5px 5px,
+    var(--paper);
+}
+
+.swatch-hatch {
+  border-color: var(--ink-faint);
+  background: repeating-linear-gradient(45deg, var(--land) 0 3px, var(--land-hatch) 3px 4.4px);
+}
+
+/*
+ * The six categories PBS names that are dominant in no district. Grouped, not merged: the data
+ * keeps all fifteen, and the group only says these six never appear on the map — which is what
+ * makes the other nine matchable at a glance.
+ */
+.legend-group {
+  align-items: center;
+  border-left: 1px solid var(--land-hatch);
+  color: var(--ink-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  padding-left: 0.9rem;
+}
+
+.legend-group .legend-item {
+  color: var(--ink-faint);
+  font-size: 0.95em;
+  gap: 0.3rem;
+}
+
+.legend-group .swatch {
+  height: 0.6rem;
+  width: 0.9rem;
+}
+
+.legend-group-label {
+  font-style: italic;
 }
 
 .swatch-rule {
