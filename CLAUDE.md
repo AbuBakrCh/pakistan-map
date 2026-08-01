@@ -78,6 +78,7 @@ drawing something.*
 | Division boundaries | OSM `admin_level=5` | ~39 real + ICT injected; strays from India/Afghanistan filtered |
 | District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Names are never trusted alone.** Matching is normalized-name-plus-alias, with relation ids overriding it wherever a name lies or collides — Karachi's four renamed districts, and every AJK district, whose names recur across the Line of Control. Anything unmatched fails the build. PBS's own documents disagree with each other on spelling, and OSM's primary `name` on AJK districts is Urdu |
 | Coastline | OSM `natural=coastline` | A way network, not a relation: chained on shared node ids with direction preserved (**land lies to the LEFT**), the open coast closed against a lon/lat extent, islands added as land. District polygons are clipped to it where their bounding box meets the shoreline's — one rectangle over the whole coast, so it nominates ~23 of the 156 districts including a dozen plainly landlocked ones, which clip to a no-op. Biased that way deliberately: a false positive costs nothing, a false negative would leave sea drawn as land. Natural Earth was rejected — a second lineage at a different vintage, against ADR-0001; OSM keeps one of each |
+| Line of Control | OSM, derived — not traced | A *segment* of the boundary we already draw, named by identity rather than by geometry: a way that belongs both to a drawn AJK/GB district relation and to India's own `admin_level=4` Jammu and Kashmir or Ladakh (strays the bbox fetch already caches) is on the line. 69 such ways, chaining into one 940 km run, emitted into the **same topology as the polygons** so line and boundary share arcs. Two exclusions fall out of the rule rather than being applied on top of it: Sialkot's and Narowal's shared ways are the **Working Boundary**, not the ceasefire line, and are excluded because Punjab is a province; GB's Karakoram frontier is shared with nobody in the cache. Its northern end, beyond NJ9842 in the Siachen area, was never delimited even as a ceasefire line — stated in copy, not smoothed over |
 | District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against |
 | Population | PBS 2023 Digital Census | District level. Extracted from the `PakPC2023` `.RData` tables, committed as upstream bytes in `data/raw/pakpc2023-*.RData` and parsed by `scripts/lib/rdata.ts`, so the numbers trace to a published file rather than to a transcription. **Anchored outside the package** at exactly two tiers: the 5 province totals and the 241,499,431 national total, typed from PBS Census-2023 **Table 1 (national)** — both agree exactly. The **31 division totals** are checked against `pakpc2023-division.RData`, i.e. against another table of the same package whose district table is being validated: a cross-table consistency check, **not** an independent source. A division figure wrong in the package would agree with itself and pass. PBS publishes no division tier in Table 1 |
 | Mother tongue | PBS 2023 Census **Table 11** | The structured release carries **tehsil rows only** — no district tier — so districts are summed from the 591 units under them, keyed on the table's own 136 district names. Safe because the sums reconcile exactly against PBS's printed province figures in **all fifteen categories**, typed from `table_11_national.pdf`: column by column, because a tehsil summed into the wrong district inside a province moves whole languages and leaves the total intact. Categories are the census's own, unmerged, including its spelling `Kohiostani`; an unknown one fails the build rather than falling into `Others`. Table 11's universe is **240,458,089** — 1,041,342 below Table 1, a difference PBS shares with Table 10 and does not explain, so it is stated and not closed. Khowar has no column, so **Chitral has no dominant language** and says so. See `docs/research/mother-tongue-table-11.md` |
@@ -120,7 +121,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 | Script | npm script | Does |
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 and the coastline → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
-| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
 The fold table — post-census district → 2023 parent — is data, not code:
@@ -188,6 +189,7 @@ What it holds:
 | Statistical integrity — districts summing to all 31 division totals, to the 5 province totals and to the 241,499,431 national total, against figures typed from PBS Table 1 rather than read back off the artifact | `statistics.test.ts` |
 | Mother tongue — every census district carrying all fifteen categories, summing to the district figure and to the language totals PBS printed per province; a dominant language only where the census names one, Chitral named as the two it does not; the districts PBS counts above their own population listed rather than smoothed | `statistics.test.ts` |
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
+| The dashed line is the **right stretch** — every arc of it belongs to AJK or GB and to no province, it is the whole of AJK's outer boundary, and it is only part of GB's, the remaining 3 arcs being the China and Afghanistan frontier. Endpoints named (Chenab, Karakoram), districts named, length agreeing with the provenance that states it. A set question on arc indices, exact, because line and boundary share arcs | `src/lib/line-of-control.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
@@ -237,13 +239,26 @@ Contiguity is **flagged, never blocked**.
 ## Politically sensitive rendering
 
 - **AJK and Gilgit-Baltistan** drawn and named, styled as **territories, not provinces** —
-  constitutionally they are not provinces. **Not fully interactive:** PBS's 2023 results cover
-  136 districts — the four provinces and ICT only — so no AJK or GB district has a mother
-  tongue, literacy, water or sanitation figure. They cannot be shaded under any basis, and
-  carry no hover statistics beyond a name. AJK population exists only relayed via AJK BoS,
-  never direct from PBS.
+  constitutionally they are not provinces. The distinction is carried by **texture, not by
+  weight**: a hatched ground at a pitch counter-scaled against the zoom, and the *same* rule at
+  the *same* weight as a province. A fainter or thinner outline is legible and says the wrong
+  thing — provisional, or not quite ours — about ground Pakistan administers. **Not fully
+  interactive:** PBS's 2023 results cover 136 districts — the four provinces and ICT only — so
+  no AJK or GB district has a mother tongue, literacy, water or sanitation figure. They cannot
+  be shaded under any basis, and carry no hover statistics beyond a name. Hovering names them
+  and says *the census does not cover them*, so the absence reads as coverage and not as a zero
+  or a failed load. AJK population exists only relayed via AJK BoS, never direct from PBS.
 - **Line of Control drawn dashed and labelled** — a ceasefire line, not an international
-  border. Solid would be a claim this app's data can't support.
+  border. Solid would be a claim this app's data can't support. It is a stratum of its own and
+  the **only** thing drawn along its stretch: the province and territory outlines are drawn by
+  arc with those arcs held out, because a solid line beneath a dash fills the gaps in and leaves
+  a line that looks solid and means the opposite. Width and dash are in screen px at every zoom.
+  The name is set along whichever part of the line is on screen, on the side with no drawn land,
+  and it **yields to** the tier names rather than displacing them — the territories are drawn
+  *and named*.
+- **The Working Boundary is not the Line of Control.** Punjab's Sialkot–Jammu stretch is a
+  different line, south of the ceasefire line's terminus on the Chenab; it is not drawn dashed,
+  and the colophon says so. Falls out of the derivation rule rather than being special-cased.
 - **"GB as 5th province" is content, not baseline** — a live proposal (provisional status
   announced Nov 2020; GBLA resolution), so it's a switchable variant.
 - **Durand Line** — normal boundary with a footnote.
@@ -292,7 +307,7 @@ Numbered by the grilling question that settled each.
 | D9 | One basis at a time | Eliminates cross-basis conflicts for free |
 | D10 | Variants atomic | Owner's call, for simplicity |
 | D11 | D3 + SVG, no map library | No basemap needed; variant morphs trivial in D3, painful in MapLibre |
-| D12 | LoC dashed, AJK/GB as territories | Consistency with the app's own provenance discipline |
+| D12 | LoC dashed, AJK/GB as territories | Consistency with the app's own provenance discipline. The line is **derived, never traced** (#7): a hand-drawn polyline would be the one boundary in the bundle with no source behind it |
 | D13 | Basis *is* the overlay | One control, self-explaining map |
 | D14 | Fill = data, not unit membership | Otherwise every basis looks identical and the justification layer vanishes |
 | D17 | Compare = variant vs. reality only | The current map is what every proposal argues against |

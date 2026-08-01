@@ -19,7 +19,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { geoArea } from 'd3';
-import { mergeArcs } from 'topojson-client';
+import { feature as topoFeature, mergeArcs } from 'topojson-client';
 import { topology } from 'topojson-server';
 import { presimplify, simplify } from 'topojson-simplify';
 import {
@@ -29,6 +29,12 @@ import {
   chainCoastline,
   clipToLand,
 } from './lib/coastline.ts';
+import {
+  type BoundaryRelation,
+  chainWays,
+  lengthKm,
+  sharedBoundary,
+} from './lib/line-of-control.ts';
 import { type OsmRelation, classifyDivision, reconcileDistricts } from './lib/reconcile.ts';
 import {
   CENSUS_DISTRICT_COUNT,
@@ -47,6 +53,19 @@ const OUT_FILE = resolve(ROOT, 'data/bundle/geography.topojson.json');
 /** Islamabad Capital Territory: no division tier, no district relation. Injected by hand. */
 const ICT_RELATION_ID = 358002;
 const ICT_DISTRICT = 'Islamabad';
+
+/**
+ * India's own first-level relations, which the bbox fetch pulls into the cache as strays (#7).
+ *
+ * They are never drawn — nothing outside Pakistan's administration is. They are here for one
+ * purpose: to say what is on the other side of the eastern edge, which is the only thing that
+ * distinguishes a ceasefire line from an international border. Named by relation id rather than
+ * by name, for the same reason every other join in this pipeline is: a name is not an identity.
+ */
+const INDIA_ADMINISTERED_KASHMIR: readonly { id: number; name: string }[] = [
+  { id: 1943188, name: 'Jammu and Kashmir' },
+  { id: 5515045, name: 'Ladakh' },
+];
 
 /**
  * Quantization grid. 1e5 over Pakistan's ~23 degrees of longitude is roughly 25 m — well below
@@ -491,8 +510,86 @@ function main(): void {
   const pct = (value: number, published: number): string =>
     `${value >= published ? '+' : '−'}${(Math.abs(value / published - 1) * 100).toFixed(1)}%`;
 
-  // ---- 5. One topology, three tiers merged from the same arcs --------------------------------
-  const topo = topology({ units: { type: 'FeatureCollection', features } } as never, QUANTIZATION);
+  // ---- 5. The ceasefire line, named by identity ----------------------------------------------
+  // The Line of Control is a *stretch* of the boundary we already have, not a shape of its own,
+  // so it is derived from the same ways rather than traced (#7, D12). The Pakistani side is
+  // exactly the units that are not provinces — which is what keeps Sialkot's and Narowal's
+  // shared ways, the Working Boundary, out of it without naming them.
+  const waysOf = (element: RawFile['elements'][number]): BoundaryRelation['ways'] =>
+    (element.members ?? [])
+      .filter((member) => member.type === 'way' && member.ref !== undefined)
+      .map((member) => ({ ref: member.ref as number, geometry: member.geometry }));
+
+  const territoryRelations: BoundaryRelation[] = [];
+  for (const element of districts.elements) {
+    const district = reconciliation.assignments.get(element.id);
+    if (district === undefined) continue;
+    const province = provinceOf(district);
+    if (province === null || kindOf(province) !== 'territory') continue;
+    territoryRelations.push({ id: element.id, name: district, ways: waysOf(element) });
+  }
+
+  const indianRelations: BoundaryRelation[] = INDIA_ADMINISTERED_KASHMIR.map(({ id, name }) => {
+    const element = provinces.elements.find((candidate) => candidate.id === id);
+    if (element === undefined) {
+      fail(
+        `${name} (relation ${id}) is not in the admin_level=4 cache. It is never drawn, but ` +
+          `without it there is nothing on the far side of the eastern boundary and the Line of ` +
+          `Control cannot be told from an international border.`,
+      );
+    }
+    return { id, name, ways: waysOf(element) };
+  });
+
+  const shared = sharedBoundary(territoryRelations, indianRelations);
+  if (shared.withoutGeometry.length > 0) {
+    fail(
+      `${shared.withoutGeometry.length} way(s) on the ceasefire line came back without ` +
+        `geometry: ${shared.withoutGeometry.join(', ')}. A missing way is a gap in a dashed ` +
+        `line, which is invisible by construction.`,
+    );
+  }
+  if (shared.ways.length === 0) {
+    fail(
+      'No way is shared between the drawn territories and India-administered Kashmir, so the ' +
+        'Line of Control cannot be derived. Either upstream restructured the ways or the ' +
+        'territories are no longer being read — both are the fetch to look at, not this rule.',
+    );
+  }
+
+  const { chains: locChains, branches } = chainWays(shared.ways);
+  if (branches.length > 0) {
+    fail(
+      `The ceasefire line branches at ${branches.length} position(s), first at ` +
+        `${(branches[0] as Position).join(', ')}. Chaining it would mean choosing an arm, which ` +
+        `is this build drawing a line rather than reporting one.`,
+    );
+  }
+
+  const locDistricts = [...new Set(shared.ways.map((way) => way.along))].sort();
+  console.log(
+    `\n  line of control: ${shared.ways.length} ways shared with ` +
+      `${INDIA_ADMINISTERED_KASHMIR.map((r) => r.name).join(' and ')} → ${locChains.length} ` +
+      `chain(s), ${locChains.reduce((sum, chain) => sum + lengthKm(chain), 0).toFixed(0)} km ` +
+      `before simplification, along ${locDistricts.join(', ')}`,
+  );
+
+  // ---- 6. One topology, three tiers merged from the same arcs --------------------------------
+  // The line goes into the *same* topology as the polygons, which is the whole reason this
+  // bundle is TopoJSON. Its arcs are literally the district boundary's arcs, so simplification
+  // moves both at once and the dash can never drift off the edge it is qualifying — and a test
+  // can prove the line is the right stretch by arc index rather than by proximity.
+  const topo = topology(
+    {
+      units: { type: 'FeatureCollection', features },
+      lineOfControl: {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'MultiLineString', coordinates: locChains },
+      },
+    } as never,
+    QUANTIZATION,
+  );
   // presimplify attaches a removal weight to every point; the threshold can only be chosen
   // once those weights exist.
   const weighted = presimplify(topo as never);
@@ -532,6 +629,21 @@ function main(): void {
   const divisionToProvince = new Map(
     features.map((f) => [f.properties.division, f.properties.province]),
   );
+  const locObject = simplified.objects['lineOfControl'] as unknown as Record<string, unknown>;
+  // Measured off the *simplified* line — the one that ships — rather than off the ways it came
+  // from, which run 960 km before the threshold takes 2% of their detail away. A figure in the
+  // provenance that describes geometry the bundle does not contain is an unsourced surface.
+  const drawnLoc = topoFeature(simplified as never, locObject as never) as unknown as {
+    geometry: { coordinates: Position[][] };
+  };
+  const locLengthKm = drawnLoc.geometry.coordinates.reduce(
+    (sum, chain) => sum + lengthKm(chain),
+    0,
+  );
+  const locEnds = drawnLoc.geometry.coordinates.map(
+    (chain) => [chain[0], chain[chain.length - 1]] as const,
+  );
+
   simplified.objects = {
     provinces: mergeTier('province', (name) => ({ kind: kindOf(name) })),
     divisions: mergeTier('division', (name) => ({
@@ -548,6 +660,23 @@ function main(): void {
       // split was folded back (South Waziristan).
       osmRelations: relationsOfDistrict.get(name)?.sort((a, b) => a - b),
     })),
+    // Kept as its own object rather than folded into a tier: it is a segment of a boundary, not
+    // a whole one, and the renderer draws it as a stratum of its own on top of the outlines.
+    lineOfControl: {
+      ...locObject,
+      properties: {
+        name: 'Line of Control',
+        // What the app is entitled to say about it, carried with the geometry rather than typed
+        // into the renderer, so the caveat cannot be lost while the line is still drawn.
+        kind: 'ceasefire-line',
+        note:
+          'Ceasefire line, not an international border. Drawn dashed for that reason: the ' +
+          'territory on both sides of it is disputed and this app takes no position on it. Its ' +
+          'northern end, beyond map reference NJ9842 in the Siachen area, was never delimited ' +
+          'even as a ceasefire line — what is drawn there is where the two armies stand.',
+        osmWays: shared.ways.map((way) => way.ref).sort((a, b) => a - b),
+      },
+    },
   } as never;
 
   const districtGeometries = (): { properties: { province: string } }[] =>
@@ -555,7 +684,7 @@ function main(): void {
       geometries: { properties: { province: string } }[];
     }).geometries;
 
-  // ---- 6. Provenance ------------------------------------------------------------------------
+  // ---- 7. Provenance ------------------------------------------------------------------------
   (simplified as unknown as Record<string, unknown>)['provenance'] = {
     generated: new Date().toISOString(),
     vintage: '2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001',
@@ -599,6 +728,27 @@ function main(): void {
           { before: Math.round(before), after: Math.round(after) },
         ]),
       ),
+    },
+    lineOfControl: {
+      method:
+        'Named by identity, not traced. An OSM way that is a member of both a drawn territory ' +
+        'district relation (Azad Jammu & Kashmir, Gilgit-Baltistan — the units that are not ' +
+        'provinces) and of India-administered Jammu and Kashmir or Ladakh is a piece of the ' +
+        'line between them. Those ways are chained head to tail on exact coordinates and put ' +
+        'into the same topology as the polygons, so the line and the boundary it qualifies ' +
+        'share arcs and cannot drift apart under simplification. Punjab is deliberately not on ' +
+        'the Pakistani side of this rule: Sialkot and Narowal share ways with Jammu and Kashmir ' +
+        'too, but that stretch is the Working Boundary, south of the ceasefire line\'s ' +
+        'southern terminus on the Chenab, and it is not drawn dashed.',
+      againstRelations: INDIA_ADMINISTERED_KASHMIR,
+      ways: shared.ways.length,
+      chains: locChains.length,
+      // Measured off the simplified line about to be written, not quoted from a published
+      // figure: published LoC lengths are lengths of the line as a claim, and this is the
+      // length of the line as this bundle draws it.
+      lengthKm: Math.round(locLengthKm),
+      endpoints: locEnds.map(([from, to]) => ({ from, to })),
+      alongDistricts: locDistricts,
     },
     counts: {
       districts: ROSTER_DISTRICT_COUNT,
@@ -654,7 +804,7 @@ function main(): void {
   mkdirSync(resolve(OUT_FILE, '..'), { recursive: true });
   writeFileSync(OUT_FILE, `${JSON.stringify(simplified)}\n`);
 
-  // ---- 7. Report ----------------------------------------------------------------------------
+  // ---- 8. Report ----------------------------------------------------------------------------
   const districtCount = districtGeometries().length;
   if (districtCount !== ROSTER_DISTRICT_COUNT) {
     fail(`bundle holds ${districtCount} districts, expected ${ROSTER_DISTRICT_COUNT}`);

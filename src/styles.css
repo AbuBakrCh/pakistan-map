@@ -82,6 +82,7 @@ body {
 .map-well {
   flex: 1 1 auto;
   min-height: 0;
+  position: relative;
 }
 
 .map {
@@ -134,10 +135,43 @@ body {
   vector-effect: non-scaling-stroke;
 }
 
-/* Territories are not provinces; their outer rule is drawn lighter as well as hatched. */
+/*
+ * Territories are not provinces, and are drawn as a different kind of unit rather than as a
+ * lesser one: the same rule at the same weight, over a hatched ground. The earlier treatment
+ * stroked them lighter and thinner, which is legible but says the wrong thing — a faded
+ * outline reads as provisional, or as not quite ours, and neither is a claim this map is
+ * entitled to make about ground Pakistan administers. Texture carries the distinction; weight
+ * carries none of it.
+ */
 .province-territory {
-  stroke: var(--ink-faint);
-  stroke-width: 0.9;
+  stroke: var(--rule-province);
+  stroke-width: 1.1;
+}
+
+/*
+ * The ceasefire line. Dashed because a solid line here would say "international border", which
+ * is a claim this app's data cannot support (D12) — the dash is the qualification, not the
+ * decoration. Drawn darker and slightly heavier than an ordinary border, because a caveat set
+ * fainter than the thing it qualifies is a caveat nobody reads.
+ *
+ * The dash length is in screen px and stays there: `non-scaling-stroke` computes the stroke in
+ * the host coordinate space, so neither the width nor the dash grows with the zoom transform.
+ */
+.line-of-control {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.35;
+  stroke-dasharray: 4.5 3;
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The shape under the pointer. A wash, never an outline — see `showReadout` in map.ts. */
+.hover-wash {
+  fill: var(--ink);
+  fill-opacity: 0.09;
+  stroke: none;
+  pointer-events: none;
 }
 
 .label {
@@ -161,6 +195,61 @@ body {
   fill: var(--ink-soft);
   font-size: 10.5px;
   font-style: italic;
+}
+
+/* Set along the line itself, the way an atlas names a river or a meridian. */
+.label-loc {
+  fill: var(--ink);
+  font-size: 9.5px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+/*
+ * What the pointer is over. Parked in the corner rather than following the cursor: the cursor
+ * tooltip belongs to the district layer (#13), and two things chasing the pointer is one too
+ * many. Its job here is that a territory can be interrogated and answers — with its standing,
+ * and with the reason it has no figures.
+ */
+.readout {
+  background: var(--paper);
+  border: 1px solid var(--land-hatch);
+  color: var(--ink-soft);
+  display: none;
+  font-size: 0.78rem;
+  left: 0.75rem;
+  line-height: 1.4;
+  max-width: 17rem;
+  padding: 0.45rem 0.6rem;
+  pointer-events: none;
+  position: absolute;
+  top: 0.75rem;
+}
+
+.readout.is-shown {
+  display: block;
+}
+
+.readout-name {
+  color: var(--ink);
+  display: block;
+  font-size: 0.95rem;
+}
+
+.readout-status {
+  display: block;
+  font-style: italic;
+}
+
+.readout-status-territory {
+  color: var(--ink);
+}
+
+.readout-note {
+  border-top: 1px solid var(--land-hatch);
+  display: block;
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
 }
 
 .legend {
@@ -202,6 +291,13 @@ body {
 .swatch-rule {
   border: 0;
   border-top: 1px solid var(--rule-division);
+  height: 0;
+}
+
+/* The same dash as the map draws, so the legend entry and the line are recognisably one thing. */
+.swatch-dashed {
+  border: 0;
+  border-top: 1.35px dashed var(--ink);
   height: 0;
 }
 
