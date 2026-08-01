@@ -13,6 +13,10 @@
  * other on spelling and OSM's primary `name` tag is Urdu.
  */
 
+import postCensusFolds from '../../data/reference/post-census-district-folds.json' with {
+  type: 'json',
+};
+
 export type ProvinceCode = 'PB' | 'KP' | 'SD' | 'BA' | 'ICT' | 'AJK' | 'GB';
 
 export interface Province {
@@ -129,33 +133,23 @@ export const POST_CENSUS_DIVISION_FOLDS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Districts OSM carries that the 2023 census does not. Each folds into exactly one parent —
- * verified for Balochistan in `docs/research/balochistan-division-district-set.md`, which
- * confirmed no post-census unit was carved from two parents. A one-parent fold means the
- * dissolve recovers the 2023 boundary exactly rather than approximating it.
+ * Districts that did not exist at the census date, and the 2023 district each folds into.
  *
- * Two relations folding into the *same* parent is normal and expected: South Waziristan was
+ * The table itself lives in `data/reference/post-census-district-folds.json`, not here. It is
+ * the vintage rule (ADR-0001) expressed as data: it changes whenever Pakistan reorganises, it
+ * is reviewed as a diff with a date on it, and both pipelines that need it — the geometry
+ * dissolve and the census join — read the same file rather than each carrying a copy.
+ *
+ * Each entry names exactly one parent, so the dissolve recovers the 2023 boundary exactly
+ * rather than approximating it. Two children sharing a parent is normal: South Waziristan was
  * split into Upper and Lower after the census, so its 2023 geometry is the union of both.
  */
-export const POST_CENSUS_DISTRICT_FOLDS: Readonly<Record<string, string>> = {
-  // Punjab
-  Wazirabad: 'Gujranwala',
-  Taunsa: 'Dera Ghazi Khan',
-  'Kot Addu': 'Muzaffargarh',
-  Talagang: 'Chakwal',
-  Murree: 'Rawalpindi',
-  // Khyber Pakhtunkhwa
-  'Central Dir': 'Lower Dir',
-  'Lower South Waziristan': 'South Waziristan',
-  'Upper South Waziristan': 'South Waziristan',
-  // Balochistan — docs/research/balochistan-division-district-set.md
-  Hub: 'Lasbela',
-  'Usta Muhammad': 'Jaffarabad',
-  // Gilgit-Baltistan
-  'Gupis-Yasin': 'Ghizer',
-  Tangir: 'Diamir',
-  Darel: 'Diamir',
-};
+export const POST_CENSUS_DISTRICT_FOLDS: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(postCensusFolds.folds.map((fold) => [fold.district, fold.into])),
+);
+
+/** The fold table with its per-entry provenance intact, for the statistics artifact. */
+export const POST_CENSUS_FOLD_TABLE = postCensusFolds;
 
 /**
  * Relations to drop outright, with the reason. Being explicit here is the point: an unmatched
