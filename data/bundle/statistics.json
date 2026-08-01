@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T16:52:38.088Z",
+    "generated": "2026-08-01T17:16:00.843Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -10,6 +10,7 @@
       "censusPackageLicence": "GPL-2",
       "publishedTotals": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate",
       "motherTongue": "PBS Census-2023 Table 11 — population by mother tongue, sex and rural/urban. Published at tehsil level in PakPC2023 (object TABLE_11); the province and national figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_11_national.pdf",
+      "development": "PBS Census-2023 Table 12 (literacy rate, enrolment and out-of-school population by sex and rural/urban), Table 23 (housing facilities by source of drinking water by region) and Table 24 (housing characteristics, facilities of toilet and washroom used by households, rural/urban). Published at tehsil level in PakPC2023 (objects TABLE_12, TABLE_23, TABLE_24); the province figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf, table_23_national.pdf and table_24_national.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
     },
@@ -17,7 +18,10 @@
       "district": "sha256:a1a3469e2938a80038041a61f51785dc3eb8c424884c2f814b665d7802112895",
       "division": "sha256:d9e1b80e74405a568411d86bb566271519b134a7ac75f5d8a3c3be8cc17788ae",
       "province": "sha256:5f25ec14649c45f03c28c8dc629789238dfef5ae4bcb14043e5518d3d2be6abe",
-      "motherTongue": "sha256:842498bb8b0fd19813e47136c9e328308191f9f7def4a6bbf2e9c09a3665540c"
+      "motherTongue": "sha256:842498bb8b0fd19813e47136c9e328308191f9f7def4a6bbf2e9c09a3665540c",
+      "literacy": "sha256:bfc966c103e87ab3d96fd59c79ed97e67456b85f03e00253225469456a6f08af",
+      "water": "sha256:882456f73108cd537d0fd6e91336f30b919a6a905bc91cc015c39608b7901e24",
+      "sanitation": "sha256:e4d8257deddd14a8ef625445d087952643feb4c8e5ca1feb0e58b01a91c60d0f"
     },
     "counts": {
       "censusDistricts": 136,
@@ -57,6 +61,27 @@
           "Kohiostani": 11744,
           "Others": 22545
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1063313,
+          "literate10Plus": 822410,
+          "rate": 0.773441
+        },
+        "water": {
+          "households": 236789,
+          "improved": 195201,
+          "improvedShare": 0.824367
+        },
+        "sanitation": {
+          "households": 236789,
+          "flushToilet": 220283,
+          "nonFlushToilet": 4570,
+          "noToilet": 11936,
+          "separateToilet": 199499,
+          "flushToiletShare": 0.930292,
+          "noToiletShare": 0.050408
+        }
       }
     },
     "Attock": {
@@ -85,6 +110,27 @@
           "Kalasha": 20,
           "Kohiostani": 5798,
           "Others": 17442
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1659542,
+          "literate10Plus": 1165399,
+          "rate": 0.702241
+        },
+        "water": {
+          "households": 353973,
+          "improved": 334155,
+          "improvedShare": 0.944013
+        },
+        "sanitation": {
+          "households": 353973,
+          "flushToilet": 328013,
+          "nonFlushToilet": 8738,
+          "noToilet": 17222,
+          "separateToilet": 309451,
+          "flushToiletShare": 0.926661,
+          "noToiletShare": 0.048653
         }
       }
     },
@@ -115,6 +161,27 @@
           "Kohiostani": 0,
           "Others": 90
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 116409,
+          "literate10Plus": 42298,
+          "rate": 0.363357
+        },
+        "water": {
+          "households": 27796,
+          "improved": 20661,
+          "improvedShare": 0.743308
+        },
+        "sanitation": {
+          "households": 27796,
+          "flushToilet": 14432,
+          "nonFlushToilet": 7553,
+          "noToilet": 5811,
+          "separateToilet": 20910,
+          "flushToiletShare": 0.519211,
+          "noToiletShare": 0.209059
+        }
       }
     },
     "Badin": {
@@ -143,6 +210,27 @@
           "Kalasha": 0,
           "Kohiostani": 221,
           "Others": 6225
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1319868,
+          "literate10Plus": 483693,
+          "rate": 0.366471
+        },
+        "water": {
+          "households": 397892,
+          "improved": 355209,
+          "improvedShare": 0.892727
+        },
+        "sanitation": {
+          "households": 397892,
+          "flushToilet": 127750,
+          "nonFlushToilet": 70829,
+          "noToilet": 199313,
+          "separateToilet": 150653,
+          "flushToiletShare": 0.321067,
+          "noToiletShare": 0.500922
         }
       }
     },
@@ -173,6 +261,27 @@
           "Kohiostani": 1,
           "Others": 9488
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2572990,
+          "literate10Plus": 1466956,
+          "rate": 0.570137
+        },
+        "water": {
+          "households": 557616,
+          "improved": 518200,
+          "improvedShare": 0.929313
+        },
+        "sanitation": {
+          "households": 557616,
+          "flushToilet": 446194,
+          "nonFlushToilet": 13973,
+          "noToilet": 97449,
+          "separateToilet": 387669,
+          "flushToiletShare": 0.800181,
+          "noToiletShare": 0.17476
+        }
       }
     },
     "Bahawalpur": {
@@ -201,6 +310,27 @@
           "Kalasha": 3,
           "Kohiostani": 36,
           "Others": 29132
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3033056,
+          "literate10Plus": 1618280,
+          "rate": 0.533548
+        },
+        "water": {
+          "households": 673437,
+          "improved": 652974,
+          "improvedShare": 0.969614
+        },
+        "sanitation": {
+          "households": 673437,
+          "flushToilet": 568888,
+          "nonFlushToilet": 13411,
+          "noToilet": 91138,
+          "separateToilet": 479787,
+          "flushToiletShare": 0.844753,
+          "noToiletShare": 0.135333
         }
       }
     },
@@ -231,6 +361,27 @@
           "Kohiostani": 17,
           "Others": 160
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 817059,
+          "literate10Plus": 214570,
+          "rate": 0.262613
+        },
+        "water": {
+          "households": 181699,
+          "improved": 124871,
+          "improvedShare": 0.687241
+        },
+        "sanitation": {
+          "households": 181699,
+          "flushToilet": 105826,
+          "nonFlushToilet": 38770,
+          "noToilet": 37103,
+          "separateToilet": 71630,
+          "flushToiletShare": 0.582425,
+          "noToiletShare": 0.2042
+        }
       }
     },
     "Bannu": {
@@ -259,6 +410,27 @@
           "Kalasha": 1,
           "Kohiostani": 1,
           "Others": 241
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 909367,
+          "literate10Plus": 379617,
+          "rate": 0.417452
+        },
+        "water": {
+          "households": 183130,
+          "improved": 169422,
+          "improvedShare": 0.925146
+        },
+        "sanitation": {
+          "households": 183130,
+          "flushToilet": 125069,
+          "nonFlushToilet": 19475,
+          "noToilet": 38586,
+          "separateToilet": 101134,
+          "flushToiletShare": 0.682952,
+          "noToiletShare": 0.210703
         }
       }
     },
@@ -289,6 +461,27 @@
           "Kohiostani": 0,
           "Others": 56
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 125459,
+          "literate10Plus": 42185,
+          "rate": 0.336245
+        },
+        "water": {
+          "households": 23053,
+          "improved": 16148,
+          "improvedShare": 0.700473
+        },
+        "sanitation": {
+          "households": 23053,
+          "flushToilet": 6572,
+          "nonFlushToilet": 3771,
+          "noToilet": 12710,
+          "separateToilet": 5340,
+          "flushToiletShare": 0.285082,
+          "noToiletShare": 0.551338
+        }
       }
     },
     "Batagram": {
@@ -317,6 +510,27 @@
           "Kalasha": 3,
           "Kohiostani": 11654,
           "Others": 65712
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 376570,
+          "literate10Plus": 147203,
+          "rate": 0.390905
+        },
+        "water": {
+          "households": 86196,
+          "improved": 62453,
+          "improvedShare": 0.724546
+        },
+        "sanitation": {
+          "households": 86196,
+          "flushToilet": 63062,
+          "nonFlushToilet": 4652,
+          "noToilet": 18482,
+          "separateToilet": 48579,
+          "flushToiletShare": 0.731612,
+          "noToiletShare": 0.214418
         }
       }
     },
@@ -347,6 +561,27 @@
           "Kohiostani": 24,
           "Others": 11783
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1363047,
+          "literate10Plus": 758886,
+          "rate": 0.556757
+        },
+        "water": {
+          "households": 313311,
+          "improved": 310053,
+          "improvedShare": 0.989601
+        },
+        "sanitation": {
+          "households": 313311,
+          "flushToilet": 254704,
+          "nonFlushToilet": 5488,
+          "noToilet": 53119,
+          "separateToilet": 196921,
+          "flushToiletShare": 0.812943,
+          "noToiletShare": 0.169541
+        }
       }
     },
     "Buner": {
@@ -375,6 +610,27 @@
           "Kalasha": 0,
           "Kohiostani": 969,
           "Others": 18239
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 706190,
+          "literate10Plus": 308960,
+          "rate": 0.437503
+        },
+        "water": {
+          "households": 118665,
+          "improved": 104746,
+          "improvedShare": 0.882703
+        },
+        "sanitation": {
+          "households": 118665,
+          "flushToilet": 87115,
+          "nonFlushToilet": 4411,
+          "noToilet": 27139,
+          "separateToilet": 70609,
+          "flushToiletShare": 0.734125,
+          "noToiletShare": 0.228703
         }
       }
     },
@@ -405,6 +661,27 @@
           "Kohiostani": 1,
           "Others": 22
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 167188,
+          "literate10Plus": 55416,
+          "rate": 0.331459
+        },
+        "water": {
+          "households": 38213,
+          "improved": 33845,
+          "improvedShare": 0.885693
+        },
+        "sanitation": {
+          "households": 38213,
+          "flushToilet": 25211,
+          "nonFlushToilet": 3549,
+          "noToilet": 9453,
+          "separateToilet": 23093,
+          "flushToiletShare": 0.659749,
+          "noToiletShare": 0.247377
+        }
       }
     },
     "Chakwal": {
@@ -433,6 +710,27 @@
           "Kalasha": 3,
           "Kohiostani": 260,
           "Others": 429
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1333288,
+          "literate10Plus": 1037126,
+          "rate": 0.777871
+        },
+        "water": {
+          "households": 288838,
+          "improved": 275440,
+          "improvedShare": 0.953614
+        },
+        "sanitation": {
+          "households": 288838,
+          "flushToilet": 264076,
+          "nonFlushToilet": 7848,
+          "noToilet": 16914,
+          "separateToilet": 251659,
+          "flushToiletShare": 0.91427,
+          "noToiletShare": 0.058559
         }
       }
     },
@@ -463,6 +761,27 @@
           "Kohiostani": 0,
           "Others": 198
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 284174,
+          "literate10Plus": 113577,
+          "rate": 0.399674
+        },
+        "water": {
+          "households": 61915,
+          "improved": 47049,
+          "improvedShare": 0.759897
+        },
+        "sanitation": {
+          "households": 61915,
+          "flushToilet": 39700,
+          "nonFlushToilet": 19460,
+          "noToilet": 2755,
+          "separateToilet": 38314,
+          "flushToiletShare": 0.641202,
+          "noToiletShare": 0.044496
+        }
       }
     },
     "Charsadda": {
@@ -491,6 +810,27 @@
           "Kalasha": 13,
           "Kohiostani": 984,
           "Others": 2042
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1292257,
+          "literate10Plus": 697011,
+          "rate": 0.539375
+        },
+        "water": {
+          "households": 263934,
+          "improved": 257830,
+          "improvedShare": 0.976873
+        },
+        "sanitation": {
+          "households": 263934,
+          "flushToilet": 246101,
+          "nonFlushToilet": 8119,
+          "noToilet": 9714,
+          "separateToilet": 185710,
+          "flushToiletShare": 0.932434,
+          "noToiletShare": 0.036805
         }
       }
     },
@@ -521,6 +861,27 @@
           "Kohiostani": 321,
           "Others": 506
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1145954,
+          "literate10Plus": 630806,
+          "rate": 0.550464
+        },
+        "water": {
+          "households": 256438,
+          "improved": 252125,
+          "improvedShare": 0.983181
+        },
+        "sanitation": {
+          "households": 256438,
+          "flushToilet": 176596,
+          "nonFlushToilet": 5486,
+          "noToilet": 74356,
+          "separateToilet": 141472,
+          "flushToiletShare": 0.68865,
+          "noToiletShare": 0.289957
+        }
       }
     },
     "Dadu": {
@@ -549,6 +910,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 425
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1199047,
+          "literate10Plus": 565078,
+          "rate": 0.471273
+        },
+        "water": {
+          "households": 340471,
+          "improved": 316805,
+          "improvedShare": 0.93049
+        },
+        "sanitation": {
+          "households": 340471,
+          "flushToilet": 274924,
+          "nonFlushToilet": 62209,
+          "noToilet": 3338,
+          "separateToilet": 223280,
+          "flushToiletShare": 0.807481,
+          "noToiletShare": 0.009804
         }
       }
     },
@@ -579,6 +961,27 @@
           "Kohiostani": 1,
           "Others": 23
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 202817,
+          "literate10Plus": 48816,
+          "rate": 0.24069
+        },
+        "water": {
+          "households": 62267,
+          "improved": 33049,
+          "improvedShare": 0.530763
+        },
+        "sanitation": {
+          "households": 62267,
+          "flushToilet": 21769,
+          "nonFlushToilet": 4554,
+          "noToilet": 35944,
+          "separateToilet": 13726,
+          "flushToiletShare": 0.349607,
+          "noToiletShare": 0.577256
+        }
       }
     },
     "Dera Ghazi Khan": {
@@ -607,6 +1010,27 @@
           "Kalasha": 2,
           "Kohiostani": 0,
           "Others": 549
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2235453,
+          "literate10Plus": 1045814,
+          "rate": 0.467831
+        },
+        "water": {
+          "households": 454464,
+          "improved": 414669,
+          "improvedShare": 0.912435
+        },
+        "sanitation": {
+          "households": 454464,
+          "flushToilet": 319937,
+          "nonFlushToilet": 15841,
+          "noToilet": 118686,
+          "separateToilet": 245677,
+          "flushToiletShare": 0.703988,
+          "noToiletShare": 0.261156
         }
       }
     },
@@ -637,6 +1061,27 @@
           "Kohiostani": 0,
           "Others": 524
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1263515,
+          "literate10Plus": 588508,
+          "rate": 0.46577
+        },
+        "water": {
+          "households": 270021,
+          "improved": 226383,
+          "improvedShare": 0.83839
+        },
+        "sanitation": {
+          "households": 270021,
+          "flushToilet": 223956,
+          "nonFlushToilet": 44689,
+          "noToilet": 1376,
+          "separateToilet": 189529,
+          "flushToiletShare": 0.829402,
+          "noToiletShare": 0.005096
+        }
       }
     },
     "Duki": {
@@ -665,6 +1110,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 825
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 137711,
+          "literate10Plus": 60847,
+          "rate": 0.441846
+        },
+        "water": {
+          "households": 43059,
+          "improved": 35091,
+          "improvedShare": 0.814952
+        },
+        "sanitation": {
+          "households": 43059,
+          "flushToilet": 19306,
+          "nonFlushToilet": 11742,
+          "noToilet": 12011,
+          "separateToilet": 18881,
+          "flushToiletShare": 0.448362,
+          "noToiletShare": 0.278943
         }
       }
     },
@@ -695,6 +1161,27 @@
           "Kohiostani": 99,
           "Others": 1365
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 6865192,
+          "literate10Plus": 5040010,
+          "rate": 0.73414
+        },
+        "water": {
+          "households": 1382773,
+          "improved": 1286143,
+          "improvedShare": 0.930119
+        },
+        "sanitation": {
+          "households": 1382773,
+          "flushToilet": 1287363,
+          "nonFlushToilet": 22274,
+          "noToilet": 73136,
+          "separateToilet": 1133041,
+          "flushToiletShare": 0.931001,
+          "noToiletShare": 0.052891
+        }
       }
     },
     "Ghotki": {
@@ -723,6 +1210,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 1122
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1196515,
+          "literate10Plus": 495061,
+          "rate": 0.413752
+        },
+        "water": {
+          "households": 331046,
+          "improved": 323310,
+          "improvedShare": 0.976632
+        },
+        "sanitation": {
+          "households": 331046,
+          "flushToilet": 186370,
+          "nonFlushToilet": 33430,
+          "noToilet": 111246,
+          "separateToilet": 110211,
+          "flushToiletShare": 0.562973,
+          "noToiletShare": 0.336044
         }
       }
     },
@@ -753,6 +1261,27 @@
           "Kohiostani": 196,
           "Others": 1211
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 4345898,
+          "literate10Plus": 3336551,
+          "rate": 0.767747
+        },
+        "water": {
+          "households": 849177,
+          "improved": 841395,
+          "improvedShare": 0.990836
+        },
+        "sanitation": {
+          "households": 849177,
+          "flushToilet": 821732,
+          "nonFlushToilet": 14446,
+          "noToilet": 12999,
+          "separateToilet": 726387,
+          "flushToiletShare": 0.96768,
+          "noToiletShare": 0.015308
+        }
       }
     },
     "Gujrat": {
@@ -781,6 +1310,27 @@
           "Kalasha": 14,
           "Kohiostani": 1243,
           "Others": 2366
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2498174,
+          "literate10Plus": 2032866,
+          "rate": 0.813741
+        },
+        "water": {
+          "households": 489337,
+          "improved": 484430,
+          "improvedShare": 0.989972
+        },
+        "sanitation": {
+          "households": 489337,
+          "flushToilet": 468668,
+          "nonFlushToilet": 6631,
+          "noToilet": 14038,
+          "separateToilet": 431408,
+          "flushToiletShare": 0.957761,
+          "noToiletShare": 0.028688
         }
       }
     },
@@ -811,6 +1361,27 @@
           "Kohiostani": 2,
           "Others": 620
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 214036,
+          "literate10Plus": 107650,
+          "rate": 0.502953
+        },
+        "water": {
+          "households": 50357,
+          "improved": 44228,
+          "improvedShare": 0.878289
+        },
+        "sanitation": {
+          "households": 50357,
+          "flushToilet": 39518,
+          "nonFlushToilet": 4704,
+          "noToilet": 6135,
+          "separateToilet": 29969,
+          "flushToiletShare": 0.784757,
+          "noToiletShare": 0.12183
+        }
       }
     },
     "Hafizabad": {
@@ -839,6 +1410,27 @@
           "Kalasha": 0,
           "Kohiostani": 85,
           "Others": 382
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 988643,
+          "literate10Plus": 650199,
+          "rate": 0.657668
+        },
+        "water": {
+          "households": 197206,
+          "improved": 186823,
+          "improvedShare": 0.947349
+        },
+        "sanitation": {
+          "households": 197206,
+          "flushToilet": 176929,
+          "nonFlushToilet": 3324,
+          "noToilet": 16953,
+          "separateToilet": 157913,
+          "flushToiletShare": 0.897179,
+          "noToiletShare": 0.085966
         }
       }
     },
@@ -869,6 +1461,27 @@
           "Kohiostani": 107,
           "Others": 49
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 373119,
+          "literate10Plus": 161002,
+          "rate": 0.431503
+        },
+        "water": {
+          "households": 61148,
+          "improved": 54870,
+          "improvedShare": 0.897331
+        },
+        "sanitation": {
+          "households": 61148,
+          "flushToilet": 51700,
+          "nonFlushToilet": 5426,
+          "noToilet": 4022,
+          "separateToilet": 41758,
+          "flushToiletShare": 0.84549,
+          "noToiletShare": 0.065775
+        }
       }
     },
     "Haripur": {
@@ -897,6 +1510,27 @@
           "Kalasha": 12,
           "Kohiostani": 3070,
           "Others": 15598
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 890826,
+          "literate10Plus": 667053,
+          "rate": 0.748803
+        },
+        "water": {
+          "households": 192451,
+          "improved": 175157,
+          "improvedShare": 0.910138
+        },
+        "sanitation": {
+          "households": 192451,
+          "flushToilet": 177481,
+          "nonFlushToilet": 7555,
+          "noToilet": 7415,
+          "separateToilet": 159505,
+          "flushToiletShare": 0.922214,
+          "noToiletShare": 0.038529
         }
       }
     },
@@ -927,6 +1561,27 @@
           "Kohiostani": 1,
           "Others": 230
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 72572,
+          "literate10Plus": 28904,
+          "rate": 0.39828
+        },
+        "water": {
+          "households": 16393,
+          "improved": 8677,
+          "improvedShare": 0.529311
+        },
+        "sanitation": {
+          "households": 16393,
+          "flushToilet": 7059,
+          "nonFlushToilet": 1663,
+          "noToilet": 7671,
+          "separateToilet": 5649,
+          "flushToiletShare": 0.430611,
+          "noToiletShare": 0.467944
+        }
       }
     },
     "Hyderabad": {
@@ -955,6 +1610,27 @@
           "Kalasha": 122,
           "Kohiostani": 170,
           "Others": 56380
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1773727,
+          "literate10Plus": 1192087,
+          "rate": 0.67208
+        },
+        "water": {
+          "households": 448191,
+          "improved": 431140,
+          "improvedShare": 0.961956
+        },
+        "sanitation": {
+          "households": 448191,
+          "flushToilet": 404210,
+          "nonFlushToilet": 26119,
+          "noToilet": 17862,
+          "separateToilet": 315866,
+          "flushToiletShare": 0.90187,
+          "noToiletShare": 0.039854
         }
       }
     },
@@ -985,6 +1661,27 @@
           "Kohiostani": 5016,
           "Others": 64734
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1797000,
+          "literate10Plus": 1508916,
+          "rate": 0.839686
+        },
+        "water": {
+          "households": 410993,
+          "improved": 397091,
+          "improvedShare": 0.966175
+        },
+        "sanitation": {
+          "households": 410993,
+          "flushToilet": 396553,
+          "nonFlushToilet": 10330,
+          "noToilet": 4110,
+          "separateToilet": 371815,
+          "flushToiletShare": 0.964866,
+          "noToiletShare": 0.01
+        }
       }
     },
     "Jacobabad": {
@@ -1013,6 +1710,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 529
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 727254,
+          "literate10Plus": 307946,
+          "rate": 0.423437
+        },
+        "water": {
+          "households": 195056,
+          "improved": 184019,
+          "improvedShare": 0.943416
+        },
+        "sanitation": {
+          "households": 195056,
+          "flushToilet": 106249,
+          "nonFlushToilet": 31874,
+          "noToilet": 56933,
+          "separateToilet": 82087,
+          "flushToiletShare": 0.54471,
+          "noToiletShare": 0.29188
         }
       }
     },
@@ -1043,6 +1761,27 @@
           "Kohiostani": 0,
           "Others": 2072
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 369647,
+          "literate10Plus": 131318,
+          "rate": 0.355252
+        },
+        "water": {
+          "households": 81562,
+          "improved": 39465,
+          "improvedShare": 0.483865
+        },
+        "sanitation": {
+          "households": 81562,
+          "flushToilet": 38632,
+          "nonFlushToilet": 15203,
+          "noToilet": 27727,
+          "separateToilet": 31694,
+          "flushToiletShare": 0.473652,
+          "noToiletShare": 0.33995
+        }
       }
     },
     "Jamshoro": {
@@ -1071,6 +1810,27 @@
           "Kalasha": 0,
           "Kohiostani": 94,
           "Others": 2087
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 785657,
+          "literate10Plus": 389886,
+          "rate": 0.496255
+        },
+        "water": {
+          "households": 213493,
+          "improved": 187781,
+          "improvedShare": 0.879565
+        },
+        "sanitation": {
+          "households": 213493,
+          "flushToilet": 146948,
+          "nonFlushToilet": 27578,
+          "noToilet": 38967,
+          "separateToilet": 125282,
+          "flushToiletShare": 0.688304,
+          "noToiletShare": 0.182521
         }
       }
     },
@@ -1101,6 +1861,27 @@
           "Kohiostani": 0,
           "Others": 92
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 129692,
+          "literate10Plus": 39087,
+          "rate": 0.301383
+        },
+        "water": {
+          "households": 30953,
+          "improved": 12153,
+          "improvedShare": 0.392628
+        },
+        "sanitation": {
+          "households": 30953,
+          "flushToilet": 10712,
+          "nonFlushToilet": 8562,
+          "noToilet": 11679,
+          "separateToilet": 14463,
+          "flushToiletShare": 0.346073,
+          "noToiletShare": 0.377314
+        }
       }
     },
     "Jhang": {
@@ -1129,6 +1910,27 @@
           "Kalasha": 0,
           "Kohiostani": 20,
           "Others": 2514
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2228470,
+          "literate10Plus": 1324823,
+          "rate": 0.594499
+        },
+        "water": {
+          "households": 491999,
+          "improved": 486121,
+          "improvedShare": 0.988053
+        },
+        "sanitation": {
+          "households": 491999,
+          "flushToilet": 377014,
+          "nonFlushToilet": 12683,
+          "noToilet": 102302,
+          "separateToilet": 302264,
+          "flushToiletShare": 0.76629,
+          "noToiletShare": 0.207931
         }
       }
     },
@@ -1159,6 +1961,27 @@
           "Kohiostani": 343,
           "Others": 44295
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1081370,
+          "literate10Plus": 872137,
+          "rate": 0.806511
+        },
+        "water": {
+          "households": 229064,
+          "improved": 218939,
+          "improvedShare": 0.955798
+        },
+        "sanitation": {
+          "households": 229064,
+          "flushToilet": 211985,
+          "nonFlushToilet": 4381,
+          "noToilet": 12698,
+          "separateToilet": 196698,
+          "flushToiletShare": 0.92544,
+          "noToiletShare": 0.055434
+        }
       }
     },
     "Kachhi (Bolan)": {
@@ -1187,6 +2010,27 @@
           "Kalasha": 0,
           "Kohiostani": 85,
           "Others": 824
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 277258,
+          "literate10Plus": 83731,
+          "rate": 0.301997
+        },
+        "water": {
+          "households": 50032,
+          "improved": 13678,
+          "improvedShare": 0.273385
+        },
+        "sanitation": {
+          "households": 50032,
+          "flushToilet": 24724,
+          "nonFlushToilet": 18290,
+          "noToilet": 7018,
+          "separateToilet": 23840,
+          "flushToiletShare": 0.494164,
+          "noToiletShare": 0.14027
         }
       }
     },
@@ -1217,6 +2061,27 @@
           "Kohiostani": 0,
           "Others": 168
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 170917,
+          "literate10Plus": 67857,
+          "rate": 0.397017
+        },
+        "water": {
+          "households": 33101,
+          "improved": 19408,
+          "improvedShare": 0.586327
+        },
+        "sanitation": {
+          "households": 33101,
+          "flushToilet": 13712,
+          "nonFlushToilet": 10993,
+          "noToilet": 8396,
+          "separateToilet": 16917,
+          "flushToiletShare": 0.414247,
+          "noToiletShare": 0.253648
+        }
       }
     },
     "Kambar Shahdadkot": {
@@ -1245,6 +2110,27 @@
           "Kalasha": 2,
           "Kohiostani": 0,
           "Others": 160
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 987214,
+          "literate10Plus": 395091,
+          "rate": 0.400208
+        },
+        "water": {
+          "households": 267553,
+          "improved": 246983,
+          "improvedShare": 0.923118
+        },
+        "sanitation": {
+          "households": 267553,
+          "flushToilet": 155664,
+          "nonFlushToilet": 62585,
+          "noToilet": 49304,
+          "separateToilet": 129246,
+          "flushToiletShare": 0.581806,
+          "noToiletShare": 0.184278
         }
       }
     },
@@ -1275,6 +2161,27 @@
           "Kohiostani": 3767,
           "Others": 100841
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2922005,
+          "literate10Plus": 2441433,
+          "rate": 0.835533
+        },
+        "water": {
+          "households": 651268,
+          "improved": 640240,
+          "improvedShare": 0.983067
+        },
+        "sanitation": {
+          "households": 651268,
+          "flushToilet": 634411,
+          "nonFlushToilet": 13897,
+          "noToilet": 2960,
+          "separateToilet": 536051,
+          "flushToiletShare": 0.974117,
+          "noToiletShare": 0.004545
+        }
       }
     },
     "Karachi East": {
@@ -1303,6 +2210,27 @@
           "Kalasha": 172,
           "Kohiostani": 2285,
           "Others": 194350
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2980142,
+          "literate10Plus": 2386145,
+          "rate": 0.800682
+        },
+        "water": {
+          "households": 659389,
+          "improved": 641022,
+          "improvedShare": 0.972145
+        },
+        "sanitation": {
+          "households": 659389,
+          "flushToilet": 622592,
+          "nonFlushToilet": 25105,
+          "noToilet": 11692,
+          "separateToilet": 544976,
+          "flushToiletShare": 0.944195,
+          "noToiletShare": 0.017732
         }
       }
     },
@@ -1333,6 +2261,27 @@
           "Kohiostani": 551,
           "Others": 311965
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1842717,
+          "literate10Plus": 1447743,
+          "rate": 0.785657
+        },
+        "water": {
+          "households": 425093,
+          "improved": 417644,
+          "improvedShare": 0.982477
+        },
+        "sanitation": {
+          "households": 425093,
+          "flushToilet": 410465,
+          "nonFlushToilet": 12169,
+          "noToilet": 2459,
+          "separateToilet": 371037,
+          "flushToiletShare": 0.965589,
+          "noToiletShare": 0.005785
+        }
       }
     },
     "Karachi West": {
@@ -1361,6 +2310,27 @@
           "Kalasha": 131,
           "Kohiostani": 2058,
           "Others": 40873
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2005821,
+          "literate10Plus": 1352477,
+          "rate": 0.674276
+        },
+        "water": {
+          "households": 464756,
+          "improved": 450262,
+          "improvedShare": 0.968814
+        },
+        "sanitation": {
+          "households": 464756,
+          "flushToilet": 443773,
+          "nonFlushToilet": 15588,
+          "noToilet": 5395,
+          "separateToilet": 357469,
+          "flushToiletShare": 0.954852,
+          "noToiletShare": 0.011608
         }
       }
     },
@@ -1391,6 +2361,27 @@
           "Kohiostani": 1,
           "Others": 52
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 573227,
+          "literate10Plus": 374674,
+          "rate": 0.653622
+        },
+        "water": {
+          "households": 95997,
+          "improved": 78128,
+          "improvedShare": 0.813859
+        },
+        "sanitation": {
+          "households": 95997,
+          "flushToilet": 84662,
+          "nonFlushToilet": 11089,
+          "noToilet": 246,
+          "separateToilet": 80689,
+          "flushToiletShare": 0.881923,
+          "noToiletShare": 0.002563
+        }
       }
     },
     "Kashmore": {
@@ -1419,6 +2410,27 @@
           "Kalasha": 1,
           "Kohiostani": 2,
           "Others": 309
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 748032,
+          "literate10Plus": 266194,
+          "rate": 0.355859
+        },
+        "water": {
+          "households": 208894,
+          "improved": 201325,
+          "improvedShare": 0.963766
+        },
+        "sanitation": {
+          "households": 208894,
+          "flushToilet": 103009,
+          "nonFlushToilet": 40414,
+          "noToilet": 65471,
+          "separateToilet": 77737,
+          "flushToiletShare": 0.493116,
+          "noToiletShare": 0.313417
         }
       }
     },
@@ -1449,6 +2461,27 @@
           "Kohiostani": 53,
           "Others": 13097
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2934580,
+          "literate10Plus": 1844344,
+          "rate": 0.628487
+        },
+        "water": {
+          "households": 645308,
+          "improved": 631491,
+          "improvedShare": 0.978589
+        },
+        "sanitation": {
+          "households": 645308,
+          "flushToilet": 603103,
+          "nonFlushToilet": 9150,
+          "noToilet": 33055,
+          "separateToilet": 449156,
+          "flushToiletShare": 0.934597,
+          "noToiletShare": 0.051224
+        }
       }
     },
     "Keamari": {
@@ -1477,6 +2510,27 @@
           "Kalasha": 29,
           "Kohiostani": 3254,
           "Others": 121502
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1521192,
+          "literate10Plus": 944213,
+          "rate": 0.620706
+        },
+        "water": {
+          "households": 319121,
+          "improved": 302513,
+          "improvedShare": 0.947957
+        },
+        "sanitation": {
+          "households": 319121,
+          "flushToilet": 302537,
+          "nonFlushToilet": 12267,
+          "noToilet": 4317,
+          "separateToilet": 255299,
+          "flushToiletShare": 0.948032,
+          "noToiletShare": 0.013528
         }
       }
     },
@@ -1507,6 +2561,27 @@
           "Kohiostani": 0,
           "Others": 217
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 732240,
+          "literate10Plus": 363534,
+          "rate": 0.496468
+        },
+        "water": {
+          "households": 253475,
+          "improved": 180457,
+          "improvedShare": 0.711932
+        },
+        "sanitation": {
+          "households": 253475,
+          "flushToilet": 142587,
+          "nonFlushToilet": 64806,
+          "noToilet": 46082,
+          "separateToilet": 127898,
+          "flushToiletShare": 0.562529,
+          "noToiletShare": 0.181801
+        }
       }
     },
     "Khairpur": {
@@ -1535,6 +2610,27 @@
           "Kalasha": 0,
           "Kohiostani": 32,
           "Others": 2110
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1706188,
+          "literate10Plus": 855550,
+          "rate": 0.501439
+        },
+        "water": {
+          "households": 452250,
+          "improved": 439790,
+          "improvedShare": 0.972449
+        },
+        "sanitation": {
+          "households": 452250,
+          "flushToilet": 264928,
+          "nonFlushToilet": 59029,
+          "noToilet": 128293,
+          "separateToilet": 207912,
+          "flushToiletShare": 0.5858,
+          "noToiletShare": 0.283677
         }
       }
     },
@@ -1565,6 +2661,27 @@
           "Kohiostani": 2,
           "Others": 24421
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2456148,
+          "literate10Plus": 1497449,
+          "rate": 0.609674
+        },
+        "water": {
+          "households": 526196,
+          "improved": 518533,
+          "improvedShare": 0.985437
+        },
+        "sanitation": {
+          "households": 526196,
+          "flushToilet": 461957,
+          "nonFlushToilet": 12133,
+          "noToilet": 52106,
+          "separateToilet": 383934,
+          "flushToiletShare": 0.877918,
+          "noToiletShare": 0.099024
+        }
       }
     },
     "Kharan": {
@@ -1593,6 +2710,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 20
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 152476,
+          "literate10Plus": 62625,
+          "rate": 0.41072
+        },
+        "water": {
+          "households": 35843,
+          "improved": 29311,
+          "improvedShare": 0.817761
+        },
+        "sanitation": {
+          "households": 35843,
+          "flushToilet": 19063,
+          "nonFlushToilet": 11166,
+          "noToilet": 5614,
+          "separateToilet": 22827,
+          "flushToiletShare": 0.531847,
+          "noToiletShare": 0.156628
         }
       }
     },
@@ -1623,6 +2761,27 @@
           "Kohiostani": 1,
           "Others": 4336
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1129307,
+          "literate10Plus": 706088,
+          "rate": 0.62524
+        },
+        "water": {
+          "households": 248304,
+          "improved": 235331,
+          "improvedShare": 0.947754
+        },
+        "sanitation": {
+          "households": 248304,
+          "flushToilet": 203503,
+          "nonFlushToilet": 5964,
+          "noToilet": 38837,
+          "separateToilet": 175122,
+          "flushToiletShare": 0.819572,
+          "noToiletShare": 0.156409
+        }
       }
     },
     "Khuzdar": {
@@ -1651,6 +2810,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 404
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 621603,
+          "literate10Plus": 239864,
+          "rate": 0.38588
+        },
+        "water": {
+          "households": 161450,
+          "improved": 110230,
+          "improvedShare": 0.68275
+        },
+        "sanitation": {
+          "households": 161450,
+          "flushToilet": 71788,
+          "nonFlushToilet": 42743,
+          "noToilet": 46919,
+          "separateToilet": 85673,
+          "flushToiletShare": 0.444645,
+          "noToiletShare": 0.29061
         }
       }
     },
@@ -1681,6 +2861,27 @@
           "Kohiostani": 11,
           "Others": 786
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 750674,
+          "literate10Plus": 288669,
+          "rate": 0.384546
+        },
+        "water": {
+          "households": 166805,
+          "improved": 117755,
+          "improvedShare": 0.705944
+        },
+        "sanitation": {
+          "households": 166805,
+          "flushToilet": 78819,
+          "nonFlushToilet": 71196,
+          "noToilet": 16790,
+          "separateToilet": 72253,
+          "flushToiletShare": 0.472522,
+          "noToiletShare": 0.100656
+        }
       }
     },
     "Killa Abdullah": {
@@ -1709,6 +2910,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 369
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 228328,
+          "literate10Plus": 83117,
+          "rate": 0.364025
+        },
+        "water": {
+          "households": 67289,
+          "improved": 54971,
+          "improvedShare": 0.816939
+        },
+        "sanitation": {
+          "households": 67289,
+          "flushToilet": 34141,
+          "nonFlushToilet": 25666,
+          "noToilet": 7482,
+          "separateToilet": 36169,
+          "flushToiletShare": 0.507379,
+          "noToiletShare": 0.111192
         }
       }
     },
@@ -1739,6 +2961,27 @@
           "Kohiostani": 0,
           "Others": 114
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 226581,
+          "literate10Plus": 74678,
+          "rate": 0.329586
+        },
+        "water": {
+          "households": 69998,
+          "improved": 43398,
+          "improvedShare": 0.619989
+        },
+        "sanitation": {
+          "households": 69998,
+          "flushToilet": 23078,
+          "nonFlushToilet": 10794,
+          "noToilet": 36126,
+          "separateToilet": 19865,
+          "flushToiletShare": 0.329695,
+          "noToiletShare": 0.5161
+        }
       }
     },
     "Kohat": {
@@ -1767,6 +3010,27 @@
           "Kalasha": 1,
           "Kohiostani": 33,
           "Others": 306
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 900401,
+          "literate10Plus": 527155,
+          "rate": 0.585467
+        },
+        "water": {
+          "households": 169679,
+          "improved": 151724,
+          "improvedShare": 0.894183
+        },
+        "sanitation": {
+          "households": 169679,
+          "flushToilet": 151992,
+          "nonFlushToilet": 7952,
+          "noToilet": 9735,
+          "separateToilet": 125059,
+          "flushToiletShare": 0.895762,
+          "noToiletShare": 0.057373
         }
       }
     },
@@ -1797,6 +3061,27 @@
           "Kohiostani": 0,
           "Others": 128
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 163542,
+          "literate10Plus": 46661,
+          "rate": 0.285315
+        },
+        "water": {
+          "households": 38095,
+          "improved": 11604,
+          "improvedShare": 0.304607
+        },
+        "sanitation": {
+          "households": 38095,
+          "flushToilet": 8585,
+          "nonFlushToilet": 3837,
+          "noToilet": 25673,
+          "separateToilet": 7407,
+          "flushToiletShare": 0.225358,
+          "noToiletShare": 0.67392
+        }
       }
     },
     "Kolai Pallas Kohistan": {
@@ -1825,6 +3110,27 @@
           "Kalasha": 14,
           "Kohiostani": 201656,
           "Others": 9531
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 134084,
+          "literate10Plus": 25209,
+          "rate": 0.188009
+        },
+        "water": {
+          "households": 33983,
+          "improved": 9014,
+          "improvedShare": 0.26525
+        },
+        "sanitation": {
+          "households": 33983,
+          "flushToilet": 13481,
+          "nonFlushToilet": 8761,
+          "noToilet": 11741,
+          "separateToilet": 9816,
+          "flushToiletShare": 0.396698,
+          "noToiletShare": 0.345496
         }
       }
     },
@@ -1855,6 +3161,27 @@
           "Kohiostani": 800,
           "Others": 96917
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2312200,
+          "literate10Plus": 1846470,
+          "rate": 0.798577
+        },
+        "water": {
+          "households": 493050,
+          "improved": 482881,
+          "improvedShare": 0.979375
+        },
+        "sanitation": {
+          "households": 493050,
+          "flushToilet": 480174,
+          "nonFlushToilet": 9846,
+          "noToilet": 3030,
+          "separateToilet": 400983,
+          "flushToiletShare": 0.973885,
+          "noToiletShare": 0.006145
+        }
       }
     },
     "Kurram": {
@@ -1883,6 +3210,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 3573
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 509976,
+          "literate10Plus": 179598,
+          "rate": 0.35217
+        },
+        "water": {
+          "households": 94548,
+          "improved": 60938,
+          "improvedShare": 0.644519
+        },
+        "sanitation": {
+          "households": 94548,
+          "flushToilet": 61816,
+          "nonFlushToilet": 19355,
+          "noToilet": 13377,
+          "separateToilet": 50696,
+          "flushToiletShare": 0.653805,
+          "noToiletShare": 0.141484
         }
       }
     },
@@ -1913,6 +3261,27 @@
           "Kohiostani": 543,
           "Others": 15682
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 9746671,
+          "literate10Plus": 7760203,
+          "rate": 0.79619
+        },
+        "water": {
+          "households": 2010225,
+          "improved": 1970577,
+          "improvedShare": 0.980277
+        },
+        "sanitation": {
+          "households": 2010225,
+          "flushToilet": 1921046,
+          "nonFlushToilet": 52476,
+          "noToilet": 36703,
+          "separateToilet": 1678820,
+          "flushToiletShare": 0.955637,
+          "noToiletShare": 0.018258
+        }
       }
     },
     "Lakki Marwat": {
@@ -1941,6 +3310,27 @@
           "Kalasha": 6,
           "Kohiostani": 0,
           "Others": 35
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 692004,
+          "literate10Plus": 335435,
+          "rate": 0.48473
+        },
+        "water": {
+          "households": 131800,
+          "improved": 118298,
+          "improvedShare": 0.897557
+        },
+        "sanitation": {
+          "households": 131800,
+          "flushToilet": 106651,
+          "nonFlushToilet": 9145,
+          "noToilet": 16004,
+          "separateToilet": 78627,
+          "flushToiletShare": 0.809188,
+          "noToiletShare": 0.121426
         }
       }
     },
@@ -1971,6 +3361,27 @@
           "Kohiostani": 1,
           "Others": 144
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1215006,
+          "literate10Plus": 675353,
+          "rate": 0.555843
+        },
+        "water": {
+          "households": 321528,
+          "improved": 318020,
+          "improvedShare": 0.98909
+        },
+        "sanitation": {
+          "households": 321528,
+          "flushToilet": 264082,
+          "nonFlushToilet": 35939,
+          "noToilet": 21507,
+          "separateToilet": 176723,
+          "flushToiletShare": 0.821334,
+          "noToiletShare": 0.06689
+        }
       }
     },
     "Lasbela": {
@@ -1999,6 +3410,27 @@
           "Kalasha": 23,
           "Kohiostani": 24,
           "Others": 15899
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 471778,
+          "literate10Plus": 172052,
+          "rate": 0.364688
+        },
+        "water": {
+          "households": 115539,
+          "improved": 95457,
+          "improvedShare": 0.826189
+        },
+        "sanitation": {
+          "households": 115539,
+          "flushToilet": 80605,
+          "nonFlushToilet": 10658,
+          "noToilet": 24276,
+          "separateToilet": 71503,
+          "flushToiletShare": 0.697643,
+          "noToiletShare": 0.210111
         }
       }
     },
@@ -2029,6 +3461,27 @@
           "Kohiostani": 1,
           "Others": 3904
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1497639,
+          "literate10Plus": 926057,
+          "rate": 0.618345
+        },
+        "water": {
+          "households": 341131,
+          "improved": 336363,
+          "improvedShare": 0.986023
+        },
+        "sanitation": {
+          "households": 341131,
+          "flushToilet": 294042,
+          "nonFlushToilet": 6382,
+          "noToilet": 40707,
+          "separateToilet": 224076,
+          "flushToiletShare": 0.861962,
+          "noToiletShare": 0.11933
+        }
       }
     },
     "Lodhran": {
@@ -2057,6 +3510,27 @@
           "Kalasha": 12,
           "Kohiostani": 6,
           "Others": 32535
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1385693,
+          "literate10Plus": 716142,
+          "rate": 0.516811
+        },
+        "water": {
+          "households": 323866,
+          "improved": 312562,
+          "improvedShare": 0.965097
+        },
+        "sanitation": {
+          "households": 323866,
+          "flushToilet": 277767,
+          "nonFlushToilet": 7364,
+          "noToilet": 38735,
+          "separateToilet": 206679,
+          "flushToiletShare": 0.85766,
+          "noToiletShare": 0.119602
         }
       }
     },
@@ -2087,6 +3561,27 @@
           "Kohiostani": 3,
           "Others": 605
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 167957,
+          "literate10Plus": 72498,
+          "rate": 0.431646
+        },
+        "water": {
+          "households": 38214,
+          "improved": 27735,
+          "improvedShare": 0.725781
+        },
+        "sanitation": {
+          "households": 38214,
+          "flushToilet": 20006,
+          "nonFlushToilet": 6870,
+          "noToilet": 11338,
+          "separateToilet": 17083,
+          "flushToiletShare": 0.523525,
+          "noToiletShare": 0.296698
+        }
       }
     },
     "Lower Chitral": {
@@ -2115,6 +3610,27 @@
           "Kalasha": 5065,
           "Kohiostani": 1418,
           "Others": 279298
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 230856,
+          "literate10Plus": 152589,
+          "rate": 0.66097
+        },
+        "water": {
+          "households": 46028,
+          "improved": 38085,
+          "improvedShare": 0.827431
+        },
+        "sanitation": {
+          "households": 46028,
+          "flushToilet": 40443,
+          "nonFlushToilet": 1694,
+          "noToilet": 3891,
+          "separateToilet": 38861,
+          "flushToiletShare": 0.878661,
+          "noToiletShare": 0.084536
         }
       }
     },
@@ -2145,6 +3661,27 @@
           "Kohiostani": 557,
           "Others": 3860
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1106546,
+          "literate10Plus": 634720,
+          "rate": 0.573605
+        },
+        "water": {
+          "households": 202836,
+          "improved": 147642,
+          "improvedShare": 0.727889
+        },
+        "sanitation": {
+          "households": 202836,
+          "flushToilet": 181551,
+          "nonFlushToilet": 6793,
+          "noToilet": 14492,
+          "separateToilet": 148161,
+          "flushToiletShare": 0.895063,
+          "noToiletShare": 0.071447
+        }
       }
     },
     "Lower Kohistan": {
@@ -2173,6 +3710,27 @@
           "Kalasha": 31,
           "Kohiostani": 279839,
           "Others": 1650
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 167582,
+          "literate10Plus": 36945,
+          "rate": 0.220459
+        },
+        "water": {
+          "households": 47347,
+          "improved": 21612,
+          "improvedShare": 0.45646
+        },
+        "sanitation": {
+          "households": 47347,
+          "flushToilet": 25605,
+          "nonFlushToilet": 7119,
+          "noToilet": 14623,
+          "separateToilet": 16823,
+          "flushToiletShare": 0.540795,
+          "noToiletShare": 0.308847
         }
       }
     },
@@ -2203,6 +3761,27 @@
           "Kohiostani": 447,
           "Others": 11466
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 580753,
+          "literate10Plus": 358119,
+          "rate": 0.616646
+        },
+        "water": {
+          "households": 113118,
+          "improved": 102648,
+          "improvedShare": 0.907442
+        },
+        "sanitation": {
+          "households": 113118,
+          "flushToilet": 97817,
+          "nonFlushToilet": 5464,
+          "noToilet": 9837,
+          "separateToilet": 85839,
+          "flushToiletShare": 0.864734,
+          "noToiletShare": 0.086962
+        }
       }
     },
     "Malir": {
@@ -2231,6 +3810,27 @@
           "Kalasha": 58,
           "Kohiostani": 1358,
           "Others": 76717
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1795564,
+          "literate10Plus": 1133717,
+          "rate": 0.631399
+        },
+        "water": {
+          "households": 421426,
+          "improved": 408301,
+          "improvedShare": 0.968856
+        },
+        "sanitation": {
+          "households": 421426,
+          "flushToilet": 378196,
+          "nonFlushToilet": 27550,
+          "noToilet": 15680,
+          "separateToilet": 322335,
+          "flushToiletShare": 0.89742,
+          "noToiletShare": 0.037207
         }
       }
     },
@@ -2261,6 +3861,27 @@
           "Kohiostani": 827,
           "Others": 599
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1371605,
+          "literate10Plus": 963813,
+          "rate": 0.70269
+        },
+        "water": {
+          "households": 285989,
+          "improved": 280729,
+          "improvedShare": 0.981608
+        },
+        "sanitation": {
+          "households": 285989,
+          "flushToilet": 248405,
+          "nonFlushToilet": 6741,
+          "noToilet": 30843,
+          "separateToilet": 224264,
+          "flushToiletShare": 0.868582,
+          "noToiletShare": 0.107847
+        }
       }
     },
     "Mansehra": {
@@ -2289,6 +3910,27 @@
           "Kalasha": 14,
           "Kohiostani": 44883,
           "Others": 206893
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1310639,
+          "literate10Plus": 836108,
+          "rate": 0.637939
+        },
+        "water": {
+          "households": 294052,
+          "improved": 232361,
+          "improvedShare": 0.790204
+        },
+        "sanitation": {
+          "households": 294052,
+          "flushToilet": 260243,
+          "nonFlushToilet": 8654,
+          "noToilet": 25155,
+          "separateToilet": 216066,
+          "flushToiletShare": 0.885024,
+          "noToiletShare": 0.085546
         }
       }
     },
@@ -2319,6 +3961,27 @@
           "Kohiostani": 2677,
           "Others": 10185
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1954332,
+          "literate10Plus": 1090251,
+          "rate": 0.557864
+        },
+        "water": {
+          "households": 400859,
+          "improved": 390381,
+          "improvedShare": 0.973861
+        },
+        "sanitation": {
+          "households": 400859,
+          "flushToilet": 370827,
+          "nonFlushToilet": 11344,
+          "noToilet": 18688,
+          "separateToilet": 283010,
+          "flushToiletShare": 0.925081,
+          "noToiletShare": 0.04662
+        }
       }
     },
     "Mastung": {
@@ -2347,6 +4010,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 1776
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 202839,
+          "literate10Plus": 93253,
+          "rate": 0.459739
+        },
+        "water": {
+          "households": 43695,
+          "improved": 33734,
+          "improvedShare": 0.772033
+        },
+        "sanitation": {
+          "households": 43695,
+          "flushToilet": 29513,
+          "nonFlushToilet": 10921,
+          "noToilet": 3261,
+          "separateToilet": 27578,
+          "flushToiletShare": 0.675432,
+          "noToiletShare": 0.074631
         }
       }
     },
@@ -2377,6 +4061,27 @@
           "Kohiostani": 0,
           "Others": 4889
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 582611,
+          "literate10Plus": 267295,
+          "rate": 0.458788
+        },
+        "water": {
+          "households": 158463,
+          "improved": 154538,
+          "improvedShare": 0.975231
+        },
+        "sanitation": {
+          "households": 158463,
+          "flushToilet": 101725,
+          "nonFlushToilet": 16796,
+          "noToilet": 39942,
+          "separateToilet": 75015,
+          "flushToiletShare": 0.641948,
+          "noToiletShare": 0.252059
+        }
       }
     },
     "Mianwali": {
@@ -2405,6 +4110,27 @@
           "Kalasha": 1,
           "Kohiostani": 37,
           "Others": 5608
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1341380,
+          "literate10Plus": 843309,
+          "rate": 0.628688
+        },
+        "water": {
+          "households": 296339,
+          "improved": 278416,
+          "improvedShare": 0.939519
+        },
+        "sanitation": {
+          "households": 296339,
+          "flushToilet": 259254,
+          "nonFlushToilet": 10880,
+          "noToilet": 26205,
+          "separateToilet": 207663,
+          "flushToiletShare": 0.874856,
+          "noToiletShare": 0.088429
         }
       }
     },
@@ -2435,6 +4161,27 @@
           "Kohiostani": 133,
           "Others": 43519
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1143427,
+          "literate10Plus": 518786,
+          "rate": 0.453712
+        },
+        "water": {
+          "households": 312986,
+          "improved": 250859,
+          "improvedShare": 0.801502
+        },
+        "sanitation": {
+          "households": 312986,
+          "flushToilet": 143778,
+          "nonFlushToilet": 43445,
+          "noToilet": 125763,
+          "separateToilet": 146958,
+          "flushToiletShare": 0.459375,
+          "noToiletShare": 0.401817
+        }
       }
     },
     "Mohmand": {
@@ -2463,6 +4210,27 @@
           "Kalasha": 0,
           "Kohiostani": 103,
           "Others": 120
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 362180,
+          "literate10Plus": 113307,
+          "rate": 0.312847
+        },
+        "water": {
+          "households": 63973,
+          "improved": 47984,
+          "improvedShare": 0.750066
+        },
+        "sanitation": {
+          "households": 63973,
+          "flushToilet": 28806,
+          "nonFlushToilet": 21107,
+          "noToilet": 14060,
+          "separateToilet": 31366,
+          "flushToiletShare": 0.450284,
+          "noToiletShare": 0.21978
         }
       }
     },
@@ -2493,6 +4261,27 @@
           "Kohiostani": 32,
           "Others": 24086
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3942603,
+          "literate10Plus": 2421172,
+          "rate": 0.614105
+        },
+        "water": {
+          "households": 886392,
+          "improved": 867724,
+          "improvedShare": 0.978939
+        },
+        "sanitation": {
+          "households": 886392,
+          "flushToilet": 795090,
+          "nonFlushToilet": 17900,
+          "noToilet": 73402,
+          "separateToilet": 638044,
+          "flushToiletShare": 0.896996,
+          "noToiletShare": 0.08281
+        }
       }
     },
     "Musa Khel": {
@@ -2521,6 +4310,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 2601
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 107604,
+          "literate10Plus": 39383,
+          "rate": 0.365999
+        },
+        "water": {
+          "households": 31252,
+          "improved": 12809,
+          "improvedShare": 0.409862
+        },
+        "sanitation": {
+          "households": 31252,
+          "flushToilet": 8352,
+          "nonFlushToilet": 6219,
+          "noToilet": 16681,
+          "separateToilet": 8599,
+          "flushToiletShare": 0.267247,
+          "noToiletShare": 0.533758
         }
       }
     },
@@ -2551,6 +4361,27 @@
           "Kohiostani": 11,
           "Others": 5948
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3394476,
+          "literate10Plus": 1628943,
+          "rate": 0.479881
+        },
+        "water": {
+          "households": 804438,
+          "improved": 796037,
+          "improvedShare": 0.989557
+        },
+        "sanitation": {
+          "households": 804438,
+          "flushToilet": 611886,
+          "nonFlushToilet": 22621,
+          "noToilet": 169931,
+          "separateToilet": 445353,
+          "flushToiletShare": 0.760638,
+          "noToiletShare": 0.211242
+        }
       }
     },
     "Nankana Sahib": {
@@ -2579,6 +4410,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 523
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1206271,
+          "literate10Plus": 761403,
+          "rate": 0.631204
+        },
+        "water": {
+          "households": 246956,
+          "improved": 228307,
+          "improvedShare": 0.924485
+        },
+        "sanitation": {
+          "households": 246956,
+          "flushToilet": 222957,
+          "nonFlushToilet": 4025,
+          "noToilet": 19974,
+          "separateToilet": 186801,
+          "flushToiletShare": 0.902821,
+          "noToiletShare": 0.080881
         }
       }
     },
@@ -2609,6 +4461,27 @@
           "Kohiostani": 1,
           "Others": 530
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1455970,
+          "literate10Plus": 1096110,
+          "rate": 0.752838
+        },
+        "water": {
+          "households": 281536,
+          "improved": 278211,
+          "improvedShare": 0.98819
+        },
+        "sanitation": {
+          "households": 281536,
+          "flushToilet": 265022,
+          "nonFlushToilet": 4014,
+          "noToilet": 12500,
+          "separateToilet": 238888,
+          "flushToiletShare": 0.941343,
+          "noToiletShare": 0.044399
+        }
       }
     },
     "Nasirabad": {
@@ -2637,6 +4510,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 581
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 346468,
+          "literate10Plus": 100345,
+          "rate": 0.289623
+        },
+        "water": {
+          "households": 87516,
+          "improved": 45550,
+          "improvedShare": 0.520476
+        },
+        "sanitation": {
+          "households": 87516,
+          "flushToilet": 26788,
+          "nonFlushToilet": 25498,
+          "noToilet": 35230,
+          "separateToilet": 32241,
+          "flushToiletShare": 0.306093,
+          "noToiletShare": 0.402555
         }
       }
     },
@@ -2667,6 +4561,27 @@
           "Kohiostani": 8,
           "Others": 1828
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1196467,
+          "literate10Plus": 683795,
+          "rate": 0.571512
+        },
+        "water": {
+          "households": 319768,
+          "improved": 311355,
+          "improvedShare": 0.97369
+        },
+        "sanitation": {
+          "households": 319768,
+          "flushToilet": 232568,
+          "nonFlushToilet": 38644,
+          "noToilet": 48556,
+          "separateToilet": 167884,
+          "flushToiletShare": 0.727302,
+          "noToiletShare": 0.151848
+        }
       }
     },
     "North Waziristan": {
@@ -2695,6 +4610,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 24
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 438878,
+          "literate10Plus": 144051,
+          "rate": 0.328226
+        },
+        "water": {
+          "households": 99595,
+          "improved": 68449,
+          "improvedShare": 0.687273
+        },
+        "sanitation": {
+          "households": 99595,
+          "flushToilet": 53523,
+          "nonFlushToilet": 20218,
+          "noToilet": 25854,
+          "separateToilet": 47275,
+          "flushToiletShare": 0.537406,
+          "noToiletShare": 0.259591
         }
       }
     },
@@ -2725,6 +4661,27 @@
           "Kohiostani": 1250,
           "Others": 3956
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1256704,
+          "literate10Plus": 713608,
+          "rate": 0.567841
+        },
+        "water": {
+          "households": 259774,
+          "improved": 245363,
+          "improvedShare": 0.944525
+        },
+        "sanitation": {
+          "households": 259774,
+          "flushToilet": 236082,
+          "nonFlushToilet": 9770,
+          "noToilet": 13922,
+          "separateToilet": 186895,
+          "flushToiletShare": 0.908798,
+          "noToiletShare": 0.053593
+        }
       }
     },
     "Nushki": {
@@ -2753,6 +4710,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 21
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 133949,
+          "literate10Plus": 76506,
+          "rate": 0.571158
+        },
+        "water": {
+          "households": 31255,
+          "improved": 29338,
+          "improvedShare": 0.938666
+        },
+        "sanitation": {
+          "households": 31255,
+          "flushToilet": 21714,
+          "nonFlushToilet": 6623,
+          "noToilet": 2918,
+          "separateToilet": 21602,
+          "flushToiletShare": 0.694737,
+          "noToiletShare": 0.093361
         }
       }
     },
@@ -2783,6 +4761,27 @@
           "Kohiostani": 31,
           "Others": 484
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2544906,
+          "literate10Plus": 1533378,
+          "rate": 0.602528
+        },
+        "water": {
+          "households": 549724,
+          "improved": 539105,
+          "improvedShare": 0.980683
+        },
+        "sanitation": {
+          "households": 549724,
+          "flushToilet": 490449,
+          "nonFlushToilet": 9222,
+          "noToilet": 50053,
+          "separateToilet": 403059,
+          "flushToiletShare": 0.892173,
+          "noToiletShare": 0.091051
+        }
       }
     },
     "Orakzai": {
@@ -2811,6 +4810,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 18
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 249296,
+          "literate10Plus": 83690,
+          "rate": 0.335705
+        },
+        "water": {
+          "households": 52104,
+          "improved": 30977,
+          "improvedShare": 0.594522
+        },
+        "sanitation": {
+          "households": 52104,
+          "flushToilet": 32736,
+          "nonFlushToilet": 19368,
+          "noToilet": 0,
+          "separateToilet": 29042,
+          "flushToiletShare": 0.628282,
+          "noToiletShare": 0
         }
       }
     },
@@ -2841,6 +4861,27 @@
           "Kohiostani": 1,
           "Others": 10648
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1521954,
+          "literate10Plus": 869422,
+          "rate": 0.571254
+        },
+        "water": {
+          "households": 344546,
+          "improved": 330777,
+          "improvedShare": 0.960037
+        },
+        "sanitation": {
+          "households": 344546,
+          "flushToilet": 294982,
+          "nonFlushToilet": 7892,
+          "noToilet": 41672,
+          "separateToilet": 232682,
+          "flushToiletShare": 0.856147,
+          "noToiletShare": 0.120948
+        }
       }
     },
     "Panjgur": {
@@ -2869,6 +4910,27 @@
           "Kalasha": 0,
           "Kohiostani": 4,
           "Others": 233
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 354229,
+          "literate10Plus": 149007,
+          "rate": 0.420652
+        },
+        "water": {
+          "households": 117089,
+          "improved": 85793,
+          "improvedShare": 0.732716
+        },
+        "sanitation": {
+          "households": 117089,
+          "flushToilet": 26316,
+          "nonFlushToilet": 67419,
+          "noToilet": 23354,
+          "separateToilet": 48341,
+          "flushToiletShare": 0.224752,
+          "noToiletShare": 0.199455
         }
       }
     },
@@ -2899,6 +4961,27 @@
           "Kohiostani": 1253,
           "Others": 24839
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3394763,
+          "literate10Plus": 1808869,
+          "rate": 0.532841
+        },
+        "water": {
+          "households": 690976,
+          "improved": 670248,
+          "improvedShare": 0.970002
+        },
+        "sanitation": {
+          "households": 690976,
+          "flushToilet": 625150,
+          "nonFlushToilet": 38445,
+          "noToilet": 27381,
+          "separateToilet": 463334,
+          "flushToiletShare": 0.904735,
+          "noToiletShare": 0.039627
+        }
       }
     },
     "Pishin": {
@@ -2927,6 +5010,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 231
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 517451,
+          "literate10Plus": 264249,
+          "rate": 0.510674
+        },
+        "water": {
+          "households": 147185,
+          "improved": 124316,
+          "improvedShare": 0.844624
+        },
+        "sanitation": {
+          "households": 147185,
+          "flushToilet": 96120,
+          "nonFlushToilet": 38384,
+          "noToilet": 12681,
+          "separateToilet": 87300,
+          "flushToiletShare": 0.653056,
+          "noToiletShare": 0.086157
         }
       }
     },
@@ -2957,6 +5061,27 @@
           "Kohiostani": 892,
           "Others": 186007
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1550356,
+          "literate10Plus": 872669,
+          "rate": 0.562883
+        },
+        "water": {
+          "households": 288459,
+          "improved": 272201,
+          "improvedShare": 0.943638
+        },
+        "sanitation": {
+          "households": 288459,
+          "flushToilet": 248887,
+          "nonFlushToilet": 35752,
+          "noToilet": 3820,
+          "separateToilet": 231816,
+          "flushToiletShare": 0.862816,
+          "noToiletShare": 0.013243
+        }
       }
     },
     "Rahim Yar Khan": {
@@ -2985,6 +5110,27 @@
           "Kalasha": 61,
           "Kohiostani": 202,
           "Others": 95719
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3877479,
+          "literate10Plus": 1858774,
+          "rate": 0.479377
+        },
+        "water": {
+          "households": 826942,
+          "improved": 804941,
+          "improvedShare": 0.973395
+        },
+        "sanitation": {
+          "households": 826942,
+          "flushToilet": 685407,
+          "nonFlushToilet": 23874,
+          "noToilet": 117661,
+          "separateToilet": 563119,
+          "flushToiletShare": 0.828845,
+          "noToiletShare": 0.142284
         }
       }
     },
@@ -3015,6 +5161,27 @@
           "Kohiostani": 0,
           "Others": 1769
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1507085,
+          "literate10Plus": 543915,
+          "rate": 0.360905
+        },
+        "water": {
+          "households": 354016,
+          "improved": 317781,
+          "improvedShare": 0.897646
+        },
+        "sanitation": {
+          "households": 354016,
+          "flushToilet": 204808,
+          "nonFlushToilet": 15995,
+          "noToilet": 133213,
+          "separateToilet": 139514,
+          "flushToiletShare": 0.578528,
+          "noToiletShare": 0.376291
+        }
       }
     },
     "Rawalpindi": {
@@ -3043,6 +5210,27 @@
           "Kalasha": 208,
           "Kohiostani": 10921,
           "Others": 382852
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 4696941,
+          "literate10Plus": 3909007,
+          "rate": 0.832245
+        },
+        "water": {
+          "households": 998000,
+          "improved": 925431,
+          "improvedShare": 0.927286
+        },
+        "sanitation": {
+          "households": 998000,
+          "flushToilet": 947903,
+          "nonFlushToilet": 26351,
+          "noToilet": 23746,
+          "separateToilet": 871788,
+          "flushToiletShare": 0.949803,
+          "noToiletShare": 0.023794
         }
       }
     },
@@ -3073,6 +5261,27 @@
           "Kohiostani": 0,
           "Others": 1865
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2105939,
+          "literate10Plus": 1364032,
+          "rate": 0.647707
+        },
+        "water": {
+          "households": 446606,
+          "improved": 438237,
+          "improvedShare": 0.981261
+        },
+        "sanitation": {
+          "households": 446606,
+          "flushToilet": 397106,
+          "nonFlushToilet": 8635,
+          "noToilet": 40865,
+          "separateToilet": 343187,
+          "flushToiletShare": 0.889164,
+          "noToiletShare": 0.091501
+        }
       }
     },
     "Sanghar": {
@@ -3101,6 +5310,27 @@
           "Kalasha": 30,
           "Kohiostani": 130,
           "Others": 51568
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1573709,
+          "literate10Plus": 687063,
+          "rate": 0.436588
+        },
+        "water": {
+          "households": 406937,
+          "improved": 373178,
+          "improvedShare": 0.917041
+        },
+        "sanitation": {
+          "households": 406937,
+          "flushToilet": 206088,
+          "nonFlushToilet": 44610,
+          "noToilet": 156239,
+          "separateToilet": 172192,
+          "flushToiletShare": 0.506437,
+          "noToiletShare": 0.383939
         }
       }
     },
@@ -3131,6 +5361,27 @@
           "Kohiostani": 419,
           "Others": 779
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3237620,
+          "literate10Plus": 2160405,
+          "rate": 0.667282
+        },
+        "water": {
+          "households": 684321,
+          "improved": 660905,
+          "improvedShare": 0.965782
+        },
+        "sanitation": {
+          "households": 684321,
+          "flushToilet": 578632,
+          "nonFlushToilet": 13018,
+          "noToilet": 92671,
+          "separateToilet": 471981,
+          "flushToiletShare": 0.845556,
+          "noToiletShare": 0.13542
+        }
       }
     },
     "Shaheed Benazirabad": {
@@ -3159,6 +5410,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 4639
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1238322,
+          "literate10Plus": 629794,
+          "rate": 0.508587
+        },
+        "water": {
+          "households": 334356,
+          "improved": 326687,
+          "improvedShare": 0.977063
+        },
+        "sanitation": {
+          "households": 334356,
+          "flushToilet": 208519,
+          "nonFlushToilet": 37027,
+          "noToilet": 88810,
+          "separateToilet": 159487,
+          "flushToiletShare": 0.623644,
+          "noToiletShare": 0.265615
         }
       }
     },
@@ -3189,6 +5461,27 @@
           "Kohiostani": 9175,
           "Others": 30438
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 583402,
+          "literate10Plus": 196832,
+          "rate": 0.337387
+        },
+        "water": {
+          "households": 125540,
+          "improved": 85344,
+          "improvedShare": 0.679815
+        },
+        "sanitation": {
+          "households": 125540,
+          "flushToilet": 84932,
+          "nonFlushToilet": 8813,
+          "noToilet": 31795,
+          "separateToilet": 63094,
+          "flushToiletShare": 0.676533,
+          "noToiletShare": 0.253266
+        }
       }
     },
     "Sheikhupura": {
@@ -3217,6 +5510,27 @@
           "Kalasha": 16,
           "Kohiostani": 34,
           "Others": 2443
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2962186,
+          "literate10Plus": 2040443,
+          "rate": 0.68883
+        },
+        "water": {
+          "households": 593260,
+          "improved": 577250,
+          "improvedShare": 0.973014
+        },
+        "sanitation": {
+          "households": 593260,
+          "flushToilet": 569941,
+          "nonFlushToilet": 9699,
+          "noToilet": 13620,
+          "separateToilet": 493564,
+          "flushToiletShare": 0.960693,
+          "noToiletShare": 0.022958
         }
       }
     },
@@ -3247,6 +5561,27 @@
           "Kohiostani": 0,
           "Others": 4
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 116273,
+          "literate10Plus": 27747,
+          "rate": 0.238637
+        },
+        "water": {
+          "households": 36100,
+          "improved": 19266,
+          "improvedShare": 0.533684
+        },
+        "sanitation": {
+          "households": 36100,
+          "flushToilet": 16154,
+          "nonFlushToilet": 10009,
+          "noToilet": 9937,
+          "separateToilet": 14538,
+          "flushToiletShare": 0.447479,
+          "noToiletShare": 0.275263
+        }
       }
     },
     "Shikarpur": {
@@ -3275,6 +5610,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 230
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 872141,
+          "literate10Plus": 381153,
+          "rate": 0.437031
+        },
+        "water": {
+          "households": 214824,
+          "improved": 212909,
+          "improvedShare": 0.991086
+        },
+        "sanitation": {
+          "households": 214824,
+          "flushToilet": 146199,
+          "nonFlushToilet": 30743,
+          "noToilet": 37882,
+          "separateToilet": 98312,
+          "flushToiletShare": 0.680552,
+          "noToiletShare": 0.17634
         }
       }
     },
@@ -3305,6 +5661,27 @@
           "Kohiostani": 353,
           "Others": 4533
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 3356203,
+          "literate10Plus": 2630257,
+          "rate": 0.7837
+        },
+        "water": {
+          "households": 671320,
+          "improved": 664795,
+          "improvedShare": 0.99028
+        },
+        "sanitation": {
+          "households": 671320,
+          "flushToilet": 644597,
+          "nonFlushToilet": 10291,
+          "noToilet": 16432,
+          "separateToilet": 579321,
+          "flushToiletShare": 0.960193,
+          "noToiletShare": 0.024477
+        }
       }
     },
     "Sibi": {
@@ -3333,6 +5710,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 151
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 144535,
+          "literate10Plus": 68529,
+          "rate": 0.474134
+        },
+        "water": {
+          "households": 31296,
+          "improved": 21023,
+          "improvedShare": 0.671747
+        },
+        "sanitation": {
+          "households": 31296,
+          "flushToilet": 20770,
+          "nonFlushToilet": 6930,
+          "noToilet": 3596,
+          "separateToilet": 18152,
+          "flushToiletShare": 0.663663,
+          "noToiletShare": 0.114903
         }
       }
     },
@@ -3363,6 +5761,27 @@
           "Kohiostani": 0,
           "Others": 382
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 136881,
+          "literate10Plus": 56153,
+          "rate": 0.410232
+        },
+        "water": {
+          "households": 33734,
+          "improved": 18191,
+          "improvedShare": 0.539248
+        },
+        "sanitation": {
+          "households": 33734,
+          "flushToilet": 11301,
+          "nonFlushToilet": 5522,
+          "noToilet": 16911,
+          "separateToilet": 11284,
+          "flushToiletShare": 0.335003,
+          "noToiletShare": 0.501304
+        }
       }
     },
     "South Waziristan": {
@@ -3391,6 +5810,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 16406
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 593064,
+          "literate10Plus": 189570,
+          "rate": 0.319645
+        },
+        "water": {
+          "households": 178636,
+          "improved": 83065,
+          "improvedShare": 0.464996
+        },
+        "sanitation": {
+          "households": 178636,
+          "flushToilet": 104752,
+          "nonFlushToilet": 40299,
+          "noToilet": 33585,
+          "separateToilet": 64514,
+          "flushToiletShare": 0.586399,
+          "noToiletShare": 0.188008
         }
       }
     },
@@ -3421,6 +5861,27 @@
           "Kohiostani": 2,
           "Others": 589
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 551765,
+          "literate10Plus": 149071,
+          "rate": 0.270171
+        },
+        "water": {
+          "households": 158854,
+          "improved": 127126,
+          "improvedShare": 0.800269
+        },
+        "sanitation": {
+          "households": 158854,
+          "flushToilet": 38915,
+          "nonFlushToilet": 40448,
+          "noToilet": 79491,
+          "separateToilet": 62824,
+          "flushToiletShare": 0.244973,
+          "noToiletShare": 0.500403
+        }
       }
     },
     "Sukkur": {
@@ -3449,6 +5910,27 @@
           "Kalasha": 0,
           "Kohiostani": 16,
           "Others": 6372
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1086116,
+          "literate10Plus": 632719,
+          "rate": 0.582552
+        },
+        "water": {
+          "households": 268588,
+          "improved": 258926,
+          "improvedShare": 0.964027
+        },
+        "sanitation": {
+          "households": 268588,
+          "flushToilet": 199703,
+          "nonFlushToilet": 29265,
+          "noToilet": 39620,
+          "separateToilet": 140624,
+          "flushToiletShare": 0.743529,
+          "noToiletShare": 0.147512
         }
       }
     },
@@ -3479,6 +5961,27 @@
           "Kohiostani": 0,
           "Others": 127
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 164423,
+          "literate10Plus": 61559,
+          "rate": 0.374394
+        },
+        "water": {
+          "households": 51227,
+          "improved": 37171,
+          "improvedShare": 0.725613
+        },
+        "sanitation": {
+          "households": 51227,
+          "flushToilet": 25206,
+          "nonFlushToilet": 17324,
+          "noToilet": 8697,
+          "separateToilet": 24066,
+          "flushToiletShare": 0.492045,
+          "noToiletShare": 0.169774
+        }
       }
     },
     "Swabi": {
@@ -3507,6 +6010,27 @@
           "Kalasha": 2,
           "Kohiostani": 1563,
           "Others": 4002
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1370367,
+          "literate10Plus": 801359,
+          "rate": 0.584777
+        },
+        "water": {
+          "households": 278976,
+          "improved": 262696,
+          "improvedShare": 0.941644
+        },
+        "sanitation": {
+          "households": 278976,
+          "flushToilet": 245358,
+          "nonFlushToilet": 8719,
+          "noToilet": 24899,
+          "separateToilet": 193274,
+          "flushToiletShare": 0.879495,
+          "noToiletShare": 0.089251
         }
       }
     },
@@ -3537,6 +6061,27 @@
           "Kohiostani": 39565,
           "Others": 163758
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1877188,
+          "literate10Plus": 903484,
+          "rate": 0.481296
+        },
+        "water": {
+          "households": 381212,
+          "improved": 304345,
+          "improvedShare": 0.798362
+        },
+        "sanitation": {
+          "households": 381212,
+          "flushToilet": 335531,
+          "nonFlushToilet": 10767,
+          "noToilet": 34914,
+          "separateToilet": 276863,
+          "flushToiletShare": 0.880169,
+          "noToiletShare": 0.091587
+        }
       }
     },
     "Tando Allah Yar": {
@@ -3565,6 +6110,27 @@
           "Kalasha": 0,
           "Kohiostani": 1,
           "Others": 6706
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 621796,
+          "literate10Plus": 247486,
+          "rate": 0.398018
+        },
+        "water": {
+          "households": 177471,
+          "improved": 171658,
+          "improvedShare": 0.967245
+        },
+        "sanitation": {
+          "households": 177471,
+          "flushToilet": 100545,
+          "nonFlushToilet": 18391,
+          "noToilet": 58535,
+          "separateToilet": 82910,
+          "flushToiletShare": 0.566543,
+          "noToiletShare": 0.329829
         }
       }
     },
@@ -3595,6 +6161,27 @@
           "Kohiostani": 0,
           "Others": 6791
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 502611,
+          "literate10Plus": 171013,
+          "rate": 0.340249
+        },
+        "water": {
+          "households": 143798,
+          "improved": 138220,
+          "improvedShare": 0.961209
+        },
+        "sanitation": {
+          "households": 143798,
+          "flushToilet": 49941,
+          "nonFlushToilet": 20446,
+          "noToilet": 73411,
+          "separateToilet": 46928,
+          "flushToiletShare": 0.3473,
+          "noToiletShare": 0.510515
+        }
       }
     },
     "Tank": {
@@ -3623,6 +6210,27 @@
           "Kalasha": 38,
           "Kohiostani": 2,
           "Others": 228
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 307532,
+          "literate10Plus": 125071,
+          "rate": 0.406693
+        },
+        "water": {
+          "households": 70563,
+          "improved": 54317,
+          "improvedShare": 0.769766
+        },
+        "sanitation": {
+          "households": 70563,
+          "flushToilet": 49791,
+          "nonFlushToilet": 12708,
+          "noToilet": 8064,
+          "separateToilet": 34032,
+          "flushToiletShare": 0.705625,
+          "noToiletShare": 0.114281
         }
       }
     },
@@ -3653,6 +6261,27 @@
           "Kohiostani": 1,
           "Others": 4641
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1088975,
+          "literate10Plus": 396323,
+          "rate": 0.363941
+        },
+        "water": {
+          "households": 327584,
+          "improved": 180494,
+          "improvedShare": 0.550985
+        },
+        "sanitation": {
+          "households": 327584,
+          "flushToilet": 95952,
+          "nonFlushToilet": 39075,
+          "noToilet": 192557,
+          "separateToilet": 91988,
+          "flushToiletShare": 0.292908,
+          "noToiletShare": 0.58781
+        }
       }
     },
     "Thatta": {
@@ -3681,6 +6310,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 1489
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 736470,
+          "literate10Plus": 197949,
+          "rate": 0.268781
+        },
+        "water": {
+          "households": 206202,
+          "improved": 160980,
+          "improvedShare": 0.780691
+        },
+        "sanitation": {
+          "households": 206202,
+          "flushToilet": 63278,
+          "nonFlushToilet": 43259,
+          "noToilet": 99665,
+          "separateToilet": 89315,
+          "flushToiletShare": 0.306874,
+          "noToiletShare": 0.483337
         }
       }
     },
@@ -3711,6 +6361,27 @@
           "Kohiostani": 0,
           "Others": 525
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 1902553,
+          "literate10Plus": 1358123,
+          "rate": 0.713842
+        },
+        "water": {
+          "households": 393896,
+          "improved": 379724,
+          "improvedShare": 0.964021
+        },
+        "sanitation": {
+          "households": 393896,
+          "flushToilet": 353149,
+          "nonFlushToilet": 11178,
+          "noToilet": 29569,
+          "separateToilet": 315411,
+          "flushToiletShare": 0.896554,
+          "noToiletShare": 0.075068
+        }
       }
     },
     "Torghar": {
@@ -3739,6 +6410,27 @@
           "Kalasha": 0,
           "Kohiostani": 53,
           "Others": 1453
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 132971,
+          "literate10Plus": 39552,
+          "rate": 0.297448
+        },
+        "water": {
+          "households": 29410,
+          "improved": 20065,
+          "improvedShare": 0.682251
+        },
+        "sanitation": {
+          "households": 29410,
+          "flushToilet": 13232,
+          "nonFlushToilet": 732,
+          "noToilet": 15446,
+          "separateToilet": 9848,
+          "flushToiletShare": 0.449915,
+          "noToiletShare": 0.525196
         }
       }
     },
@@ -3769,6 +6461,27 @@
           "Kohiostani": 1,
           "Others": 5733
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 751699,
+          "literate10Plus": 290808,
+          "rate": 0.386868
+        },
+        "water": {
+          "households": 222562,
+          "improved": 150862,
+          "improvedShare": 0.677843
+        },
+        "sanitation": {
+          "households": 222562,
+          "flushToilet": 72593,
+          "nonFlushToilet": 20979,
+          "noToilet": 128990,
+          "separateToilet": 66358,
+          "flushToiletShare": 0.32617,
+          "noToiletShare": 0.579569
+        }
       }
     },
     "Upper Chitral": {
@@ -3797,6 +6510,27 @@
           "Kalasha": 0,
           "Kohiostani": 16,
           "Others": 194851
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 150810,
+          "literate10Plus": 111343,
+          "rate": 0.7383
+        },
+        "water": {
+          "households": 26365,
+          "improved": 19090,
+          "improvedShare": 0.724066
+        },
+        "sanitation": {
+          "households": 26365,
+          "flushToilet": 24953,
+          "nonFlushToilet": 1017,
+          "noToilet": 395,
+          "separateToilet": 25432,
+          "flushToiletShare": 0.946444,
+          "noToiletShare": 0.014982
         }
       }
     },
@@ -3827,6 +6561,27 @@
           "Kohiostani": 55327,
           "Others": 39968
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 690202,
+          "literate10Plus": 322810,
+          "rate": 0.467704
+        },
+        "water": {
+          "households": 149536,
+          "improved": 71885,
+          "improvedShare": 0.48072
+        },
+        "sanitation": {
+          "households": 149536,
+          "flushToilet": 120845,
+          "nonFlushToilet": 5803,
+          "noToilet": 22888,
+          "separateToilet": 82837,
+          "flushToiletShare": 0.808133,
+          "noToiletShare": 0.15306
+        }
       }
     },
     "Upper Kohistan": {
@@ -3855,6 +6610,27 @@
           "Kalasha": 28,
           "Kohiostani": 327804,
           "Others": 4184
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 214826,
+          "literate10Plus": 40933,
+          "rate": 0.19054
+        },
+        "water": {
+          "households": 63712,
+          "improved": 16621,
+          "improvedShare": 0.260877
+        },
+        "sanitation": {
+          "households": 63712,
+          "flushToilet": 27956,
+          "nonFlushToilet": 8442,
+          "noToilet": 27314,
+          "separateToilet": 17868,
+          "flushToiletShare": 0.438787,
+          "noToiletShare": 0.42871
         }
       }
     },
@@ -3885,6 +6661,27 @@
           "Kohiostani": 8,
           "Others": 14141
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 2487435,
+          "literate10Plus": 1470060,
+          "rate": 0.590994
+        },
+        "water": {
+          "households": 543036,
+          "improved": 528449,
+          "improvedShare": 0.973138
+        },
+        "sanitation": {
+          "households": 543036,
+          "flushToilet": 476446,
+          "nonFlushToilet": 15065,
+          "noToilet": 51525,
+          "separateToilet": 409222,
+          "flushToiletShare": 0.877375,
+          "noToiletShare": 0.094883
+        }
       }
     },
     "Washuk": {
@@ -3913,6 +6710,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 34
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 179601,
+          "literate10Plus": 38756,
+          "rate": 0.215789
+        },
+        "water": {
+          "households": 49049,
+          "improved": 36126,
+          "improvedShare": 0.736529
+        },
+        "sanitation": {
+          "households": 49049,
+          "flushToilet": 14053,
+          "nonFlushToilet": 13993,
+          "noToilet": 21003,
+          "separateToilet": 21647,
+          "flushToiletShare": 0.286509,
+          "noToiletShare": 0.428204
         }
       }
     },
@@ -3943,6 +6761,27 @@
           "Kohiostani": 0,
           "Others": 158
         }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 196456,
+          "literate10Plus": 71952,
+          "rate": 0.36625
+        },
+        "water": {
+          "households": 47901,
+          "improved": 30953,
+          "improvedShare": 0.646187
+        },
+        "sanitation": {
+          "households": 47901,
+          "flushToilet": 22657,
+          "nonFlushToilet": 7679,
+          "noToilet": 17565,
+          "separateToilet": 19023,
+          "flushToiletShare": 0.472996,
+          "noToiletShare": 0.366694
+        }
       }
     },
     "Ziarat": {
@@ -3971,6 +6810,27 @@
           "Kalasha": 0,
           "Kohiostani": 0,
           "Others": 123
+        }
+      },
+      "development": {
+        "literacy": {
+          "population10Plus": 110630,
+          "literate10Plus": 47976,
+          "rate": 0.433662
+        },
+        "water": {
+          "households": 22894,
+          "improved": 12479,
+          "improvedShare": 0.545077
+        },
+        "sanitation": {
+          "households": 22894,
+          "flushToilet": 11092,
+          "nonFlushToilet": 2498,
+          "noToilet": 9304,
+          "separateToilet": 8745,
+          "flushToiletShare": 0.484494,
+          "noToiletShare": 0.406395
         }
       }
     }
@@ -4316,6 +7176,232 @@
           }
         }
       ]
+    }
+  },
+  "development": {
+    "source": "PBS Census-2023 Table 12 (literacy rate, enrolment and out-of-school population by sex and rural/urban), Table 23 (housing facilities by source of drinking water by region) and Table 24 (housing characteristics, facilities of toilet and washroom used by households, rural/urban). Published at tehsil level in PakPC2023 (objects TABLE_12, TABLE_23, TABLE_24); the province figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf, table_23_national.pdf and table_24_national.pdf",
+    "unit": "district — summed from the tehsil rows PakPC2023 publishes",
+    "indicators": {
+      "literacy": {
+        "table": "PBS Census-2023 Table 12",
+        "numerator": "Literate >=10",
+        "denominator": "Population >=10",
+        "note": "Literate people aged 10 and above over population aged 10 and above — PBS's own definition and PBS's own denominator, which is not the district population. The rate is computed once from the summed counts, so it is population-weighted; averaging the 591 published tehsil percentages would weight a tehsil of 6,000 like a city of millions. Table 12 does print a Literate % per tehsil, and it agrees with the counts to within 0.005 percentage points across all 591 units."
+      },
+      "water": {
+        "table": "PBS Census-2023 Table 23",
+        "numerator": "DRINK_WTR_IMPROVE",
+        "denominator": "HOUSEHOLDS",
+        "note": "Households whose drinking-water source PBS classifies as improved. The improved/not-improved line is the census's own published column, not a rule of ours. The denominator is the household count Tables 23 and 24 publish — 38,292,556 nationally, which is 48,010 fewer than the 38,340,566 the district table carries, a difference present in all 136 districts and unexplained by PBS."
+      },
+      "sanitation": {
+        "table": "PBS Census-2023 Table 24",
+        "numerator": "TOILET_FLUSH",
+        "denominator": "HOUSEHOLDS",
+        "note": "PBS publishes no improved-sanitation column. For drinking water it classifies sources as improved or not and prints the result; for toilets it prints only flush, non-flush and none, and a non-flush toilet may be improved (a pit latrine with a slab) or not (an open pit) — the census does not say which. So there is no improved-sanitation figure to join, and adding flush to non-flush would be this project's own definition wearing a census badge. The four published counts are carried as published; the shaded share is flush toilets, and noToiletShare is carried beside it as the one category nobody can misread. Any composite is #31, badged synthesized. separateToilet — a toilet not shared with another household — is orthogonal to the other three, not a fourth category."
+      }
+    },
+    "shares": "Proportions in 0–1, never percentages, and rounded to six places. Each is emitted beside its own numerator and denominator, because the three do not share one: literacy is over population aged 10 and above, water and sanitation over households.",
+    "reconciliation": {
+      "method": "District sums checked against PBS Tables 12, 23 and 24 (national) count by count — every numerator and every denominator, for each of the five provinces and for Pakistan. Counts rather than rates, because a province rate is population-weighted and cannot be recovered from district rates, and because a rate can be right for the wrong reason: two tehsils swapped between districts leave both halves intact. The figures are typed from the PBS PDFs, i.e. from outside the PakPC2023 package, so this checks the package as well as the join. Seven of the eight counts reconcile exactly; see improvedWaterDifference for the one that does not.",
+      "source": "PBS Census-2023 Table 12 (literacy rate, enrolment and out-of-school population by sex and rural/urban), Table 23 (housing facilities by source of drinking water by region) and Table 24 (housing characteristics, facilities of toilet and washroom used by households, rural/urban). Published at tehsil level in PakPC2023 (objects TABLE_12, TABLE_23, TABLE_24); the province figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf, table_23_national.pdf and table_24_national.pdf",
+      "national": {
+        "population10Plus": {
+          "summed": 171714532,
+          "published": 171714532
+        },
+        "literate10Plus": {
+          "summed": 104148094,
+          "published": 104148094
+        },
+        "households": {
+          "summed": 38292556,
+          "published": 38292556
+        },
+        "improvedWater": {
+          "summed": 35200804,
+          "published": 35194430
+        },
+        "flushToilet": {
+          "summed": 30870460,
+          "published": 30870460
+        },
+        "nonFlushToilet": {
+          "summed": 2499076,
+          "published": 2499076
+        },
+        "noToilet": {
+          "summed": 4923020,
+          "published": 4923020
+        },
+        "separateToilet": {
+          "summed": 26007432,
+          "published": 26007432
+        }
+      },
+      "provinces": [
+        {
+          "name": "Balochistan",
+          "summed": {
+            "population10Plus": 9294080,
+            "literate10Plus": 3904799,
+            "households": 2317256,
+            "improvedWater": 1655565,
+            "flushToilet": 1240123,
+            "nonFlushToilet": 541355,
+            "noToilet": 535778,
+            "separateToilet": 1206153
+          },
+          "published": {
+            "population10Plus": 9294080,
+            "literate10Plus": 3904799,
+            "households": 2317256,
+            "improvedWater": 1654052,
+            "flushToilet": 1240123,
+            "nonFlushToilet": 541355,
+            "noToilet": 535778,
+            "separateToilet": 1206153
+          }
+        },
+        {
+          "name": "Islamabad Capital Territory",
+          "summed": {
+            "population10Plus": 1797000,
+            "literate10Plus": 1508916,
+            "households": 410993,
+            "improvedWater": 397091,
+            "flushToilet": 396553,
+            "nonFlushToilet": 10330,
+            "noToilet": 4110,
+            "separateToilet": 371815
+          },
+          "published": {
+            "population10Plus": 1797000,
+            "literate10Plus": 1508916,
+            "households": 410993,
+            "improvedWater": 397065,
+            "flushToilet": 396553,
+            "nonFlushToilet": 10330,
+            "noToilet": 4110,
+            "separateToilet": 371815
+          }
+        },
+        {
+          "name": "Khyber Pakhtunkhwa",
+          "summed": {
+            "population10Plus": 28225473,
+            "literate10Plus": 14420285,
+            "households": 5861457,
+            "improvedWater": 4819968,
+            "flushToilet": 4758147,
+            "nonFlushToilet": 512441,
+            "noToilet": 590869,
+            "separateToilet": 3799527
+          },
+          "published": {
+            "population10Plus": 28225473,
+            "literate10Plus": 14420285,
+            "households": 5861457,
+            "improvedWater": 4818817,
+            "flushToilet": 4758147,
+            "nonFlushToilet": 512441,
+            "noToilet": 590869,
+            "separateToilet": 3799527
+          }
+        },
+        {
+          "name": "Punjab",
+          "summed": {
+            "population10Plus": 93413721,
+            "literate10Plus": 61882702,
+            "households": 19839980,
+            "improvedWater": 19163143,
+            "flushToilet": 17509551,
+            "nonFlushToilet": 445394,
+            "noToilet": 1885035,
+            "separateToilet": 14841995
+          },
+          "published": {
+            "population10Plus": 93413721,
+            "literate10Plus": 61882702,
+            "households": 19839980,
+            "improvedWater": 19160917,
+            "flushToilet": 17509551,
+            "nonFlushToilet": 445394,
+            "noToilet": 1885035,
+            "separateToilet": 14841995
+          }
+        },
+        {
+          "name": "Sindh",
+          "summed": {
+            "population10Plus": 38984258,
+            "literate10Plus": 22431392,
+            "households": 9862870,
+            "improvedWater": 9165037,
+            "flushToilet": 6966086,
+            "nonFlushToilet": 989556,
+            "noToilet": 1907228,
+            "separateToilet": 5787942
+          },
+          "published": {
+            "population10Plus": 38984258,
+            "literate10Plus": 22431392,
+            "households": 9862870,
+            "improvedWater": 9163579,
+            "flushToilet": 6966086,
+            "nonFlushToilet": 989556,
+            "noToilet": 1907228,
+            "separateToilet": 5787942
+          }
+        }
+      ]
+    },
+    "improvedWaterDifference": {
+      "summed": 35200804,
+      "published": 35194430,
+      "difference": 6374,
+      "byProvince": {
+        "Punjab": 2226,
+        "Sindh": 1458,
+        "Khyber Pakhtunkhwa": 1151,
+        "Balochistan": 1513,
+        "Islamabad Capital Territory": 26
+      },
+      "note": "PBS's tehsil-level release of Table 23 counts 6,374 more improved-drinking-water households than PBS's own printed province table for the same table. The household totals agree exactly, and the nine drinking-water source columns differ between the two releases by amounts that cancel within every province, so this is a reclassification between sources rather than a missing unit. Pinned per province and failed on if it changes, rather than absorbed into a tolerance. Not smoothed: the shares here are shares of the tehsil rows the district tier is summed from."
+    },
+    "extremes": {
+      "note": "The lowest and highest district on each indicator, so a reader can sanity-check the fill against a figure rather than against a colour.",
+      "literacyRate": {
+        "lowest": {
+          "district": "Kolai Pallas Kohistan",
+          "value": 0.188009
+        },
+        "highest": {
+          "district": "Islamabad",
+          "value": 0.839686
+        }
+      },
+      "improvedWaterShare": {
+        "lowest": {
+          "district": "Upper Kohistan",
+          "value": 0.260877
+        },
+        "highest": {
+          "district": "Shikarpur",
+          "value": 0.991086
+        }
+      },
+      "flushToiletShare": {
+        "lowest": {
+          "district": "Panjgur",
+          "value": 0.224752
+        },
+        "highest": {
+          "district": "Karachi Central",
+          "value": 0.974117
+        }
+      }
     }
   },
   "folds": {
