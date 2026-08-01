@@ -3,6 +3,7 @@
   "vintage": "PBS 2023 Digital Census, as on 01-03-2023",
   "rule": "Every fold names exactly one parent. A district carved from two parents would destroy a 2023 boundary and could not be dissolved back exactly; none does — verified for Balochistan in docs/research/balochistan-division-district-set.md.",
   "authority": "Whether a district is post-census is decided by the census itself: the 136 district rows PBS published are the census-era set, and a name absent from them is post-census regardless of when it was notified.",
+  "namingPolicy": "This table follows the fetched OSM data; it does not lead it. Every entry is keyed by the name the current fetch actually carries, never by an official name OSM has not adopted yet. When a rename reaches OSM, the fetch and this table are updated in the same commit — so the build failing on an unrecognised name is the intended signal that upstream moved, not a defect. Leading the fetch would fill this file with entries nothing can falsify, which is how a hand-maintained table rots. Note that a rename and a split are different events: a split leaves the 2023 parent with no current official name at all, and its census-era name is what gets drawn.",
   "folds": [
     {
       "district": "Wazirabad",

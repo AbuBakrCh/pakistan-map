@@ -126,6 +126,19 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 The fold table — post-census district → 2023 parent — is data, not code:
 `data/reference/post-census-district-folds.json`. Both pipelines read it.
 
+**The fold table follows the fetch, it never leads it.** Entries are keyed by the name the
+current OSM fetch actually carries, never by an official name OSM has not adopted yet; when a
+rename lands upstream, the fetch and the table are updated in the same commit. So a build
+failing on an unrecognised name is the intended signal that upstream moved — not a defect to
+be pre-empted by guessing. Leading the fetch would accumulate entries nothing can falsify.
+
+A **rename** and a **split** are different events, and only the first has a display answer.
+Karachi's four renamed districts are pure renames, resolved by relation id. Dera Bugti is a
+split: the census counted it whole, February 2026 bifurcated it, and July 2026 renamed the two
+halves North and South. There is therefore no current official name for the unit we draw —
+*North Dera Bugti is half of it, not another word for it* — so the 2023 census name stands,
+and the restructuring is noted in copy per the vintage rule.
+
 Still to come: the remaining census joins (#10–#11), the adjacency graph (#16) and per-variant
 derived stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
 
