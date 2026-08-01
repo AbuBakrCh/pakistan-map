@@ -90,19 +90,30 @@ export const shortFormExpansions: readonly (readonly [string, string])[] = Objec
 
 /**
  * The text to actually draw: the full name where the shape has room for it, otherwise the unit's
- * own abbreviation. `available` is the width of the shape on screen — a name wider than that is
+ * own abbreviation. `shapeWidth` is the width of the shape on screen — a name wider than that is
  * lying about which ground it names, not merely crowding its neighbours.
  */
 export function labelText(
   name: string,
-  available: number,
+  shapeWidth: number,
   measure: (text: string) => number,
 ): string {
   const short = SHORT_FORMS[name];
-  return short !== undefined && measure(name) > available ? short : name;
+  return short !== undefined && measure(name) > shapeWidth ? short : name;
 }
 
 export type LabelTier = 'province' | 'division';
+
+/**
+ * What identifies a name across the tiers.
+ *
+ * Tier-qualified because the tiers collide: Peshawar, Quetta, Lahore and a dozen others name
+ * both a division and a district, and Islamabad names a province and a pseudo-division. Built
+ * here rather than spelled inline at each site, because a caller that composes the string
+ * itself and drifts does not fail — it misses a `Map` lookup and falls back, so abbreviations
+ * silently stop firing and the layout silently loses its width data. Nothing goes red.
+ */
+export const labelKey = (tier: LabelTier, name: string): string => `${tier}:${name}`;
 
 /** A name and the ground it belongs to, before anything is known about the page. */
 export interface LabelSite {
@@ -135,7 +146,7 @@ export function baselineLabelSites(geography: {
 }): LabelSite[] {
   const sites = (features: readonly Shape[], tier: LabelTier, floor: number): LabelSite[] =>
     features.map((f) => ({
-      key: `${tier}:${(f.properties as { name: string }).name}`,
+      key: labelKey(tier, (f.properties as { name: string }).name),
       text: (f.properties as { name: string }).name,
       tier,
       anchor: labelAnchor(f),
@@ -188,10 +199,10 @@ export type Measurer = (text: string, tier: LabelTier) => {
 export function measureLabel(
   site: LabelSite,
   point: readonly [number, number],
-  available: number,
+  shapeWidth: number,
   measure: Measurer,
 ): { box: LabelBox; text: string } {
-  const text = labelText(site.text, available, (candidate) => measure(candidate, site.tier).width);
+  const text = labelText(site.text, shapeWidth, (candidate) => measure(candidate, site.tier).width);
   const { width, height } = measure(text, site.tier);
   return {
     box: { key: site.key, x: point[0], y: point[1], width, height, priority: site.priority },

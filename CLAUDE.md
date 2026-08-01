@@ -169,6 +169,12 @@ and no fixtures, and it is fast and deterministic. Everything that can go seriou
 this app is a property of that artifact: if a unit's population is wrong, we have published a
 false figure about Pakistani provinces.
 
+The renderer is tested at its **pure seams only** — projection, tier extraction, label layout.
+`src/map.ts` is imperative D3 against the DOM and carries no tests of its own; the repo has no
+jsdom, deliberately. Where a rendering criterion is worth holding, it is held over the real
+bundle through the real projection instead — which is why the label tests name the divisions
+that go unlabelled at default zoom rather than counting them.
+
 What it holds:
 
 | Property | Where |
@@ -176,12 +182,15 @@ What it holds:
 | Referential integrity — every district under a real division and a real province, the two agreeing; no empty division; every fold landing on a drawn district | `bundle.test.ts` |
 | Vintage rule — every one of the 136 census districts present exactly once, none null or zero, 2023 fields only, AJK/GB listed as absent rather than as zero | `statistics.test.ts` |
 | Statistical integrity — districts summing to all 31 division totals, to the 5 province totals and to the 241,499,431 national total, against figures typed from PBS Table 1 rather than read back off the artifact | `statistics.test.ts` |
+| Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
-offline property rather than assuming it: no module the suite loads may name a network
-primitive, nothing may import `fetch-osm.ts`, and every input must be committed — so a fresh
-clone runs the suite with the machine unplugged.
+offline property rather than assuming it: no module under `scripts/lib/` **or `src/`** may name
+a network primitive, nothing may import `fetch-osm.ts`, and every input must be committed — so
+a fresh clone runs the suite with the machine unplugged. `src/` is the half that matters, since
+D19's zero-network claim is about the runtime; the scan covers both directories entire, and
+asserts that it still reaches the renderer.
 
 CI (`.github/workflows/ci.yml`) runs exactly those two commands on every push and pull request,
 on a pinned Node 22. It has nothing else to do: the artifacts are baked and committed, so there

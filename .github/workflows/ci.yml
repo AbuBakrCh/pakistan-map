@@ -21,9 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Pinned rather than floating. The repo uses `with { type: 'json' }` import attributes and
-      # Vite 6, which need Node 22 or newer; a floating `latest` would make a green build
-      # unreproducible, which is the same objection that put the data artifacts in git.
+      # Pinned rather than floating. Vite 6 and the `with { type: 'json' }` import attribute in
+      # `scripts/lib/roster.ts` need Node 22 or newer; a floating `latest` would make a green
+      # build unreproducible, which is the same objection that put the data artifacts in git.
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

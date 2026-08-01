@@ -14,6 +14,7 @@ import type { Topology } from 'topojson-specification';
 import { readGeography } from './lib/geography.ts';
 import {
   baselineLabelSites,
+  labelKey,
   layoutLabels,
   measureLabel,
   type LabelTier,
@@ -165,7 +166,7 @@ export function renderBaselineMap(container: HTMLElement, topology: Topology): v
     ] as const) {
       for (const f of features) {
         const [[west], [east]] = path.bounds(f);
-        shapeWidth.set(`${tier}:${f.properties.name}`, east - west);
+        shapeWidth.set(labelKey(tier, f.properties.name), east - west);
       }
     }
 

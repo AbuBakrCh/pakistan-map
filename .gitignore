@@ -14,3 +14,6 @@ dist/
 # NOTE: data/ is deliberately NOT ignored. The raw Overpass cache and every baked
 # artifact are committed so that boundary changes arrive as reviewable, dated diffs
 # and the runtime makes zero network calls. Do not add data/ here.
+
+# Agent worktrees. Transient clones of this repo; vitest is scoped past them in vite.config.ts.
+.claude/worktrees/

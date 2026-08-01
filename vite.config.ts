@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 
 export default defineConfig({
   root: '.',
@@ -14,7 +15,9 @@ export default defineConfig({
     // a count that should be a fixed property of the artifact drifts with whatever happens to
     // be checked out. CI never sees this — there are no worktrees there — which is exactly why
     // it has to be excluded here rather than noticed later.
-    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
+    // Extending the defaults rather than replacing them — `exclude` overwrites, and spelling
+    // out a shorter list here would quietly re-collect `.git/` and the config files.
+    exclude: [...configDefaults.exclude, '.claude/worktrees/**'],
   },
   build: {
     outDir: 'dist',

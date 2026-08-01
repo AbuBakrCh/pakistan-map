@@ -15,21 +15,41 @@
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Socket } from 'node:net';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const LIB = resolve(ROOT, 'scripts/lib');
+/**
+ * `src/` is scanned as well as `scripts/lib/`, and matters more.
+ *
+ * The pipeline libraries were the whole import surface when this file was written; the renderer
+ * landed after it, and the scan went on covering only the half where a stray `fetch` would have
+ * been least consequential. D19 is a claim about the *runtime*: the bundle is baked and
+ * committed so the page makes zero network calls, so `src/bundle.ts` and `src/map.ts` are
+ * exactly the files the offline property is about. Directories, not a file list, so a new
+ * module is covered by existing.
+ */
+const SRC = resolve(ROOT, 'src');
 
 const read = (path: string) => readFileSync(resolve(ROOT, path), 'utf8');
+
+/** Every `.ts` under a directory, at any depth — `src/` has a `lib/` under it. */
+const walk = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(dir, entry.name);
+    if (entry.isDirectory()) return walk(path);
+    return entry.name.endsWith('.ts') ? [path] : [];
+  });
+
 /**
  * This file is excluded from its own scan, and is the only file that ever should be: it names
  * `node:net` in order to take the socket layer away below. Every other exclusion would be the
  * scan being talked out of its own finding.
  */
-const libFiles = readdirSync(LIB).filter((f) => f.endsWith('.ts') && f !== 'seam.test.ts');
+const sourceFiles = [...walk(LIB), ...walk(SRC)].filter((f) => !f.endsWith('scripts/lib/seam.test.ts'));
 
 /**
  * Everything that opens a socket from Node, by the name it is reached under. Deliberately
@@ -47,15 +67,24 @@ const NETWORK_PRIMITIVES: readonly (readonly [string, RegExp])[] = [
 
 describe('test seam isolation', () => {
   it('keeps every module the suite loads free of anything that opens a socket', () => {
-    // The suite's whole import surface is `scripts/lib` plus committed JSON, so scanning this
-    // directory is exhaustive rather than a spot check.
-    const offenders = libFiles.flatMap((file) => {
-      const source = read(`scripts/lib/${file}`);
+    // The suite's import surface is `scripts/lib` and `src` plus committed JSON — both
+    // directories entire, so this is exhaustive rather than a spot check.
+    const offenders = sourceFiles.flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
       return NETWORK_PRIMITIVES.filter(([, pattern]) => pattern.test(source)).map(
-        ([primitive]) => `${file} uses ${primitive}`,
+        ([primitive]) => `${relative(ROOT, file)} uses ${primitive}`,
       );
     });
     expect(offenders).toEqual([]);
+  });
+
+  it('scans the renderer, which is where the offline claim is actually about', () => {
+    // Guards the guard. The scan silently covered only `scripts/lib` once `src/` existed, and
+    // nothing went red — a scan that has stopped looking at the right directory passes exactly
+    // as loudly as one that looked and found nothing.
+    const scanned = sourceFiles.map((f) => relative(ROOT, f));
+    expect(scanned).toContain('src/bundle.ts');
+    expect(scanned).toContain('src/map.ts');
   });
 
   it('confines the network to the one script whose job is the network', () => {
@@ -63,8 +92,8 @@ describe('test seam isolation', () => {
     // else (the pipeline is split by failure mode). It follows that nothing under test may
     // import it — importing it is how its Overpass calls would arrive in the suite by accident.
     expect(NETWORK_PRIMITIVES.some(([, p]) => p.test(read('scripts/fetch-osm.ts')))).toBe(true);
-    for (const file of libFiles) {
-      expect(read(`scripts/lib/${file}`), file).not.toMatch(/fetch-osm/);
+    for (const file of sourceFiles) {
+      expect(readFileSync(file, 'utf8'), relative(ROOT, file)).not.toMatch(/fetch-osm/);
     }
   });
 

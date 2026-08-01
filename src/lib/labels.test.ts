@@ -6,6 +6,7 @@ import { fitProjection } from './projection.ts';
 import {
   baselineLabelSites,
   labelAnchor,
+  labelKey,
   labelText,
   layoutLabels,
   measureLabel,
@@ -99,17 +100,26 @@ describe('the baseline map at default zoom', () => {
       ? { width: text.length * (size * 0.68 + 1.5), height: size }
       : { width: text.length * size * 0.5, height: size };
   };
-  const shapeWidth = new Map(
-    [...provinces.features, ...divisions.features].map((f) => {
-      const [[west], [east]] = path.bounds(f as never);
-      return [f.properties.name, east - west];
-    }),
-  );
+  const width = (f: { geometry: unknown }) => {
+    const [[west], [east]] = path.bounds(f as never);
+    return east - west;
+  };
+  // Keyed exactly as the renderer keys it — by `labelKey`, not by the display text. Keying by
+  // text here would agree with production by coincidence and stop agreeing the moment a name
+  // is abbreviated or a division and a province share one.
+  const shapeWidth = new Map([
+    ...provinces.features.map(
+      (f) => [labelKey('province', f.properties.name), width(f)] as const,
+    ),
+    ...divisions.features.map(
+      (f) => [labelKey('division', f.properties.name), width(f)] as const,
+    ),
+  ]);
 
   const measured = baselineLabelSites({ provinces, divisions }).flatMap((site) => {
     const point = project(site.anchor);
     if (point === null) return [];
-    return [measureLabel(site, point, shapeWidth.get(site.text) ?? Infinity, measure)];
+    return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
   });
   const result = layoutLabels(
     measured.map((m) => m.box),
@@ -131,13 +141,27 @@ describe('the baseline map at default zoom', () => {
     }
   });
 
-  it('names every province and all but a handful of divisions', () => {
+  it('names every province, including both territories', () => {
     const drawn = new Set(keys(result));
-    for (const province of provinces.features) {
-      expect(drawn).toContain(`province:${province.properties.name}`);
-    }
-    const divisionsDrawn = [...drawn].filter((k) => k.startsWith('division:'));
-    expect(divisionsDrawn.length).toBeGreaterThanOrEqual(34);
+    // AJK and GB are named here or they are named nowhere: CLAUDE.md requires both drawn *and*
+    // named, and unlike a division neither has a second chance further down the tier.
+    const unnamed = provinces.features
+      .map((p) => p.properties.name)
+      .filter((name) => !drawn.has(labelKey('province', name)));
+    expect(unnamed).toEqual([]);
+  });
+
+  it('drops these divisions at default zoom, and no others', () => {
+    // Named rather than counted. A floor of "at least 34" passes while three divisions go
+    // silently unnamed and never says which — and which ones matter: a drop is only acceptable
+    // because the name returns on zoom, so a change in this list is a change in what the
+    // opening view of the country says, and belongs in a diff.
+    const drawn = new Set(keys(result));
+    const dropped = divisions.features
+      .filter((d) => d.properties.pseudo !== true)
+      .map((d) => d.properties.name)
+      .filter((name) => !drawn.has(labelKey('division', name)));
+    expect(dropped.sort()).toEqual(['Poonch']);
   });
 });
 
