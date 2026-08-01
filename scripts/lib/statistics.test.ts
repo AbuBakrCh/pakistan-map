@@ -428,6 +428,13 @@ describe('statistics development', () => {
     expect(total((r) => r.development.sanitation.flushToilet)).toBe(PUBLISHED_TOILETS.flush);
     expect(total((r) => r.development.sanitation.nonFlushToilet)).toBe(PUBLISHED_TOILETS.nonFlush);
     expect(total((r) => r.development.sanitation.noToilet)).toBe(PUBLISHED_TOILETS.none);
+    // Both sides of the 48,010-household gap, pinned. The housing tables' total alone would let
+    // the district table's drift on a rebuild while the suite stayed green — and the difference
+    // is quoted in the artifact, in CLAUDE.md and in the research note, so it has to be a figure
+    // the build can falsify rather than one three documents merely agree about.
+    expect(total((r) => r.households)).toBe(38_340_566);
+    expect(total((r) => r.development.water.households)).toBe(38_292_556);
+    expect(total((r) => r.households) - total((r) => r.development.water.households)).toBe(48_010);
     expect(total((r) => r.development.literacy.population10Plus)).toBe(171_714_532);
     expect(total((r) => r.development.literacy.literate10Plus)).toBe(104_148_094);
   });

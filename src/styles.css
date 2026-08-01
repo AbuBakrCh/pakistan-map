@@ -133,7 +133,15 @@ body {
   display: block;
 }
 
+/*
+ * Stratum 1 is paint, not a target. It sits above the land, so without this it wins the hit test
+ * and the province readout goes silent the moment a basis is switched on — the opposite of what
+ * D25 needs, since the coverage line saying the census does not reach AJK and GB is the one
+ * surface a reader has to be able to reach. The district layer gets its own pointer when it has
+ * something of its own to say (#13); until then the land keeps it.
+ */
 .district {
+  pointer-events: none;
   stroke-width: 0.5;
   vector-effect: non-scaling-stroke;
 }
@@ -148,9 +156,7 @@ body {
  * Khowar has no column in Table 11. A stipple over the paper, outlined so it reads as a district
  * rather than as a hole. Not grey — a flat tone would sit in the legend as a sixteenth category.
  */
-.district-no-data {
-  pointer-events: none;
-}
+/* `no-data` needs no rule of its own: no fill and no stroke is the whole of it. */
 
 .district-no-dominant {
   stroke: var(--ink-faint);

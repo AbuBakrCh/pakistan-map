@@ -86,8 +86,14 @@ export const BASES: Readonly<Record<BasisId, Basis>> = {
   development: {
     id: 'development',
     name: 'Development',
-    source: 'PBS 2023 Census — literacy (10+), improved drinking water, improved sanitation',
-    badges: ['census', 'synthesized'],
+    // Three published rates, named as PBS publishes them. PBS classifies water sources as
+    // improved or not, but for toilets prints only flush / non-flush / none — so there is no
+    // improved-sanitation column to cite, and calling the flush share by that name would be our
+    // definition wearing a `census` badge. The basis is `census` for these three; a composite of
+    // them is `synthesized` and is #31's to badge, on the variant that builds one.
+    source:
+      'PBS 2023 Census — literacy (10+), improved drinking water, households with a flush toilet',
+    badges: ['census'],
   },
 };
 

@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T17:10:09.578Z",
+    "generated": "2026-08-01T17:57:57.885Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -55,10 +55,9 @@
     "development": {
       "id": "development",
       "name": "Development",
-      "source": "PBS 2023 Census — literacy (10+), improved drinking water, improved sanitation",
+      "source": "PBS 2023 Census — literacy (10+), improved drinking water, households with a flush toilet",
       "badges": [
-        "census",
-        "synthesized"
+        "census"
       ]
     }
   },
