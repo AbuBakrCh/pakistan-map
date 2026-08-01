@@ -106,9 +106,20 @@ which includes AJK, GB and post-census creations. See `docs/research/`.
 
 Build-time bake, **artifacts committed** — not gitignored.
 
-`scripts/build-data.ts` fetches → filters → injects ICT → joins census indicators by district
-code → simplifies geometry → precomputes the adjacency graph and every variant's derived
-stats → emits one TopoJSON + JSON bundle stamped with generation date and source URLs.
+Split by failure mode, so network flakiness never contaminates geometry work:
+
+| Script | npm script | Does |
+|---|---|---|
+| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
+| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+
+Still to come: the census join (#9–#11), the adjacency graph (#16) and per-variant derived
+stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
+
+Every relation must be classified. A relation matching no 2023 district and no fold rule
+**fails the build** rather than being skipped — a silent discard is how the district set drifts
+without anyone noticing, and the point of committing the bundle is that boundary changes are
+reviewable diffs.
 
 Committing the output means **every boundary change is a reviewable diff with a date on it**.
 Runtime makes zero network calls.

@@ -129,7 +129,9 @@ export function assemblePolygons(members: readonly OsmMember[]): AssembledPolygo
   const outer = stitchRings(byRole('outer'));
   const inner = stitchRings(byRole('inner'));
 
-  // Largest first, so a hole lands in the tightest containing ring rather than an enclosing one.
+  // Smallest first, so `findIndex` below lands a hole in the *tightest* ring containing it
+  // rather than in some larger ring that also encloses it. Reversing this sort silently puts
+  // holes in the wrong polygon.
   const outers = outer.rings
     .map((ring) => ({ ring, area: Math.abs(signedArea(ring)) }))
     .sort((a, b) => a.area - b.area);

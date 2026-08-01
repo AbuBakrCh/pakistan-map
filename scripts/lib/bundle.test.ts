@@ -59,6 +59,37 @@ describe('bundle tiers', () => {
     expect(kinds['Islamabad Capital Territory']).toBe('capital');
   });
 
+  it('spells divisions as PBS does, not as OSM does', () => {
+    const names = divisions.map(nameOf);
+    expect(names).toContain('Kalat');
+    expect(names).toContain('Mekran');
+    expect(names).not.toContain('Qalat');
+    expect(names).not.toContain('Makran');
+  });
+
+  it('emits the published district count for every province, counted from geometry', () => {
+    const counted = new Map<string, number>();
+    for (const d of districts) {
+      const p = d.properties['province'] as string;
+      counted.set(p, (counted.get(p) ?? 0) + 1);
+    }
+    for (const province of ROSTER) {
+      expect(counted.get(province.name)).toBe(province.districts.length);
+    }
+  });
+
+  it('carries the OSM relation ids each district was built from', () => {
+    for (const district of districts) {
+      const ids = district.properties['osmRelations'] as unknown as number[] | undefined;
+      // ICT is injected from admin_level=4, so it has no district relation of its own.
+      if (nameOf(district) === 'Islamabad') continue;
+      expect(ids?.length).toBeGreaterThan(0);
+    }
+    // South Waziristan is the folded split: two relations, one 2023 district.
+    const sw = districts.find((d) => nameOf(d) === 'South Waziristan');
+    expect((sw?.properties['osmRelations'] as unknown as number[]).length).toBe(2);
+  });
+
   it('resolves every district to exactly one division and one province', () => {
     const divisionNames = new Set(divisions.map(nameOf));
     const provinceNames = new Set(provinces.map(nameOf));

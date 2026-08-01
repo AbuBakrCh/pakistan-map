@@ -106,6 +106,18 @@ export const ROSTER: readonly Province[] = [
  */
 export const ICT_PSEUDO_DIVISION = 'Islamabad';
 
+/**
+ * OSM division spelling -> PBS spelling. Kept separate from `NAME_ALIASES` because the two
+ * tiers genuinely disagree: Balochistan has both a Kalat *district* and a Kalat *division*, and
+ * OSM spells the division "Qalat" while spelling the district "Kalat". One shared table would
+ * have to pick a winner and would silently rename the other tier.
+ */
+export const DIVISION_ALIASES: Readonly<Record<string, string>> = {
+  qalat: 'Kalat',
+  makran: 'Mekran',
+  makuran: 'Mekran',
+};
+
 /** Fold OSM's post-census divisions into their 2023 parent. */
 export const POST_CENSUS_DIVISION_FOLDS: Readonly<Record<string, string>> = {
   // Punjab, created after 01-03-2023
@@ -186,7 +198,6 @@ export const NAME_ALIASES: Readonly<Record<string, string>> = {
   'neelam valley': 'Neelum',
   sudhanoti: 'Sudhnoti',
   qalat: 'Kalat',
-  makran: 'Mekran',
   bolan: 'Kachhi (Bolan)',
   kachhi: 'Kachhi (Bolan)',
   'qilla abdullah': 'Killa Abdullah',
@@ -200,7 +211,6 @@ export const NAME_ALIASES: Readonly<Record<string, string>> = {
   'qambar shahdadkot': 'Kambar Shahdadkot',
   'shaheed benazir abad': 'Shaheed Benazirabad',
   kiamari: 'Keamari',
-  keamari: 'Keamari',
   diamer: 'Diamir',
   kharmang: 'Kharmaung',
   'jhelum valley': 'Hattian Bala',
@@ -234,6 +244,19 @@ export function resolveRosterName(osmName: string): string | null {
     }
   }
   return null;
+}
+
+/** The province a roster district belongs to. */
+export function provinceOf(district: string): string | null {
+  for (const province of ROSTER) {
+    if (province.districts.includes(district)) return province.name;
+  }
+  return null;
+}
+
+/** Constitutional status, which drives territory styling — D12, D25. */
+export function kindOf(province: string): Province['kind'] {
+  return ROSTER.find((p) => p.name === province)?.kind ?? 'province';
 }
 
 export const ROSTER_DISTRICT_COUNT = ROSTER.reduce((n, p) => n + p.districts.length, 0);

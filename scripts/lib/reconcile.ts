@@ -12,8 +12,8 @@
  */
 
 import {
+  DIVISION_ALIASES,
   DROPPED_RELATIONS,
-  ICT_PSEUDO_DIVISION,
   POST_CENSUS_DISTRICT_FOLDS,
   POST_CENSUS_DIVISION_FOLDS,
   RELATION_OVERRIDES,
@@ -27,46 +27,57 @@ export interface OsmRelation {
   readonly name: string;
 }
 
+/**
+ * Where one OSM relation's geometry ends up. `name` is a district when classifying the district
+ * tier and a division when classifying the division tier — deliberately neutral, because
+ * CONTEXT.md keeps District and Division as distinct terms and calling this field `district`
+ * would make `classifyDivision` return division names in a field named district.
+ */
 export type Classification =
-  /** A 2023 census district, drawn as itself. */
-  | { readonly kind: 'district'; readonly district: string }
-  /** Created after the census; its geometry merges into `district`, and it is never drawn. */
-  | { readonly kind: 'fold'; readonly district: string; readonly from: string }
-  /** Not Pakistan, or not a district at all. */
+  /** A 2023 census unit, drawn as itself. */
+  | { readonly kind: 'unit'; readonly name: string }
+  /** Created after the census; its geometry merges into `name`, and it is never drawn. */
+  | { readonly kind: 'fold'; readonly name: string; readonly from: string }
+  /** Not Pakistan, or not a unit at all. */
   | { readonly kind: 'dropped'; readonly reason: string }
   /** Matched nothing. Always a build failure. */
   | { readonly kind: 'unclassified' };
+
+/** Look up `name` in a fold table, matching on normalized spelling. */
+function matchFold(
+  table: Readonly<Record<string, string>>,
+  name: string,
+): Classification | null {
+  const normalized = normalizeName(name);
+  for (const [child, parent] of Object.entries(table)) {
+    if (normalizeName(child) === normalized) return { kind: 'fold', name: parent, from: child };
+  }
+  return null;
+}
 
 export function classifyDistrict(relation: OsmRelation): Classification {
   const dropped = DROPPED_RELATIONS[relation.id];
   if (dropped !== undefined) return { kind: 'dropped', reason: dropped };
 
   const override = RELATION_OVERRIDES[relation.id];
-  if (override !== undefined) return { kind: 'district', district: override };
+  if (override !== undefined) return { kind: 'unit', name: override };
 
   const direct = resolveRosterName(relation.name);
-  if (direct !== null) return { kind: 'district', district: direct };
+  if (direct !== null) return { kind: 'unit', name: direct };
 
-  const normalized = normalizeName(relation.name);
-  for (const [child, parent] of Object.entries(POST_CENSUS_DISTRICT_FOLDS)) {
-    if (normalizeName(child) === normalized) {
-      return { kind: 'fold', district: parent, from: child };
-    }
-  }
-
-  return { kind: 'unclassified' };
+  return matchFold(POST_CENSUS_DISTRICT_FOLDS, relation.name) ?? { kind: 'unclassified' };
 }
 
 export function classifyDivision(relation: OsmRelation): Classification {
-  const normalized = normalizeName(relation.name);
-  for (const [child, parent] of Object.entries(POST_CENSUS_DIVISION_FOLDS)) {
-    if (normalizeName(child) === normalized) {
-      return { kind: 'fold', district: parent, from: child };
-    }
-  }
-  // Divisions have no roster of their own; OSM is the authority on the division tier, and the
-  // census list is the authority on which of them existed in 2023. Anything not folded stands.
-  return { kind: 'district', district: stripSuffix(relation.name) };
+  const folded = matchFold(POST_CENSUS_DIVISION_FOLDS, relation.name);
+  if (folded !== null) return folded;
+
+  // Divisions have no roster of their own — OSM is the authority on which divisions exist, and
+  // the PBS list is the authority on their spelling. Without the alias step the bundle would
+  // ship OSM's "Qalat" and "Makran" for divisions while normalising the districts inside them
+  // to PBS's "Kalat" and "Mekran": the same name spelled two ways in one file.
+  const bare = stripSuffix(relation.name);
+  return { kind: 'unit', name: DIVISION_ALIASES[normalizeName(bare)] ?? bare };
 }
 
 function stripSuffix(name: string): string {
@@ -92,12 +103,12 @@ export function reconcileDistricts(relations: readonly OsmRelation[]): DistrictR
   for (const relation of relations) {
     const result = classifyDistrict(relation);
     switch (result.kind) {
-      case 'district':
-        assignments.set(relation.id, result.district);
+      case 'unit':
+        assignments.set(relation.id, result.name);
         break;
       case 'fold':
-        assignments.set(relation.id, result.district);
-        folded.push({ relation, into: result.district });
+        assignments.set(relation.id, result.name);
+        folded.push({ relation, into: result.name });
         break;
       case 'dropped':
         dropped.push({ relation, reason: result.reason });
@@ -114,12 +125,3 @@ export function reconcileDistricts(relations: readonly OsmRelation[]): DistrictR
   return { assignments, dropped, folded, unclassified, missing };
 }
 
-/** The province a roster district belongs to. */
-export function provinceOf(district: string): string | null {
-  for (const province of ROSTER) {
-    if (province.districts.includes(district)) return province.name;
-  }
-  return null;
-}
-
-export { ICT_PSEUDO_DIVISION };

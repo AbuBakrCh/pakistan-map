@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { classifyDistrict, classifyDivision, provinceOf, reconcileDistricts } from './reconcile.ts';
+import { classifyDistrict, classifyDivision, reconcileDistricts } from './reconcile.ts';
 import {
   CENSUS_DISTRICT_COUNT,
   ROSTER,
   ROSTER_DISTRICT_COUNT,
   normalizeName,
+  provinceOf,
   resolveRosterName,
 } from './roster.ts';
 
@@ -56,19 +57,19 @@ describe('normalizeName', () => {
 describe('classifyDistrict', () => {
   it('accepts a district whose OSM spelling differs from PBS', () => {
     expect(classifyDistrict(rel(1, 'Battagram District'))).toEqual({
-      kind: 'district',
-      district: 'Batagram',
+      kind: 'unit',
+      name: 'Batagram',
     });
     expect(classifyDistrict(rel(2, 'Tando Allahyar District'))).toEqual({
-      kind: 'district',
-      district: 'Tando Allah Yar',
+      kind: 'unit',
+      name: 'Tando Allah Yar',
     });
   });
 
   it('folds a post-census district into its parent', () => {
     expect(classifyDistrict(rel(3, 'Kot Addu District'))).toEqual({
       kind: 'fold',
-      district: 'Muzaffargarh',
+      name: 'Muzaffargarh',
       from: 'Kot Addu',
     });
   });
@@ -76,20 +77,20 @@ describe('classifyDistrict', () => {
   it('folds both halves of a post-census split into one 2023 district', () => {
     const lower = classifyDistrict(rel(16463404, 'Lower South Waziristan District'));
     const upper = classifyDistrict(rel(16463405, 'Upper South Waziristan District'));
-    expect(lower).toMatchObject({ kind: 'fold', district: 'South Waziristan' });
-    expect(upper).toMatchObject({ kind: 'fold', district: 'South Waziristan' });
+    expect(lower).toMatchObject({ kind: 'fold', name: 'South Waziristan' });
+    expect(upper).toMatchObject({ kind: 'fold', name: 'South Waziristan' });
   });
 
   it('trusts the relation id over a misleading name, for Karachi', () => {
     // OSM calls Karachi South plain "Karachi District" and Karachi West "Orangi". Matching on
     // name would misplace population in the largest city in the country.
     expect(classifyDistrict(rel(16350836, 'Karachi District'))).toEqual({
-      kind: 'district',
-      district: 'Karachi South',
+      kind: 'unit',
+      name: 'Karachi South',
     });
     expect(classifyDistrict(rel(16347667, 'Orangi District'))).toEqual({
-      kind: 'district',
-      district: 'Karachi West',
+      kind: 'unit',
+      name: 'Karachi West',
     });
   });
 
@@ -110,19 +111,27 @@ describe('classifyDivision', () => {
   it('folds divisions created after the census', () => {
     expect(classifyDivision(rel(1, 'Banbhore Division'))).toMatchObject({
       kind: 'fold',
-      district: 'Hyderabad',
+      name: 'Hyderabad',
     });
     expect(classifyDivision(rel(2, 'Gujrat Division'))).toMatchObject({
       kind: 'fold',
-      district: 'Gujranwala',
+      name: 'Gujranwala',
     });
   });
 
   it('keeps a 2023 division, stripping the suffix', () => {
     expect(classifyDivision(rel(3, 'Malakand Division'))).toEqual({
-      kind: 'district',
-      district: 'Malakand',
+      kind: 'unit',
+      name: 'Malakand',
     });
+  });
+
+  it('normalises division spelling to PBS, matching the districts inside it', () => {
+    // OSM spells the division "Qalat" but the district inside it "Kalat". Without this the
+    // bundle would ship the same name spelled two ways depending on which tier you read.
+    expect(classifyDivision(rel(4, 'Qalat Division'))).toEqual({ kind: 'unit', name: 'Kalat' });
+    expect(classifyDivision(rel(5, 'Makran Division'))).toEqual({ kind: 'unit', name: 'Mekran' });
+    expect(classifyDistrict(rel(6, 'Kalat District'))).toEqual({ kind: 'unit', name: 'Kalat' });
   });
 });
 
