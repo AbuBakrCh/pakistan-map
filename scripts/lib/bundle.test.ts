@@ -15,12 +15,25 @@ import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
+import {
+  AREA_AGREEMENT,
+  areaKm2,
+  arcsOf,
+  boundaryArcs,
+  dissolve,
+  interiorArcs,
+  outlineProblems,
+  polygonsOf,
+  unclosedRings,
+  type PolygonalGeometry,
+} from './unit-outlines.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const bundle = JSON.parse(
   readFileSync(resolve(ROOT, 'data/bundle/geography.topojson.json'), 'utf8'),
 );
 const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.json'), 'utf8'));
+const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -650,5 +663,194 @@ describe('bundle scenarios', () => {
       const unitIds = variant.units.map((u) => u.id);
       expect(new Set(unitIds).size, variant.id).toBe(unitIds.length);
     }
+  });
+});
+
+/**
+ * The dissolved unit outlines (#15), checked against the districts they were cut from.
+ *
+ * `unit-outlines.test.ts` holds the arithmetic on a topology of three squares. This is the same
+ * arithmetic over the artifact that ships and the geometry it ships against — 156 real districts,
+ * a coastline, and a unit whose claim crosses three divisions.
+ *
+ * The file carries no arcs of its own: its indices are into `geography.topojson.json`, which is
+ * why the first thing asserted is that the two were built from the same arcs. An index that has
+ * come to mean a different edge is invisible until a boundary is drawn in the wrong place.
+ */
+interface EmittedOutline {
+  readonly type: 'MultiPolygon';
+  readonly arcs: number[][][];
+  readonly properties: {
+    readonly variant: string;
+    readonly unit: string;
+    readonly name: string;
+    readonly kind: string;
+    readonly districts: number;
+    readonly polygons: number;
+    readonly areaKm2: number;
+  };
+}
+
+const districtGeometries = new Map<string, PolygonalGeometry>(
+  (bundle.objects.districts.geometries as { properties: { name: string } }[]).map((geometry) => [
+    geometry.properties.name,
+    geometry as unknown as PolygonalGeometry,
+  ]),
+);
+
+const outlinesOf = (variantId: string): EmittedOutline[] =>
+  (outlines.objects[variantId]?.geometries ?? []) as EmittedOutline[];
+
+/** Every unit of every variant, paired with the district geometry it claims. */
+const dissolved = variants.flatMap((variant) =>
+  variant.units.map((unit) => {
+    const outline = outlinesOf(variant.id).find((o) => o.properties.unit === unit.id);
+    return {
+      label: `${variant.id} "${unit.name}"`,
+      unit,
+      outline,
+      members: unit.districts.flatMap((district) => {
+        const geometry = districtGeometries.get(district);
+        return geometry === undefined ? [] : [geometry];
+      }),
+    };
+  }),
+);
+
+describe('bundle unit outlines', () => {
+  it('ships one outline per unit of every variant, and nothing for anything else', () => {
+    const missing = dissolved.filter((d) => d.outline === undefined).map((d) => d.label);
+    expect(missing).toEqual([]);
+
+    expect(new Set(Object.keys(outlines.objects))).toEqual(new Set(variants.map((v) => v.id)));
+    for (const variant of variants) {
+      expect(
+        outlinesOf(variant.id)
+          .map((o) => o.properties.unit)
+          .sort(),
+      ).toEqual(variant.units.map((u) => u.id).sort());
+    }
+  });
+
+  it('cuts its arcs against the geometry that ships beside it, not some other build', () => {
+    // The two artifacts are one geometry split across two files: the outlines are arc indices and
+    // nothing else. Rebuilding the geography without rebuilding the outlines is the failure mode,
+    // and it is silent — every index still resolves, to whatever edge now holds that position.
+    expect(outlines.provenance.arcsFrom).toBe('data/bundle/geography.topojson.json');
+    expect(outlines.provenance.geography.generated).toBe(bundle.provenance.generated);
+    expect(outlines.provenance.geography.arcs).toBe(bundle.arcs.length);
+    expect(outlines.provenance.geography.bbox).toEqual(bundle.bbox);
+
+    const outOfRange = dissolved.flatMap(({ label, outline }) =>
+      arcsOf(outline as unknown as PolygonalGeometry)
+        .filter((arc) => arc >= (bundle.arcs as unknown[]).length)
+        .map((arc) => `${label} references arc ${arc}`),
+    );
+    expect(outOfRange).toEqual([]);
+  });
+
+  it('draws every unit as exactly the union of the districts it claims', () => {
+    // The acceptance criterion of #15, over the whole shipped set: arcs, area and ring closure
+    // together. Reported as a flat list of sentences, each naming its unit, so a broken dissolve
+    // says which proposal is drawn wrong rather than that one of them is.
+    const problems = dissolved.flatMap(({ label, members, outline }) =>
+      outlineProblems(label, bundle, members, outline as never),
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it('removes the district borders inside a unit and keeps only its outside edge', () => {
+    // Re-derived here rather than taken from the artifact: the arcs a unit's districts share are
+    // computable from the geography alone, and the outline has to be their complement exactly.
+    // Anything left in is a district line drawn inside a province; anything missing is a gap.
+    for (const { label, members, outline } of dissolved) {
+      expect(arcsOf(outline as unknown as PolygonalGeometry), label).toEqual(boundaryArcs(members));
+    }
+
+    // South Punjab is the case worth naming: eleven districts across three divisions, so there is
+    // a great deal of internal border for a dissolve to get wrong.
+    const southPunjab = dissolved.find((d) => d.unit.name === 'South Punjab');
+    expect(southPunjab).toBeDefined();
+    const interior = interiorArcs(southPunjab!.members);
+    expect(interior.length).toBeGreaterThan(10);
+    const survived = arcsOf(southPunjab!.outline as unknown as PolygonalGeometry).filter((arc) =>
+      interior.includes(arc),
+    );
+    expect(survived).toEqual([]);
+  });
+
+  it('measures the same ground dissolved as it does district by district', () => {
+    // The reading the arc check cannot make: a dissolve of ten districts out of eleven is
+    // perfectly well formed and simply smaller. Quoted in km² because that is what a reader can
+    // check against the district figures in this same file.
+    for (const { label, members, outline } of dissolved) {
+      const union = members.reduce((sum, member) => sum + areaKm2(bundle, member), 0);
+      expect(
+        areaKm2(bundle, outline as unknown as PolygonalGeometry) / union,
+        label,
+      ).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('covers each variant’s whole district set once, with no ground gained or lost', () => {
+    for (const variant of variants) {
+      const outlineArea = outlinesOf(variant.id).reduce(
+        (sum, outline) => sum + areaKm2(bundle, outline as unknown as PolygonalGeometry),
+        0,
+      );
+      const universeArea = universeDistricts(variant.partition.universe).reduce(
+        (sum, district) =>
+          sum + areaKm2(bundle, districtGeometries.get(district) as PolygonalGeometry),
+        0,
+      );
+      expect(outlineArea / universeArea, variant.id).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('closes every ring of every outline', () => {
+    const torn = dissolved.flatMap(({ label, outline }) =>
+      unclosedRings(bundle, outline as never).map((ring) => `${label} ${ring}`),
+    );
+    expect(torn).toEqual([]);
+  });
+
+  it('draws a unit of non-adjacent districts as several pieces, without error', () => {
+    // No variant yet proposes a unit whose districts do not touch, and contiguity is flagged and
+    // never blocked (D7), so the property is held over the real topology with two districts that
+    // could not be further apart: Lower Chitral on the Afghan border and Karachi South on the sea.
+    const apart = ['Lower Chitral', 'Karachi South'].map(
+      (name) => districtGeometries.get(name) as PolygonalGeometry,
+    );
+    const outline = dissolve(bundle, apart);
+
+    // Sharing no arc, the two dissolve to as many pieces as they brought — which is nine, not
+    // two, because Karachi South keeps its offshore islands as pieces of their own once the
+    // coastline clip has taken the water away. That is the reason `polygons` is not a contiguity
+    // measure, said in the one place the difference is visible.
+    expect(polygonsOf(outline)).toBe(
+      apart.reduce((sum, district) => sum + polygonsOf(district as never), 0),
+    );
+    expect(polygonsOf(outline)).toBeGreaterThan(1);
+    expect(interiorArcs(apart)).toEqual([]);
+    expect(outlineProblems('two districts apart', bundle, apart, outline)).toEqual([]);
+  });
+
+  it('records a polygon count and an area the committed geometry actually has', () => {
+    // Rendered provenance, under the project's no-unsourced-surface rule: both numbers are read
+    // off the artifact by anything that wants them, so they are re-measured here rather than
+    // trusted. `polygons` is a drawing fact and not a contiguity one — South Punjab draws as
+    // three pieces because Rahim Yar Khan is three in OSM, two of them under 200 km².
+    for (const { label, outline } of dissolved) {
+      const geometry = outline as unknown as PolygonalGeometry;
+      expect(outline!.properties.polygons, label).toBe(polygonsOf(outline as never));
+      expect(outline!.properties.areaKm2, label).toBe(Math.round(areaKm2(bundle, geometry)));
+    }
+    const southPunjab = dissolved.find((d) => d.unit.name === 'South Punjab');
+    expect(southPunjab!.outline!.properties.polygons).toBe(3);
+  });
+
+  it('states the floating-point allowance its own check was made to', () => {
+    expect(outlines.provenance.validation.areaAgreement).toBe(AREA_AGREEMENT);
+    expect(outlines.provenance.counts.units).toBe(dissolved.length);
   });
 });

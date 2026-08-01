@@ -108,13 +108,14 @@ describe('test seam isolation', () => {
       'data/bundle/geography.topojson.json',
       'data/bundle/statistics.json',
       'data/bundle/scenarios.json',
+      'data/bundle/unit-outlines.json',
       'data/reference/post-census-district-folds.json',
     ]) {
       expect(tracked, input).toContain(input);
     }
   });
 
-  it('reads both artifacts with the socket layer taken away', () => {
+  it('reads every artifact with the socket layer taken away', () => {
     // The static scan says no module names a network primitive; this says the artifacts load
     // when there is no socket to open at all, which also covers anything reached indirectly.
     const connect = Socket.prototype.connect;
@@ -126,6 +127,7 @@ describe('test seam isolation', () => {
         'data/bundle/geography.topojson.json',
         'data/bundle/statistics.json',
         'data/bundle/scenarios.json',
+        'data/bundle/unit-outlines.json',
       ])
         expect(Object.keys(JSON.parse(read(artifact))).length).toBeGreaterThan(0);
     } finally {
