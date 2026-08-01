@@ -46,7 +46,7 @@ _Avoid_: scenario, proposal, preset, configuration, option
 
 **Basis**:
 The ground on which a variant's boundaries are argued — language, administrative, historical,
-economic. Selecting one determines both which variants exist and how districts are shaded.
+development. Selecting one determines both which variants exist and how districts are shaded.
 _Avoid_: category, lens, mode, dimension, criterion
 
 **Baseline**:

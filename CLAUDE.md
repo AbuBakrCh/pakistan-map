@@ -23,7 +23,7 @@ Vocabulary: a proposed new province is a **unit**.
 ```
 Base map (rendered):   Province └── Division      ← always; keeps the map uncluttered
 Building block:        District (~165)            ← every unit is composed of these
-Statistics join:       District                   ← census + MPI both publish here; exact, never interpolated
+Statistics join:       District                   ← the census publishes here; exact, never interpolated
 ```
 
 Districts are the atom because **every real proposal in Pakistan is stated in districts**
@@ -34,7 +34,7 @@ cuts through a division, or on zoom.
 ### Structure
 
 ```
-Basis (4)  →  Variant (3–4 each, ~14 total)  →  Units  →  Districts
+Basis (4)  →  Variant (17 total)  →  Units  →  Districts
 ```
 
 - **Basis** — the ground on which boundaries are argued. Selecting one fades the current
@@ -51,7 +51,7 @@ Basis (4)  →  Variant (3–4 each, ~14 total)  →  Units  →  Districts
 | **Language / dialect** | PBS 2023 Census Table 11, mother tongue by district | `census` · `proxy` |
 | **Administrative** | 2023 census population + derived geometry | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
-| **Economic** | National MPI, PSLM 2019-20 (Ministry of Planning + UNICEF + OPHI) | `survey 2019/20` |
+| **Development** | PBS 2023 Census — literacy, drinking water, sanitation | `census` · `synthesized` |
 
 **Deliberately cut:**
 
@@ -79,7 +79,7 @@ drawing something.*
 | District boundaries | OSM `admin_level=6` | ~165. **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short |
 | Population | PBS 2023 Digital Census | District level |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
-| Deprivation | National MPI, PSLM **2019-20** | 195k households, purpose-built for district-level estimates. **Older than the census — must be badged.** Deliberately *not* rebuilt from 2023 census indicators: choosing weights would make it our methodology |
+| Development | PBS 2023 Census | Literacy (10+), improved drinking water, improved sanitation — all published directly at district level. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage |
 
 Structured census extraction path: `PakPC2023` (CRAN, GPL-2, GitHub `myaseen208/PakPC2023`).
 PBS publishes primarily as PDF.
@@ -96,7 +96,7 @@ copy, not drawn**. The baseline is stale *on purpose*, and the app says so.
 
 Build-time bake, **artifacts committed** — not gitignored.
 
-`scripts/build-data.ts` fetches → filters → injects ICT → joins census and MPI by district
+`scripts/build-data.ts` fetches → filters → injects ICT → joins census indicators by district
 code → simplifies geometry → precomputes the adjacency graph and every variant's derived
 stats → emits one TopoJSON + JSON bundle stamped with generation date and source URLs.
 
@@ -118,7 +118,7 @@ the active variant's unit outlines draw prominently on top.
 
 **Three visual strata:**
 
-1. **Fill = data** (dominant mother tongue, deprivation band…) — *never* unit membership
+1. **Fill = data** (dominant mother tongue, development band…) — *never* unit membership
 2. **Current boundaries** — thin, faded, once a basis is active
 3. **Unit outlines** — heavy, labelled, on top
 
@@ -201,7 +201,7 @@ Numbered by the grilling question that settled each.
 | D19 | Bake at build time, commit artifacts | Reproducibility; boundaries must not mutate without a commit |
 | D20 | Vanilla TS | Four state values; React would be walled out of 90% of the UI anyway |
 | D22 | PNG export with baked provenance | Screenshots travel regardless; make the honest one the easy one |
-| D23 | Districts as the building block | Every real proposal is stated in districts; MPI has no division-level source |
+| D23 | Districts as the building block | Every real proposal in Pakistan is stated in districts |
 
 ---
 
@@ -216,7 +216,7 @@ Numbered by the grilling question that settled each.
    rendered variant-card content, not documentation. Keeping both would be two sources of truth.
 
 **Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,
-Economic 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a
+Development 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a
 boundary). Karachi and Pashtun Balochistan are attributed variants, not algorithmic by-products.
 
 ---

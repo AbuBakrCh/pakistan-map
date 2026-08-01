@@ -13,7 +13,7 @@ every real proposal is stated.
 ```
 Base map (rendered):   Province └── Division      ← current-day, reference only, carries no data
 Building block:        District                   ← every unit is composed of these
-Statistics join:       District                   ← census + MPI both publish here
+Statistics join:       District                   ← the census publishes here
 ```
 
 **The division layer carries no statistics.** That falls out of the district move and it
@@ -230,39 +230,45 @@ province. Different bases, so the app never draws both — the Q8/Q9 behaviour w
 
 ---
 
-## Basis 4 — Economic
-Source: **national MPI, PSLM 2019-20** (Ministry of Planning, Development & Special Initiatives,
-with UNICEF and OPHI; published 2024) · Badge: `survey 2019/20`
+## Basis 4 — Development
+Source: **PBS 2023 Census**, three district-level indicators · Badge: `census` · `synthesized`
 
-**Upgraded from the 2014/15 round.** PSLM 2019-20 sampled 195,000 households and was
-*purpose-built to produce district-level estimates* — so it is both five years newer and better
-matched to our join than the earlier round.
+| Indicator | Census measure |
+|---|---|
+| Literacy | Literacy rate, population aged 10+ |
+| Water | Households with improved drinking water source |
+| Sanitation | Households with improved sanitation |
 
-**Deliberately not built from the 2023 census.** The census does carry literacy, housing
-materials, water, sanitation, electricity and cooking fuel at district level — enough to
-construct a 2023-vintage deprivation index. We don't, because choosing indicators and weights
-would be our own methodology, and every other surface in this app reports someone else's
-published figure. Official MPI stays authoritative; the badge carries the vintage honestly.
+All three are **published directly at district level** — no derivation, no latent variable.
 
-**Now on firmer ground structurally too:** MPI is published at district level *only*, so at
-division resolution we'd have been aggregating a survey to a resolution it was never published
-at. The district move fixes that.
+**Named "Development", not "Economic" or "Poverty".** The census can see service access and
+attainment. It cannot see income, consumption, child mortality or nutrition — the things that
+make MPI a poverty measure. Shading a map from literacy and toilets and calling it poverty
+would be a claim these three indicators can't support.
+
+**MPI dropped entirely.** Earlier drafts used the national MPI (PSLM 2014/15, then 2019-20).
+Replaced because the census gives one source and one vintage for the whole app, and because
+three named published rates are more interrogable than a 15-indicator weighted composite with
+censoring rules.
+
+**Why `synthesized`:** the three rates are census figures, but combining them into one shading
+is our choice — equal weighting is still a weighting. Therefore: the formula is stated on the
+card, and **all three component rates show per district on hover**, so the composite is never
+the only thing visible. Same badge and same reasoning as L7.
 
 **Reservation retained.** Deprivation is arguably the true engine of the debate — the South
-Punjab case is fundamentally economic, not linguistic — but it doesn't form contiguous blocs
-the way language does. Kept as a standalone basis with one variant.
+Punjab case is fundamentally about it, not language — but it doesn't form contiguous blocs the
+way language does. Kept as a standalone basis with one variant.
 
-### E1 · Deprivation fault lines *(recommended: the only Economic variant)*
-Split each province where its internal deprivation gradient is steepest — which independently
-reproduces South Punjab, interior Sindh, and interior Balochistan **from a data source with no
+### D1 · Development fault lines *(the only Development variant)*
+Split each province where its internal development gradient is steepest — which independently
+reproduces South Punjab, interior Sindh, and interior Balochistan **from indicators with no
 linguistic or historical input at all.** That convergence is the most interesting single result
-in the app.
+in the app: three service-access rates, measured for entirely unrelated reasons, land on
+roughly the boundaries the political movements have been arguing for.
 
-**Cut from the earlier draft:** quartile-banding (works as an overlay, weak as a partition) and
-poorest-divisions-as-one-unit (non-contiguous, would be flagged invalid).
-
-**Open question:** does one variant justify a standalone basis, or should this fold into Language
-and Administrative as supporting evidence on their cards?
+**Cut from the earlier draft:** quartile-banding (works as shading, weak as a partition) and
+poorest-districts-as-one-unit (non-contiguous, would be flagged invalid).
 
 ---
 
@@ -273,7 +279,7 @@ and Administrative as supporting evidence on their cards?
 | Language | 7 |
 | Administrative | 5 |
 | Historical | 4 |
-| Economic | 1 |
+| Development | 1 |
 | **Total** | **17** |
 
 ---
@@ -290,7 +296,8 @@ Both are verification tasks for build time, not decisions.
 ## Resolved
 
 - **Amb and Phulra** — omitted with a footnote naming them (H2)
-- **Economic basis** — kept standalone, upgraded to MPI **2019-20**
+- **Economic basis** — kept standalone, rebuilt from the **2023 census** (literacy, water,
+  sanitation) and renamed **Development**; MPI dropped
 - **Karachi** and **Pashtun Balochistan** — promoted from algorithmic by-products of L7 to
   attributed variants with named advocates and named opposition
 
@@ -299,5 +306,5 @@ Both are verification tasks for build time, not decisions.
 - ~~L3 over-inclusion of the Waziristans~~ — exactly expressible
 - ~~Princely states smaller than divisions~~ — all but Amb and Phulra
 - ~~Sub-block mechanism~~ — deleted, never needed
-- ~~MPI aggregated above its published resolution~~ — joins natively
+- ~~Deprivation data aggregated above its published resolution~~ — joins natively at district level
 - ~~Division-layer vintage alignment~~ — divisions carry no data
