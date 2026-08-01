@@ -10,3 +10,7 @@ dist/
 
 # OS
 .DS_Store
+
+# NOTE: data/ is deliberately NOT ignored. The raw Overpass cache and every baked
+# artifact are committed so that boundary changes arrive as reviewable, dated diffs
+# and the runtime makes zero network calls. Do not add data/ here.

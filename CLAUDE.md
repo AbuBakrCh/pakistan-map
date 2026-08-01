@@ -22,7 +22,7 @@ Vocabulary: a proposed new province is a **unit**.
 
 ```
 Base map (rendered):   Province └── Division      ← always; keeps the map uncluttered
-Building block:        District (~165)            ← every unit is composed of these
+Building block:        District (136)             ← every unit is composed of these; 2023 census set
 Statistics join:       District                   ← the census publishes here; exact, never interpolated
 ```
 
@@ -76,7 +76,7 @@ drawing something.*
 | What | Source | Notes |
 |---|---|---|
 | Division boundaries | OSM `admin_level=5` | ~39 real + ICT injected; strays from India/Afghanistan filtered |
-| District boundaries | OSM `admin_level=6` | ~165. **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short |
+| District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Join on relation id or census code, never on name** — PBS's own documents disagree with each other, and OSM's primary `name` on AJK districts is Urdu |
 | Population | PBS 2023 Digital Census | District level |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
 | Development | PBS 2023 Census | Literacy (10+), improved drinking water, improved sanitation — all published directly at district level. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage |
@@ -89,8 +89,18 @@ PBS publishes primarily as PDF.
 **Everything pins to the 2023 census.** Administrative units created after the census fold
 into their parent, because a unit with no census row cannot carry a population.
 
-Consequence: newer Balochistan divisions (Pishin, Koh-e-Sulaiman, ~2025–26) are **noted in
-copy, not drawn**. The baseline is stale *on purpose*, and the app says so.
+**This pins geometry as well as statistics** (ADR-0001). The drawn district set *is* the 2023
+set: post-census districts are dissolved back into their 2023 parents rather than rendered.
+Verified safe — every post-census unit folds into exactly one parent, so the dissolve recovers
+the original boundary exactly rather than approximating it.
+
+Consequence: the Balochistan restructuring of **8 July 2026** (divisions Pishin and
+Koh-e-Sulaiman; districts Quetta East/West, Barshore, Wadh, Tump, Upper Dera Bugti) is **noted
+in copy, not drawn**. The baseline is stale *on purpose*, and the app says so.
+
+Two district counts coexist and both belong in the bundle: **136** census districts across the
+four provinces and ICT — the statistical atom — and the larger current-day set OSM returns,
+which includes AJK, GB and post-census creations. See `docs/research/`.
 
 ### Pipeline
 
@@ -142,8 +152,12 @@ Contiguity is **flagged, never blocked**.
 
 ## Politically sensitive rendering
 
-- **AJK and Gilgit-Baltistan** included and fully interactive, styled as **territories, not
-  provinces** — constitutionally they are not provinces.
+- **AJK and Gilgit-Baltistan** drawn and named, styled as **territories, not provinces** —
+  constitutionally they are not provinces. **Not fully interactive:** PBS's 2023 results cover
+  136 districts — the four provinces and ICT only — so no AJK or GB district has a mother
+  tongue, literacy, water or sanitation figure. They cannot be shaded under any basis, and
+  carry no hover statistics beyond a name. AJK population exists only relayed via AJK BoS,
+  never direct from PBS.
 - **Line of Control drawn dashed and labelled** — a ceasefire line, not an international
   border. Solid would be a claim this app's data can't support.
 - **"GB as 5th province" is content, not baseline** — a live proposal (provisional status
@@ -202,14 +216,24 @@ Numbered by the grilling question that settled each.
 | D20 | Vanilla TS | Four state values; React would be walled out of 90% of the UI anyway |
 | D22 | PNG export with baked provenance | Screenshots travel regardless; make the honest one the easy one |
 | D23 | Districts as the building block | Every real proposal in Pakistan is stated in districts |
+| D24 | Single vintage — 2023 geometry *and* statistics (ADR-0001) | Two vintages meant drawing districts that had no data; verified that every post-census unit folds into exactly one parent, so the dissolve is exact |
+| D25 | AJK/GB drawn but not shaded | PBS 2023 publishes 136 districts — provinces + ICT only. No AJK/GB indicator data exists to shade with |
 
 ---
 
 ## Open items
 
-1. **AJK district list** is from memory — verify against a primary source at build time.
-2. **Balochistan's division and district set** needs verification; Wikipedia and OSM disagree
-   and it is the most recently churned region in the country.
+1. ~~**AJK district list** is from memory~~ — **resolved.** 10 districts in 3 divisions,
+   confirmed against AJK BoS and PBS. The set was right; the *names* were not (officially
+   **Jhelum Valley**, not Hattian Bala; **Sudhnoti**, not Sudhanoti) and Haveli sits in Poonch
+   division, not Muzaffarabad. See `docs/research/ajk-district-set.md`.
+2. ~~**Balochistan's division and district set** needs verification~~ — **resolved.** 8
+   divisions, 34 districts, proved complete by population sum. Surab is *not* new (draw it);
+   Taftan is not a district at all. See `docs/research/balochistan-division-district-set.md`.
+   The current-day 41-district roster remains unresolvable without the provincial gazette —
+   which no longer blocks anything, since under ADR-0001 none of it is drawn.
+2b. **Can a variant claim AJK territory?** L2 (#24) and H2 (#30) reference AJK districts, which
+   are drawn but unshaded and carry no PBS-direct statistics. Product decision outstanding.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 4. **`SCENARIOS-DRAFT.md` is temporary.** Once approved it becomes a typed data module and the
    markdown is deleted — every field in it (rationale, advocacy, opposition, footnotes) is
