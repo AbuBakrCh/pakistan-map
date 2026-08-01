@@ -1,0 +1,1304 @@
+{
+  "provenance": {
+    "generated": "2026-08-01T14:58:21.400Z",
+    "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
+    "unit": "district",
+    "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
+    "sources": {
+      "census": "https://www.pbs.gov.pk — Pakistan Population Census 2023 (Digital Census)",
+      "censusPackage": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication",
+      "censusPackageLicence": "GPL-2",
+      "publishedTotals": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate",
+      "folds": "data/reference/post-census-district-folds.json",
+      "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+    },
+    "cacheDigests": {
+      "district": "sha256:a1a3469e2938a80038041a61f51785dc3eb8c424884c2f814b665d7802112895",
+      "division": "sha256:d9e1b80e74405a568411d86bb566271519b134a7ac75f5d8a3c3be8cc17788ae",
+      "province": "sha256:5f25ec14649c45f03c28c8dc629789238dfef5ae4bcb14043e5518d3d2be6abe"
+    },
+    "counts": {
+      "censusDistricts": 136,
+      "drawnDistricts": 156,
+      "districtsWithoutCensusData": 20,
+      "divisions": 31,
+      "provinces": 5,
+      "postCensusFolds": 23
+    },
+    "note": "136 districts carry census statistics (four provinces and ICT); 156 are drawn. The difference is AJK and Gilgit-Baltistan, which PBS's 2023 results do not cover."
+  },
+  "districts": {
+    "Abbotabad": {
+      "population": 1419072,
+      "households": 237020,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Attock": {
+      "population": 2170423,
+      "households": 354235,
+      "division": "Rawalpindi",
+      "province": "Punjab"
+    },
+    "Awaran": {
+      "population": 178958,
+      "households": 27808,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Badin": {
+      "population": 1947081,
+      "households": 398066,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Bahawalnagar": {
+      "population": 3550342,
+      "households": 558333,
+      "division": "Bahawalpur",
+      "province": "Punjab"
+    },
+    "Bahawalpur": {
+      "population": 4284964,
+      "households": 674155,
+      "division": "Bahawalpur",
+      "province": "Punjab"
+    },
+    "Bajaur": {
+      "population": 1287960,
+      "households": 181721,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Bannu": {
+      "population": 1357890,
+      "households": 183246,
+      "division": "Bannu",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Barkhan": {
+      "population": 210249,
+      "households": 23069,
+      "division": "Loralai",
+      "province": "Balochistan"
+    },
+    "Batagram": {
+      "population": 554133,
+      "households": 86224,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Bhakkar": {
+      "population": 1957470,
+      "households": 313559,
+      "division": "Sargodha",
+      "province": "Punjab"
+    },
+    "Buner": {
+      "population": 1016869,
+      "households": 118692,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Chagai": {
+      "population": 269192,
+      "households": 38234,
+      "division": "Rakhshan",
+      "province": "Balochistan"
+    },
+    "Chakwal": {
+      "population": 1734854,
+      "households": 288997,
+      "division": "Rawalpindi",
+      "province": "Punjab"
+    },
+    "Chaman": {
+      "population": 466218,
+      "households": 61942,
+      "division": "Quetta",
+      "province": "Balochistan"
+    },
+    "Charsadda": {
+      "population": 1835504,
+      "households": 263993,
+      "division": "Peshawar",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Chiniot": {
+      "population": 1563024,
+      "households": 256660,
+      "division": "Faisalabad",
+      "province": "Punjab"
+    },
+    "Dadu": {
+      "population": 1742320,
+      "households": 340665,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Dera Bugti": {
+      "population": 355274,
+      "households": 62298,
+      "division": "Sibi",
+      "province": "Balochistan"
+    },
+    "Dera Ghazi Khan": {
+      "population": 3393705,
+      "households": 454711,
+      "division": "Dera Ghazi Khan",
+      "province": "Punjab"
+    },
+    "Dera Ismail Khan": {
+      "population": 1829811,
+      "households": 270189,
+      "division": "Dera Ismail Khan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Duki": {
+      "population": 205044,
+      "households": 43069,
+      "division": "Loralai",
+      "province": "Balochistan"
+    },
+    "Faisalabad": {
+      "population": 9075819,
+      "households": 1384668,
+      "division": "Faisalabad",
+      "province": "Punjab"
+    },
+    "Ghotki": {
+      "population": 1772609,
+      "households": 331132,
+      "division": "Sukkur",
+      "province": "Sindh"
+    },
+    "Gujranwala": {
+      "population": 5959750,
+      "households": 849524,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Gujrat": {
+      "population": 3219375,
+      "households": 489589,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Gwadar": {
+      "population": 305160,
+      "households": 50376,
+      "division": "Mekran",
+      "province": "Balochistan"
+    },
+    "Hafizabad": {
+      "population": 1319909,
+      "households": 197277,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Hangu": {
+      "population": 528902,
+      "households": 61163,
+      "division": "Kohat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Haripur": {
+      "population": 1174783,
+      "households": 192658,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Harnai": {
+      "population": 127571,
+      "households": 16400,
+      "division": "Sibi",
+      "province": "Balochistan"
+    },
+    "Hyderabad": {
+      "population": 2432540,
+      "households": 448479,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Islamabad": {
+      "population": 2363863,
+      "households": 411518,
+      "division": "Islamabad",
+      "province": "Islamabad Capital Territory"
+    },
+    "Jacobabad": {
+      "population": 1174097,
+      "households": 195161,
+      "division": "Larkana",
+      "province": "Sindh"
+    },
+    "Jaffarabad": {
+      "population": 594558,
+      "households": 81580,
+      "division": "Nasirabad",
+      "province": "Balochistan"
+    },
+    "Jamshoro": {
+      "population": 1117308,
+      "households": 213639,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Jhal Magsi": {
+      "population": 203368,
+      "households": 30967,
+      "division": "Nasirabad",
+      "province": "Balochistan"
+    },
+    "Jhang": {
+      "population": 3077720,
+      "households": 494761,
+      "division": "Faisalabad",
+      "province": "Punjab"
+    },
+    "Jhelum": {
+      "population": 1382308,
+      "households": 229227,
+      "division": "Rawalpindi",
+      "province": "Punjab"
+    },
+    "Kachhi (Bolan)": {
+      "population": 442612,
+      "households": 50035,
+      "division": "Nasirabad",
+      "province": "Balochistan"
+    },
+    "Kalat": {
+      "population": 272506,
+      "households": 33415,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Kambar Shahdadkot": {
+      "population": 1514869,
+      "households": 267684,
+      "division": "Larkana",
+      "province": "Sindh"
+    },
+    "Karachi Central": {
+      "population": 3822325,
+      "households": 652776,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Karachi East": {
+      "population": 3950031,
+      "households": 665452,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Karachi South": {
+      "population": 2329764,
+      "households": 426224,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Karachi West": {
+      "population": 2679380,
+      "households": 465197,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Karak": {
+      "population": 815878,
+      "households": 96026,
+      "division": "Kohat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Kashmore": {
+      "population": 1233957,
+      "households": 208980,
+      "division": "Larkana",
+      "province": "Sindh"
+    },
+    "Kasur": {
+      "population": 4084286,
+      "households": 645838,
+      "division": "Lahore",
+      "province": "Punjab"
+    },
+    "Keamari": {
+      "population": 2068451,
+      "households": 319555,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Kech": {
+      "population": 1060931,
+      "households": 253526,
+      "division": "Mekran",
+      "province": "Balochistan"
+    },
+    "Khairpur": {
+      "population": 2597535,
+      "households": 452588,
+      "division": "Sukkur",
+      "province": "Sindh"
+    },
+    "Khanewal": {
+      "population": 3364077,
+      "households": 526609,
+      "division": "Multan",
+      "province": "Punjab"
+    },
+    "Kharan": {
+      "population": 260352,
+      "households": 35879,
+      "division": "Rakhshan",
+      "province": "Balochistan"
+    },
+    "Khushab": {
+      "population": 1501089,
+      "households": 248449,
+      "division": "Sargodha",
+      "province": "Punjab"
+    },
+    "Khuzdar": {
+      "population": 997214,
+      "households": 161594,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Khyber": {
+      "population": 1146267,
+      "households": 166829,
+      "division": "Peshawar",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Killa Abdullah": {
+      "population": 361971,
+      "households": 67308,
+      "division": "Quetta",
+      "province": "Balochistan"
+    },
+    "Killa Saifullah": {
+      "population": 380200,
+      "households": 70021,
+      "division": "Zhob",
+      "province": "Balochistan"
+    },
+    "Kohat": {
+      "population": 1234661,
+      "households": 169734,
+      "division": "Kohat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Kohlu": {
+      "population": 260220,
+      "households": 38115,
+      "division": "Sibi",
+      "province": "Balochistan"
+    },
+    "Kolai Pallas Kohistan": {
+      "population": 280162,
+      "households": 40393,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Korangi": {
+      "population": 3128971,
+      "households": 493504,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Kurram": {
+      "population": 785434,
+      "households": 94575,
+      "division": "Kohat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Lahore": {
+      "population": 13004135,
+      "households": 2012526,
+      "division": "Lahore",
+      "province": "Punjab"
+    },
+    "Lakki Marwat": {
+      "population": 1040856,
+      "households": 131894,
+      "division": "Bannu",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Larkana": {
+      "population": 1784453,
+      "households": 321837,
+      "division": "Larkana",
+      "province": "Sindh"
+    },
+    "Lasbela": {
+      "population": 680977,
+      "households": 115635,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Layyah": {
+      "population": 2102386,
+      "households": 341276,
+      "division": "Dera Ghazi Khan",
+      "province": "Punjab"
+    },
+    "Lodhran": {
+      "population": 1928299,
+      "households": 324020,
+      "division": "Multan",
+      "province": "Punjab"
+    },
+    "Loralai": {
+      "population": 272432,
+      "households": 38284,
+      "division": "Loralai",
+      "province": "Balochistan"
+    },
+    "Lower Chitral": {
+      "population": 320407,
+      "households": 46050,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Lower Dir": {
+      "population": 1650183,
+      "households": 202899,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Lower Kohistan": {
+      "population": 340017,
+      "households": 52318,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Malakand": {
+      "population": 826250,
+      "households": 113159,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Malir": {
+      "population": 2403959,
+      "households": 416512,
+      "division": "Karachi",
+      "province": "Sindh"
+    },
+    "Mandi Bahauddin": {
+      "population": 1829486,
+      "households": 286168,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Mansehra": {
+      "population": 1797177,
+      "households": 294113,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Mardan": {
+      "population": 2744898,
+      "households": 400904,
+      "division": "Mardan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Mastung": {
+      "population": 313271,
+      "households": 43736,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Matiari": {
+      "population": 849383,
+      "households": 158559,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Mianwali": {
+      "population": 1798268,
+      "households": 296614,
+      "division": "Sargodha",
+      "province": "Punjab"
+    },
+    "Mirpur Khas": {
+      "population": 1681386,
+      "households": 313141,
+      "division": "Mirpur Khas",
+      "province": "Sindh"
+    },
+    "Mohmand": {
+      "population": 553933,
+      "households": 63982,
+      "division": "Peshawar",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Multan": {
+      "population": 5362305,
+      "households": 887304,
+      "division": "Multan",
+      "province": "Punjab"
+    },
+    "Musa Khel": {
+      "population": 182275,
+      "households": 31257,
+      "division": "Loralai",
+      "province": "Balochistan"
+    },
+    "Muzaffargarh": {
+      "population": 5015325,
+      "households": 804783,
+      "division": "Dera Ghazi Khan",
+      "province": "Punjab"
+    },
+    "Nankana Sahib": {
+      "population": 1634871,
+      "households": 247121,
+      "division": "Lahore",
+      "province": "Punjab"
+    },
+    "Narowal": {
+      "population": 1950954,
+      "households": 281628,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Nasirabad": {
+      "population": 563377,
+      "households": 87540,
+      "division": "Nasirabad",
+      "province": "Balochistan"
+    },
+    "Naushahro Feroze": {
+      "population": 1777082,
+      "households": 319938,
+      "division": "Shaheed Benazirabad",
+      "province": "Sindh"
+    },
+    "North Waziristan": {
+      "population": 693332,
+      "households": 99625,
+      "division": "Bannu",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Nowshera": {
+      "population": 1740705,
+      "households": 259911,
+      "division": "Peshawar",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Nushki": {
+      "population": 207834,
+      "households": 31268,
+      "division": "Rakhshan",
+      "province": "Balochistan"
+    },
+    "Okara": {
+      "population": 3515490,
+      "households": 550057,
+      "division": "Sahiwal",
+      "province": "Punjab"
+    },
+    "Orakzai": {
+      "population": 387561,
+      "households": 52108,
+      "division": "Kohat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Pakpattan": {
+      "population": 2136170,
+      "households": 344744,
+      "division": "Sahiwal",
+      "province": "Punjab"
+    },
+    "Panjgur": {
+      "population": 509781,
+      "households": 117157,
+      "division": "Mekran",
+      "province": "Balochistan"
+    },
+    "Peshawar": {
+      "population": 4758762,
+      "households": 691505,
+      "division": "Peshawar",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Pishin": {
+      "population": 835482,
+      "households": 147241,
+      "division": "Quetta",
+      "province": "Balochistan"
+    },
+    "Quetta": {
+      "population": 2595492,
+      "households": 288690,
+      "division": "Quetta",
+      "province": "Balochistan"
+    },
+    "Rahim Yar Khan": {
+      "population": 5564703,
+      "households": 827525,
+      "division": "Bahawalpur",
+      "province": "Punjab"
+    },
+    "Rajanpur": {
+      "population": 2381049,
+      "households": 354271,
+      "division": "Dera Ghazi Khan",
+      "province": "Punjab"
+    },
+    "Rawalpindi": {
+      "population": 6118911,
+      "households": 999347,
+      "division": "Rawalpindi",
+      "province": "Punjab"
+    },
+    "Sahiwal": {
+      "population": 2881811,
+      "households": 446787,
+      "division": "Sahiwal",
+      "province": "Punjab"
+    },
+    "Sanghar": {
+      "population": 2308465,
+      "households": 407265,
+      "division": "Shaheed Benazirabad",
+      "province": "Sindh"
+    },
+    "Sargodha": {
+      "population": 4334448,
+      "households": 684799,
+      "division": "Sargodha",
+      "province": "Punjab"
+    },
+    "Shaheed Benazirabad": {
+      "population": 1845102,
+      "households": 334596,
+      "division": "Shaheed Benazirabad",
+      "province": "Sindh"
+    },
+    "Shangla": {
+      "population": 891252,
+      "households": 125551,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Sheikhupura": {
+      "population": 4049418,
+      "households": 593506,
+      "division": "Lahore",
+      "province": "Punjab"
+    },
+    "Sherani": {
+      "population": 191687,
+      "households": 36108,
+      "division": "Zhob",
+      "province": "Balochistan"
+    },
+    "Shikarpur": {
+      "population": 1386330,
+      "households": 214901,
+      "division": "Larkana",
+      "province": "Sindh"
+    },
+    "Sialkot": {
+      "population": 4499394,
+      "households": 671589,
+      "division": "Gujranwala",
+      "province": "Punjab"
+    },
+    "Sibi": {
+      "population": 224148,
+      "households": 31303,
+      "division": "Sibi",
+      "province": "Balochistan"
+    },
+    "Sohbatpur": {
+      "population": 240106,
+      "households": 33738,
+      "division": "Nasirabad",
+      "province": "Balochistan"
+    },
+    "South Waziristan": {
+      "population": 888675,
+      "households": 178665,
+      "division": "Dera Ismail Khan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Sujawal": {
+      "population": 839292,
+      "households": 158917,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Sukkur": {
+      "population": 1639897,
+      "households": 268755,
+      "division": "Sukkur",
+      "province": "Sindh"
+    },
+    "Surab": {
+      "population": 278092,
+      "households": 51021,
+      "division": "Kalat",
+      "province": "Balochistan"
+    },
+    "Swabi": {
+      "population": 1894600,
+      "households": 279035,
+      "division": "Mardan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Swat": {
+      "population": 2687384,
+      "households": 381246,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Tando Allah Yar": {
+      "population": 922012,
+      "households": 177534,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Tando Mohammad Khan": {
+      "population": 726119,
+      "households": 143956,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Tank": {
+      "population": 470293,
+      "households": 70694,
+      "division": "Dera Ismail Khan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Tharparkar": {
+      "population": 1778407,
+      "households": 327677,
+      "division": "Mirpur Khas",
+      "province": "Sindh"
+    },
+    "Thatta": {
+      "population": 1083191,
+      "households": 206281,
+      "division": "Hyderabad",
+      "province": "Sindh"
+    },
+    "Toba Tek Singh": {
+      "population": 2511963,
+      "households": 391861,
+      "division": "Faisalabad",
+      "province": "Punjab"
+    },
+    "Torghar": {
+      "population": 200445,
+      "households": 29417,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Umerkot": {
+      "population": 1159831,
+      "households": 222649,
+      "division": "Mirpur Khas",
+      "province": "Sindh"
+    },
+    "Upper Chitral": {
+      "population": 195528,
+      "households": 26368,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Upper Dir": {
+      "population": 1083566,
+      "households": 149557,
+      "division": "Malakand",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Upper Kohistan": {
+      "population": 422947,
+      "households": 71543,
+      "division": "Hazara",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    "Vehari": {
+      "population": 3430421,
+      "households": 543384,
+      "division": "Multan",
+      "province": "Punjab"
+    },
+    "Washuk": {
+      "population": 302623,
+      "households": 49080,
+      "division": "Rakhshan",
+      "province": "Balochistan"
+    },
+    "Zhob": {
+      "population": 355692,
+      "households": 47925,
+      "division": "Zhob",
+      "province": "Balochistan"
+    },
+    "Ziarat": {
+      "population": 189535,
+      "households": 22900,
+      "division": "Sibi",
+      "province": "Balochistan"
+    }
+  },
+  "withoutCensusData": {
+    "reason": "Drawn and named, never shaded and never counted (D25). PBS published the 2023 census results for 136 districts — the four provinces and ICT only — so no district of Azad Jammu & Kashmir or Gilgit-Baltistan has a population, literacy, water or sanitation figure from PBS. AJK population exists only as relayed by the AJK Bureau of Statistics, never direct from PBS, and is out of scope here. Absent, not zero.",
+    "districts": [
+      "Hattian Bala",
+      "Muzaffarabad",
+      "Neelum",
+      "Bagh",
+      "Haveli",
+      "Sudhnoti",
+      "Poonch",
+      "Bhimber",
+      "Mirpur",
+      "Kotli",
+      "Gilgit",
+      "Hunza",
+      "Nagar",
+      "Ghizer",
+      "Skardu",
+      "Kharmaung",
+      "Shigar",
+      "Ghanche",
+      "Astore",
+      "Diamir"
+    ]
+  },
+  "folds": {
+    "reason": "Districts created after the census date. A unit with no census row cannot carry a population, so it is neither drawn nor counted on its own: its people stay with the 2023 district it was carved out of. Look a post-census district up here to reach the district that carries it.",
+    "source": "data/reference/post-census-district-folds.json",
+    "into": {
+      "Wazirabad": "Gujranwala",
+      "Taunsa": "Dera Ghazi Khan",
+      "Kot Addu": "Muzaffargarh",
+      "Talagang": "Chakwal",
+      "Murree": "Rawalpindi",
+      "Central Dir": "Lower Dir",
+      "Upper Swat": "Swat",
+      "Allai": "Batagram",
+      "Paharpur": "Dera Ismail Khan",
+      "Lower South Waziristan": "South Waziristan",
+      "Upper South Waziristan": "South Waziristan",
+      "Hub": "Lasbela",
+      "Usta Muhammad": "Jaffarabad",
+      "Quetta East": "Quetta",
+      "Quetta West": "Quetta",
+      "Barshore": "Pishin",
+      "Wadh": "Khuzdar",
+      "Tump": "Kech",
+      "Upper Dera Bugti": "Dera Bugti",
+      "South Dera Bugti": "Dera Bugti",
+      "Gupis-Yasin": "Ghizer",
+      "Tangir": "Diamir",
+      "Darel": "Diamir"
+    },
+    "table": [
+      {
+        "district": "Wazirabad",
+        "into": "Gujranwala",
+        "province": "Punjab"
+      },
+      {
+        "district": "Taunsa",
+        "into": "Dera Ghazi Khan",
+        "province": "Punjab"
+      },
+      {
+        "district": "Kot Addu",
+        "into": "Muzaffargarh",
+        "province": "Punjab"
+      },
+      {
+        "district": "Talagang",
+        "into": "Chakwal",
+        "province": "Punjab",
+        "note": "Moved into the post-census Mianwali division when it was created. The parent stays in Rawalpindi division, where the census puts Chakwal."
+      },
+      {
+        "district": "Murree",
+        "into": "Rawalpindi",
+        "province": "Punjab"
+      },
+      {
+        "district": "Central Dir",
+        "into": "Lower Dir",
+        "province": "Khyber Pakhtunkhwa"
+      },
+      {
+        "district": "Upper Swat",
+        "into": "Swat",
+        "province": "Khyber Pakhtunkhwa"
+      },
+      {
+        "district": "Allai",
+        "into": "Batagram",
+        "province": "Khyber Pakhtunkhwa"
+      },
+      {
+        "district": "Paharpur",
+        "into": "Dera Ismail Khan",
+        "province": "Khyber Pakhtunkhwa"
+      },
+      {
+        "district": "Lower South Waziristan",
+        "into": "South Waziristan",
+        "province": "Khyber Pakhtunkhwa",
+        "note": "South Waziristan was split in two after the census, so its 2023 geometry is the union of both halves. This is the one case where two relations fold into one district."
+      },
+      {
+        "district": "Upper South Waziristan",
+        "into": "South Waziristan",
+        "province": "Khyber Pakhtunkhwa"
+      },
+      {
+        "district": "Hub",
+        "into": "Lasbela",
+        "province": "Balochistan",
+        "note": "docs/research/balochistan-division-district-set.md"
+      },
+      {
+        "district": "Usta Muhammad",
+        "into": "Jaffarabad",
+        "province": "Balochistan",
+        "note": "docs/research/balochistan-division-district-set.md"
+      },
+      {
+        "district": "Quetta East",
+        "into": "Quetta",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring — noted in copy, never drawn or counted."
+      },
+      {
+        "district": "Quetta West",
+        "into": "Quetta",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring."
+      },
+      {
+        "district": "Barshore",
+        "into": "Pishin",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring."
+      },
+      {
+        "district": "Wadh",
+        "into": "Khuzdar",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring."
+      },
+      {
+        "district": "Tump",
+        "into": "Kech",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring."
+      },
+      {
+        "district": "Upper Dera Bugti",
+        "into": "Dera Bugti",
+        "province": "Balochistan",
+        "note": "Created February 2026 out of Dera Bugti, then renamed North Dera Bugti by the 8 July 2026 notification. Kept under the name it was created with, which is the one OSM carries; the renamed form is not yet in the fetch and is not guessed at here.",
+        "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773"
+      },
+      {
+        "district": "South Dera Bugti",
+        "into": "Dera Bugti",
+        "province": "Balochistan",
+        "note": "8 July 2026 restructuring. Dera Bugti was bifurcated in February 2026 into Upper and Lower Dera Bugti; the July notification renamed the pair North and South Dera Bugti. Both halves are post-census under the rule above, so both fold back into the district the census counted.",
+        "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773 — 'Upper and Lower Dera Bugti were renamed North and South Dera Bugti.'"
+      },
+      {
+        "district": "Gupis-Yasin",
+        "into": "Ghizer",
+        "province": "Gilgit-Baltistan",
+        "note": "Gilgit-Baltistan has boundaries but no PBS census indicators, so this fold resolves to a district that carries no population — D25."
+      },
+      {
+        "district": "Tangir",
+        "into": "Diamir",
+        "province": "Gilgit-Baltistan"
+      },
+      {
+        "district": "Darel",
+        "into": "Diamir",
+        "province": "Gilgit-Baltistan"
+      }
+    ]
+  },
+  "totals": {
+    "pakistan": 241499431,
+    "provinces": {
+      "Balochistan": 14894402,
+      "Islamabad Capital Territory": 2363863,
+      "Khyber Pakhtunkhwa": 40856097,
+      "Punjab": 127688922,
+      "Sindh": 55696147
+    },
+    "divisions": {
+      "Bahawalpur": 13400009,
+      "Bannu": 3092078,
+      "Dera Ghazi Khan": 12892465,
+      "Dera Ismail Khan": 3188779,
+      "Faisalabad": 16228526,
+      "Gujranwala": 18778868,
+      "Hazara": 6188736,
+      "Hyderabad": 11659246,
+      "Islamabad": 2363863,
+      "Kalat": 2721018,
+      "Karachi": 20382881,
+      "Kohat": 3752436,
+      "Lahore": 22772710,
+      "Larkana": 7093706,
+      "Loralai": 870000,
+      "Malakand": 9959399,
+      "Mardan": 4639498,
+      "Mekran": 1875872,
+      "Mirpur Khas": 4619624,
+      "Multan": 14085102,
+      "Nasirabad": 2044021,
+      "Peshawar": 10035171,
+      "Quetta": 4259163,
+      "Rakhshan": 1040001,
+      "Rawalpindi": 11406496,
+      "Sahiwal": 8533471,
+      "Sargodha": 9591275,
+      "Shaheed Benazirabad": 5930649,
+      "Sibi": 1156748,
+      "Sukkur": 6010041,
+      "Zhob": 927579
+    }
+  },
+  "reconciliation": {
+    "method": "District populations summed and compared against the total for the tier above them. The build fails on any difference. The two tiers are anchored differently, and the `source` on each row says which: province and national totals are typed from PBS Census-2023 Table 1, i.e. from outside the PakPC2023 package; division totals come from that package's own division table, so they are a cross-table consistency check on the district rows, not an independent source. PBS publishes no division tier in Table 1.",
+    "national": {
+      "summed": 241499431,
+      "published": 241499431,
+      "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+    },
+    "provinces": [
+      {
+        "name": "Balochistan",
+        "summed": 14894402,
+        "published": 14894402,
+        "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+      },
+      {
+        "name": "Islamabad Capital Territory",
+        "summed": 2363863,
+        "published": 2363863,
+        "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+      },
+      {
+        "name": "Khyber Pakhtunkhwa",
+        "summed": 40856097,
+        "published": 40856097,
+        "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+      },
+      {
+        "name": "Punjab",
+        "summed": 127688922,
+        "published": 127688922,
+        "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+      },
+      {
+        "name": "Sindh",
+        "summed": 55696147,
+        "published": 55696147,
+        "source": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — PBS Census-2023 Table 1 (national): area, population by sex, sex ratio, density, urban proportion, household size and growth rate"
+      }
+    ],
+    "divisions": [
+      {
+        "name": "Bahawalpur",
+        "summed": 13400009,
+        "published": 13400009,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Bannu",
+        "summed": 3092078,
+        "published": 3092078,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Dera Ghazi Khan",
+        "summed": 12892465,
+        "published": 12892465,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Dera Ismail Khan",
+        "summed": 3188779,
+        "published": 3188779,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Faisalabad",
+        "summed": 16228526,
+        "published": 16228526,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Gujranwala",
+        "summed": 18778868,
+        "published": 18778868,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Hazara",
+        "summed": 6188736,
+        "published": 6188736,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Hyderabad",
+        "summed": 11659246,
+        "published": 11659246,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Islamabad",
+        "summed": 2363863,
+        "published": 2363863,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Kalat",
+        "summed": 2721018,
+        "published": 2721018,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Karachi",
+        "summed": 20382881,
+        "published": 20382881,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Kohat",
+        "summed": 3752436,
+        "published": 3752436,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Lahore",
+        "summed": 22772710,
+        "published": 22772710,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Larkana",
+        "summed": 7093706,
+        "published": 7093706,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Loralai",
+        "summed": 870000,
+        "published": 870000,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Malakand",
+        "summed": 9959399,
+        "published": 9959399,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Mardan",
+        "summed": 4639498,
+        "published": 4639498,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Mekran",
+        "summed": 1875872,
+        "published": 1875872,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Mirpur Khas",
+        "summed": 4619624,
+        "published": 4619624,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Multan",
+        "summed": 14085102,
+        "published": 14085102,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Nasirabad",
+        "summed": 2044021,
+        "published": 2044021,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Peshawar",
+        "summed": 10035171,
+        "published": 10035171,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Quetta",
+        "summed": 4259163,
+        "published": 4259163,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Rakhshan",
+        "summed": 1040001,
+        "published": 1040001,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Rawalpindi",
+        "summed": 11406496,
+        "published": 11406496,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Sahiwal",
+        "summed": 8533471,
+        "published": 8533471,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Sargodha",
+        "summed": 9591275,
+        "published": 9591275,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Shaheed Benazirabad",
+        "summed": 5930649,
+        "published": 5930649,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Sibi",
+        "summed": 1156748,
+        "published": 1156748,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Sukkur",
+        "summed": 6010041,
+        "published": 6010041,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      },
+      {
+        "name": "Zhob",
+        "summed": 927579,
+        "published": 927579,
+        "source": "PakPC2023 0.2.0 (CRAN; https://github.com/myaseen208/PakPC2023) — structured republication"
+      }
+    ]
+  }
+}

@@ -13,6 +13,10 @@
  * other on spelling and OSM's primary `name` tag is Urdu.
  */
 
+import postCensusFolds from '../../data/reference/post-census-district-folds.json' with {
+  type: 'json',
+};
+
 export type ProvinceCode = 'PB' | 'KP' | 'SD' | 'BA' | 'ICT' | 'AJK' | 'GB';
 
 export interface Province {
@@ -129,33 +133,56 @@ export const POST_CENSUS_DIVISION_FOLDS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Districts OSM carries that the 2023 census does not. Each folds into exactly one parent —
- * verified for Balochistan in `docs/research/balochistan-division-district-set.md`, which
- * confirmed no post-census unit was carved from two parents. A one-parent fold means the
- * dissolve recovers the 2023 boundary exactly rather than approximating it.
+ * Districts that did not exist at the census date, and the 2023 district each folds into.
  *
- * Two relations folding into the *same* parent is normal and expected: South Waziristan was
+ * The table itself lives in `data/reference/post-census-district-folds.json`, not here. It is
+ * the vintage rule (ADR-0001) expressed as data: it changes whenever Pakistan reorganises, it
+ * is reviewed as a diff with a date on it, and both pipelines that need it — the geometry
+ * dissolve and the census join — read the same file rather than each carrying a copy.
+ *
+ * Each entry names exactly one parent, so the dissolve recovers the 2023 boundary exactly
+ * rather than approximating it. Two children sharing a parent is normal: South Waziristan was
  * split into Upper and Lower after the census, so its 2023 geometry is the union of both.
  */
-export const POST_CENSUS_DISTRICT_FOLDS: Readonly<Record<string, string>> = {
-  // Punjab
-  Wazirabad: 'Gujranwala',
-  Taunsa: 'Dera Ghazi Khan',
-  'Kot Addu': 'Muzaffargarh',
-  Talagang: 'Chakwal',
-  Murree: 'Rawalpindi',
-  // Khyber Pakhtunkhwa
-  'Central Dir': 'Lower Dir',
-  'Lower South Waziristan': 'South Waziristan',
-  'Upper South Waziristan': 'South Waziristan',
-  // Balochistan — docs/research/balochistan-division-district-set.md
-  Hub: 'Lasbela',
-  'Usta Muhammad': 'Jaffarabad',
-  // Gilgit-Baltistan
-  'Gupis-Yasin': 'Ghizer',
-  Tangir: 'Diamir',
-  Darel: 'Diamir',
-};
+export const POST_CENSUS_DISTRICT_FOLDS: Readonly<Record<string, string>> = Object.freeze(
+  indexFolds(postCensusFolds.folds),
+);
+
+/**
+ * The fold table's rows, with their per-entry provenance intact, for the statistics artifact.
+ * `POST_CENSUS_DISTRICT_FOLDS` is the same data indexed for lookup; this is the reviewable list.
+ */
+export const POST_CENSUS_FOLD_TABLE: readonly (typeof postCensusFolds.folds)[number][] =
+  postCensusFolds.folds;
+
+/**
+ * Index the fold rows by child district, refusing a duplicate.
+ *
+ * `Object.fromEntries` would let a second row for the same district silently win, which is how a
+ * hand-maintained table acquires two answers to "where do these people go" and reports only one.
+ * The file is edited by hand precisely because it changes when Pakistan reorganises, so the
+ * failure mode is a real one: the same district pasted twice with different parents.
+ */
+export function indexFolds(
+  folds: readonly { district: string; into: string }[],
+): Record<string, string> {
+  const index: Record<string, string> = {};
+  const seen = new Map<string, string>();
+  for (const fold of folds) {
+    // Normalized, because two spellings of one district are the same duplicate wearing a hat.
+    const key = normalizeName(fold.district);
+    const previous = seen.get(key);
+    if (previous !== undefined) {
+      throw new Error(
+        `post-census-district-folds.json lists ${fold.district} twice — once folding into ` +
+          `${index[previous]}, once into ${fold.into}. One district, one parent.`,
+      );
+    }
+    seen.set(key, fold.district);
+    index[fold.district] = fold.into;
+  }
+  return index;
+}
 
 /**
  * Relations to drop outright, with the reason. Being explicit here is the point: an unmatched

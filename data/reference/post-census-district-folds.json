@@ -1,0 +1,137 @@
+{
+  "about": "Districts that did not exist at the 2023 census date and the census-era district each one folds into. This is the vintage rule (ADR-0001) as data: a unit with no census row cannot carry a population, so it is never drawn and never counted on its own — its territory and its people stay with the 2023 parent they were carved out of. Hand-maintained; it changes when Pakistan reorganises, and it is committed so that change arrives as a reviewable diff.",
+  "vintage": "PBS 2023 Digital Census, as on 01-03-2023",
+  "rule": "Every fold names exactly one parent. A district carved from two parents would destroy a 2023 boundary and could not be dissolved back exactly; none does — verified for Balochistan in docs/research/balochistan-division-district-set.md.",
+  "authority": "Whether a district is post-census is decided by the census itself: the 136 district rows PBS published are the census-era set, and a name absent from them is post-census regardless of when it was notified.",
+  "folds": [
+    {
+      "district": "Wazirabad",
+      "into": "Gujranwala",
+      "province": "Punjab"
+    },
+    {
+      "district": "Taunsa",
+      "into": "Dera Ghazi Khan",
+      "province": "Punjab"
+    },
+    {
+      "district": "Kot Addu",
+      "into": "Muzaffargarh",
+      "province": "Punjab"
+    },
+    {
+      "district": "Talagang",
+      "into": "Chakwal",
+      "province": "Punjab",
+      "note": "Moved into the post-census Mianwali division when it was created. The parent stays in Rawalpindi division, where the census puts Chakwal."
+    },
+    {
+      "district": "Murree",
+      "into": "Rawalpindi",
+      "province": "Punjab"
+    },
+    {
+      "district": "Central Dir",
+      "into": "Lower Dir",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    {
+      "district": "Upper Swat",
+      "into": "Swat",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    {
+      "district": "Allai",
+      "into": "Batagram",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    {
+      "district": "Paharpur",
+      "into": "Dera Ismail Khan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    {
+      "district": "Lower South Waziristan",
+      "into": "South Waziristan",
+      "province": "Khyber Pakhtunkhwa",
+      "note": "South Waziristan was split in two after the census, so its 2023 geometry is the union of both halves. This is the one case where two relations fold into one district."
+    },
+    {
+      "district": "Upper South Waziristan",
+      "into": "South Waziristan",
+      "province": "Khyber Pakhtunkhwa"
+    },
+    {
+      "district": "Hub",
+      "into": "Lasbela",
+      "province": "Balochistan",
+      "note": "docs/research/balochistan-division-district-set.md"
+    },
+    {
+      "district": "Usta Muhammad",
+      "into": "Jaffarabad",
+      "province": "Balochistan",
+      "note": "docs/research/balochistan-division-district-set.md"
+    },
+    {
+      "district": "Quetta East",
+      "into": "Quetta",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring — noted in copy, never drawn or counted."
+    },
+    {
+      "district": "Quetta West",
+      "into": "Quetta",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring."
+    },
+    {
+      "district": "Barshore",
+      "into": "Pishin",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring."
+    },
+    {
+      "district": "Wadh",
+      "into": "Khuzdar",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring."
+    },
+    {
+      "district": "Tump",
+      "into": "Kech",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring."
+    },
+    {
+      "district": "Upper Dera Bugti",
+      "into": "Dera Bugti",
+      "province": "Balochistan",
+      "note": "Created February 2026 out of Dera Bugti, then renamed North Dera Bugti by the 8 July 2026 notification. Kept under the name it was created with, which is the one OSM carries; the renamed form is not yet in the fetch and is not guessed at here.",
+      "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773"
+    },
+    {
+      "district": "South Dera Bugti",
+      "into": "Dera Bugti",
+      "province": "Balochistan",
+      "note": "8 July 2026 restructuring. Dera Bugti was bifurcated in February 2026 into Upper and Lower Dera Bugti; the July notification renamed the pair North and South Dera Bugti. Both halves are post-census under the rule above, so both fold back into the district the census counted.",
+      "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773 — 'Upper and Lower Dera Bugti were renamed North and South Dera Bugti.'"
+    },
+    {
+      "district": "Gupis-Yasin",
+      "into": "Ghizer",
+      "province": "Gilgit-Baltistan",
+      "note": "Gilgit-Baltistan has boundaries but no PBS census indicators, so this fold resolves to a district that carries no population — D25."
+    },
+    {
+      "district": "Tangir",
+      "into": "Diamir",
+      "province": "Gilgit-Baltistan"
+    },
+    {
+      "district": "Darel",
+      "into": "Diamir",
+      "province": "Gilgit-Baltistan"
+    }
+  ]
+}

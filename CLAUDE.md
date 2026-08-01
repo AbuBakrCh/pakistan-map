@@ -77,7 +77,7 @@ drawing something.*
 |---|---|---|
 | Division boundaries | OSM `admin_level=5` | ~39 real + ICT injected; strays from India/Afghanistan filtered |
 | District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Names are never trusted alone.** Matching is normalized-name-plus-alias, with relation ids overriding it wherever a name lies or collides — Karachi's four renamed districts, and every AJK district, whose names recur across the Line of Control. Anything unmatched fails the build. PBS's own documents disagree with each other on spelling, and OSM's primary `name` on AJK districts is Urdu |
-| Population | PBS 2023 Digital Census | District level |
+| Population | PBS 2023 Digital Census | District level. Extracted from the `PakPC2023` `.RData` tables, committed as upstream bytes in `data/raw/pakpc2023-*.RData` and parsed by `scripts/lib/rdata.ts`, so the numbers trace to a published file rather than to a transcription. **Anchored outside the package** at exactly two tiers: the 5 province totals and the 241,499,431 national total, typed from PBS Census-2023 **Table 1 (national)** — both agree exactly. The **31 division totals** are checked against `pakpc2023-division.RData`, i.e. against another table of the same package whose district table is being validated: a cross-table consistency check, **not** an independent source. A division figure wrong in the package would agree with itself and pass. PBS publishes no division tier in Table 1 |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
 | Development | PBS 2023 Census | Literacy (10+), improved drinking water, improved sanitation — all published directly at district level. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage |
 
@@ -119,9 +119,13 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+| `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1 → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
-Still to come: the census join (#9–#11), the adjacency graph (#16) and per-variant derived
-stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
+The fold table — post-census district → 2023 parent — is data, not code:
+`data/reference/post-census-district-folds.json`. Both pipelines read it.
+
+Still to come: the remaining census joins (#10–#11), the adjacency graph (#16) and per-variant
+derived stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
 
 Every relation must be classified. A relation matching no 2023 district and no fold rule
 **fails the build** rather than being skipped — a silent discard is how the district set drifts
