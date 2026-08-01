@@ -15,7 +15,12 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
-import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
+import {
+  CENSUS_DISTRICTS,
+  CENSUS_DISTRICT_COUNT,
+  ROSTER,
+  ROSTER_DISTRICT_COUNT,
+} from './roster.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
@@ -60,8 +65,7 @@ const PUBLISHED_NATIONAL_TOTAL = 241_499_431;
 describe('statistics coverage', () => {
   it('carries every one of the 136 census districts, exactly once', () => {
     expect(entries).toHaveLength(CENSUS_DISTRICT_COUNT);
-    const censusAtom = ROSTER.filter((p) => p.kind !== 'territory').flatMap((p) => p.districts);
-    for (const district of censusAtom) expect(districts[district]).toBeDefined();
+    for (const district of CENSUS_DISTRICTS) expect(districts[district]).toBeDefined();
   });
 
   it('gives every district a real population, never null and never zero', () => {

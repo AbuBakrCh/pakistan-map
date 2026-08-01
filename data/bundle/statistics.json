@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T16:41:15.209Z",
+    "generated": "2026-08-01T16:52:38.088Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",

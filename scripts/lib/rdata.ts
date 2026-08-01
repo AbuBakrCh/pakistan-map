@@ -16,8 +16,37 @@
  */
 
 import { gunzipSync } from 'node:zlib';
+import xz from 'xz-decompress';
 
 export type Cell = string | number | null;
+
+/** The containers an `.RData` arrives in. `save()` writes gzip; `compress = "xz"` writes xz. */
+const GZIP_MAGIC = [0x1f, 0x8b];
+const XZ_MAGIC = [0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00];
+
+const wrappedIn = (file: Uint8Array, magic: readonly number[]): boolean =>
+  magic.every((byte, index) => file[index] === byte);
+
+/**
+ * Unwrap an xz-compressed `.RData`, leaving anything else exactly as it arrived.
+ *
+ * `PakPC2023` ships its three summary tables gzip — which `readDataFrames` unwraps itself,
+ * because `gunzipSync` is synchronous — and its numbered tables, Table 11 among them, xz. Node's
+ * `zlib` has no xz and the decoder is streaming, so that one container has to be unwrapped ahead
+ * of the read rather than inside it. Kept here beside the gzip sniff all the same: which
+ * containers an `.RData` can arrive in is one fact, and a build script that had to know half of
+ * it would be the second place to update when the package changes how it compresses.
+ *
+ * `Response` below is a stream adapter over bytes already in memory, not a request — the decoder
+ * takes a `ReadableStream` and this is the standard-library way to make one. Nothing here opens a
+ * socket, and `seam.test.ts` re-checks that from the outside.
+ */
+export async function decompressRData(file: Uint8Array): Promise<Uint8Array> {
+  if (!wrappedIn(file, XZ_MAGIC)) return file;
+  const compressed = new Response(file as unknown as BodyInit).body;
+  if (compressed === null) throw new Error('could not stream the .RData file for decompression');
+  return new Uint8Array(await new Response(new xz.XzReadableStream(compressed)).arrayBuffer());
+}
 
 export interface DataFrame {
   readonly columns: readonly string[];
@@ -264,7 +293,14 @@ function readPairlist(cursor: Cursor, hasAttributes: boolean, hasTag: boolean): 
  * Accepts the file exactly as published — gzip-compressed, which is how `save()` writes it.
  */
 export function readDataFrames(file: Uint8Array): Map<string, DataFrame> {
-  const raw = file[0] === 0x1f && file[1] === 0x8b ? new Uint8Array(gunzipSync(file)) : file;
+  if (wrappedIn(file, XZ_MAGIC)) {
+    throw new Error(
+      'this .RData is xz-compressed, which cannot be unwrapped synchronously. Await ' +
+        '`decompressRData` first — reading the container as a serialization stream would fail ' +
+        'somewhere less obvious than here.',
+    );
+  }
+  const raw = wrappedIn(file, GZIP_MAGIC) ? new Uint8Array(gunzipSync(file)) : file;
 
   // "RDX2"/"RDX3" then "X\n", where X means XDR — big-endian binary. ASCII saves are not
   // supported; no published R package ships them.

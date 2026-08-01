@@ -30,7 +30,7 @@
  * figures PBS printed — every one of the fifteen columns, not just the total.
  */
 
-import { normalizeName, provinceOf, ROSTER } from './roster.ts';
+import { CENSUS_DISTRICTS, normalizeName, provinceOf } from './roster.ts';
 import { resolveCensusDistrict } from './census.ts';
 
 /**
@@ -67,6 +67,23 @@ export const SPOKEN_LANGUAGES: readonly CensusLanguage[] = CENSUS_LANGUAGES.filt
   (language) => language !== RESIDUAL_CATEGORY,
 );
 
+/**
+ * A count per category — a district's distribution, a province's, or Pakistan's.
+ *
+ * Named because it travels: the join builds them, the province sums add them up, and the build
+ * compares them against the figures PBS printed. A bare `Record` at each of those seams would be
+ * three unrelated objects that happen to have the same keys.
+ */
+export type LanguageTotals = Record<CensusLanguage, number>;
+
+/** Every category at zero — the starting point for any sum, and the shape of a district. */
+export const zeroedLanguages = (): LanguageTotals =>
+  Object.fromEntries(CENSUS_LANGUAGES.map((l) => [l, 0])) as LanguageTotals;
+
+/** All fifteen categories added together: the universe Table 11 counts, not a population. */
+export const sumLanguages = (totals: Readonly<LanguageTotals>): number =>
+  CENSUS_LANGUAGES.reduce((sum, language) => sum + totals[language], 0);
+
 /** One published cell: a tehsil, a category, and the speakers counted. */
 export interface MotherTongueRow {
   readonly district: string;
@@ -80,7 +97,7 @@ export interface MotherTongueRow {
 export interface DistrictMotherTongue {
   readonly district: string;
   /** Every category, always. A missing key and a published zero are different claims. */
-  readonly speakers: Readonly<Record<CensusLanguage, number>>;
+  readonly speakers: Readonly<LanguageTotals>;
   /** The fifteen categories added up — Table 11's own universe, not the district's population. */
   readonly total: number;
   /**
@@ -94,12 +111,18 @@ export interface DistrictMotherTongue {
   readonly residualShare: number;
 }
 
+/** One roster district that more than one published name resolved to. */
+export interface NameCollision {
+  readonly district: string;
+  readonly publishedNames: readonly string[];
+}
+
 export interface MotherTongueJoin {
   readonly districts: ReadonlyMap<string, DistrictMotherTongue>;
   /** Published district names matching no 2023 district. Always a build failure. */
   readonly unmatched: readonly string[];
-  /** Two published names resolving to one district, as `district: name, name`. */
-  readonly collisions: readonly string[];
+  /** Two or more published names resolving to one district, with the names that did it. */
+  readonly collisions: readonly NameCollision[];
   /** Published categories this build does not know. Never folded into `Others`. */
   readonly unknownCategories: readonly string[];
   /** Census districts no published row covered. */
@@ -120,18 +143,15 @@ export function resolveCensusLanguage(published: string): CensusLanguage | null 
 /**
  * The per-unit `TOTAL` row, which is a checksum rather than a category.
  *
- * Deliberately not read as data. It is the one column of Table 11 the published extract
- * disagrees with itself on — for Rajanpur tehsil it is 41,741 short of that unit's own language
- * rows — so the totals this build carries are summed from the languages, and the published
- * `TOTAL` is left where it is. See `docs/research/mother-tongue-table-11.md`.
+ * Skipped rather than read: adding it to the languages would double every district. It is not
+ * skipped for want of trust — all 591 published units agree with their own language rows — but
+ * the totals this build carries are summed from the categories anyway, since those are the
+ * figures the province reconciliation checks.
  */
 const TOTAL_ROW = 'total';
 
-const zeroed = (): Record<CensusLanguage, number> =>
-  Object.fromEntries(CENSUS_LANGUAGES.map((l) => [l, 0])) as Record<CensusLanguage, number>;
-
 export function joinMotherTongue(rows: readonly MotherTongueRow[]): MotherTongueJoin {
-  const speakersByDistrict = new Map<string, Record<CensusLanguage, number>>();
+  const speakersByDistrict = new Map<string, LanguageTotals>();
   /** Roster district -> the published names that resolved to it, for the collision report. */
   const publishedNames = new Map<string, Set<string>>();
   const unmatched = new Set<string>();
@@ -153,7 +173,7 @@ export function joinMotherTongue(rows: readonly MotherTongueRow[]): MotherTongue
     names.add(row.district);
     publishedNames.set(district, names);
 
-    const speakers = speakersByDistrict.get(district) ?? zeroed();
+    const speakers = speakersByDistrict.get(district) ?? zeroedLanguages();
     speakers[language] += row.speakers ?? 0;
     speakersByDistrict.set(district, speakers);
   }
@@ -161,7 +181,7 @@ export function joinMotherTongue(rows: readonly MotherTongueRow[]): MotherTongue
   const districts = new Map<string, DistrictMotherTongue>();
   const empty: string[] = [];
   for (const [district, speakers] of speakersByDistrict) {
-    const total = CENSUS_LANGUAGES.reduce((sum, l) => sum + speakers[l], 0);
+    const total = sumLanguages(speakers);
     if (total === 0) {
       empty.push(district);
       continue;
@@ -179,11 +199,10 @@ export function joinMotherTongue(rows: readonly MotherTongueRow[]): MotherTongue
 
   const collisions = [...publishedNames]
     .filter(([, names]) => names.size > 1)
-    .map(([district, names]) => `${district}: ${[...names].sort().join(', ')}`)
-    .sort();
+    .map(([district, names]) => ({ district, publishedNames: [...names].sort() }))
+    .sort((a, b) => a.district.localeCompare(b.district));
 
-  const censusAtom = ROSTER.filter((p) => p.kind !== 'territory').flatMap((p) => p.districts);
-  const missing = censusAtom.filter((d) => !districts.has(d) && !empty.includes(d));
+  const missing = CENSUS_DISTRICTS.filter((d) => !districts.has(d) && !empty.includes(d));
 
   return {
     districts,
@@ -205,9 +224,7 @@ export function joinMotherTongue(rows: readonly MotherTongueRow[]): MotherTongue
  * A district whose language the census does not name is a fact about the census, and the map has
  * to be able to say so.
  */
-function dominantLanguage(
-  speakers: Readonly<Record<CensusLanguage, number>>,
-): CensusLanguage | null {
+function dominantLanguage(speakers: Readonly<LanguageTotals>): CensusLanguage | null {
   let dominant = SPOKEN_LANGUAGES[0] as CensusLanguage;
   for (const language of SPOKEN_LANGUAGES) {
     if (speakers[language] > speakers[dominant]) dominant = language;
@@ -218,12 +235,18 @@ function dominantLanguage(
 /** Add districts up into the province that contains them, category by category. */
 export function sumLanguagesByProvince(
   districts: Iterable<DistrictMotherTongue>,
-): Map<string, Record<CensusLanguage, number>> {
-  const totals = new Map<string, Record<CensusLanguage, number>>();
+): Map<string, LanguageTotals> {
+  const totals = new Map<string, LanguageTotals>();
   for (const district of districts) {
     const province = provinceOf(district.district);
-    if (province === null) continue;
-    const accumulated = totals.get(province) ?? zeroed();
+    // Unreachable from `joinMotherTongue`, which only ever admits roster districts — and thrown
+    // rather than skipped for that reason. A district silently missing from its province would
+    // surface downstream as a language column short by an unexplained amount, naming a delta
+    // where the failure should name the district.
+    if (province === null) {
+      throw new Error(`${district.district} is not a district of any province in the roster`);
+    }
+    const accumulated = totals.get(province) ?? zeroedLanguages();
     for (const language of CENSUS_LANGUAGES) accumulated[language] += district.speakers[language];
     totals.set(province, accumulated);
   }

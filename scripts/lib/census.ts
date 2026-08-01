@@ -16,6 +16,7 @@
  */
 
 import {
+  CENSUS_DISTRICTS,
   ICT_PSEUDO_DIVISION,
   ROSTER,
   normalizeName,
@@ -145,8 +146,7 @@ export function joinCensus(rows: readonly CensusRow[]): CensusJoin {
     });
   }
 
-  const censusAtom = ROSTER.filter((p) => p.kind !== 'territory').flatMap((p) => p.districts);
-  const missing = censusAtom.filter((d) => !districts.has(d));
+  const missing = CENSUS_DISTRICTS.filter((d) => !districts.has(d));
 
   return { districts, unmatched, missing, withoutCensusData: districtsWithoutCensusData() };
 }

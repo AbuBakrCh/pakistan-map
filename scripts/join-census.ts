@@ -31,13 +31,14 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import xz from 'xz-decompress';
 import {
   CENSUS_LANGUAGES,
   RESIDUAL_CATEGORY,
   joinMotherTongue,
+  sumLanguages,
   sumLanguagesByProvince,
-  type CensusLanguage,
+  zeroedLanguages,
+  type LanguageTotals,
   type MotherTongueRow,
 } from './lib/mother-tongue.ts';
 import {
@@ -56,7 +57,7 @@ import {
   ROSTER,
   ROSTER_DISTRICT_COUNT,
 } from './lib/roster.ts';
-import { readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
+import { decompressRData, readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const RAW_DIR = resolve(ROOT, 'data/raw');
@@ -73,7 +74,8 @@ const CACHE = {
   district: { file: 'pakpc2023-district.RData', frame: 'PakPC2023PakDist' },
   division: { file: 'pakpc2023-division.RData', frame: 'PakPC2023PakDiv' },
   province: { file: 'pakpc2023-province.RData', frame: 'PakPC2023Pak' },
-  // Table 11 is the one the package ships xz-compressed rather than gzip; see `decompress`.
+  // Table 11 is the one table the package ships xz-compressed rather than gzip; `rdata.ts`
+  // unwraps it, which is why reading the cache is asynchronous.
   motherTongue: { file: 'pakpc2023-table-11.RData', frame: 'TABLE_11' },
 } as const;
 
@@ -128,94 +130,93 @@ const PUBLISHED_NATIONAL_TOTAL = 241_499_431;
  * Six rows of sixteen figures each, and they check each other: the fifteen categories sum to the
  * printed total in every row, and the five provinces sum to Pakistan in every column.
  */
-const PUBLISHED_MOTHER_TONGUE: Readonly<Record<string, Readonly<Record<CensusLanguage, number>>>> =
-  {
-    Punjab: {
-      Urdu: 9_143_466,
-      Punjabi: 85_309_591,
-      Sindhi: 352_686,
-      Pushto: 2_387_378,
-      Balochi: 1_063_324,
-      Kashmiri: 155_088,
-      Saraiki: 26_282_637,
-      Hindko: 779_667,
-      Brahvi: 3_506,
-      Shina: 16_161,
-      Balti: 12_922,
-      Mewati: 1_035_687,
-      Kalasha: 793,
-      Kohiostani: 21_910,
-      Others: 768_489,
-    },
-    Sindh: {
-      Urdu: 12_409_745,
-      Punjabi: 2_265_471,
-      Sindhi: 33_462_299,
-      Pushto: 2_955_893,
-      Balochi: 1_208_147,
-      Kashmiri: 53_249,
-      Saraiki: 913_418,
-      Hindko: 830_581,
-      Brahvi: 265_769,
-      Shina: 22_273,
-      Balti: 27_193,
-      Mewati: 57_059,
-      Kalasha: 777,
-      Kohiostani: 14_885,
-      Others: 1_151_650,
-    },
-    'Khyber Pakhtunkhwa': {
-      Urdu: 259_925,
-      Punjabi: 99_485,
-      Sindhi: 10_019,
-      Pushto: 32_919_592,
-      Balochi: 30_636,
-      Kashmiri: 6_471,
-      Saraiki: 1_288_200,
-      Hindko: 3_815_327,
-      Brahvi: 1_570,
-      Shina: 70_140,
-      Balti: 858,
-      Mewati: 93,
-      Kalasha: 5_632,
-      Kohiostani: 996_182,
-      Others: 1_136_990,
-    },
-    Balochistan: {
-      Urdu: 77_249,
-      Punjabi: 86_457,
-      Sindhi: 555_198,
-      Pushto: 4_955_245,
-      Balochi: 5_811_185,
-      Kashmiri: 7_352,
-      Saraiki: 319_054,
-      Hindko: 24_204,
-      Brahvi: 2_507_157,
-      Shina: 1_278,
-      Balti: 846,
-      Mewati: 285,
-      Kalasha: 82,
-      Kohiostani: 1_014,
-      Others: 215_405,
-    },
-    'Islamabad Capital Territory': {
-      Urdu: 358_922,
-      Punjabi: 1_154_540,
-      Sindhi: 21_362,
-      Pushto: 415_838,
-      Balochi: 4_503,
-      Kashmiri: 51_920,
-      Saraiki: 46_270,
-      Hindko: 140_780,
-      Brahvi: 668,
-      Shina: 7_099,
-      Balti: 10_315,
-      Mewati: 1_095,
-      Kalasha: 182,
-      Kohiostani: 5_016,
-      Others: 64_734,
-    },
-  };
+const PUBLISHED_MOTHER_TONGUE: Readonly<Record<string, Readonly<LanguageTotals>>> = {
+  Punjab: {
+    Urdu: 9_143_466,
+    Punjabi: 85_309_591,
+    Sindhi: 352_686,
+    Pushto: 2_387_378,
+    Balochi: 1_063_324,
+    Kashmiri: 155_088,
+    Saraiki: 26_282_637,
+    Hindko: 779_667,
+    Brahvi: 3_506,
+    Shina: 16_161,
+    Balti: 12_922,
+    Mewati: 1_035_687,
+    Kalasha: 793,
+    Kohiostani: 21_910,
+    Others: 768_489,
+  },
+  Sindh: {
+    Urdu: 12_409_745,
+    Punjabi: 2_265_471,
+    Sindhi: 33_462_299,
+    Pushto: 2_955_893,
+    Balochi: 1_208_147,
+    Kashmiri: 53_249,
+    Saraiki: 913_418,
+    Hindko: 830_581,
+    Brahvi: 265_769,
+    Shina: 22_273,
+    Balti: 27_193,
+    Mewati: 57_059,
+    Kalasha: 777,
+    Kohiostani: 14_885,
+    Others: 1_151_650,
+  },
+  'Khyber Pakhtunkhwa': {
+    Urdu: 259_925,
+    Punjabi: 99_485,
+    Sindhi: 10_019,
+    Pushto: 32_919_592,
+    Balochi: 30_636,
+    Kashmiri: 6_471,
+    Saraiki: 1_288_200,
+    Hindko: 3_815_327,
+    Brahvi: 1_570,
+    Shina: 70_140,
+    Balti: 858,
+    Mewati: 93,
+    Kalasha: 5_632,
+    Kohiostani: 996_182,
+    Others: 1_136_990,
+  },
+  Balochistan: {
+    Urdu: 77_249,
+    Punjabi: 86_457,
+    Sindhi: 555_198,
+    Pushto: 4_955_245,
+    Balochi: 5_811_185,
+    Kashmiri: 7_352,
+    Saraiki: 319_054,
+    Hindko: 24_204,
+    Brahvi: 2_507_157,
+    Shina: 1_278,
+    Balti: 846,
+    Mewati: 285,
+    Kalasha: 82,
+    Kohiostani: 1_014,
+    Others: 215_405,
+  },
+  'Islamabad Capital Territory': {
+    Urdu: 358_922,
+    Punjabi: 1_154_540,
+    Sindhi: 21_362,
+    Pushto: 415_838,
+    Balochi: 4_503,
+    Kashmiri: 51_920,
+    Saraiki: 46_270,
+    Hindko: 140_780,
+    Brahvi: 668,
+    Shina: 7_099,
+    Balti: 10_315,
+    Mewati: 1_095,
+    Kalasha: 182,
+    Kohiostani: 5_016,
+    Others: 64_734,
+  },
+};
 
 /**
  * Table 11's own universe: 240,458,089, which is **1,041,342 short of the census population**.
@@ -226,7 +227,7 @@ const PUBLISHED_MOTHER_TONGUE: Readonly<Record<string, Readonly<Record<CensusLan
  * rather than closed by inventing a residual category — the shares this app shades by are shares
  * of the universe the table itself publishes.
  */
-const PUBLISHED_MOTHER_TONGUE_NATIONAL: Readonly<Record<CensusLanguage, number>> = {
+const PUBLISHED_MOTHER_TONGUE_NATIONAL: Readonly<LanguageTotals> = {
   Urdu: 22_249_307,
   Punjabi: 88_915_544,
   Sindhi: 34_401_564,
@@ -249,29 +250,17 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-/** `.xz` container magic, "\xFD7zXZ\0". */
-const XZ_MAGIC = [0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00];
-
 /**
- * Unwrap the container an `.RData` file arrives in.
+ * Read one cached table, digesting the file exactly as committed.
  *
- * `save()` writes gzip by default and `rdata.ts` handles that itself, but `PakPC2023` ships its
- * numbered tables — Table 11 among them — with `compress = "xz"`, which Node's `zlib` cannot
- * read. Decompressing here rather than committing a re-compressed file is what keeps the raw
- * cache byte-for-byte identical to the package as CRAN publishes it: the committed file's MD5 is
- * the one in the package's own `MD5` manifest, so the provenance is checkable in one command and
- * does not rest on trusting a conversion step of ours.
+ * The digest is over the bytes on disk rather than the decompressed payload, because those are
+ * the bytes CRAN publishes: `pakpc2023-table-11.RData` carries the MD5 the package's own manifest
+ * lists for it, so the provenance is checkable in one command and rests on no conversion of ours.
+ * Unwrapping the container is `rdata.ts`'s job.
  */
-async function decompress(bytes: Uint8Array): Promise<Uint8Array> {
-  if (!XZ_MAGIC.every((byte, index) => bytes[index] === byte)) return bytes;
-  const compressed = new Response(bytes as unknown as BodyInit).body;
-  if (compressed === null) fail('could not stream the census cache for decompression');
-  return new Uint8Array(await new Response(new xz.XzReadableStream(compressed)).arrayBuffer());
-}
-
 async function readCache(which: keyof typeof CACHE): Promise<{ frame: DataFrame; digest: string }> {
   const bytes = readFileSync(resolve(RAW_DIR, CACHE[which].file));
-  const frame = readDataFrames(await decompress(bytes)).get(CACHE[which].frame);
+  const frame = readDataFrames(await decompressRData(bytes)).get(CACHE[which].frame);
   if (frame === undefined) fail(`${CACHE[which].file} holds no table named ${CACHE[which].frame}`);
   return { frame, digest: `sha256:${createHash('sha256').update(bytes).digest('hex')}` };
 }
@@ -407,7 +396,9 @@ async function main(): Promise<void> {
     fail(
       `two Table 11 district names resolved to one district, so their tehsils were summed ` +
         `together and some other district is now missing:\n` +
-        motherTongue.collisions.map((c) => `    ${c}`).join('\n'),
+        motherTongue.collisions
+          .map((c) => `    ${c.district.padEnd(28)} ← ${c.publishedNames.join(', ')}`)
+          .join('\n'),
     );
   }
   if (motherTongue.missing.length > 0) {
@@ -490,11 +481,14 @@ async function main(): Promise<void> {
   // A published table cannot count more people than live there. Where it does, upstream disagrees
   // with itself; the build records which districts and by how much rather than smoothing it away.
   const countedAbovePopulation = districts
-    .map((d) => ({
-      district: d.district,
-      counted: motherTongue.districts.get(d.district)?.total ?? 0,
-      population: d.population,
-    }))
+    .map((d) => {
+      // Every census district has a distribution by here — `motherTongue.missing` stopped the
+      // build otherwise. Defaulting a missing one to zero would quietly drop it from this check
+      // instead, which is the one place a hole could still hide.
+      const counted = motherTongue.districts.get(d.district);
+      if (counted === undefined) fail(`${d.district} has no mother-tongue distribution`);
+      return { district: d.district, counted: counted.total, population: d.population };
+    })
     .filter((d) => d.counted > d.population)
     .map((d) => ({ ...d, excess: d.counted - d.population }))
     .sort((a, b) => b.excess - a.excess);
@@ -741,11 +735,5 @@ async function main(): Promise<void> {
 
 const sorted = (totals: ReadonlyMap<string, number>): Record<string, number> =>
   Object.fromEntries([...totals].sort(([a], [b]) => a.localeCompare(b)));
-
-const zeroedLanguages = (): Record<CensusLanguage, number> =>
-  Object.fromEntries(CENSUS_LANGUAGES.map((l) => [l, 0])) as Record<CensusLanguage, number>;
-
-const sumLanguages = (totals: Readonly<Record<CensusLanguage, number>>): number =>
-  CENSUS_LANGUAGES.reduce((sum, language) => sum + totals[language], 0);
 
 await main();

@@ -123,7 +123,9 @@ describe('joinMotherTongue', () => {
       ...tehsil('ABBOTTABAD', 'ABBOTTABAD', { Hindko: 10 }),
       ...tehsil('ABBOTABAD', 'HAVELIAN', { Hindko: 5 }),
     ]);
-    expect(join.collisions).toEqual(['Abbotabad: ABBOTABAD, ABBOTTABAD']);
+    expect(join.collisions).toEqual([
+      { district: 'Abbotabad', publishedNames: ['ABBOTABAD', 'ABBOTTABAD'] },
+    ]);
   });
 
   it('reports a category the census published that this build does not know', () => {

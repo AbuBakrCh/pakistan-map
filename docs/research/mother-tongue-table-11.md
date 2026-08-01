@@ -44,7 +44,7 @@ There is a district-level PBS source — `table_11_<province>_districts.pdf`, fo
 each. Not used: they are PDFs of the same figures, and a PDF-scraping step would be a second,
 less reliable path to a tier that already reconciles exactly.
 
-## Four things upstream gets wrong, or does not explain
+## Three things upstream does not explain
 
 ### 1. Table 11 counts 1,041,342 fewer people than Table 1
 
@@ -85,13 +85,18 @@ the province columns all reconciling exactly. The artifact names them under
 `motherTongue.districtsCountedAbovePopulation` rather than smoothing them, and the largest is
 0.6% of its district.
 
-### 4. One unit's `TOTAL` row contradicts its own languages
+### A fourth, retracted
 
-Rajanpur tehsil: the published `TOTAL` is **851,729**, its fifteen language rows sum to
-**893,470** — 41,741 apart. Every other one of the 590 units agrees with itself.
+An earlier draft of this file claimed Rajanpur tehsil's published `TOTAL` contradicted its own
+language rows by 41,741. It does not. `RAJANPUR | RAJANPUR` is **two** published units — one
+`TEHSIL` and one `DE-EXCLUDED_AREA` — and each agrees with its own languages exactly;
+851,729 + 41,741 = 893,470. The contradiction was produced by keying units on
+`DISTRICT | TEHSIL` and ignoring `ADMIN_UNIT`, which also produced a stray "590 units" where
+there are **591**.
 
-The build never reads the `TOTAL` row. District totals are summed from the language columns,
-which is the side that reconciles to the published province figures.
+**All 591 units agree with their own `TOTAL` row.** The build still sums district totals from the
+language columns rather than reading `TOTAL` — those are the figures the province reconciliation
+checks — but not because upstream is untrustworthy here.
 
 ## Two districts the census names no language for
 

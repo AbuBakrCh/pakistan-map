@@ -322,8 +322,15 @@ export function kindOf(province: string): Province['kind'] {
 
 export const ROSTER_DISTRICT_COUNT = ROSTER.reduce((n, p) => n + p.districts.length, 0);
 
-/** Districts in the four provinces plus ICT — the statistical atom. Excludes AJK and GB. */
-export const CENSUS_DISTRICT_COUNT = ROSTER.filter((p) => p.kind !== 'territory').reduce(
-  (n, p) => n + p.districts.length,
-  0,
-);
+/**
+ * Districts in the four provinces plus ICT — the statistical atom. Excludes AJK and GB.
+ *
+ * Every join that reports what the census failed to cover measures against this list, so it is
+ * defined once: two copies of the filter would be two answers to "which districts should have
+ * data", and the one that drifted would report nothing missing.
+ */
+export const CENSUS_DISTRICTS: readonly string[] = ROSTER.filter(
+  (p) => p.kind !== 'territory',
+).flatMap((p) => p.districts);
+
+export const CENSUS_DISTRICT_COUNT = CENSUS_DISTRICTS.length;
