@@ -121,6 +121,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 and the coastline → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11 |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
 The fold table — post-census district → 2023 parent — is data, not code:
@@ -142,6 +143,22 @@ and the restructuring is noted in copy per the vintage rule.
 Table 11 is the one cache file the package ships **xz**-compressed rather than gzip; the build
 decompresses it (`xz-decompress`) rather than committing a re-compressed copy, so the committed
 bytes still match CRAN's published MD5 and the provenance rests on no conversion of ours.
+
+**Scenario content is data, and it is baked like the rest.** The typed schema lives in
+`scripts/lib/scenarios.ts` and the variants themselves in `scripts/lib/variants.ts` — the source
+of truth that retires `SCENARIOS-DRAFT.md` (#36). The module is the reviewable form; the
+committed `data/bundle/scenarios.json` is the *resolved* form, and the difference is the point:
+it carries the claim as its advocates state it next to the 2023 districts the map draws it as,
+with every fold recorded. A change to a proposal's territory is therefore a dated diff rather
+than something that happens between two page loads, and the runtime reads one bundle directory
+rather than reaching into `scripts/`.
+
+Two things a partition has to state out loud, because both have two defensible answers:
+
+| Question | How it is expressed | Current answer |
+|---|---|---|
+| **Which district set must a partition cover?** | `universe` on the variant — `drawn` (all 156, nothing left uncoloured) or `census` (the 136 with statistics; AJK and GB outside the partition, drawn and named and in no unit) | Per variant; L1 declares `drawn` |
+| **May a variant claim AJK or GB territory?** (open item 2b) | `TERRITORY_CLAIM_POLICY` in `scenarios.ts`, both settings tested | **`forbid`** — a `proposed` unit taking a territory district fails the build, naming it. Those districts carry no PBS statistic, so the unit's population would be short by an unknowable amount. A product decision, not a technical one: settling it is a one-line change |
 
 Still to come: the development indicators join (#11), the adjacency graph (#16) and per-variant
 derived stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
@@ -187,6 +204,9 @@ What it holds:
 | Vintage rule — every one of the 136 census districts present exactly once, none null or zero, 2023 fields only, AJK/GB listed as absent rather than as zero | `statistics.test.ts` |
 | Statistical integrity — districts summing to all 31 division totals, to the 5 province totals and to the 241,499,431 national total, against figures typed from PBS Table 1 rather than read back off the artifact | `statistics.test.ts` |
 | Mother tongue — every census district carrying all fifteen categories, summing to the district figure and to the language totals PBS printed per province; a dominant language only where the census names one, Chitral named as the two it does not; the districts PBS counts above their own population listed rather than smoothed | `statistics.test.ts` |
+| Partition integrity — every variant covering the district set it declares exactly once, every unit's districts drawn by the geography bundle, no district in two units, no fold landing off the map, no unit both claiming and excluding a district | `bundle.test.ts` |
+| Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids | `bundle.test.ts` |
+| What the validator does when a partition is *wrong* — the one thing a valid bundle cannot demonstrate: the district named, both units named on an overlap, both answers to open item 2b expressible | `scenarios.test.ts` |
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
@@ -318,10 +338,15 @@ Numbered by the grilling question that settled each.
    The current-day 41-district roster remains unresolvable without the provincial gazette —
    which no longer blocks anything, since under ADR-0001 none of it is drawn.
 2b. **Can a variant claim AJK territory?** L2 (#24) and H2 (#30) reference AJK districts, which
-   are drawn but unshaded and carry no PBS-direct statistics. Product decision outstanding.
+   are drawn but unshaded and carry no PBS-direct statistics. Product decision outstanding — the
+   build's provisional answer is **no**: `TERRITORY_CLAIM_POLICY` is `forbid`, so the first
+   variant that needs it fails loudly naming the district instead of settling a constitutional
+   question by accident. Both answers are expressible and both are tested.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
-4. **`SCENARIOS-DRAFT.md` is temporary.** Once approved it becomes a typed data module and the
-   markdown is deleted — every field in it (rationale, advocacy, opposition, footnotes) is
+4. **`SCENARIOS-DRAFT.md` is temporary.** The typed data module now exists
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries L1; the markdown
+   is deleted once the other sixteen have migrated into it (#36). Until then the two coexist and
+   the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
    rendered variant-card content, not documentation. Keeping both would be two sources of truth.
 
 **Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,

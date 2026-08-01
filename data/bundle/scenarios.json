@@ -1,0 +1,568 @@
+{
+  "provenance": {
+    "generated": "2026-08-01T17:10:09.578Z",
+    "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
+    "unit": "district",
+    "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
+    "sources": {
+      "content": "scripts/lib/variants.ts — the typed scenario module, reviewed as a diff",
+      "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf",
+      "folds": "data/reference/post-census-district-folds.json"
+    },
+    "counts": {
+      "variants": 1,
+      "bases": 4,
+      "units": 8
+    },
+    "universes": {
+      "drawn": 156,
+      "census": 136,
+      "note": "A variant declares which district set it partitions. `drawn` is all 156 districts on the map, so nothing is left uncoloured; `census` is the 136 PBS published 2023 results for — the four provinces and ICT — leaving AJK and Gilgit-Baltistan outside the partition, drawn and named and in no unit. Both are complete partitions; they are complete over different ground, and a reader has to be told which."
+    },
+    "territoryClaims": {
+      "policy": "forbid",
+      "note": "Whether a unit that is not itself a territory may take an AJK or Gilgit-Baltistan district is an open product decision (CLAUDE.md open item 2b), and the build's current answer is \"forbid\". Those districts are drawn but carry no PBS statistic of any kind, so a unit containing one has a population short by an unknowable amount. Under \"forbid\" the build stops and names the district rather than publishing a province drawn across a ceasefire line."
+    },
+    "claimVsDrawing": "A unit lists the districts its advocates name. Districts created after the census date have no population row and are not drawn, so each is folded into its 2023 parent and recorded in the unit's `folded` list. South Punjab is stated as 13 districts, was 11 before 2022, and draws as 11 — one piece of ground, three true counts."
+  },
+  "bases": {
+    "language": {
+      "id": "language",
+      "name": "Language / dialect",
+      "source": "PBS 2023 Census Table 11 — mother tongue by district",
+      "badges": [
+        "census",
+        "proxy"
+      ]
+    },
+    "administrative": {
+      "id": "administrative",
+      "name": "Administrative",
+      "source": "2023 census population + derived geometry",
+      "badges": [
+        "census",
+        "derived"
+      ]
+    },
+    "historical": {
+      "id": "historical",
+      "name": "Historical",
+      "source": "Documented past demarcations, 1947 onward",
+      "badges": [
+        "documented"
+      ]
+    },
+    "development": {
+      "id": "development",
+      "name": "Development",
+      "source": "PBS 2023 Census — literacy (10+), improved drinking water, improved sanitation",
+      "badges": [
+        "census",
+        "synthesized"
+      ]
+    }
+  },
+  "variants": [
+    {
+      "id": "l1",
+      "basis": "language",
+      "name": "South Punjab Secretariat",
+      "tagline": "the version that partly exists",
+      "badges": [
+        "census",
+        "proxy"
+      ],
+      "rationale": "Punjab’s three southernmost divisions — Multan, Bahawalpur and Dera Ghazi Khan — leave the province as one unit. It is the closest any proposal in this app comes to already being true: a separate civil secretariat covering exactly these three divisions has been operational since 2020, without the constitutional amendment an actual province would require. The boundary here is transcribed from that secretariat’s remit, not derived from the census.",
+      "status": "Partly implemented. The South Punjab Secretariat has been operational since 15 October 2020, covering exactly these three divisions, and has been kept running under successive governments. Creating a province from it needs a constitutional amendment, which has never passed.",
+      "advocacy": {
+        "kind": "advocated",
+        "by": [
+          "Pakistan Tehreek-e-Insaf (PTI), whose position it is",
+          "successive Punjab governments, which have kept the secretariat operational"
+        ]
+      },
+      "opposedBy": [
+        "Central Punjab political interests",
+        "Opponents of dividing Punjab at all, for whom the province’s size is its weight"
+      ],
+      "composition": {
+        "kind": "transcribed",
+        "from": "the secretariat’s own remit — the Multan, Bahawalpur and Dera Ghazi Khan divisions"
+      },
+      "footnotes": [
+        {
+          "kind": "district-count",
+          "text": "Sources state this claim as 11 districts. That was the count before 2022, when Taunsa was carved out of Dera Ghazi Khan and Kot Addu out of Muzaffargarh: the same territory is 13 districts today. This map is pinned to the 2023 census, in which neither new district has a population row, so both are drawn inside their parents and the unit reads as 11. Three counts of one piece of ground — 11 then, 13 now, 11 drawn."
+        },
+        {
+          "kind": "note",
+          "text": "A secretariat is not a province. It devolves administration for these divisions; legislature, governor and provincial share of revenue all still sit in Lahore."
+        }
+      ],
+      "notes": [
+        {
+          "label": "Collision with the Bahawalpur restoration",
+          "text": "Bahawalpur’s restoration movement rejects being folded into a single southern province at all, and PML-N’s stated position is two provinces rather than one. Those are separate variants on separate bases, and the app never draws two at once."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Government of the Punjab — South Punjab Secretariat, established 15 October 2020, covering the Multan, Bahawalpur and Dera Ghazi Khan divisions"
+        },
+        {
+          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+        },
+        {
+          "label": "data/reference/post-census-district-folds.json — Taunsa and Kot Addu, created 2022 and folded into Dera Ghazi Khan and Muzaffargarh under ADR-0001"
+        }
+      ],
+      "statistics": {
+        "modernFigures": true
+      },
+      "partition": {
+        "universe": "drawn",
+        "districts": 156,
+        "claimed": 158
+      },
+      "counts": {
+        "units": 8,
+        "proposedUnits": 1,
+        "claimedDistricts": 13,
+        "drawnDistricts": 11
+      },
+      "units": [
+        {
+          "id": "south-punjab",
+          "name": "South Punjab",
+          "alsoKnownAs": [
+            "Saraikistan",
+            "Saraiki Wasaib"
+          ],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Vehari",
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan",
+            "Dera Ghazi Khan",
+            "Layyah",
+            "Muzaffargarh",
+            "Rajanpur",
+            "Taunsa",
+            "Kot Addu"
+          ],
+          "districts": [
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Vehari",
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan",
+            "Dera Ghazi Khan",
+            "Layyah",
+            "Muzaffargarh",
+            "Rajanpur"
+          ],
+          "folded": [
+            {
+              "from": "Taunsa",
+              "into": "Dera Ghazi Khan"
+            },
+            {
+              "from": "Kot Addu",
+              "into": "Muzaffargarh"
+            }
+          ],
+          "excludes": []
+        },
+        {
+          "id": "punjab",
+          "name": "Punjab",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan"
+          ],
+          "districts": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "khyber-pakhtunkhwa",
+          "name": "Khyber Pakhtunkhwa",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Upper Chitral",
+            "Lower Chitral",
+            "Upper Dir",
+            "Lower Dir",
+            "Swat",
+            "Shangla",
+            "Buner",
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "districts": [
+            "Upper Chitral",
+            "Lower Chitral",
+            "Upper Dir",
+            "Lower Dir",
+            "Swat",
+            "Shangla",
+            "Buner",
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "sindh",
+          "name": "Sindh",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Khairpur",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "districts": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Khairpur",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "balochistan",
+          "name": "Balochistan",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Quetta",
+            "Pishin",
+            "Killa Abdullah",
+            "Chaman",
+            "Chagai",
+            "Nushki",
+            "Kharan",
+            "Washuk",
+            "Loralai",
+            "Duki",
+            "Barkhan",
+            "Musa Khel",
+            "Killa Saifullah",
+            "Zhob",
+            "Sherani",
+            "Sibi",
+            "Harnai",
+            "Ziarat",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Kalat",
+            "Surab",
+            "Mastung",
+            "Khuzdar",
+            "Awaran",
+            "Lasbela",
+            "Kech",
+            "Gwadar",
+            "Panjgur"
+          ],
+          "districts": [
+            "Quetta",
+            "Pishin",
+            "Killa Abdullah",
+            "Chaman",
+            "Chagai",
+            "Nushki",
+            "Kharan",
+            "Washuk",
+            "Loralai",
+            "Duki",
+            "Barkhan",
+            "Musa Khel",
+            "Killa Saifullah",
+            "Zhob",
+            "Sherani",
+            "Sibi",
+            "Harnai",
+            "Ziarat",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Kalat",
+            "Surab",
+            "Mastung",
+            "Khuzdar",
+            "Awaran",
+            "Lasbela",
+            "Kech",
+            "Gwadar",
+            "Panjgur"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "islamabad-capital-territory",
+          "name": "Islamabad Capital Territory",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Islamabad"
+          ],
+          "districts": [
+            "Islamabad"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "azad-jammu-kashmir",
+          "name": "Azad Jammu & Kashmir",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "districts": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "folded": [],
+          "excludes": []
+        },
+        {
+          "id": "gilgit-baltistan",
+          "name": "Gilgit-Baltistan",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "districts": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "folded": [],
+          "excludes": []
+        }
+      ]
+    }
+  ]
+}

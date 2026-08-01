@@ -14,11 +14,13 @@ import { geoArea } from 'd3';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
+import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const bundle = JSON.parse(
   readFileSync(resolve(ROOT, 'data/bundle/geography.topojson.json'), 'utf8'),
 );
+const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.json'), 'utf8'));
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -450,5 +452,203 @@ describe('bundle provenance', () => {
       divisions: 37,
       provinces: 7,
     });
+  });
+});
+
+/**
+ * The committed scenario set (#14), checked against the committed geometry.
+ *
+ * `scenarios.test.ts` holds the validator: given a variant with a hole in it, does it say which
+ * district and which units. These are the same properties asserted over the artifact that ships,
+ * and against the geography bundle rather than against the roster the build used — a variant that
+ * partitions a district set the map does not draw is a unit outline with nothing underneath it.
+ */
+interface EmittedUnit {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: 'proposed' | 'unchanged' | 'territory';
+  readonly claimed: readonly string[];
+  readonly districts: readonly string[];
+  readonly folded: readonly { readonly from: string; readonly into: string }[];
+  readonly excludes: readonly string[];
+  readonly alsoKnownAs: readonly string[];
+}
+interface EmittedVariant {
+  readonly id: string;
+  readonly basis: string;
+  readonly name: string;
+  readonly badges: readonly string[];
+  readonly rationale: string;
+  readonly status: string;
+  readonly advocacy:
+    | { readonly kind: 'advocated'; readonly by: readonly string[] }
+    | { readonly kind: 'unadvocated'; readonly note: string };
+  readonly opposedBy: readonly string[];
+  readonly sources: readonly { readonly label: string }[];
+  readonly partition: { readonly universe: 'drawn' | 'census'; readonly districts: number };
+  readonly counts: Readonly<Record<string, number>>;
+  readonly units: readonly EmittedUnit[];
+}
+
+const variants = scenarios.variants as EmittedVariant[];
+const drawnDistricts = new Set(districts.map(nameOf));
+const territoryDistricts = new Set(
+  ROSTER.filter((p) => p.kind === 'territory').flatMap((p) => p.districts),
+);
+
+describe('bundle scenarios', () => {
+  it('ships at least one variant, expressed as data rather than as prose', () => {
+    expect(variants.length).toBeGreaterThan(0);
+    expect(variants.map((v) => v.id)).toContain('l1');
+  });
+
+  it('gives every unit districts the map actually draws', () => {
+    // Named per district rather than per variant: "l1 references a district that isn't drawn"
+    // leaves the reader to find which of 156 it was.
+    const undrawn = variants.flatMap((variant) =>
+      variant.units.flatMap((unit) =>
+        unit.districts
+          .filter((district) => !drawnDistricts.has(district))
+          .map((district) => `${variant.id} "${unit.name}" claims undrawn ${district}`),
+      ),
+    );
+    expect(undrawn).toEqual([]);
+  });
+
+  it('gives every district in a variant to exactly one unit', () => {
+    const overlaps = variants.flatMap((variant) => {
+      const owner = new Map<string, string>();
+      const clashes: string[] = [];
+      for (const unit of variant.units) {
+        for (const district of unit.districts) {
+          const taken = owner.get(district);
+          if (taken !== undefined) clashes.push(`${variant.id}: ${district} in ${taken} and ${unit.name}`);
+          else owner.set(district, unit.name);
+        }
+      }
+      return clashes;
+    });
+    expect(overlaps).toEqual([]);
+  });
+
+  it('leaves no district of the set a variant partitions in no unit at all', () => {
+    const holes = variants.flatMap((variant) => {
+      const covered = new Set(variant.units.flatMap((u) => u.districts));
+      return universeDistricts(variant.partition.universe)
+        .filter((district) => !covered.has(district))
+        .map((district) => `${variant.id} leaves ${district} uncoloured`);
+    });
+    expect(holes).toEqual([]);
+    for (const variant of variants) {
+      expect(variant.partition.districts, variant.id).toBe(
+        universeDistricts(variant.partition.universe).length,
+      );
+    }
+  });
+
+  it('keeps a census-set partition out of AJK and Gilgit-Baltistan entirely', () => {
+    // The 136 are the districts PBS published results for; a census-set variant that reached
+    // into a territory would be shading ground with no figure behind it (D25).
+    const strays = variants
+      .filter((v) => v.partition.universe === 'census')
+      .flatMap((variant) =>
+        variant.units.flatMap((unit) =>
+          unit.districts
+            .filter((d) => territoryDistricts.has(d))
+            .map((d) => `${variant.id} "${unit.name}" claims ${d}`),
+        ),
+      );
+    expect(strays).toEqual([]);
+  });
+
+  it('honours the recorded answer to whether a variant may claim territory', () => {
+    // CLAUDE.md open item 2b is a product decision that is not settled. The artifact records
+    // which answer it was built under, and this holds the artifact to it — so a variant that
+    // takes an AJK district arrives with the decision made, not by drifting past this test.
+    expect(scenarios.provenance.territoryClaims.policy).toBe(TERRITORY_CLAIM_POLICY);
+    if (TERRITORY_CLAIM_POLICY !== 'forbid') return;
+    const claimed = variants.flatMap((variant) =>
+      variant.units
+        .filter((unit) => unit.kind !== 'territory')
+        .flatMap((unit) =>
+          unit.districts
+            .filter((d) => territoryDistricts.has(d))
+            .map((d) => `${variant.id} "${unit.name}" claims ${d}`),
+        ),
+    );
+    expect(claimed).toEqual([]);
+  });
+
+  it('records what a claim says alongside what this map draws it as', () => {
+    // The vintage rule shows up here as a difference: advocates state South Punjab as 13
+    // districts, two of which were created in 2022 and fold into their parents (ADR-0001). Both
+    // numbers are card content, and a fold has to land on a district the map draws.
+    for (const variant of variants) {
+      for (const unit of variant.units) {
+        expect(unit.claimed.length, `${variant.id} ${unit.name}`).toBeGreaterThanOrEqual(
+          unit.districts.length,
+        );
+        for (const fold of unit.folded) {
+          expect(unit.districts, `${variant.id} ${unit.name}`).toContain(fold.into);
+          expect(drawnDistricts, `${variant.id} ${fold.from}`).toContain(fold.into);
+        }
+      }
+    }
+    const l1 = variants.find((v) => v.id === 'l1');
+    expect(l1?.counts['claimedDistricts']).toBe(13);
+    expect(l1?.counts['drawnDistricts']).toBe(11);
+  });
+
+  it('never draws a district a unit says it excludes', () => {
+    const contradictions = variants.flatMap((variant) =>
+      variant.units.flatMap((unit) =>
+        unit.excludes
+          .filter((d) => unit.districts.includes(d))
+          .map((d) => `${variant.id} "${unit.name}" both claims and excludes ${d}`),
+      ),
+    );
+    expect(contradictions).toEqual([]);
+  });
+
+  it('carries every field the variant card renders, on every variant', () => {
+    for (const variant of variants) {
+      expect(variant.name, variant.id).toBeTruthy();
+      expect(variant.rationale, variant.id).toBeTruthy();
+      expect(variant.status, variant.id).toBeTruthy();
+      expect(variant.badges.length, variant.id).toBeGreaterThan(0);
+      expect(variant.sources.length, variant.id).toBeGreaterThan(0);
+      expect(Object.keys(scenarios.bases), variant.id).toContain(variant.basis);
+      expect(variant.counts['units'], variant.id).toBe(variant.units.length);
+      // A variant nobody proposes says so; it never carries an empty advocacy list.
+      if (variant.advocacy.kind === 'advocated') {
+        expect(variant.advocacy.by.length, variant.id).toBeGreaterThan(0);
+      } else {
+        expect(variant.advocacy.note, variant.id).toBeTruthy();
+      }
+    }
+  });
+
+  it('carries an "Opposed by" line on every variant, without exception', () => {
+    // The one card field that is load-bearing for the app's own neutrality: without it, whatever
+    // is on screen reads as the app's position.
+    const silent = variants.filter((v) => v.opposedBy.length === 0).map((v) => v.id);
+    expect(silent).toEqual([]);
+  });
+
+  it('uses badges from the closed provenance vocabulary and nothing else', () => {
+    const allowed = ['official', 'census', 'proxy', 'derived', 'documented', 'synthesized'];
+    const strange = variants.flatMap((v) =>
+      v.badges.filter((b) => !allowed.includes(b)).map((b) => `${v.id}: ${b}`),
+    );
+    expect(strange).toEqual([]);
+  });
+
+  it('keeps variant ids unique, so a deep link resolves to one scenario', () => {
+    const ids = variants.map((v) => v.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const variant of variants) {
+      const unitIds = variant.units.map((u) => u.id);
+      expect(new Set(unitIds).size, variant.id).toBe(unitIds.length);
+    }
   });
 });

@@ -107,6 +107,7 @@ describe('test seam isolation', () => {
     for (const input of [
       'data/bundle/geography.topojson.json',
       'data/bundle/statistics.json',
+      'data/bundle/scenarios.json',
       'data/reference/post-census-district-folds.json',
     ]) {
       expect(tracked, input).toContain(input);
@@ -121,7 +122,11 @@ describe('test seam isolation', () => {
       throw new Error('the bundle test seam opened a socket');
     } as unknown as typeof connect;
     try {
-      for (const artifact of ['data/bundle/geography.topojson.json', 'data/bundle/statistics.json'])
+      for (const artifact of [
+        'data/bundle/geography.topojson.json',
+        'data/bundle/statistics.json',
+        'data/bundle/scenarios.json',
+      ])
         expect(Object.keys(JSON.parse(read(artifact))).length).toBeGreaterThan(0);
     } finally {
       Socket.prototype.connect = connect;
