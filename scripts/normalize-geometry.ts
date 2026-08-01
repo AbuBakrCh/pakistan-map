@@ -75,6 +75,38 @@ const SIMPLIFY_RETAIN = 0.3;
  */
 const LAND_EXTENT: Extent = { west: 60, south: 23, east: 79, north: 38.5 };
 
+/**
+ * The Indus delta, in longitude — Thatta and Sujawal's seaward front. Used for one measurement
+ * only: how far south OSM's shoreline runs across it. That is the *mechanism* behind those two
+ * districts reading low, and it is checkable against the raw cache, which is what a claim about
+ * how large the creek system "really" is would not be.
+ */
+const DELTA_BAND = { west: 67, east: 68.8 } as const;
+
+/**
+ * How far a measured area may sit from its PBS published figure before it needs explaining
+ * (#38). Recorded in the bundle so a reader gets the threshold along with the narratives, not
+ * just the narratives; `scripts/lib/bundle.test.ts` asserts against this same number and
+ * documents at length why it is 5% and not tighter.
+ */
+const AREA_TOLERANCE = 0.05;
+
+/**
+ * PBS Census 2023 Table 1 land areas, km² — only the figures quoted in `knownLimitations`
+ * below. Verified against the Balochistan and Sindh district tables cited in
+ * `SOURCE_URLS.publishedAreas`. Karachi division is not published as a row of its own; 3,527 is
+ * the sum of its seven district rows (Keamari 559, Karachi South 122, West 370, Central 69,
+ * East 139, Korangi 108, Malir 2,160).
+ */
+const PUBLISHED_KM2 = {
+  karachiDivision: 3_527,
+  thattaAndSujawal: 8_570 + 8_785,
+  gwadarAndKech: 12_637 + 22_539,
+  khuzdar: 35_380,
+  panjgur: 16_891,
+  awaran: 29_510,
+} as const;
+
 interface RawFile {
   readonly elements: readonly {
     readonly id: number;
@@ -309,7 +341,14 @@ function main(): void {
       }),
     );
 
-  const { chains, headToHead } = chainCoastline(coastlineWays);
+  const { chains, headToHead, malformed } = chainCoastline(coastlineWays);
+  if (malformed.length > 0) {
+    fail(
+      `${malformed.length} coastline way(s) cannot be chained: fewer than two nodes, or a ` +
+        `geometry that does not have one coordinate per node. Dropping them would put a gap ` +
+        `in the shoreline and clip a district against it: ${malformed.join(', ')}`,
+    );
+  }
   if (headToHead.length > 0) {
     fail(
       `${headToHead.length} coastline node(s) have two ways meeting head-to-head, so one of ` +
@@ -363,6 +402,7 @@ function main(): void {
   // Keyed by district, not by feature: a district assembled from two relations (Lasbela, which
   // absorbs the post-census Hub) is two features and would otherwise be reported twice.
   const clipped = new Map<string, { before: number; after: number }>();
+  const considered = new Set<string>();
   for (const feature of features) {
     const bounds = boundsOf(feature.geometry.coordinates);
     if (
@@ -376,18 +416,23 @@ function main(): void {
           `it against the box rather than against the sea. Widen LAND_EXTENT.`,
       );
     }
-    // Districts nowhere near the coast are left byte-identical rather than run through the
-    // clipper for a no-op: an inland boundary rebuilt on one side of a shared line and not the
-    // other is how two tiers stop sharing an arc.
+    // One rectangle around the whole shoreline, so this nominates every district that could
+    // possibly reach the sea and a good many that plainly cannot — Hyderabad, Matiari and
+    // Tharparkar among them. Deliberately biased that way: a false positive costs a no-op clip,
+    // a false negative would leave territorial water drawn as land. Districts outside the box
+    // are skipped rather than clipped for a no-op because `polygon-clipping` drops collinear
+    // vertices even when it changes nothing, and an inland boundary rebuilt on one side of a
+    // shared line and not the other is how two tiers stop sharing an arc.
     if (!overlaps(bounds, shore)) continue;
+    considered.add(feature.properties.district);
 
     const before = km2(feature.geometry.coordinates);
-    const land_ = clipToLand(feature.geometry.coordinates, land.polygons);
-    if (land_.length === 0) {
+    const onLand = clipToLand(feature.geometry.coordinates, land.polygons);
+    if (onLand.length === 0) {
       fail(`${feature.properties.district} clipped away to nothing — the land polygon is wrong`);
     }
-    feature.geometry.coordinates = land_;
-    const after = km2(land_);
+    feature.geometry.coordinates = onLand;
+    const after = km2(onLand);
     // A metre-scale difference is the clipper rebuilding a ring, not sea being removed.
     if (before - after <= 1) continue;
     const running = clipped.get(feature.properties.district) ?? { before: 0, after: 0 };
@@ -401,6 +446,11 @@ function main(): void {
     .map(([district, areas]) => ({ district, ...areas }))
     .sort((a, b) => b.before - b.after - (a.before - a.after));
 
+  console.log(
+    `\n  ${considered.size} of ${new Set(features.map((f) => f.properties.district)).size} ` +
+      `districts overlapped the shoreline box and were run through the clipper; ` +
+      `${clipReport.length} of them changed area`,
+  );
   console.log('\nClipped to the coastline (km², before → after)');
   for (const { district, before, after } of clipReport) {
     console.log(
@@ -408,6 +458,38 @@ function main(): void {
         `  (−${(100 * (1 - after / before)).toFixed(1)}%)`,
     );
   }
+
+  // Every figure quoted in `knownLimitations` below is measured here, off the geometry that is
+  // about to be written, rather than typed in from a report. Prose and geometry drifting apart
+  // is the failure this guards against — a wrong number in rendered provenance is not a comment
+  // bug, it is an unsourced surface (#38 review). `bundle.test.ts` re-measures them from the
+  // committed artifact and fails if they disagree.
+  const areaOf = (matches: (f: UnitFeature) => boolean): number =>
+    features.filter(matches).reduce((sum, f) => sum + km2(f.geometry.coordinates), 0);
+  const inDistricts = (...names: string[]) => (f: UnitFeature) => names.includes(f.properties.district);
+
+  const measured = {
+    karachiDivisionKm2: areaOf((f) => f.properties.division === 'Karachi'),
+    deltaKm2: areaOf(inDistricts('Thatta', 'Sujawal')),
+    gwadarKechKm2: areaOf(inDistricts('Gwadar', 'Kech')),
+    khuzdarKm2: areaOf(inDistricts('Khuzdar')),
+    panjgurKm2: areaOf(inDistricts('Panjgur')),
+    awaranKm2: areaOf(inDistricts('Awaran')),
+    // How far south OSM's shoreline runs across the Indus delta. This is the mechanism behind
+    // the delta shortfall, stated as something checkable rather than as an assertion about how
+    // large the creek system is.
+    deltaShoreSouthLimit: Math.min(
+      ...coastlineWays.flatMap((way) =>
+        way.geometry
+          .filter((p) => p.lon >= DELTA_BAND.west && p.lon <= DELTA_BAND.east)
+          .map((p) => p.lat),
+      ),
+    ),
+  };
+
+  const km = (value: number): string => Math.round(value).toLocaleString('en-US');
+  const pct = (value: number, published: number): string =>
+    `${value >= published ? '+' : '−'}${(Math.abs(value / published - 1) * 100).toFixed(1)}%`;
 
   // ---- 5. One topology, three tiers merged from the same arcs --------------------------------
   const topo = topology({ units: { type: 'FeatureCollection', features } } as never, QUANTIZATION);
@@ -488,13 +570,27 @@ function main(): void {
       method:
         'natural=coastline ways chained on shared node ids, direction preserved (land lies to ' +
         'the LEFT of a coastline way), the open coast closed against a lon/lat extent and ' +
-        'islands added as land of their own. Coastal district polygons are intersected with ' +
-        'the result; districts away from the shore are left byte-identical.',
+        'islands added as land of their own. District polygons are intersected with the result ' +
+        'if their bounding box overlaps the shoreline\'s. That box is one rectangle over the ' +
+        'whole coast, so it also catches districts that plainly do not reach the sea, which ' +
+        'are clipped to a no-op; it is biased that way on purpose, because a district wrongly ' +
+        'skipped would keep territorial water drawn as land. Districts outside the box are not ' +
+        'passed through the clipper at all, so no boundary is rebuilt on one side of a shared ' +
+        'line and not the other. They are not byte-identical to the pre-clip bundle either: ' +
+        'quantization is fitted to the bundle\'s bounding box, and clipping moved that box, so ' +
+        'every arc in the file was requantized. What is preserved is arc sharing between the ' +
+        'three tiers, not bytes.',
       extent: LAND_EXTENT,
       ways: coastlineWays.length,
       chains: chains.length,
       islands: land.islands,
+      // Two different numbers, both real: how many districts the shoreline box nominated, and
+      // how many of those the clip actually moved.
+      districtsConsidered: considered.size,
       districtsClipped: clipReport.length,
+      // The acceptance threshold every figure below is judged against, so the bundle carries
+      // the criterion and not only the exceptions to it.
+      areaTolerance: AREA_TOLERANCE,
       // Every district whose area the clip actually moved, so the effect is reviewable without
       // re-running the build.
       areaKm2: Object.fromEntries(
@@ -523,16 +619,32 @@ function main(): void {
       'In the Indus delta the shoreline and the published area measure different things. PBS ' +
         'counts a district\'s tidal creeks and mangrove flats as its area; natural=coastline ' +
         'puts them on the sea side, so the clip removes them. Thatta and Sujawal together read ' +
-        '10,834 km² against a published 17,355, and the ~6,500 km² difference is the size the ' +
-        'delta creek system is independently reported at. Closing it would mean drawing a ' +
-        'shoreline no source draws.',
+        `${km(measured.deltaKm2)} km² against a published ` +
+        `${km(PUBLISHED_KM2.thattaAndSujawal)}, a gap of ` +
+        `${km(PUBLISHED_KM2.thattaAndSujawal - measured.deltaKm2)} km² — the largest accepted ` +
+        'deviation in the bundle. The mechanism is checkable in the raw cache rather than ' +
+        `asserted: between ${DELTA_BAND.west}°E and ${DELTA_BAND.east}°E OSM's coastline ` +
+        `descends to ${measured.deltaShoreSouthLimit.toFixed(2)}°N, so the creek belt north of ` +
+        'it is on the sea side of the line PBS counts as land. How large the creek system ' +
+        '"really" is is deliberately not claimed here: no source this project uses publishes ' +
+        'it, and closing the gap would mean drawing a shoreline no source draws.',
       // Kept separate from the delta on purpose: this one is not about water at all, and
       // conflating them would make the coastline clip look like it had failed.
       'Some district areas disagree with PBS because OSM draws the line between them somewhere ' +
-        'else, not because of the coast. Each pair sums correctly: Gwadar reads -10% and Kech ' +
-        '+5% but together they land within 0.6%; Karachi\'s seven districts vary by up to 49% ' +
-        'individually (the 2020 Keamari split) yet the division totals 3,582 km² against a ' +
-        'published 3,527. Landlocked Awaran reads -12.7% with no coast anywhere near it.',
+        'else, not because of the coast. This is a broad pattern across interior Balochistan, ' +
+        'not a curiosity: landlocked Khuzdar reads ' +
+        `${km(measured.khuzdarKm2)} km² against a published ${km(PUBLISHED_KM2.khuzdar)} ` +
+        `(${pct(measured.khuzdarKm2, PUBLISHED_KM2.khuzdar)}), Awaran ` +
+        `${pct(measured.awaranKm2, PUBLISHED_KM2.awaran)} and Panjgur ` +
+        `${pct(measured.panjgurKm2, PUBLISHED_KM2.panjgur)}, none of them anywhere near a ` +
+        'coast. Where a disagreement is only about where a shared line sits, the pair sums ' +
+        'correctly: Gwadar reads -10% and Kech +5% but together they land within 1% of the ' +
+        `published pair (${pct(measured.gwadarKechKm2, PUBLISHED_KM2.gwadarAndKech)}); ` +
+        "Karachi's seven " +
+        'districts vary by up to 49% individually (the 2020 Keamari split) yet the division ' +
+        `totals ${km(measured.karachiDivisionKm2)} km² against a published ` +
+        `${km(PUBLISHED_KM2.karachiDivision)} ` +
+        `(${pct(measured.karachiDivisionKm2, PUBLISHED_KM2.karachiDivision)}).`,
       'AJK and Gilgit-Baltistan read smaller than Pakistani published figures (AJK 11,894 vs ' +
         '13,297; GB 66,757 vs 72,971) because OSM draws the de-facto line of control. That is a ' +
         'political difference, not an error, and the dashed LoC treatment is the app response.',

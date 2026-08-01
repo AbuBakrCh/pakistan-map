@@ -48,15 +48,29 @@ export interface Extent {
 /**
  * Chain ways head-to-tail on shared node ids, preserving direction.
  *
- * `headToHead` lists node ids where two ways both start, or both end. That is the signature of
- * a way drawn backwards upstream, and it is returned rather than repaired: the caller fails the
- * build on it. Reversing the way would silently move the land to the other side of it.
+ * Two things are returned rather than repaired or skipped, because both mean the input is not
+ * a coastline and a quietly-dropped way is how a shoreline grows a gap nobody notices:
+ *
+ *   - `headToHead` lists node ids where two ways both start, or both end. That is the signature
+ *     of a way drawn backwards upstream. Reversing it would silently move the land to the other
+ *     side of it.
+ *   - `malformed` lists ways with fewer than two nodes, or with a geometry that does not have
+ *     one coordinate per node. Such a way cannot be chained on node ids at all.
+ *
+ * The caller fails the build on either.
  */
 export function chainCoastline(ways: readonly CoastlineWay[]): {
   chains: Chain[];
   headToHead: number[];
+  malformed: number[];
 } {
-  const usable = ways.filter((way) => way.nodes.length >= 2 && way.geometry.length === way.nodes.length);
+  const malformed = ways
+    .filter((way) => way.nodes.length < 2 || way.geometry.length !== way.nodes.length)
+    .map((way) => way.id)
+    .sort((a, b) => a - b);
+  if (malformed.length > 0) return { chains: [], headToHead: [], malformed };
+
+  const usable = ways;
 
   const collide = (pick: (way: CoastlineWay) => number): number[] => {
     const seen = new Set<number>();
@@ -72,7 +86,7 @@ export function chainCoastline(ways: readonly CoastlineWay[]): {
   const headToHead = [
     ...new Set([...collide((w) => w.nodes[0] as number), ...collide((w) => w.nodes.at(-1) as number)]),
   ].sort((a, b) => a - b);
-  if (headToHead.length > 0) return { chains: [], headToHead };
+  if (headToHead.length > 0) return { chains: [], headToHead, malformed };
 
   const startingAt = new Map<number, CoastlineWay>();
   const endNodes = new Set<number>();
@@ -107,7 +121,7 @@ export function chainCoastline(ways: readonly CoastlineWay[]): {
     chains.push({ points, closed: lastNode === (seed.nodes[0] as number) });
   }
 
-  return { chains, headToHead };
+  return { chains, headToHead, malformed };
 }
 
 /**
@@ -217,6 +231,19 @@ export const onExtentBoundary = (p: Position, e: Extent): boolean =>
  * corners passed on the way — until the next piece enters, and continue with that piece. Land
  * is on the left of the coastline, and counter-clockwise keeps it on the left of the extent
  * too, so the ring that comes back is the land side rather than the sea side.
+ *
+ * Two things that Pakistan's coastline does not currently do would make the ring that comes
+ * back wrong rather than merely surprising, and both throw rather than being papered over:
+ *
+ *   - **two pieces entering at the same perimeter position** — nothing orders them, so which
+ *     ring each joins would depend on sort stability;
+ *   - **the walk arriving at a piece already built into another ring** — the pieces do not
+ *     enclose one connected land region against this extent, and continuing would splice two
+ *     rings into one self-intersecting one.
+ *
+ * A piece entering *exactly* where another exits is not ambiguous and is handled: the search is
+ * inclusive of the exit position, so the two join with no perimeter walked between them. An
+ * exclusive search would have stepped over it and left a gap in the ring.
  */
 export function closeAgainstExtent(
   pieces: readonly (readonly Position[])[],
@@ -225,6 +252,16 @@ export function closeAgainstExtent(
   const entries = pieces
     .map((piece, index) => ({ index, at: perimeterPosition(piece[0] as Position, extent) }))
     .sort((a, b) => a.at - b.at);
+
+  for (let i = 1; i < entries.length; i++) {
+    if ((entries[i] as { at: number }).at === (entries[i - 1] as { at: number }).at) {
+      throw new Error(
+        `Two coastline pieces enter the extent at the same point ` +
+          `(perimeter position ${(entries[i] as { at: number }).at}). Which ring each belongs ` +
+          `to is undefined, so this is refused rather than guessed at.`,
+      );
+    }
+  }
 
   const used = new Set<number>();
   const rings: Position[][] = [];
@@ -240,9 +277,27 @@ export function closeAgainstExtent(
       ring.push(...(ring.length === 0 ? piece : piece.slice(same(ring.at(-1) as Position, piece[0] as Position) ? 1 : 0)));
 
       const exit = perimeterPosition(piece.at(-1) as Position, extent);
-      const next =
-        entries.find((candidate) => candidate.at > exit) ?? (entries[0] as { index: number; at: number });
-      const entry = next.at > exit ? next.at : next.at + 4;
+      const next = entries.find((candidate) => candidate.at >= exit) ?? entries[0];
+      if (next === undefined) {
+        throw new Error(
+          `A coastline piece leaves the extent at perimeter position ${exit} with no piece ` +
+            `left to continue with, so the land ring cannot be closed.`,
+        );
+      }
+      // Only the seed may be walked into twice, and only to close its ring on itself. Any other
+      // already-used piece belongs to a ring that is finished, and continuing into it would
+      // splice two rings into one self-intersecting one — which is what the extent walk does
+      // when the land it is closing is not actually one connected region.
+      if (next.index !== seed && used.has(next.index)) {
+        throw new Error(
+          `The extent walk leaves a coastline piece at perimeter position ${exit} and arrives ` +
+            `at a piece already built into another ring. The open coast does not enclose one ` +
+            `connected land region against this extent, which the closure cannot represent.`,
+        );
+      }
+      // `>=`, matching the search: a piece entering exactly at the exit continues immediately
+      // and no perimeter is walked. Anything earlier is a wrap all the way round the box.
+      const entry = next.at >= exit ? next.at : next.at + 4;
 
       for (let corner = Math.ceil(exit); corner < entry; corner++) {
         ring.push(cornerOf(corner % 4, extent));
@@ -343,10 +398,18 @@ function orientCounterClockwise(ring: Ring): Position[] {
 /**
  * Intersect one district's polygons with the land, dropping whatever was territorial water.
  *
- * Only ever called for districts that actually reach the coast. A landlocked district is left
- * byte-identical rather than passed through the clipper for a no-op result: `polygon-clipping`
- * drops collinear vertices even when it changes nothing, and an inland boundary that came back
- * with a different vertex count from its neighbour's copy would stop sharing an arc.
+ * The caller does not hand every district over. It gates on a bounding-box overlap with the
+ * shoreline, which is a *generous* filter — one rectangle over the whole coast, so a good
+ * number of demonstrably landlocked districts fall inside it and are clipped to a no-op result.
+ * That is deliberate: the gate is tuned to have no false negatives (no coastal district can
+ * escape a box drawn around the coast) at the cost of false positives, and the districts it
+ * does skip are skipped because `polygon-clipping` drops collinear vertices even when it
+ * changes nothing — an inland boundary rebuilt on one side of a shared line and not the other
+ * is how two tiers stop sharing an arc.
+ *
+ * Skipped is not the same as untouched. Quantization is fitted to the finished bundle's
+ * bounding box, and clipping moves that box, so every arc in the bundle is requantized. The
+ * guarantee is that arcs stay *shared*, not that they stay byte-identical.
  */
 export function clipToLand(
   polygons: readonly (readonly (readonly Position[])[])[],

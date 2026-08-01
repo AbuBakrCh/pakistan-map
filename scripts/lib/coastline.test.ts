@@ -121,6 +121,33 @@ describe('chainCoastline', () => {
     ]);
     expect(headToHead).toEqual([11]);
   });
+
+  it('reports a way it cannot chain rather than dropping it', () => {
+    // A way with one node, and a way whose geometry does not line up with its node list.
+    // Neither can be chained on node ids. Silently filtering them out is how a shoreline
+    // grows a gap that nothing fails on — the district on the other side of that gap would
+    // then be clipped against a coast with a hole in it.
+    const { malformed, chains } = chainCoastline([
+      wayOf(1, [10], [[0, 0]]),
+      wayOf(2, [20, 21], [[1, 1]]),
+      wayOf(3, [30, 31], [
+        [2, 2],
+        [3, 3],
+      ]),
+    ]);
+    expect(malformed).toEqual([1, 2]);
+    expect(chains).toEqual([]);
+  });
+
+  it('reports nothing malformed for a well-formed network', () => {
+    const { malformed } = chainCoastline([
+      wayOf(1, [10, 11], [
+        [0, 0],
+        [1, 1],
+      ]),
+    ]);
+    expect(malformed).toEqual([]);
+  });
 });
 
 describe('clipPolylineToExtent', () => {
@@ -232,6 +259,74 @@ describe('closeAgainstExtent', () => {
 
   it('returns nothing when there is no open piece to close', () => {
     expect(closeAgainstExtent([], BOX)).toEqual([]);
+  });
+
+  it('joins a piece that enters exactly where another leaves, with no gap between them', () => {
+    // Both pieces meet the south edge at x=5. An exclusive "next entry strictly after this
+    // exit" search steps straight over the second piece and walks the whole perimeter instead,
+    // leaving the shore between them missing from the ring.
+    const rings = closeAgainstExtent(
+      [
+        [
+          [0, 5],
+          [5, 0],
+        ],
+        [
+          [5, 0],
+          [10, 5],
+        ],
+      ],
+      BOX,
+    );
+    expect(rings).toHaveLength(1);
+    expect(rings[0]).toEqual([
+      [0, 5],
+      [5, 0],
+      [10, 5],
+      [10, 10],
+      [0, 10],
+      [0, 5],
+    ]);
+  });
+
+  it('refuses two pieces that enter at the same point rather than ordering them arbitrarily', () => {
+    expect(() =>
+      closeAgainstExtent(
+        [
+          [
+            [0, 5],
+            [5, 0],
+          ],
+          [
+            [0, 5],
+            [3, 0],
+          ],
+        ],
+        BOX,
+      ),
+    ).toThrow(/same point/);
+  });
+
+  it('refuses to splice two rings together when the pieces do not enclose one region', () => {
+    // Two shores whose entries and exits interleave around the perimeter, so the walk would
+    // arrive back at a piece it has already built into a ring. The old code did that silently
+    // and returned a self-intersecting ring; the land polygon would then have been wrong
+    // everywhere, with nothing failing.
+    expect(() =>
+      closeAgainstExtent(
+        [
+          [
+            [0, 1],
+            [1, 0],
+          ],
+          [
+            [9, 10],
+            [10, 9],
+          ],
+        ],
+        BOX,
+      ),
+    ).toThrow(/already built into another ring/);
   });
 });
 

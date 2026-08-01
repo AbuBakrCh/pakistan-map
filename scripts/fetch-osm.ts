@@ -40,9 +40,9 @@ const GEOMETRY_FAILURE_RATIO = 0.1;
 /**
  * One dataset we cache. `expectedMin` is a sanity floor, not a target: Overpass
  * happily returns a well-formed response with half the country missing, and the count
- * is the only signal that it did. Floors sit well below the real counts (~39 divisions,
- * ~165 districts, ~1,500 coastline ways) so that genuine upstream churn does not fail the
- * build, while a grossly truncated response does.
+ * is the only signal that it did. Floors sit well below the counts actually in the committed
+ * cache (39 divisions, 170 districts, 862 coastline ways) so that genuine upstream churn does
+ * not fail the build, while a grossly truncated response does.
  */
 export interface SourceSpec {
   /** What `--source` takes. */
@@ -164,7 +164,7 @@ function hasGeometry(element: unknown): boolean {
  * Overpass `remark` (how it reports timeouts and runtime errors while still returning
  * HTTP 200 with partial data), or a count below the source's sanity floor.
  */
-export function validate(body: string, level: SourceSpec): OverpassResponse {
+export function validate(body: string, source: SourceSpec): OverpassResponse {
   const head = body.trimStart().slice(0, 200);
   if (!head.startsWith('{')) {
     throw new FetchFailure(
@@ -201,13 +201,13 @@ export function validate(body: string, level: SourceSpec): OverpassResponse {
     (element) =>
       typeof element === 'object' &&
       element !== null &&
-      (element as { type?: unknown }).type === level.elementType,
+      (element as { type?: unknown }).type === source.elementType,
   );
 
-  if (wanted.length < level.expectedMin) {
+  if (wanted.length < source.expectedMin) {
     throw new FetchFailure(
-      `only ${wanted.length} ${level.name} ${level.elementType}s returned, ` +
-        `expected at least ${level.expectedMin} — treating as truncated`,
+      `only ${wanted.length} ${source.name} ${source.elementType}s returned, ` +
+        `expected at least ${source.expectedMin} — treating as truncated`,
     );
   }
 
@@ -220,7 +220,7 @@ export function validate(body: string, level: SourceSpec): OverpassResponse {
   // mapper's mistake, so they are reported and left for the filtering step.
   if (withoutGeometry.length > wanted.length * GEOMETRY_FAILURE_RATIO) {
     throw new FetchFailure(
-      `${withoutGeometry.length} of ${wanted.length} ${level.elementType}s came back ` +
+      `${withoutGeometry.length} of ${wanted.length} ${source.elementType}s came back ` +
         'without geometry — the mirror is not returning geometry',
     );
   }
@@ -228,7 +228,7 @@ export function validate(body: string, level: SourceSpec): OverpassResponse {
   for (const element of withoutGeometry) {
     const { id, tags } = element as { id?: number; tags?: Record<string, string> };
     console.warn(
-      `    note: ${level.elementType} ${id} (${tags?.['name'] ?? 'unnamed'}) has no geometry ` +
+      `    note: ${source.elementType} ${id} (${tags?.['name'] ?? 'unnamed'}) has no geometry ` +
         '— broken upstream in OSM, passed through to the cache as-is',
     );
   }
@@ -274,18 +274,18 @@ const sleep = (ms: number): Promise<void> =>
  * next. Only a validated response is returned; every failure mode is exhausted across all
  * mirrors before the script gives up.
  */
-async function fetchSource(level: SourceSpec): Promise<OverpassResponse> {
+async function fetchSource(source: SourceSpec): Promise<OverpassResponse> {
   const failures: string[] = [];
 
   for (const mirror of MIRRORS) {
     for (let attempt = 1; attempt <= ATTEMPTS_PER_MIRROR; attempt += 1) {
       const host = new URL(mirror).host;
       console.log(
-        `  → ${level.name} via ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})`,
+        `  → ${source.name} via ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})`,
       );
       try {
-        const body = await postOnce(mirror, level.query);
-        const response = validate(body, level);
+        const body = await postOnce(mirror, source.query);
+        const response = validate(body, source);
         console.log(`    ok — ${(body.length / 1_048_576).toFixed(1)} MiB from ${host}`);
         return response;
       } catch (error) {
@@ -302,40 +302,41 @@ async function fetchSource(level: SourceSpec): Promise<OverpassResponse> {
   }
 
   throw new Error(
-    `Could not fetch ${level.name} from any Overpass mirror.\n` +
+    `Could not fetch ${source.name} from any Overpass mirror.\n` +
       failures.map((line) => `  - ${line}`).join('\n'),
   );
 }
 
 /**
- * Counts the wanted elements, and buckets boundary relations by admin_level so drift in
- * either direction is visible in the log. Coastline ways have no admin_level, so they all
- * land in `untagged` — the count is the signal there.
+ * Counts the source's own elements — relations for the boundary sources, ways for the
+ * coastline — and buckets them by admin_level so drift in either direction is visible in the
+ * log. Coastline ways have no admin_level, so they all land in `untagged`; the count is the
+ * only signal there.
  */
 function summarise(
   response: OverpassResponse,
-  level: SourceSpec,
-): { relations: number; named: number; byLevel: Map<string, number> } {
-  let relations = 0;
+  source: SourceSpec,
+): { elements: number; named: number; byAdminLevel: Map<string, number> } {
+  let elements = 0;
   let named = 0;
-  const byLevel = new Map<string, number>();
+  const byAdminLevel = new Map<string, number>();
 
   for (const element of response.elements) {
     if (
       typeof element !== 'object' ||
       element === null ||
-      (element as { type?: unknown }).type !== level.elementType
+      (element as { type?: unknown }).type !== source.elementType
     ) {
       continue;
     }
-    relations += 1;
+    elements += 1;
     const tags = (element as { tags?: Record<string, string> }).tags ?? {};
     if (tags['name']) named += 1;
     const key = tags['admin_level'] ?? 'untagged';
-    byLevel.set(key, (byLevel.get(key) ?? 0) + 1);
+    byAdminLevel.set(key, (byAdminLevel.get(key) ?? 0) + 1);
   }
 
-  return { relations, named, byLevel };
+  return { elements, named, byAdminLevel };
 }
 
 /**
@@ -351,21 +352,21 @@ function serialise(response: OverpassResponse): string {
   return `${prefix}\n"elements":[\n${lines.join(',\n')}\n]}\n`;
 }
 
-function parseArgs(argv: readonly string[]): { levels: readonly SourceSpec[]; dryRun: boolean } {
+function parseArgs(argv: readonly string[]): { sources: readonly SourceSpec[]; dryRun: boolean } {
   const dryRun = argv.includes('--dry-run');
   const index = argv.indexOf('--source');
-  if (index === -1) return { levels: SOURCES, dryRun };
+  if (index === -1) return { sources: SOURCES, dryRun };
 
   const requested = argv[index + 1];
   const match = SOURCES.find((source) => source.key === requested);
   if (!match) {
     throw new Error(`--source must be one of ${SOURCES.map((s) => s.key).join(', ')}`);
   }
-  return { levels: [match], dryRun };
+  return { sources: [match], dryRun };
 }
 
 async function main(): Promise<void> {
-  const { levels, dryRun } = parseArgs(process.argv.slice(2));
+  const { sources, dryRun } = parseArgs(process.argv.slice(2));
 
   console.log('Fetching OSM administrative boundaries and coastline for Pakistan');
   console.log(`  cache: ${RAW_DIR}${dryRun ? '  (dry run — nothing will be written)' : ''}`);
@@ -374,22 +375,22 @@ async function main(): Promise<void> {
 
   const counts: string[] = [];
 
-  for (const level of levels) {
-    console.log(`\n${level.name} (${level.elementType}s)`);
-    const response = await fetchSource(level);
-    const { relations, named, byLevel } = summarise(response, level);
+  for (const source of sources) {
+    console.log(`\n${source.name} (${source.elementType}s)`);
+    const response = await fetchSource(source);
+    const { elements, named, byAdminLevel } = summarise(response, source);
 
-    const breakdown = [...byLevel.entries()]
+    const breakdown = [...byAdminLevel.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([adminLevel, count]) => `admin_level=${adminLevel}: ${count}`)
       .join(', ');
 
-    console.log(`    ${relations} ${level.elementType}s (${named} named) — ${breakdown}`);
+    console.log(`    ${elements} ${source.elementType}s (${named} named) — ${breakdown}`);
     console.log(`    OSM base timestamp: ${response.osm3s?.timestamp_osm_base ?? 'unknown'}`);
-    counts.push(`${level.name}: ${relations}`);
+    counts.push(`${source.name}: ${elements}`);
 
     if (!dryRun) {
-      const path = resolve(RAW_DIR, level.file);
+      const path = resolve(RAW_DIR, source.file);
       await writeFile(path, serialise(response), 'utf8');
       console.log(`    wrote ${path}`);
     }

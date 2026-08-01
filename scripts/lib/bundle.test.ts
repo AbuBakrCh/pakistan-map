@@ -178,6 +178,11 @@ const PUBLISHED_KM2: Record<string, number> = {
   'Karachi East': 139,
   Korangi: 108,
   Malir: 2_160,
+  // Interior Balochistan, landlocked, where OSM and PBS simply disagree about where the line
+  // between two districts runs. Named here because the bundle's own `knownLimitations` names
+  // them, and a narrative that cites the small miss and hides the large one is the failure.
+  Khuzdar: 35_380,
+  Panjgur: 16_891,
   Punjab: 205_344,
   'Khyber Pakhtunkhwa': 101_741,
   Sindh: 140_914,
@@ -197,6 +202,10 @@ const PUBLISHED_KM2: Record<string, number> = {
  * It is not loosened past 5% for the districts that miss it. Those are named and explained
  * below and in the bundle's own `knownLimitations`, because the reason they miss is not the
  * coastline.
+ *
+ * The bundle records this same number as `provenance.coastline.areaTolerance`, so a reader of
+ * the artifact gets the acceptance criterion and not only the list of exceptions to it. The
+ * two are asserted equal below.
  */
 const TOLERANCE = 0.05;
 
@@ -211,11 +220,19 @@ const ratio = (names: readonly string[]): number =>
   names.reduce((sum, n) => sum + (PUBLISHED_KM2[n] as number), 0);
 
 describe('bundle coastline', () => {
-  it('leaves landlocked provinces exactly where they were', () => {
-    // The clip is a no-op away from the shore, and this is the guard on it: districts nowhere
-    // near the coast are never handed to the clipper, so these two must not move at all.
-    expect(ratio(['Punjab'])).toBeCloseTo(1, 2);
-    expect(ratio(['Khyber Pakhtunkhwa'])).toBeCloseTo(1, 2);
+  it('keeps landlocked provinces on their published areas, which the clip must not disturb', () => {
+    // Deliberately *not* phrased as "unchanged by the clip". Clipping moved the bundle's
+    // bounding box (23.4342°N -> 24.0516°N at the south edge), which moves the quantization
+    // grid every arc in the file is snapped to, so no arc survives the clip verbatim and the
+    // landlocked provinces did shift — Punjab by -0.31 km², KP by -0.55, GB by -0.98, AJK by
+    // +0.34, all under 0.0005%. A test in this file cannot see the previous bundle, so it
+    // cannot assert "did not move"; what it can assert, against a published source rather than
+    // against a prior artifact, is that they still sit on their PBS figures. 0.3% is a tenth
+    // of the tolerance the coastal provinces are held to and well inside method error
+    // (spherical vs planimetric area, simplification), so a clip that leaked inland would
+    // fail here.
+    expect(Math.abs(ratio(['Punjab']) - 1)).toBeLessThan(0.003);
+    expect(Math.abs(ratio(['Khyber Pakhtunkhwa']) - 1)).toBeLessThan(0.003);
   });
 
   it('brings both coastal provinces within tolerance of their published areas', () => {
@@ -227,12 +244,22 @@ describe('bundle coastline', () => {
   it('stops coastal districts at the sea instead of in territorial waters', () => {
     // The failure this replaces: Gwadar read 25,913 km² against a published 12,637, Lasbela
     // 24,090 against 15,153. Nothing may read meaningfully larger than its published area again.
+    //
+    // Two thresholds rather than one blanket ceiling. A single ceiling has to clear the worst
+    // legitimate survivor — Malir, at 1.226, where OSM puts the Karachi/Malir line further out
+    // than PBS's areas assume — and a ceiling set just above Malir is no test at all: Malir
+    // could re-inflate most of the way back and still pass. So Malir is pinned to a narrow
+    // band of its own, and every other district is held an order of magnitude tighter.
     const provinceNames = new Set(provinces.map(nameOf));
     const inflated = Object.entries(PUBLISHED_KM2)
-      .filter(([name]) => !provinceNames.has(name))
-      .filter(([name, published]) => areaOf(name) / published > 1.25)
+      .filter(([name]) => !provinceNames.has(name) && name !== 'Malir')
+      .filter(([name, published]) => areaOf(name) / published > 1.1)
       .map(([name]) => name);
     expect(inflated).toEqual([]);
+
+    const malir = areaOf('Malir') / (PUBLISHED_KM2['Malir'] as number);
+    expect(malir).toBeGreaterThan(1.2);
+    expect(malir).toBeLessThan(1.25);
   });
 
   it('lands within tolerance wherever OSM and PBS draw the same lines', () => {
@@ -259,11 +286,22 @@ describe('bundle coastline', () => {
 
   it('reads the Indus delta low, by the documented amount and no more', () => {
     // PBS counts a delta district's tidal creeks as its area; natural=coastline does not, so
-    // the clip removes them. The gap is ~6,500 km², which is the size the delta creek system is
-    // independently reported at. Pinned as a band: it is a known deviation, not a free one.
+    // the clip removes them. That leaves a gap of ~6,500 km², the largest accepted deviation
+    // in the bundle. What the gap is *not* claimed to be is the measured size of the creek
+    // system: no source this project uses publishes that, so the bundle states the arithmetic
+    // and the mechanism and stops there. Pinned as a band — a known deviation, not a free one.
     const delta = ratio(['Thatta', 'Sujawal']);
     expect(delta).toBeGreaterThan(0.55);
     expect(delta).toBeLessThan(0.7);
+  });
+
+  it('names the large interior-Balochistan misses, not only the small one', () => {
+    // Awaran (-12.7%) was the only one the narrative used to name, which read as an isolated
+    // curiosity. Khuzdar misses by more, in both percentage and absolute terms.
+    expect(Math.abs(ratio(['Khuzdar']) - 1)).toBeGreaterThan(TOLERANCE);
+    expect(Math.abs(ratio(['Panjgur']) - 1)).toBeGreaterThan(TOLERANCE);
+    const text = (bundle.provenance.knownLimitations as string[]).join(' ');
+    for (const name of ['Khuzdar', 'Panjgur', 'Awaran']) expect(text).toContain(name);
   });
 });
 
@@ -284,6 +322,63 @@ describe('bundle provenance', () => {
     expect(p.osmBaseTimestamp.coastline).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(p.coastline.districtsClipped).toBeGreaterThan(0);
     expect(p.coastline.areaKm2.Gwadar.before).toBeGreaterThan(p.coastline.areaKm2.Gwadar.after);
+  });
+
+  it('carries the area tolerance, not only the exceptions to it', () => {
+    expect(bundle.provenance.coastline.areaTolerance).toBe(TOLERANCE);
+  });
+
+  it('reports how many districts the shoreline box nominated, not just how many moved', () => {
+    // The bbox gate is one rectangle over the whole coast, so it nominates a good many
+    // landlocked districts too. Both numbers are recorded because either alone misleads.
+    const { districtsConsidered, districtsClipped } = bundle.provenance.coastline;
+    expect(districtsConsidered).toBeGreaterThan(districtsClipped);
+    expect(districtsConsidered).toBeLessThan(ROSTER_DISTRICT_COUNT);
+  });
+
+  it('does not claim districts away from the shore are byte-identical', () => {
+    // They are not: clipping moved the bundle's bounding box, which moved the quantization
+    // grid, so every arc in the file was rebuilt. What survives is arc *sharing*.
+    const method = bundle.provenance.coastline.method as string;
+    expect(method).not.toMatch(/away from the shore are left byte-identical/);
+    expect(method).toMatch(/requantized|arc sharing/);
+  });
+
+  it('does not claim the delta gap is an independently reported creek area', () => {
+    const text = (bundle.provenance.knownLimitations as string[]).join(' ');
+    expect(text).not.toMatch(/independently reported/i);
+  });
+
+  /**
+   * The narrative numbers in `knownLimitations` are rendered provenance, not comments — under
+   * this project's "no unsourced surface" rule a wrong one is a defect, and one of them (the
+   * Karachi division total) had already drifted from 3,682 to a stated 3,582 once. The
+   * generator interpolates them from the geometry it is about to write; this re-measures them
+   * from the committed artifact, so prose and geometry cannot come apart again.
+   */
+  it('quotes area figures that the committed geometry actually has', () => {
+    const text = (bundle.provenance.knownLimitations as string[]).join(' ');
+    const quoted = (pattern: RegExp): number => {
+      const match = text.match(pattern);
+      if (match === null) throw new Error(`knownLimitations has no match for ${pattern}`);
+      return Number((match[1] as string).replace(/,/g, ''));
+    };
+    // Rounded to the km² in the prose, and the bundle is measured spherically here as it is
+    // there, so agreement is to well under a tenth of a percent.
+    const agrees = (stated: number, actual: number) =>
+      expect(Math.abs(stated / actual - 1)).toBeLessThan(0.001);
+
+    const karachi = divisions.find((d) => nameOf(d) === 'Karachi');
+    agrees(quoted(/division totals ([\d,]+) km²/), km2(karachi!.geometry));
+
+    const delta = areaOf('Thatta') + areaOf('Sujawal');
+    agrees(quoted(/together read ([\d,]+) km²/), delta);
+    agrees(
+      quoted(/a gap of ([\d,]+) km²/),
+      (PUBLISHED_KM2['Thatta'] as number) + (PUBLISHED_KM2['Sujawal'] as number) - delta,
+    );
+
+    agrees(quoted(/Khuzdar reads ([\d,]+) km²/), areaOf('Khuzdar'));
   });
 
   it('no longer claims coastal districts run into territorial waters', () => {
