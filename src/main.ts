@@ -32,12 +32,22 @@ const swatch = (entry: LegendEntry): string =>
 const item = (entry: LegendEntry): string =>
   `<span class="legend-item">${swatch(entry)}${entry.label}</span>`;
 
+/**
+ * The dashed line is drawn under every basis, so its legend entry survives every basis too.
+ * Stratum 1 replaces what the fills mean, not what the lines mean: a ceasefire line with no key
+ * is a line a reader is entitled to read as a border.
+ */
+const lineOfControlEntry = `
+  <span class="legend-item"><span class="swatch swatch-dashed"></span>Line of Control —
+    ceasefire line, not an international border</span>`;
+
 const legend = document.getElementById('legend');
 if (legend !== null && languageBasis) {
   const { onTheMap, namedButNowhereDominant, absences } = motherTongueLegend(censusStatistics);
   legend.innerHTML = `
     ${onTheMap.map(item).join('')}
     ${absences.map(item).join('')}
+    ${lineOfControlEntry}
     <span class="legend-group">
       <span class="legend-group-label">Named by the census, dominant in no district</span>
       ${namedButNowhereDominant.map(item).join('')}
@@ -49,8 +59,7 @@ if (legend !== null && languageBasis) {
     <span class="legend-item"><span class="swatch swatch-territory"></span>Territory — not
       constitutionally a province</span>
     <span class="legend-item"><span class="swatch swatch-rule"></span>Division</span>
-    <span class="legend-item"><span class="swatch swatch-dashed"></span>Line of Control —
-      ceasefire line, not an international border</span>
+    ${lineOfControlEntry}
   `;
 }
 
