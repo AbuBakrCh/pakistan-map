@@ -38,9 +38,15 @@ describe('bundle tiers', () => {
     expect(districts).toHaveLength(ROSTER_DISTRICT_COUNT);
     const names = districts.map(nameOf);
     expect(new Set(names).size).toBe(names.length);
-    for (const province of ROSTER) {
-      for (const district of province.districts) expect(names).toContain(district);
-    }
+    // Collected rather than asserted one at a time: a bare `toContain` prints the 156-name
+    // haystack and leaves the reader to work out which province the needle came from. A
+    // missing district is the thing to read off the failure, so it is the thing reported.
+    const missing = ROSTER.flatMap((province) =>
+      province.districts
+        .filter((district) => !names.includes(district))
+        .map((district) => `${district} (${province.name})`),
+    );
+    expect(missing).toEqual([]);
   });
 
   it('holds 36 census divisions plus the injected ICT pseudo-division', () => {
@@ -93,10 +99,38 @@ describe('bundle tiers', () => {
   it('resolves every district to exactly one division and one province', () => {
     const divisionNames = new Set(divisions.map(nameOf));
     const provinceNames = new Set(provinces.map(nameOf));
+    // Each assertion carries the district name, because the value that fails is the *parent* —
+    // "expected [Array(37)] to include 'Nowhere'" says which division does not exist and
+    // nothing at all about which district points at it, which is the half a reader needs.
     for (const district of districts) {
-      expect(divisionNames).toContain(district.properties['division']);
-      expect(provinceNames).toContain(district.properties['province']);
+      expect(divisionNames, nameOf(district)).toContain(district.properties['division']);
+      expect(provinceNames, nameOf(district)).toContain(district.properties['province']);
     }
+  });
+
+  it('hangs every division off a province, under the same province as its own districts', () => {
+    // The tier above the one already checked. A district resolving to a real division and a
+    // real province is not enough on its own: the two can disagree, which would put a district
+    // in a division belonging to some other province and quietly break every rollup that walks
+    // district -> division -> province rather than district -> province.
+    const provinceNames = new Set(provinces.map(nameOf));
+    const divisionProvince = new Map(divisions.map((d) => [nameOf(d), d.properties['province']]));
+    for (const division of divisions) {
+      expect(provinceNames, nameOf(division)).toContain(division.properties['province']);
+    }
+    for (const district of districts) {
+      expect(divisionProvince.get(district.properties['division'] as string), nameOf(district)).toBe(
+        district.properties['province'],
+      );
+    }
+  });
+
+  it('draws no division that no district belongs to', () => {
+    // A division with no districts under it is drawn on the base map and reachable by nothing:
+    // it would survive every count check above, since counts only ever look downward.
+    const occupied = new Set(districts.map((d) => d.properties['division']));
+    const empty = divisions.map(nameOf).filter((name) => !occupied.has(name));
+    expect(empty).toEqual([]);
   });
 
   it('counts 136 census districts across the four provinces and ICT', () => {
@@ -395,6 +429,18 @@ describe('bundle provenance', () => {
     // The post-census split that folds two relations into one 2023 district.
     const waziristan = p.folded.filter((f: { into: string }) => f.into === 'South Waziristan');
     expect(waziristan).toHaveLength(2);
+  });
+
+  it('folds every post-census relation into a district the bundle actually draws', () => {
+    // `folded` is the audit trail for the dissolve (ADR-0001), and it is prose until something
+    // checks the names in it against the geometry. A fold naming a district that is not drawn
+    // means territory went somewhere the map cannot show — the exact drift that committing the
+    // bundle is meant to make reviewable.
+    const drawn = new Set(districts.map(nameOf));
+    const stranded = (bundle.provenance.folded as { from: string; into: string }[])
+      .filter((fold) => !drawn.has(fold.into))
+      .map((fold) => `${fold.from} -> ${fold.into}`);
+    expect(stranded).toEqual([]);
   });
 
   it('agrees with the roster on counts', () => {
