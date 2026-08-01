@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Local agent settings (machine-specific)
+.claude/settings.local.json
+
+# OS
+.DS_Store
