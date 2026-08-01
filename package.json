@@ -9,11 +9,18 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "build:data:fetch": "tsx scripts/fetch-osm.ts"
+    "build:data:fetch": "tsx scripts/fetch-osm.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:data:normalize": "tsx scripts/normalize-geometry.ts"
   },
   "dependencies": {
+    "@types/topojson-server": "^3.0.4",
+    "@types/topojson-simplify": "^3.0.3",
     "d3": "^7.9.0",
-    "topojson-client": "^3.1.0"
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
@@ -21,6 +28,7 @@
     "@types/topojson-client": "^3.1.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
-    "vite": "^6.0.11"
+    "vite": "^6.0.11",
+    "vitest": "^3.2.7"
   }
 }

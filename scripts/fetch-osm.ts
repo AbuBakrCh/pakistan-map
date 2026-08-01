@@ -44,13 +44,18 @@ const GEOMETRY_FAILURE_RATIO = 0.1;
  * grossly truncated response does.
  */
 export interface LevelSpec {
-  readonly adminLevel: 5 | 6;
+  readonly adminLevel: 4 | 5 | 6;
   readonly name: string;
   readonly file: string;
   readonly expectedMin: number;
 }
 
 const LEVELS: readonly LevelSpec[] = [
+  // Provinces and territories. Fetched for one reason: Islamabad Capital Territory has no
+  // division and no district relation, so without this level the map has a hole where the
+  // capital should be (#3). Province outlines themselves are derived by dissolving districts,
+  // which keeps the tiers guaranteed consistent.
+  { adminLevel: 4, name: 'province', file: 'osm-admin-level-4.json', expectedMin: 5 },
   { adminLevel: 5, name: 'division', file: 'osm-admin-level-5.json', expectedMin: 25 },
   { adminLevel: 6, name: 'district', file: 'osm-admin-level-6.json', expectedMin: 120 },
 ];
