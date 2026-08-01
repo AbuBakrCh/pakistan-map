@@ -77,6 +77,8 @@ drawing something.*
 |---|---|---|
 | Division boundaries | OSM `admin_level=5` | ~39 real + ICT injected; strays from India/Afghanistan filtered |
 | District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Names are never trusted alone.** Matching is normalized-name-plus-alias, with relation ids overriding it wherever a name lies or collides — Karachi's four renamed districts, and every AJK district, whose names recur across the Line of Control. Anything unmatched fails the build. PBS's own documents disagree with each other on spelling, and OSM's primary `name` on AJK districts is Urdu |
+| Coastline | OSM `natural=coastline` | A way network, not a relation: chained on shared node ids with direction preserved (**land lies to the LEFT**), the open coast closed against a lon/lat extent, islands added as land. Coastal district polygons are clipped to it, so they stop at the sea instead of running into territorial waters. Natural Earth was rejected — a second lineage at a different vintage, against ADR-0001; OSM keeps one of each |
+| District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against |
 | Population | PBS 2023 Digital Census | District level |
 | Mother tongue | PBS 2023 Census **Table 11** | Published at province, division, district *and* tehsil |
 | Development | PBS 2023 Census | Literacy (10+), improved drinking water, improved sanitation — all published directly at district level. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage |
@@ -117,8 +119,8 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 
 | Script | npm script | Does |
 |---|---|---|
-| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
-| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
+| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 and the coastline → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
+| `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → merges all three tiers from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
 
 Still to come: the census join (#9–#11), the adjacency graph (#16) and per-variant derived
 stats (#20). Shared pure logic lives in `scripts/lib/` with tests beside it.
@@ -236,6 +238,7 @@ Numbered by the grilling question that settled each.
 | D23 | Districts as the building block | Every real proposal in Pakistan is stated in districts |
 | D24 | Single vintage — 2023 geometry *and* statistics (ADR-0001) | Two vintages meant drawing districts that had no data; verified that every post-census unit folds into exactly one parent, so the dissolve is exact |
 | D25 | AJK/GB drawn but not shaded | PBS 2023 publishes 136 districts — provinces + ICT only. No AJK/GB indicator data exists to shade with |
+| D26 | Coastline from OSM `natural=coastline`, not Natural Earth (#38) | Same source, licence and base timestamp as the boundaries, so clipping costs no second provenance lineage and ADR-0001 needs no amendment. Harder to use — a way network rather than a polygon — which is the price of that |
 
 ---
 

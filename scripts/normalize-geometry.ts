@@ -4,7 +4,9 @@
  *   npm run build:data:normalize
  *
  * Turns three levels of raw Overpass output into one committed TopoJSON carrying the
- * province -> division -> district hierarchy at the 2023 census vintage (ADR-0001).
+ * province -> division -> district hierarchy at the 2023 census vintage (ADR-0001), with the
+ * coastal districts clipped to OSM's own shoreline so they stop at the sea rather than running
+ * out into territorial waters (#38).
  *
  * The three tiers are merged out of a *single shared arc set*, so a district boundary and the
  * division boundary running along it are literally the same arcs. That is the reason for using
@@ -16,9 +18,17 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { geoArea } from 'd3';
 import { mergeArcs } from 'topojson-client';
 import { topology } from 'topojson-server';
 import { presimplify, simplify } from 'topojson-simplify';
+import {
+  type CoastlineWay,
+  type Extent,
+  assembleLand,
+  chainCoastline,
+  clipToLand,
+} from './lib/coastline.ts';
 import { type OsmRelation, classifyDivision, reconcileDistricts } from './lib/reconcile.ts';
 import {
   CENSUS_DISTRICT_COUNT,
@@ -28,7 +38,7 @@ import {
   kindOf,
   provinceOf,
 } from './lib/roster.ts';
-import { assemblePolygons } from './lib/rings.ts';
+import { type Position, assemblePolygons } from './lib/rings.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const RAW_DIR = resolve(ROOT, 'data/raw');
@@ -51,10 +61,26 @@ const QUANTIZATION = 1e5;
  */
 const SIMPLIFY_RETAIN = 0.3;
 
+/**
+ * The rectangle the coastline is closed against to make a land polygon (#38).
+ *
+ * Two constraints, pulling in opposite directions. It must **contain every district with room
+ * to spare**, or clipping would cut the country off at the box rather than at the sea — so the
+ * build asserts that before it clips. And its south edge has to cross the coastline chain
+ * cleanly: at 23°N the chain leaves the box exactly once, in Kori Creek south of Sir Creek,
+ * whereas 23.4°N catches the creek's own jagged shore and cuts the chain four times. The
+ * closure handles either, but one exit is the honest picture of one coast.
+ *
+ * 23°N is still comfortably south of Pakistan's southernmost land (~23.69°N, at Sir Creek).
+ */
+const LAND_EXTENT: Extent = { west: 60, south: 23, east: 79, north: 38.5 };
+
 interface RawFile {
   readonly elements: readonly {
     readonly id: number;
     readonly tags?: Record<string, string>;
+    readonly nodes?: readonly number[];
+    readonly geometry?: readonly { lat: number; lon: number }[];
     readonly members?: readonly {
       type: string;
       role?: string;
@@ -78,10 +104,21 @@ const SOURCE_URLS = {
   balochistanVerification:
     'docs/research/balochistan-division-district-set.md (PBS Census-2023 Table 1)',
   karachiIdentities: 'https://www.wikidata.org — Q6367790, Q6367734, Q6367745, Q6367783',
+  // The shoreline coastal districts are clipped to (#38). Deliberately the same source, the
+  // same query, the same licence and the same base timestamp as the boundaries themselves —
+  // Natural Earth's coastline was rejected precisely because it would have been a second
+  // provenance lineage at a different vintage. See docs/adr/0001-single-vintage-2023-geometry.md.
+  coastline:
+    'https://overpass-api.de/api/interpreter — natural=coastline (OpenStreetMap, ODbL)',
+  // What the clipped areas are measured against.
+  publishedAreas:
+    'PBS Census 2023 Table 1, by province — ' +
+    'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_sindh_districts.pdf, ' +
+    'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_balochistan_districts.pdf',
 } as const;
 
-function readRaw(level: number): RawFile {
-  return JSON.parse(readFileSync(resolve(RAW_DIR, `osm-admin-level-${level}.json`), 'utf8'));
+function readRaw(name: string): RawFile {
+  return JSON.parse(readFileSync(resolve(RAW_DIR, `osm-${name}.json`), 'utf8'));
 }
 
 const nameOf = (tags: Record<string, string> | undefined): string =>
@@ -90,8 +127,37 @@ const nameOf = (tags: Record<string, string> | undefined): string =>
 interface UnitFeature {
   readonly type: 'Feature';
   readonly properties: { readonly district: string; readonly division: string; readonly province: string };
-  readonly geometry: { readonly type: 'MultiPolygon'; readonly coordinates: unknown[] };
+  geometry: { readonly type: 'MultiPolygon'; coordinates: Position[][][] };
 }
+
+/** Steradians -> km², the unit every published area figure this is measured against uses. */
+const km2 = (coordinates: Position[][][]): number =>
+  geoArea({ type: 'MultiPolygon', coordinates } as never) * 6371 * 6371;
+
+interface Box {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+function boundsOf(coordinates: Position[][][], into?: Box): Box {
+  const box = into ?? { west: Infinity, south: Infinity, east: -Infinity, north: -Infinity };
+  for (const polygon of coordinates) {
+    for (const ring of polygon) {
+      for (const [lon, lat] of ring) {
+        box.west = Math.min(box.west, lon);
+        box.east = Math.max(box.east, lon);
+        box.south = Math.min(box.south, lat);
+        box.north = Math.max(box.north, lat);
+      }
+    }
+  }
+  return box;
+}
+
+const overlaps = (a: Box, b: Box): boolean =>
+  a.west <= b.east && a.east >= b.west && a.south <= b.north && a.north >= b.south;
 
 function fail(message: string): never {
   console.error(`\n✗ ${message}`);
@@ -101,9 +167,10 @@ function fail(message: string): never {
 function main(): void {
   console.log('Normalizing OSM boundaries into bundle v0');
 
-  const provinces = readRaw(4);
-  const divisions = readRaw(5);
-  const districts = readRaw(6);
+  const provinces = readRaw('admin-level-4');
+  const divisions = readRaw('admin-level-5');
+  const districts = readRaw('admin-level-6');
+  const coastline = readRaw('coastline');
 
   // ---- 1. Which OSM relation is which 2023 district ----------------------------------------
   const districtRelations: OsmRelation[] = districts.elements.map((e) => ({
@@ -226,7 +293,123 @@ function main(): void {
     fail(`${unclosedTotal} ring(s) could not be closed — geometry would render torn`);
   }
 
-  // ---- 4. One topology, three tiers merged from the same arcs --------------------------------
+  // ---- 4. Clip the coast off the sea ---------------------------------------------------------
+  // OSM's coastal district relations run out into territorial waters, which is how OSM models
+  // Pakistan rather than anything the stitching introduced — landlocked provinces already land
+  // within 0.2% of published areas. `natural=coastline` is the shoreline at the same vintage and
+  // from the same source as the boundaries, so clipping to it costs no second provenance
+  // lineage (#38, ADR-0001).
+  const coastlineWays = coastline.elements
+    .filter((element) => element.nodes !== undefined && element.geometry !== undefined)
+    .map(
+      (element): CoastlineWay => ({
+        id: element.id,
+        nodes: element.nodes as readonly number[],
+        geometry: element.geometry as readonly { lat: number; lon: number }[],
+      }),
+    );
+
+  const { chains, headToHead } = chainCoastline(coastlineWays);
+  if (headToHead.length > 0) {
+    fail(
+      `${headToHead.length} coastline node(s) have two ways meeting head-to-head, so one of ` +
+        `each pair is drawn backwards upstream. Land lies to the LEFT of a coastline way, and ` +
+        `flipping one here would decide which side the sea is on: ${headToHead.join(', ')}`,
+    );
+  }
+
+  const land = assembleLand(chains, LAND_EXTENT);
+  if (land.dangling.length > 0) {
+    fail(
+      `${land.dangling.length} coastline chain(s) stop inside the extent instead of running ` +
+        `through it, so the coast cannot be closed into a land polygon. A torn coastline would ` +
+        `clip districts against a shoreline with a gap in it. First break at ` +
+        `${(land.dangling[0] as Position[])[0]?.join(', ')}`,
+    );
+  }
+  if (land.water.length > 0) {
+    fail(
+      `${land.water.length} closed coastline ring(s) are wound as water enclosed by land. None ` +
+        `exist off Pakistan, so this is unhandled rather than supported — they would have to ` +
+        `become holes in the land polygon.`,
+    );
+  }
+  console.log(
+    `  coastline: ${coastlineWays.length} ways → ${chains.length} chains → ` +
+      `${land.openPieces} open piece(s) closed against the extent + ${land.islands} islands`,
+  );
+
+  // The shoreline's own bounding box, taken off the coastline chains rather than off the land
+  // polygon: the land polygon fills the whole extent, so it would nominate every district in
+  // the country for clipping.
+  const shore: Box = { west: Infinity, south: Infinity, east: -Infinity, north: -Infinity };
+  for (const chain of chains) {
+    boundsOf(
+      [
+        [
+          chain.points.filter(
+            ([lon, lat]) =>
+              lon >= LAND_EXTENT.west &&
+              lon <= LAND_EXTENT.east &&
+              lat >= LAND_EXTENT.south &&
+              lat <= LAND_EXTENT.north,
+          ),
+        ],
+      ],
+      shore,
+    );
+  }
+
+  // Keyed by district, not by feature: a district assembled from two relations (Lasbela, which
+  // absorbs the post-census Hub) is two features and would otherwise be reported twice.
+  const clipped = new Map<string, { before: number; after: number }>();
+  for (const feature of features) {
+    const bounds = boundsOf(feature.geometry.coordinates);
+    if (
+      bounds.west < LAND_EXTENT.west ||
+      bounds.east > LAND_EXTENT.east ||
+      bounds.south < LAND_EXTENT.south ||
+      bounds.north > LAND_EXTENT.north
+    ) {
+      fail(
+        `${feature.properties.district} reaches outside the land extent, so clipping would cut ` +
+          `it against the box rather than against the sea. Widen LAND_EXTENT.`,
+      );
+    }
+    // Districts nowhere near the coast are left byte-identical rather than run through the
+    // clipper for a no-op: an inland boundary rebuilt on one side of a shared line and not the
+    // other is how two tiers stop sharing an arc.
+    if (!overlaps(bounds, shore)) continue;
+
+    const before = km2(feature.geometry.coordinates);
+    const land_ = clipToLand(feature.geometry.coordinates, land.polygons);
+    if (land_.length === 0) {
+      fail(`${feature.properties.district} clipped away to nothing — the land polygon is wrong`);
+    }
+    feature.geometry.coordinates = land_;
+    const after = km2(land_);
+    // A metre-scale difference is the clipper rebuilding a ring, not sea being removed.
+    if (before - after <= 1) continue;
+    const running = clipped.get(feature.properties.district) ?? { before: 0, after: 0 };
+    clipped.set(feature.properties.district, {
+      before: running.before + before,
+      after: running.after + after,
+    });
+  }
+
+  const clipReport = [...clipped]
+    .map(([district, areas]) => ({ district, ...areas }))
+    .sort((a, b) => b.before - b.after - (a.before - a.after));
+
+  console.log('\nClipped to the coastline (km², before → after)');
+  for (const { district, before, after } of clipReport) {
+    console.log(
+      `  ${district.padEnd(20)} ${before.toFixed(0).padStart(7)} → ${after.toFixed(0).padStart(7)}` +
+        `  (−${(100 * (1 - after / before)).toFixed(1)}%)`,
+    );
+  }
+
+  // ---- 5. One topology, three tiers merged from the same arcs --------------------------------
   const topo = topology({ units: { type: 'FeatureCollection', features } } as never, QUANTIZATION);
   // presimplify attaches a removal weight to every point; the threshold can only be chosen
   // once those weights exist.
@@ -290,7 +473,7 @@ function main(): void {
       geometries: { properties: { province: string } }[];
     }).geometries;
 
-  // ---- 5. Provenance ------------------------------------------------------------------------
+  // ---- 6. Provenance ------------------------------------------------------------------------
   (simplified as unknown as Record<string, unknown>)['provenance'] = {
     generated: new Date().toISOString(),
     vintage: '2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001',
@@ -299,6 +482,27 @@ function main(): void {
       province: provinces.osm3s?.timestamp_osm_base,
       division: divisions.osm3s?.timestamp_osm_base,
       district: districts.osm3s?.timestamp_osm_base,
+      coastline: coastline.osm3s?.timestamp_osm_base,
+    },
+    coastline: {
+      method:
+        'natural=coastline ways chained on shared node ids, direction preserved (land lies to ' +
+        'the LEFT of a coastline way), the open coast closed against a lon/lat extent and ' +
+        'islands added as land of their own. Coastal district polygons are intersected with ' +
+        'the result; districts away from the shore are left byte-identical.',
+      extent: LAND_EXTENT,
+      ways: coastlineWays.length,
+      chains: chains.length,
+      islands: land.islands,
+      districtsClipped: clipReport.length,
+      // Every district whose area the clip actually moved, so the effect is reviewable without
+      // re-running the build.
+      areaKm2: Object.fromEntries(
+        clipReport.map(({ district, before, after }) => [
+          district,
+          { before: Math.round(before), after: Math.round(after) },
+        ]),
+      ),
     },
     counts: {
       districts: ROSTER_DISTRICT_COUNT,
@@ -313,14 +517,22 @@ function main(): void {
     folded: reconciliation.folded.map((f) => ({ from: f.relation.name, into: f.into })),
     dropped: reconciliation.dropped.map((d) => ({ relation: d.relation.id, reason: d.reason })),
     knownLimitations: [
-      // Measured against published district areas. Landlocked provinces agree to within 0.2%
-      // (Punjab 205,708 vs 205,344; KP 101,579 vs 101,741), which is what rules out an error in
-      // ring assembly or simplification and isolates this to the coast.
-      'OSM boundary relations for coastal districts extend into territorial waters, so Gwadar, ' +
-        'Lasbela, Thatta, Sujawal, Badin and Karachi read larger than their published land ' +
-        'areas (Balochistan +6%, Sindh +6%). OSM models it this way at province level too. ' +
-        'Clipping to a coastline needs a source we do not yet have, so it is recorded rather ' +
-        'than silently corrected.',
+      // Narrowed from "coastal districts include territorial waters" (#38). The sea is gone —
+      // Balochistan +5.3% -> -1.4%, Sindh +6.2% -> -4.2% against PBS. What is left is a
+      // difference in what "area" means in tidal country, not water still being drawn as land.
+      'In the Indus delta the shoreline and the published area measure different things. PBS ' +
+        'counts a district\'s tidal creeks and mangrove flats as its area; natural=coastline ' +
+        'puts them on the sea side, so the clip removes them. Thatta and Sujawal together read ' +
+        '10,834 km² against a published 17,355, and the ~6,500 km² difference is the size the ' +
+        'delta creek system is independently reported at. Closing it would mean drawing a ' +
+        'shoreline no source draws.',
+      // Kept separate from the delta on purpose: this one is not about water at all, and
+      // conflating them would make the coastline clip look like it had failed.
+      'Some district areas disagree with PBS because OSM draws the line between them somewhere ' +
+        'else, not because of the coast. Each pair sums correctly: Gwadar reads -10% and Kech ' +
+        '+5% but together they land within 0.6%; Karachi\'s seven districts vary by up to 49% ' +
+        'individually (the 2020 Keamari split) yet the division totals 3,582 km² against a ' +
+        'published 3,527. Landlocked Awaran reads -12.7% with no coast anywhere near it.',
       'AJK and Gilgit-Baltistan read smaller than Pakistani published figures (AJK 11,894 vs ' +
         '13,297; GB 66,757 vs 72,971) because OSM draws the de-facto line of control. That is a ' +
         'political difference, not an error, and the dashed LoC treatment is the app response.',
@@ -330,7 +542,7 @@ function main(): void {
   mkdirSync(resolve(OUT_FILE, '..'), { recursive: true });
   writeFileSync(OUT_FILE, `${JSON.stringify(simplified)}\n`);
 
-  // ---- 6. Report ----------------------------------------------------------------------------
+  // ---- 7. Report ----------------------------------------------------------------------------
   const districtCount = districtGeometries().length;
   if (districtCount !== ROSTER_DISTRICT_COUNT) {
     fail(`bundle holds ${districtCount} districts, expected ${ROSTER_DISTRICT_COUNT}`);

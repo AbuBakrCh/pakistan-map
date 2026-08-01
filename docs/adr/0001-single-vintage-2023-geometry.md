@@ -34,6 +34,26 @@ Balochistan was the hard case — the most recently restructured region in the c
 cross-parent carve existed, the affected district would have needed a documented
 approximation and a provenance badge saying so. None does.
 
+## Addendum: the coastline does not breach this (#38)
+
+Coastal districts had to be clipped to a shoreline, and a shoreline is a new data source — so
+the question of whether that crosses the single-vintage rule had to be answered before the
+clipping was written, not after. **It does not, and this ADR needs no amendment.** Recording
+the reasoning here rather than leaving it implicit is the point:
+
+- The source chosen is OSM `natural=coastline`, fetched through the same Overpass query path,
+  under the same ODbL licence, and stamped with the same `timestamp_osm_base` as the boundary
+  relations it clips. It is the same lineage at the same vintage. Nothing about "the lines are
+  from one place and the shore from another" arises.
+- **Natural Earth was rejected for exactly this reason.** It is trivially easier to use — a
+  ready-made polygon rather than a way network that has to be chained and closed — but it is a
+  second provenance lineage at a different vintage, and it would have made the map's outline
+  answer to a source the rest of the geometry does not.
+
+The residual is a difference of *definition*, not of vintage: in the Indus delta PBS counts a
+district's tidal creeks as its area and a shoreline does not, so Thatta and Sujawal read low.
+That is recorded in the bundle's `knownLimitations`, where it belongs.
+
 ## Consequences
 
 - The rendered map is knowably not today's map, uniformly. The app must say so.

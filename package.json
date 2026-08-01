@@ -24,6 +24,7 @@
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-server": "^3.0.4",
     "@types/topojson-simplify": "^3.0.3",
+    "polygon-clipping": "^0.15.7",
     "topojson-server": "^3.0.1",
     "topojson-simplify": "^3.0.3",
     "tsx": "^4.19.2",

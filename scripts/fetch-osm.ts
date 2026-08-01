@@ -1,5 +1,5 @@
 /**
- * Fetch Pakistan's administrative boundaries from OSM Overpass into a committed raw cache.
+ * Fetch Pakistan's boundaries and coastline from OSM Overpass into a committed raw cache.
  *
  * Scope: network only. No filtering, no ICT injection, no geometry work, no census join —
  * those belong downstream. What lands in `data/raw/` is exactly what Overpass returned,
@@ -10,8 +10,9 @@
  * good cache: the script writes only after a response has passed validation.
  *
  *   npm run build:data:fetch
- *   npm run build:data:fetch -- --level 6      # one level only
- *   npm run build:data:fetch -- --dry-run      # validate, print counts, write nothing
+ *   npm run build:data:fetch -- --source 6           # one source only
+ *   npm run build:data:fetch -- --source coastline
+ *   npm run build:data:fetch -- --dry-run            # validate, print counts, write nothing
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -37,28 +38,22 @@ const BACKOFF_BASE_MS = 5_000;
 const GEOMETRY_FAILURE_RATIO = 0.1;
 
 /**
- * An admin level we cache. `expectedMin` is a sanity floor, not a target: Overpass
+ * One dataset we cache. `expectedMin` is a sanity floor, not a target: Overpass
  * happily returns a well-formed response with half the country missing, and the count
  * is the only signal that it did. Floors sit well below the real counts (~39 divisions,
- * ~165 districts) so that genuine upstream churn does not fail the build, while a
- * grossly truncated response does.
+ * ~165 districts, ~1,500 coastline ways) so that genuine upstream churn does not fail the
+ * build, while a grossly truncated response does.
  */
-export interface LevelSpec {
-  readonly adminLevel: 4 | 5 | 6;
+export interface SourceSpec {
+  /** What `--source` takes. */
+  readonly key: string;
   readonly name: string;
   readonly file: string;
+  readonly query: string;
+  /** Which OSM primitive carries the geometry — relations for boundaries, ways for coastline. */
+  readonly elementType: 'relation' | 'way';
   readonly expectedMin: number;
 }
-
-const LEVELS: readonly LevelSpec[] = [
-  // Provinces and territories. Fetched for one reason: Islamabad Capital Territory has no
-  // division and no district relation, so without this level the map has a hole where the
-  // capital should be (#3). Province outlines themselves are derived by dissolving districts,
-  // which keeps the tiers guaranteed consistent.
-  { adminLevel: 4, name: 'province', file: 'osm-admin-level-4.json', expectedMin: 5 },
-  { adminLevel: 5, name: 'division', file: 'osm-admin-level-5.json', expectedMin: 25 },
-  { adminLevel: 6, name: 'district', file: 'osm-admin-level-6.json', expectedMin: 120 },
-];
 
 /**
  * Selects by the relation's own tags rather than by `area`, because Pakistan's area
@@ -67,7 +62,7 @@ const LEVELS: readonly LevelSpec[] = [
  * concern (see the filtering step), and doing it here would make the cache a judgement
  * rather than a record.
  */
-function buildQuery(adminLevel: number): string {
+function adminQuery(adminLevel: number): string {
   return [
     '[out:json][timeout:280];',
     'area["ISO3166-1"="PK"]["admin_level"="2"]->.pk;',
@@ -75,6 +70,64 @@ function buildQuery(adminLevel: number): string {
     'out geom;',
   ].join('\n');
 }
+
+/**
+ * The coastline is fetched by bounding box, not by Pakistan's area, and the box reaches
+ * well into Iran and India **on purpose**.
+ *
+ * `natural=coastline` is a way network, not a relation: there is no "Pakistan's coastline"
+ * object to ask for. Pakistan's own stretch of it does not close — it runs from the Iranian
+ * border at Gwatar Bay to Sir Creek and stops. Assembling a land polygon out of it (see
+ * `scripts/lib/coastline.ts`) means closing the chain against an extent, and that only works
+ * if the chain runs clear past the ends of Pakistan's land rather than stopping level with
+ * them. The overhang into neighbouring coasts is what gives it room to do that.
+ *
+ * South/west/north/east, as Overpass orders a bbox filter.
+ */
+const COASTLINE_BBOX = [22.0, 59.0, 26.5, 70.0] as const;
+
+const SOURCES: readonly SourceSpec[] = [
+  // Provinces and territories. Fetched for one reason: Islamabad Capital Territory has no
+  // division and no district relation, so without this level the map has a hole where the
+  // capital should be (#3). Province outlines themselves are derived by dissolving districts,
+  // which keeps the tiers guaranteed consistent.
+  {
+    key: '4',
+    name: 'province',
+    file: 'osm-admin-level-4.json',
+    query: adminQuery(4),
+    elementType: 'relation',
+    expectedMin: 5,
+  },
+  {
+    key: '5',
+    name: 'division',
+    file: 'osm-admin-level-5.json',
+    query: adminQuery(5),
+    elementType: 'relation',
+    expectedMin: 25,
+  },
+  {
+    key: '6',
+    name: 'district',
+    file: 'osm-admin-level-6.json',
+    query: adminQuery(6),
+    elementType: 'relation',
+    expectedMin: 120,
+  },
+  {
+    key: 'coastline',
+    name: 'coastline',
+    file: 'osm-coastline.json',
+    query: [
+      '[out:json][timeout:280];',
+      `way["natural"="coastline"](${COASTLINE_BBOX.join(',')});`,
+      'out geom;',
+    ].join('\n'),
+    elementType: 'way',
+    expectedMin: 500,
+  },
+];
 
 /** Shape of an Overpass JSON response, to the extent we depend on it. */
 interface OverpassResponse {
@@ -88,12 +141,30 @@ interface OverpassResponse {
 class FetchFailure extends Error {}
 
 /**
+ * Does this element carry coordinates? A way holds them directly; a relation holds them on
+ * its way members.
+ */
+function hasGeometry(element: unknown): boolean {
+  const { geometry, members } = element as { geometry?: unknown; members?: unknown };
+  if (Array.isArray(geometry)) return true;
+  return (
+    Array.isArray(members) &&
+    members.some(
+      (member) =>
+        typeof member === 'object' &&
+        member !== null &&
+        Array.isArray((member as { geometry?: unknown }).geometry),
+    )
+  );
+}
+
+/**
  * Parses and validates one Overpass response body. Throws on anything that must not
  * reach the cache: HTML error pages, non-object JSON, a missing `elements` array, an
  * Overpass `remark` (how it reports timeouts and runtime errors while still returning
- * HTTP 200 with partial data), or a count below the level's sanity floor.
+ * HTTP 200 with partial data), or a count below the source's sanity floor.
  */
-export function validate(body: string, level: LevelSpec): OverpassResponse {
+export function validate(body: string, level: SourceSpec): OverpassResponse {
   const head = body.trimStart().slice(0, 200);
   if (!head.startsWith('{')) {
     throw new FetchFailure(
@@ -126,49 +197,38 @@ export function validate(body: string, level: LevelSpec): OverpassResponse {
     throw new FetchFailure('response has no `elements` array');
   }
 
-  const relations = response.elements.filter(
+  const wanted = response.elements.filter(
     (element) =>
       typeof element === 'object' &&
       element !== null &&
-      (element as { type?: unknown }).type === 'relation',
+      (element as { type?: unknown }).type === level.elementType,
   );
 
-  if (relations.length < level.expectedMin) {
+  if (wanted.length < level.expectedMin) {
     throw new FetchFailure(
-      `only ${relations.length} admin_level=${level.adminLevel} relations returned, ` +
+      `only ${wanted.length} ${level.name} ${level.elementType}s returned, ` +
         `expected at least ${level.expectedMin} — treating as truncated`,
     );
   }
 
-  const withoutGeometry = relations.filter((relation) => {
-    const members = (relation as { members?: unknown }).members;
-    return (
-      !Array.isArray(members) ||
-      !members.some(
-        (member) =>
-          typeof member === 'object' &&
-          member !== null &&
-          Array.isArray((member as { geometry?: unknown }).geometry),
-      )
-    );
-  });
+  const withoutGeometry = wanted.filter((element) => !hasGeometry(element));
 
   // A mirror that drops geometry wholesale, or answers with `out body` semantics, strips
   // it from essentially everything — that is a bad response and must not be cached. One
-  // or two relations without way members is a different thing entirely: a genuinely
-  // broken relation upstream in OSM. Failing on those would make the fetch hostage to
-  // any single mapper's mistake, so they are reported and left for the filtering step.
-  if (withoutGeometry.length > relations.length * GEOMETRY_FAILURE_RATIO) {
+  // or two elements without geometry is a different thing entirely: a genuinely broken
+  // relation upstream in OSM. Failing on those would make the fetch hostage to any single
+  // mapper's mistake, so they are reported and left for the filtering step.
+  if (withoutGeometry.length > wanted.length * GEOMETRY_FAILURE_RATIO) {
     throw new FetchFailure(
-      `${withoutGeometry.length} of ${relations.length} relations came back without ` +
-        'member geometry — the mirror is not returning geometry',
+      `${withoutGeometry.length} of ${wanted.length} ${level.elementType}s came back ` +
+        'without geometry — the mirror is not returning geometry',
     );
   }
 
-  for (const relation of withoutGeometry) {
-    const { id, tags } = relation as { id?: number; tags?: Record<string, string> };
+  for (const element of withoutGeometry) {
+    const { id, tags } = element as { id?: number; tags?: Record<string, string> };
     console.warn(
-      `    note: relation ${id} (${tags?.['name'] ?? 'unnamed'}) has no member geometry ` +
+      `    note: ${level.elementType} ${id} (${tags?.['name'] ?? 'unnamed'}) has no geometry ` +
         '— broken upstream in OSM, passed through to the cache as-is',
     );
   }
@@ -210,22 +270,21 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
 /**
- * Fetches one admin level, retrying each mirror with linear backoff before moving to the
+ * Fetches one source, retrying each mirror with linear backoff before moving to the
  * next. Only a validated response is returned; every failure mode is exhausted across all
  * mirrors before the script gives up.
  */
-async function fetchLevel(level: LevelSpec): Promise<OverpassResponse> {
-  const query = buildQuery(level.adminLevel);
+async function fetchSource(level: SourceSpec): Promise<OverpassResponse> {
   const failures: string[] = [];
 
   for (const mirror of MIRRORS) {
     for (let attempt = 1; attempt <= ATTEMPTS_PER_MIRROR; attempt += 1) {
       const host = new URL(mirror).host;
       console.log(
-        `  → admin_level=${level.adminLevel} via ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})`,
+        `  → ${level.name} via ${host} (attempt ${attempt}/${ATTEMPTS_PER_MIRROR})`,
       );
       try {
-        const body = await postOnce(mirror, query);
+        const body = await postOnce(mirror, level.query);
         const response = validate(body, level);
         console.log(`    ok — ${(body.length / 1_048_576).toFixed(1)} MiB from ${host}`);
         return response;
@@ -243,17 +302,20 @@ async function fetchLevel(level: LevelSpec): Promise<OverpassResponse> {
   }
 
   throw new Error(
-    `Could not fetch admin_level=${level.adminLevel} from any Overpass mirror.\n` +
+    `Could not fetch ${level.name} from any Overpass mirror.\n` +
       failures.map((line) => `  - ${line}`).join('\n'),
   );
 }
 
-/** Counts relations by admin_level, so drift in either direction is visible in the log. */
-function summarise(response: OverpassResponse): {
-  relations: number;
-  named: number;
-  byLevel: Map<string, number>;
-} {
+/**
+ * Counts the wanted elements, and buckets boundary relations by admin_level so drift in
+ * either direction is visible in the log. Coastline ways have no admin_level, so they all
+ * land in `untagged` — the count is the signal there.
+ */
+function summarise(
+  response: OverpassResponse,
+  level: SourceSpec,
+): { relations: number; named: number; byLevel: Map<string, number> } {
   let relations = 0;
   let named = 0;
   const byLevel = new Map<string, number>();
@@ -262,7 +324,7 @@ function summarise(response: OverpassResponse): {
     if (
       typeof element !== 'object' ||
       element === null ||
-      (element as { type?: unknown }).type !== 'relation'
+      (element as { type?: unknown }).type !== level.elementType
     ) {
       continue;
     }
@@ -289,15 +351,15 @@ function serialise(response: OverpassResponse): string {
   return `${prefix}\n"elements":[\n${lines.join(',\n')}\n]}\n`;
 }
 
-function parseArgs(argv: readonly string[]): { levels: readonly LevelSpec[]; dryRun: boolean } {
+function parseArgs(argv: readonly string[]): { levels: readonly SourceSpec[]; dryRun: boolean } {
   const dryRun = argv.includes('--dry-run');
-  const levelIndex = argv.indexOf('--level');
-  if (levelIndex === -1) return { levels: LEVELS, dryRun };
+  const index = argv.indexOf('--source');
+  if (index === -1) return { levels: SOURCES, dryRun };
 
-  const requested = Number(argv[levelIndex + 1]);
-  const match = LEVELS.find((level) => level.adminLevel === requested);
+  const requested = argv[index + 1];
+  const match = SOURCES.find((source) => source.key === requested);
   if (!match) {
-    throw new Error(`--level must be one of ${LEVELS.map((l) => l.adminLevel).join(', ')}`);
+    throw new Error(`--source must be one of ${SOURCES.map((s) => s.key).join(', ')}`);
   }
   return { levels: [match], dryRun };
 }
@@ -305,7 +367,7 @@ function parseArgs(argv: readonly string[]): { levels: readonly LevelSpec[]; dry
 async function main(): Promise<void> {
   const { levels, dryRun } = parseArgs(process.argv.slice(2));
 
-  console.log('Fetching OSM administrative boundaries for Pakistan');
+  console.log('Fetching OSM administrative boundaries and coastline for Pakistan');
   console.log(`  cache: ${RAW_DIR}${dryRun ? '  (dry run — nothing will be written)' : ''}`);
 
   await mkdir(RAW_DIR, { recursive: true });
@@ -313,18 +375,18 @@ async function main(): Promise<void> {
   const counts: string[] = [];
 
   for (const level of levels) {
-    console.log(`\n${level.name} boundaries (admin_level=${level.adminLevel})`);
-    const response = await fetchLevel(level);
-    const { relations, named, byLevel } = summarise(response);
+    console.log(`\n${level.name} (${level.elementType}s)`);
+    const response = await fetchSource(level);
+    const { relations, named, byLevel } = summarise(response, level);
 
     const breakdown = [...byLevel.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([adminLevel, count]) => `admin_level=${adminLevel}: ${count}`)
       .join(', ');
 
-    console.log(`    ${relations} relations (${named} named) — ${breakdown}`);
+    console.log(`    ${relations} ${level.elementType}s (${named} named) — ${breakdown}`);
     console.log(`    OSM base timestamp: ${response.osm3s?.timestamp_osm_base ?? 'unknown'}`);
-    counts.push(`${level.name} (admin_level=${level.adminLevel}): ${relations}`);
+    counts.push(`${level.name}: ${relations}`);
 
     if (!dryRun) {
       const path = resolve(RAW_DIR, level.file);
