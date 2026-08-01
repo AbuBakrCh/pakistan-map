@@ -40,6 +40,15 @@ const EXTPTR = 22;
 /** R's integer NA is INT_MIN, not a flag alongside the value. */
 const NA_INTEGER = -2147483648;
 
+/**
+ * A CHARSXP carries its encoding in the serialized "levels", which start at bit 12 of the flags
+ * word (R's `PackFlags`: `val |= levs << 12`). Within the levels, R uses `LATIN1_MASK (1<<2)`,
+ * `UTF8_MASK (1<<3)` and `ASCII_MASK (1<<6)`.
+ */
+const LEVELS_SHIFT = 12;
+const LATIN1_MASK = 1 << 2;
+const ASCII_MASK = 1 << 6;
+
 type Attrs = ReadonlyMap<string, Node>;
 
 /** An atomic vector: logical, integer, double or character. */
@@ -136,7 +145,24 @@ function readNode(cursor: Cursor): Node {
       const length = cursor.int32();
       // -1 is NA_character_, which is not the empty string and must not become one.
       if (length === -1) return null;
-      return cursor.text(length);
+      // Everything below decodes as UTF-8, which is right for UTF8, ASCII and a UTF-8 native
+      // encoding — but wrong for latin1, where the high bytes are a different alphabet. A
+      // latin1 "Kachhi (Bolan)" would decode to mojibake and match no roster name; worse, a
+      // latin1 name that happens to be pure ASCII would pass while its neighbour did not.
+      // District names are exactly where this bites, so refuse rather than guess.
+      const levels = flags >> LEVELS_SHIFT;
+      if ((levels & LATIN1_MASK) !== 0) {
+        throw new Error(
+          'RData string is latin1-encoded. This reader decodes UTF-8 only; decoding latin1 as ' +
+            'UTF-8 corrupts exactly the district names the join matches on.',
+        );
+      }
+      const text = cursor.text(length);
+      if ((levels & ASCII_MASK) !== 0 && /[^\x00-\x7f]/.test(text)) {
+        throw new Error('RData string is flagged ASCII but holds bytes above 0x7f');
+      }
+      // UTF8_MASK and a UTF-8 native encoding both decode the same way, so neither is checked.
+      return text;
     }
 
     case LIST:
@@ -274,9 +300,28 @@ function toDataFrame(node: Node): DataFrame | null {
   if (names.kind !== 'atomic') return null;
   const columns = names.values.map(String);
 
-  const columnValues = node.elements.map((element) => {
+  // A `names` attribute shorter than the column list would leave real columns unnamed and
+  // unreachable; longer would name columns that do not exist, and `?? null` below would fill
+  // them with nulls that look exactly like published NAs. Neither is a table anyone should read.
+  if (columns.length !== node.elements.length) {
+    throw new Error(
+      `data.frame has ${node.elements.length} column(s) but ${columns.length} name(s)`,
+    );
+  }
+
+  const columnValues = node.elements.map((element, index) => {
     if (element === null || typeof element === 'string' || element.kind !== 'atomic') {
-      throw new Error('data.frame column was not an atomic vector');
+      throw new Error(`data.frame column ${columns[index]} was not an atomic vector`);
+    }
+    // A factor is an integer vector wearing a `levels` attribute: its values are 1-based codes
+    // into that attribute, not data. Read as-is, a factor District column yields the numbers
+    // 1..136 and a factor Pop2023 column yields ranks — both perfectly plausible integers.
+    if (element.attrs.has('levels')) {
+      throw new Error(
+        `data.frame column ${columns[index]} is a factor. Its values are level codes, not the ` +
+          `labels; this reader does not decode them, and reading the codes as data would put ` +
+          `integers where names or populations belong.`,
+      );
     }
     return element.values;
   });

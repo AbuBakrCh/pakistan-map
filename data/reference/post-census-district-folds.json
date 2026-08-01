@@ -107,13 +107,15 @@
       "district": "Upper Dera Bugti",
       "into": "Dera Bugti",
       "province": "Balochistan",
-      "note": "8 July 2026 restructuring."
+      "note": "Created February 2026 out of Dera Bugti, then renamed North Dera Bugti by the 8 July 2026 notification. Kept under the name it was created with, which is the one OSM carries; the renamed form is not yet in the fetch and is not guessed at here.",
+      "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773"
     },
     {
       "district": "South Dera Bugti",
       "into": "Dera Bugti",
       "province": "Balochistan",
-      "note": "8 July 2026 restructuring — the renamed residual of Dera Bugti, so it folds back into the name it was carved out of."
+      "note": "8 July 2026 restructuring. Dera Bugti was bifurcated in February 2026 into Upper and Lower Dera Bugti; the July notification renamed the pair North and South Dera Bugti. Both halves are post-census under the rule above, so both fold back into the district the census counted.",
+      "source": "Dawn, 'Balochistan undergoes major restructuring', https://www.dawn.com/news/2014773 — 'Upper and Lower Dera Bugti were renamed North and South Dera Bugti.'"
     },
     {
       "district": "Gupis-Yasin",

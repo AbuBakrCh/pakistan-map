@@ -17,21 +17,25 @@
 
 import {
   ICT_PSEUDO_DIVISION,
-  POST_CENSUS_DISTRICT_FOLDS,
   ROSTER,
   normalizeName,
   provinceOf,
   resolveRosterName,
 } from './roster.ts';
 
-/** One published district row, as the census tables give it. */
+/**
+ * One published district row, as the census tables give it.
+ *
+ * 2023 figures only. The tables also carry a 2017 population; it is deliberately not read,
+ * because ADR-0001 pins this project to a single vintage and a 2017 column sitting in the
+ * bundle is an invitation to the cross-vintage comparison that rule exists to prevent.
+ */
 export interface CensusRow {
   readonly region: string;
   readonly division: string;
   readonly district: string;
   readonly population: number;
   readonly households: number;
-  readonly population2017: number;
 }
 
 /** One district's statistics, keyed and labelled the way the geography bundle is. */
@@ -41,7 +45,6 @@ export interface DistrictStatistics {
   readonly division: string;
   readonly population: number;
   readonly households: number;
-  readonly population2017: number;
 }
 
 export interface CensusJoin {
@@ -99,38 +102,6 @@ export function resolveCensusDivision(name: string): string {
   return normalizeName(name) === 'ict' ? ICT_PSEUDO_DIVISION : name;
 }
 
-/**
- * The census-vintage district that carries a given district's people.
- *
- * For a 2023 district that is itself; for a district created since, it is the parent it was
- * carved out of. This is the vintage rule in one function: a unit with no census row does not
- * get a null population, and it does not get an invented one — it gets no separate existence.
- *
- * `null` means the name is neither, which is a build failure everywhere it is used.
- */
-export function foldToCensusDistrict(name: string): string | null {
-  let current = name;
-  // The table is flat today. Following it to a fixed point costs nothing and means a future
-  // two-step reorganisation (a district carved from a district carved from a 2023 parent)
-  // resolves instead of silently landing on a unit that does not exist.
-  for (let step = 0; step <= Object.keys(POST_CENSUS_DISTRICT_FOLDS).length; step += 1) {
-    const resolved = resolveRosterName(current);
-    if (resolved !== null) return resolved;
-    const parent = matchFold(current);
-    if (parent === null) return null;
-    current = parent;
-  }
-  throw new Error(`fold table loops on ${name}`);
-}
-
-function matchFold(name: string): string | null {
-  const normalized = normalizeName(name);
-  for (const [child, parent] of Object.entries(POST_CENSUS_DISTRICT_FOLDS)) {
-    if (normalizeName(child) === normalized) return parent;
-  }
-  return null;
-}
-
 /** Districts drawn by the bundle that the census did not cover — AJK and GB (D25). */
 function districtsWithoutCensusData(): string[] {
   return ROSTER.filter((p) => p.kind === 'territory').flatMap((p) => [...p.districts]);
@@ -153,15 +124,24 @@ export function joinCensus(rows: readonly CensusRow[]): CensusJoin {
           `resolved to the wrong district and some other district is now missing.`,
       );
     }
+    // The row's own region and the roster are the same thing said twice: which province this
+    // district is in. Disagreeing is a mis-resolved name, not a judgement call, so it stops the
+    // build instead of quietly preferring one side. Nothing in the current data reaches this —
+    // which is the point. The check is worth exactly what it costs when a name later collides.
+    const rosterProvince = provinceOf(district);
+    if (rosterProvince !== null && rosterProvince !== province) {
+      throw new Error(
+        `census row puts ${district} in ${province}, the roster puts it in ${rosterProvince}. ` +
+          `One of the two names resolved to the wrong district; some other district is now ` +
+          `carrying this one's population.`,
+      );
+    }
     districts.set(district, {
       district,
-      // The row's own region is what matched; the roster is what the bundle labels by. They are
-      // the same thing said twice, so disagreeing is a mis-resolved name, not a judgement call.
-      province: provinceOf(district) ?? province,
+      province: rosterProvince ?? province,
       division: resolveCensusDivision(row.division),
       population: row.population,
       households: row.households,
-      population2017: row.population2017,
     });
   }
 

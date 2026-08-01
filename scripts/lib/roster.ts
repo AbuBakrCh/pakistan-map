@@ -145,11 +145,44 @@ export const POST_CENSUS_DIVISION_FOLDS: Readonly<Record<string, string>> = {
  * split into Upper and Lower after the census, so its 2023 geometry is the union of both.
  */
 export const POST_CENSUS_DISTRICT_FOLDS: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(postCensusFolds.folds.map((fold) => [fold.district, fold.into])),
+  indexFolds(postCensusFolds.folds),
 );
 
-/** The fold table with its per-entry provenance intact, for the statistics artifact. */
-export const POST_CENSUS_FOLD_TABLE = postCensusFolds;
+/**
+ * The fold table's rows, with their per-entry provenance intact, for the statistics artifact.
+ * `POST_CENSUS_DISTRICT_FOLDS` is the same data indexed for lookup; this is the reviewable list.
+ */
+export const POST_CENSUS_FOLD_TABLE: readonly (typeof postCensusFolds.folds)[number][] =
+  postCensusFolds.folds;
+
+/**
+ * Index the fold rows by child district, refusing a duplicate.
+ *
+ * `Object.fromEntries` would let a second row for the same district silently win, which is how a
+ * hand-maintained table acquires two answers to "where do these people go" and reports only one.
+ * The file is edited by hand precisely because it changes when Pakistan reorganises, so the
+ * failure mode is a real one: the same district pasted twice with different parents.
+ */
+export function indexFolds(
+  folds: readonly { district: string; into: string }[],
+): Record<string, string> {
+  const index: Record<string, string> = {};
+  const seen = new Map<string, string>();
+  for (const fold of folds) {
+    // Normalized, because two spellings of one district are the same duplicate wearing a hat.
+    const key = normalizeName(fold.district);
+    const previous = seen.get(key);
+    if (previous !== undefined) {
+      throw new Error(
+        `post-census-district-folds.json lists ${fold.district} twice — once folding into ` +
+          `${index[previous]}, once into ${fold.into}. One district, one parent.`,
+      );
+    }
+    seen.set(key, fold.district);
+    index[fold.district] = fold.into;
+  }
+  return index;
+}
 
 /**
  * Relations to drop outright, with the reason. Being explicit here is the point: an unmatched

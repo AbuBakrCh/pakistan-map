@@ -29,18 +29,31 @@ class Writer {
     return this;
   }
 
-  /** A CHARSXP: the string payload every R name and character element is made of. */
-  char(text: string): this {
-    return this.int32(9).int32(text.length).ascii(text);
+  /**
+   * A CHARSXP: the string payload every R name and character element is made of.
+   *
+   * `levels` are R's encoding flags, packed from bit 12 up — LATIN1 is `1 << 2`, UTF8 `1 << 3`,
+   * ASCII `1 << 6`. Default 0 is "native", which is what the census tables carry.
+   */
+  char(text: string, levels = 0): this {
+    return this.int32(9 | (levels << 12)).int32(text.length).ascii(text);
   }
 
   symbol(name: string): this {
     return this.int32(1).char(name);
   }
 
-  strings(values: readonly string[]): this {
+  strings(values: readonly string[], levels = 0): this {
     this.int32(16).int32(values.length);
-    for (const value of values) this.char(value);
+    for (const value of values) this.char(value, levels);
+    return this;
+  }
+
+  /** An integer vector wearing a `levels` attribute — R's representation of a factor. */
+  factor(codes: readonly number[], labels: readonly string[]): this {
+    this.int32(13 | (1 << 9)).int32(codes.length);
+    for (const code of codes) this.int32(code);
+    this.int32(2 | (1 << 10)).symbol('levels').strings(labels).nil();
     return this;
   }
 
@@ -135,6 +148,47 @@ describe('readDataFrames', () => {
       }),
     );
     expect(() => readDataFrames(bytes)).toThrow(/unequal length/);
+  });
+
+  it('reads a string the writer flagged UTF-8, and one it flagged ASCII', () => {
+    const bytes = file('Census', (w) =>
+      frame(w, ['Utf8', 'Ascii'], (inner) =>
+        inner.strings(['Quetta'], 1 << 3).strings(['Lahore'], 1 << 6),
+      ),
+    );
+    expect(readDataFrames(bytes).get('Census')?.rows[0]).toEqual({
+      Utf8: 'Quetta',
+      Ascii: 'Lahore',
+    });
+  });
+
+  it('refuses a latin1 string rather than decoding it as UTF-8', () => {
+    // District names are what the join matches on. A latin1 name decoded as UTF-8 is mojibake
+    // that matches no roster entry — and one that happens to be pure ASCII would pass while its
+    // neighbour failed, which is the worst of the two outcomes.
+    const bytes = file('Census', (w) =>
+      frame(w, ['District'], (inner) => inner.strings(['Quetta'], 1 << 2)),
+    );
+    expect(() => readDataFrames(bytes)).toThrow(/latin1/);
+  });
+
+  it('refuses a column count that disagrees with the name count', () => {
+    // `?? null` would fill an unnamed column's cells with nulls indistinguishable from real NAs.
+    const bytes = file('Census', (w) => {
+      w.int32(19 | (1 << 9)).int32(2);
+      w.strings(['Lahore']).doubles([1]);
+      w.int32(2 | (1 << 10)).symbol('names').strings(['District']).nil();
+    });
+    expect(() => readDataFrames(bytes)).toThrow(/2 column\(s\) but 1 name\(s\)/);
+  });
+
+  it('refuses a factor column rather than emitting its level codes as data', () => {
+    // A factor is integer codes plus a `levels` attribute. Read as-is, a factor District column
+    // is the numbers 1..n and a factor Pop2023 column is ranks — both plausible integers.
+    const bytes = file('Census', (w) =>
+      frame(w, ['District'], (inner) => inner.factor([1, 2], ['Lahore', 'Multan'])),
+    );
+    expect(() => readDataFrames(bytes)).toThrow(/is a factor/);
   });
 
   it('throws on a node type it does not understand rather than guessing', () => {

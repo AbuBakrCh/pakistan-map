@@ -13,13 +13,17 @@
  *
  * The build stops on any of:
  *   - a census row that matches no district, or a district no census row covers;
- *   - a district population that does not sum to the division PBS published above it;
- *   - a division that does not sum to its province, or a province to the national total.
+ *   - a district population that does not sum to the division total published above it;
+ *   - a province, or the national total, that the districts do not sum to.
  *
- * The totals check is the strongest one available. PBS publishes the division and province rows
- * independently of the district rows, so a fold that double-counts a district or a name that
- * resolved to the wrong one lands as an exact arithmetic difference rather than as a
- * plausible-looking number nobody queries.
+ * The totals check is the strongest one available: a fold that double-counts a district or a
+ * name that resolved to the wrong one lands as an exact arithmetic difference rather than as a
+ * plausible-looking number nobody queries. Its two tiers are not equally strong, and the
+ * artifact says so per row. The five province totals and the national total are typed from PBS
+ * Census-2023 Table 1 — outside the PakPC2023 package, so they check the package as well as the
+ * join. The 31 division totals come from that same package's division table: a cross-table
+ * consistency check, which would still pass if the package were wrong the same way twice. PBS
+ * publishes no division tier in Table 1, so no external anchor exists at that tier.
  */
 
 import { createHash } from 'node:crypto';
@@ -42,7 +46,7 @@ import {
   ROSTER,
   ROSTER_DISTRICT_COUNT,
 } from './lib/roster.ts';
-import { readDataFrames, type DataFrame } from './lib/rdata.ts';
+import { readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const RAW_DIR = resolve(ROOT, 'data/raw');
@@ -106,7 +110,7 @@ function readCache(which: keyof typeof CACHE): { frame: DataFrame; digest: strin
 }
 
 /** Read a published population out of a census row, refusing anything that is not a count. */
-function count(row: Readonly<Record<string, string | number | null>>, column: string): number {
+function count(row: Readonly<Record<string, Cell>>, column: string): number {
   const value = row[column];
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
     fail(`census row has no usable ${column}: ${JSON.stringify(row)}`);
@@ -114,7 +118,7 @@ function count(row: Readonly<Record<string, string | number | null>>, column: st
   return value;
 }
 
-function text(row: Readonly<Record<string, string | number | null>>, column: string): string {
+function text(row: Readonly<Record<string, Cell>>, column: string): string {
   const value = row[column];
   if (typeof value !== 'string' || value.length === 0) {
     fail(`census row has no usable ${column}: ${JSON.stringify(row)}`);
@@ -125,7 +129,7 @@ function text(row: Readonly<Record<string, string | number | null>>, column: str
 function report(tier: string, discrepancies: readonly Discrepancy[]): void {
   if (discrepancies.length === 0) return;
   fail(
-    `${discrepancies.length} ${tier} total(s) do not match what PBS published. A district was ` +
+    `${discrepancies.length} ${tier} total(s) do not match the published figure. A district was ` +
       `dropped, double-counted, or matched to the wrong ${tier}:\n` +
       discrepancies
         .map(
@@ -154,7 +158,10 @@ function main(): void {
     district: text(row, 'District'),
     population: count(row, 'Pop2023'),
     households: count(row, 'Households'),
-    population2017: count(row, 'Pop2017'),
+    // The table also carries Pop2017. Deliberately not read: ADR-0001 pins this project to a
+    // single vintage, and a 2017 column in the bundle is an invitation to the cross-vintage
+    // comparison that rule exists to prevent — an intercensal growth rate nothing here can
+    // source, on a district set that was reorganised in between.
   }));
 
   const join = joinCensus(rows);
@@ -203,8 +210,9 @@ function main(): void {
       }),
   );
 
-  report('division', reconcileTotals(byDivision, publishedDivisions));
-  report('province', reconcileTotals(byProvince, publishedProvinces));
+  // Package-internal: both sides come from PakPC2023, so these catch a bad join, not a bad package.
+  report('division (PakPC2023)', reconcileTotals(byDivision, publishedDivisions));
+  report('province (PakPC2023)', reconcileTotals(byProvince, publishedProvinces));
   // Anchored outside the package: these six figures are typed from the PBS table itself.
   report('province (PBS Table 1)', reconcileTotals(byProvince, new Map(Object.entries(PUBLISHED_PROVINCE_TOTALS))));
 
@@ -253,7 +261,6 @@ function main(): void {
           {
             population: d.population,
             households: d.households,
-            population2017: d.population2017,
             division: d.division,
             province: d.province,
           },
@@ -276,7 +283,7 @@ function main(): void {
         'district that carries it.',
       source: SOURCE_URLS.folds,
       into: POST_CENSUS_DISTRICT_FOLDS,
-      table: POST_CENSUS_FOLD_TABLE.folds,
+      table: POST_CENSUS_FOLD_TABLE,
     },
     totals: {
       pakistan: national,
@@ -285,9 +292,13 @@ function main(): void {
     },
     reconciliation: {
       method:
-        'District populations summed and compared against the totals PBS published for the ' +
-        'tier above them, which are published independently of the district rows. The build ' +
-        'fails on any difference.',
+        'District populations summed and compared against the total for the tier above them. ' +
+        'The build fails on any difference. The two tiers are anchored differently, and the ' +
+        '`source` on each row says which: province and national totals are typed from PBS ' +
+        'Census-2023 Table 1, i.e. from outside the PakPC2023 package; division totals come ' +
+        "from that package's own division table, so they are a cross-table consistency check " +
+        'on the district rows, not an independent source. PBS publishes no division tier in ' +
+        'Table 1.',
       national: {
         summed: national,
         published: PUBLISHED_NATIONAL_TOTAL,

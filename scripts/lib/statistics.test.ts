@@ -26,7 +26,6 @@ const geography = JSON.parse(
 interface DistrictStatisticsRecord {
   population: number;
   households: number;
-  population2017: number;
   division: string;
   province: string;
 }
@@ -62,8 +61,20 @@ describe('statistics coverage', () => {
     for (const [name, record] of entries) {
       expect(Number.isInteger(record.population), name).toBe(true);
       expect(record.population, name).toBeGreaterThan(0);
-      expect(record.population2017, name).toBeGreaterThan(0);
       expect(record.households, name).toBeGreaterThan(0);
+    }
+  });
+
+  it('carries 2023 figures only, per the single-vintage rule', () => {
+    // ADR-0001. A 2017 population in the bundle is an invitation to the cross-vintage
+    // comparison the rule exists to prevent, on a district set reorganised in between.
+    for (const [name, record] of entries) {
+      expect(Object.keys(record).sort(), name).toEqual([
+        'division',
+        'households',
+        'population',
+        'province',
+      ]);
     }
   });
 
