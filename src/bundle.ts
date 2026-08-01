@@ -16,6 +16,13 @@ export interface Provenance {
   readonly vintage: string;
   readonly sources: Readonly<Record<string, string>>;
   readonly counts: Readonly<Record<string, number>>;
+  /** How the ceasefire line was derived, so the page can say it rather than assert it (#7). */
+  readonly lineOfControl: {
+    readonly ways: number;
+    readonly lengthKm: number;
+    readonly alongDistricts: readonly string[];
+    readonly againstRelations: readonly { readonly id: number; readonly name: string }[];
+  };
 }
 
 export const geographyTopology = topology as unknown as Topology;

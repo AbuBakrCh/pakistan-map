@@ -1,6 +1,8 @@
+import { geoLength } from 'd3';
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
-import { readGeography } from './geography.ts';
+import { describeKind, linesFromArcs, readGeography, tierArcs } from './geography.ts';
+import { arcsOf, readLineOfControl } from './line-of-control.ts';
 
 /** A one-arc square, enough to make a topology the reader will accept as geometry. */
 const synthetic = (provinces: unknown[], divisions: unknown[] = []) =>
@@ -55,5 +57,68 @@ describe('readGeography', () => {
         synthetic([{ name: 'Punjab', kind: 'province' }], [{ name: 'Kalat', province: 'Balochistan' }]),
       ),
     ).toThrow(/Kalat.*Balochistan/);
+  });
+});
+
+describe('describeKind', () => {
+  it('says what a territory is, and why it carries no figures', () => {
+    const { status, coverage } = describeKind('territory');
+    expect(status).toMatch(/not constitutionally a province/);
+    expect(coverage).toMatch(/does not cover/);
+    // It names PBS only to say PBS publishes nothing here. AJK's population reaches us relayed
+    // through the AJK Bureau of Statistics and never direct, so a PBS-badged figure for it must
+    // not exist anywhere in the app — including in the line that explains its absence.
+    expect(coverage).toMatch(/PBS publishes no/);
+  });
+
+  it('leaves provinces and the capital to be described by their data, not by an absence', () => {
+    expect(describeKind('province').coverage).toBeNull();
+    expect(describeKind('capital').coverage).toBeNull();
+  });
+});
+
+describe('tierArcs and linesFromArcs', () => {
+  const topology = bundle as never as Parameters<typeof tierArcs>[0];
+
+  it('accounts for every arc of the province tier exactly once across the strata drawn', () => {
+    // This is what stops the dashed line being underlined by a solid one. Each arc of the
+    // outline belongs to exactly one stratum: ordinary border, territory border, or ceasefire
+    // line — and the three together are the whole outline, so nothing goes undrawn either.
+    const provinces = tierArcs(topology, 'provinces');
+    const kinds = new Map(
+      readGeography(topology).provinces.features.map((f) => [f.properties.name, f.properties.kind]),
+    );
+    const all = new Set([...provinces.values()].flatMap((arcs) => [...arcs]));
+    const territory = new Set(
+      [...provinces]
+        .filter(([name]) => kinds.get(name) === 'territory')
+        .flatMap(([, arcs]) => [...arcs]),
+    );
+    const line = arcsOf(
+      (bundle as unknown as { objects: { lineOfControl: unknown } }).objects.lineOfControl as never,
+    );
+
+    const ordinary = [...all].filter((arc) => !territory.has(arc) && !line.has(arc));
+    const territoryOnly = [...territory].filter((arc) => !line.has(arc));
+
+    expect(new Set([...ordinary, ...territoryOnly, ...line]).size).toBe(all.size);
+    expect(ordinary.filter((arc) => line.has(arc))).toEqual([]);
+    expect(territoryOnly.filter((arc) => line.has(arc))).toEqual([]);
+  });
+
+  it('rebuilds the same line work the topology holds', () => {
+    const line = readLineOfControl(topology);
+    const rebuilt = linesFromArcs(
+      topology,
+      arcsOf(
+        (bundle as unknown as { objects: { lineOfControl: unknown } }).objects.lineOfControl as never,
+      ),
+    );
+    // Same ground, arc by arc: one continuous chain against the arcs it was cut into.
+    expect(geoLength(rebuilt.geometry as never)).toBeCloseTo(geoLength(line.geometry as never), 9);
+  });
+
+  it('refuses a tier the bundle does not have', () => {
+    expect(() => tierArcs(topology, 'units')).toThrow(/units/);
   });
 });
