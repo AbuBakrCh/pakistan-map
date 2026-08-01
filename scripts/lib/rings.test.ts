@@ -1,4 +1,4 @@
-import { geoArea } from 'd3-geo';
+import { geoArea } from 'd3';
 import { describe, expect, it } from 'vitest';
 import {
   type OsmMember,

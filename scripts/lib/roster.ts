@@ -107,10 +107,11 @@ export const ROSTER: readonly Province[] = [
 export const ICT_PSEUDO_DIVISION = 'Islamabad';
 
 /**
- * OSM division spelling -> PBS spelling. Kept separate from `NAME_ALIASES` because the two
- * tiers genuinely disagree: Balochistan has both a Kalat *district* and a Kalat *division*, and
- * OSM spells the division "Qalat" while spelling the district "Kalat". One shared table would
- * have to pick a winner and would silently rename the other tier.
+ * OSM division spelling -> PBS spelling. Kept separate from `NAME_ALIASES` because the two tiers
+ * are different name spaces that happen to collide: Balochistan has both a Kalat *district* and
+ * a Kalat *division*, and OSM spells both "Qalat". Merging the tables would work today only by
+ * coincidence — the moment a division and a district sharing a name need different corrections,
+ * one table would have to pick a winner and silently rename the other tier.
  */
 export const DIVISION_ALIASES: Readonly<Record<string, string>> = {
   qalat: 'Kalat',
@@ -170,6 +171,31 @@ export const DROPPED_RELATIONS: Readonly<Record<number, string>> = {
   // Indian-administered Jammu & Kashmir, east of the Line of Control.
   10389554: 'Kupwara — Indian-administered Jammu & Kashmir, not Pakistan',
   10389555: 'Karnah — Indian-administered Jammu & Kashmir, not Pakistan',
+};
+
+/**
+ * Districts whose names are not unique across the Line of Control, pinned to the exact OSM
+ * relation the verification checked.
+ *
+ * Indian-administered Jammu & Kashmir carries a name-identical **Poonch** district and a
+ * **Haveli** at the same admin level. Name matching alone would let either silently merge into
+ * its AJK namesake if a refetch ever returned them — territory from the other side of a
+ * ceasefire line, absorbed into a Pakistani district with no error. Nothing in the current cache
+ * triggers this; the assertion exists so that a future Overpass result cannot.
+ *
+ * Ids verified in `docs/research/ajk-district-set.md`.
+ */
+export const PINNED_RELATION_IDS: Readonly<Record<string, number>> = {
+  Poonch: 8191016,
+  Haveli: 8199078,
+  Mirpur: 8181854,
+  Bhimber: 8183916,
+  Kotli: 8184277,
+  Bagh: 8192015,
+  Muzaffarabad: 8191414,
+  Neelum: 8191217,
+  Sudhnoti: 8198049,
+  'Hattian Bala': 8192278,
 };
 
 /**
@@ -254,9 +280,17 @@ export function provinceOf(district: string): string | null {
   return null;
 }
 
-/** Constitutional status, which drives territory styling — D12, D25. */
+/**
+ * Constitutional status, which drives territory styling — D12, D25.
+ *
+ * Throws rather than defaulting. A default of 'province' would stamp an unrecognised name as a
+ * province in the bundle, and CONTEXT.md is explicit that calling AJK or GB provinces is
+ * factually wrong — precisely the claim this app must not make by accident.
+ */
 export function kindOf(province: string): Province['kind'] {
-  return ROSTER.find((p) => p.name === province)?.kind ?? 'province';
+  const match = ROSTER.find((p) => p.name === province);
+  if (match === undefined) throw new Error(`${province} is not a province in the roster`);
+  return match.kind;
 }
 
 export const ROSTER_DISTRICT_COUNT = ROSTER.reduce((n, p) => n + p.districts.length, 0);

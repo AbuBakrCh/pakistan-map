@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { geoArea } from 'd3-geo';
+import { geoArea } from 'd3';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';

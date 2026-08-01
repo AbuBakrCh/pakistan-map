@@ -15,17 +15,17 @@
     "build:data:normalize": "tsx scripts/normalize-geometry.ts"
   },
   "dependencies": {
-    "@types/topojson-server": "^3.0.4",
-    "@types/topojson-simplify": "^3.0.3",
     "d3": "^7.9.0",
-    "topojson-client": "^3.1.0",
-    "topojson-server": "^3.0.1",
-    "topojson-simplify": "^3.0.3"
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
     "@types/node": "^22.13.1",
     "@types/topojson-client": "^3.1.5",
+    "@types/topojson-server": "^3.0.4",
+    "@types/topojson-simplify": "^3.0.3",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vite": "^6.0.11",

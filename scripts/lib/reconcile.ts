@@ -15,6 +15,7 @@ import {
   DIVISION_ALIASES,
   DROPPED_RELATIONS,
   POST_CENSUS_DISTRICT_FOLDS,
+  PINNED_RELATION_IDS,
   POST_CENSUS_DIVISION_FOLDS,
   RELATION_OVERRIDES,
   ROSTER,
@@ -63,7 +64,16 @@ export function classifyDistrict(relation: OsmRelation): Classification {
   if (override !== undefined) return { kind: 'unit', name: override };
 
   const direct = resolveRosterName(relation.name);
-  if (direct !== null) return { kind: 'unit', name: direct };
+  if (direct !== null) {
+    const pinned = PINNED_RELATION_IDS[direct];
+    if (pinned !== undefined && pinned !== relation.id) {
+      // A second relation answering to a pinned name is the across-the-LoC collision case.
+      // Refuse it by name and let it surface as unclassified rather than absorbing territory
+      // from the other side of a ceasefire line into a Pakistani district.
+      return { kind: 'unclassified' };
+    }
+    return { kind: 'unit', name: direct };
+  }
 
   return matchFold(POST_CENSUS_DISTRICT_FOLDS, relation.name) ?? { kind: 'unclassified' };
 }

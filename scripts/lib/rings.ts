@@ -20,9 +20,9 @@ export interface OsmMember {
   readonly geometry?: readonly { readonly lat: number; readonly lon: number }[];
 }
 
-/** GeoJSON winding is [lon, lat]; OSM gives lat/lon. */
+/** GeoJSON order is [lon, lat]; OSM gives lat/lon. */
 function toPositions(geometry: readonly { lat: number; lon: number }[]): Position[] {
-  return geometry.map((p) => [p.lon, p.lat] as const).map((p) => [p[0], p[1]] as Position);
+  return geometry.map((p): Position => [p.lon, p.lat]);
 }
 
 const key = (p: Position) => `${p[0]},${p[1]}`;

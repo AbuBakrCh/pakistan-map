@@ -285,6 +285,11 @@ function main(): void {
     })),
   } as never;
 
+  const districtGeometries = (): { properties: { province: string } }[] =>
+    (simplified.objects['districts'] as unknown as {
+      geometries: { properties: { province: string } }[];
+    }).geometries;
+
   // ---- 5. Provenance ------------------------------------------------------------------------
   (simplified as unknown as Record<string, unknown>)['provenance'] = {
     generated: new Date().toISOString(),
@@ -326,8 +331,7 @@ function main(): void {
   writeFileSync(OUT_FILE, `${JSON.stringify(simplified)}\n`);
 
   // ---- 6. Report ----------------------------------------------------------------------------
-  const districtCount = (simplified.objects['districts'] as { geometries: unknown[] }).geometries
-    .length;
+  const districtCount = districtGeometries().length;
   if (districtCount !== ROSTER_DISTRICT_COUNT) {
     fail(`bundle holds ${districtCount} districts, expected ${ROSTER_DISTRICT_COUNT}`);
   }
@@ -336,9 +340,8 @@ function main(): void {
   // would report what we expected rather than what we shipped, and agree with itself even if
   // the bundle were wrong.
   const emitted = new Map<string, number>();
-  for (const geometry of (simplified.objects['districts'] as { geometries: unknown[] })
-    .geometries) {
-    const province = (geometry as { properties: { province: string } }).properties.province;
+  for (const geometry of districtGeometries()) {
+    const province = geometry.properties.province;
     emitted.set(province, (emitted.get(province) ?? 0) + 1);
   }
 

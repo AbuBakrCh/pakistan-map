@@ -94,6 +94,17 @@ describe('classifyDistrict', () => {
     });
   });
 
+  it('refuses a name-identical district from across the Line of Control', () => {
+    // Indian-administered J&K has its own Poonch and Haveli at the same admin level. Matching
+    // on name would absorb territory from the other side of a ceasefire line into AJK.
+    expect(classifyDistrict(rel(8191016, 'Poonch District'))).toEqual({
+      kind: 'unit',
+      name: 'Poonch',
+    });
+    expect(classifyDistrict(rel(999_001, 'Poonch District'))).toEqual({ kind: 'unclassified' });
+    expect(classifyDistrict(rel(999_002, 'Haveli'))).toEqual({ kind: 'unclassified' });
+  });
+
   it('drops relations outside Pakistan', () => {
     expect(classifyDistrict(rel(10389554, 'Kupwara'))).toMatchObject({ kind: 'dropped' });
   });
