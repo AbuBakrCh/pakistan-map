@@ -84,6 +84,13 @@ const L1: Variant = {
     'Opponents of dividing Punjab at all, for whom the province’s size is its weight',
   ],
   universe: 'drawn',
+  // Not the language basis's `census · proxy`, which is right for the shading and wrong for this
+  // boundary. These three divisions come from a secretariat's documented remit, not from census
+  // analysis, and the variant's own rationale says so — a transcribed boundary wearing a `census`
+  // badge is the precise confusion the vocabulary exists to prevent. `documented`, not `official`:
+  // the secretariat is real, but the province is a proposal, and `official` would read as
+  // government recognition of the province rather than of the administrative unit.
+  badges: ['documented'],
   composition: {
     kind: 'transcribed',
     from: 'the secretariat’s own remit — the Multan, Bahawalpur and Dera Ghazi Khan divisions',

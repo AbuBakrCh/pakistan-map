@@ -164,8 +164,10 @@ describe('labelAlongLine', () => {
     // The stretch where this bites is the one that turns east: outward from the middle of the
     // country is north there, and north is Gilgit-Baltistan.
     // Everything east of the line is land here; only the west side is clear.
-    const clear = (candidate: { x: number }) => candidate.x < 200;
-    const placed = labelAlongLine([[[200, 300], [200, 100]]], { ...options, clear });
+    const placed = labelAlongLine([[[200, 300], [200, 100]]], {
+      ...options,
+      forms: [{ text: 'Line of Control', permits: () => true, prefers: (c) => c.x < 200 }],
+    });
     expect(placed?.x).toBeCloseTo(190, 5);
   });
 
@@ -173,9 +175,75 @@ describe('labelAlongLine', () => {
     // Only the northern third of this line has anywhere clear to put the name.
     const placed = labelAlongLine([[[200, 380], [200, 20]]], {
       ...options,
-      clear: (candidate) => candidate.y < 120,
+      forms: [{ text: 'Line of Control', permits: () => true, prefers: (c) => c.y < 120 }],
     });
     expect(placed?.y).toBeLessThan(120);
+  });
+
+  /*
+   * The concession ladder. Land is a compromise the name may make; another name is not — two
+   * names on top of each other leaves neither readable, and the map already refuses that for
+   * every tier name. So the order is: full name on clear paper, full name over land, short name
+   * on clear paper, short name over land, nothing.
+   */
+  it('gives up clear ground before it gives up the full name', () => {
+    // Nowhere on this line is off the land, but nothing is in the way of a name.
+    const placed = labelAlongLine([[[200, 380], [200, 20]]], {
+      ...options,
+      forms: [
+        { text: 'Line of Control', permits: () => true, prefers: () => false },
+        { text: 'LoC', permits: () => true },
+      ],
+    });
+    expect(placed?.text).toBe('Line of Control');
+  });
+
+  it('shortens the name rather than setting it over another name', () => {
+    // The full name collides everywhere; the short one fits. An abbreviation costs a reader a
+    // little, and a collision costs them both names.
+    const placed = labelAlongLine([[[200, 380], [200, 20]]], {
+      ...options,
+      forms: [
+        { text: 'Line of Control', permits: () => false },
+        { text: 'LoC', permits: () => true },
+      ],
+    });
+    expect(placed?.text).toBe('LoC');
+  });
+
+  it('draws no name at all rather than one over another name', () => {
+    // Not a fallback onto the middle: the legend keys the dash under every basis, so an unnamed
+    // line is still an explained one, and a name through a name is not.
+    const placed = labelAlongLine([[[200, 380], [200, 20]]], {
+      ...options,
+      forms: [
+        { text: 'Line of Control', permits: () => false },
+        { text: 'LoC', permits: () => false },
+      ],
+    });
+    expect(placed).toBeNull();
+  });
+
+  it('never returns a placement its own form refuses, however crowded the frame', () => {
+    // The property behind the three cases above, asserted rather than sampled: whatever the line
+    // and whatever is in the way, a returned placement satisfies the form that produced it.
+    const banned = { x0: 150, y0: 100, x1: 250, y1: 300 };
+    const permits = (c: { x: number; y: number }) =>
+      !(c.x > banned.x0 && c.x < banned.x1 && c.y > banned.y0 && c.y < banned.y1);
+    for (const line of [
+      [[200, 380] as const, [200, 20] as const],
+      [[100, 200] as const, [300, 200] as const],
+      [[300, 100] as const, [100, 300] as const],
+    ]) {
+      const placed = labelAlongLine([line], {
+        ...options,
+        forms: [
+          { text: 'Line of Control', permits },
+          { text: 'LoC', permits },
+        ],
+      });
+      if (placed !== null) expect(permits(placed), `${placed.text} at ${placed.x},${placed.y}`).toBe(true);
+    }
   });
 
   it('never sets the name upside down', () => {

@@ -288,7 +288,12 @@ Contiguity is **flagged, never blocked**.
   a line that looks solid and means the opposite. Width and dash are in screen px at every zoom.
   The name is set along whichever part of the line is on screen, on the side with no drawn land,
   and it **yields to** the tier names rather than displacing them — the territories are drawn
-  *and named*.
+  *and named*. Yielding is absolute and ordered: the full name on clear paper, then the full name
+  over land, then **`LoC`** on clear paper, then `LoC` over land, then no name at all. Sitting over
+  land is a compromise; sitting over another name is a defect, since it costs a reader both names,
+  and the dash is keyed in the legend under **every** basis — so an unnamed line is still an
+  explained one. At default zoom the northern names are dense enough that the abbreviation is what
+  gets set; from about 3× the full name returns.
 - **The Working Boundary is not the Line of Control.** Punjab's Sialkot–Jammu stretch is a
   different line, south of the ceasefire line's terminus on the Chenab; it is not drawn dashed,
   and the colophon says so. Falls out of the derivation rule rather than being special-cased.

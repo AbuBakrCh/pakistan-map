@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T17:57:57.885Z",
+    "generated": "2026-08-01T18:38:27.869Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -68,8 +68,7 @@
       "name": "South Punjab Secretariat",
       "tagline": "the version that partly exists",
       "badges": [
-        "census",
-        "proxy"
+        "documented"
       ],
       "rationale": "Punjab’s three southernmost divisions — Multan, Bahawalpur and Dera Ghazi Khan — leave the province as one unit. It is the closest any proposal in this app comes to already being true: a separate civil secretariat covering exactly these three divisions has been operational since 2020, without the constitutional amendment an actual province would require. The boundary here is transcribed from that secretariat’s remit, not derived from the census.",
       "status": "Partly implemented. The South Punjab Secretariat has been operational since 15 October 2020, covering exactly these three divisions, and has been kept running under successive governments. Creating a province from it needs a constitutional amendment, which has never passed.",

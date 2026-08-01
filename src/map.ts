@@ -72,8 +72,15 @@ const fillPaint = (fill: DistrictFill | undefined): string => {
 const strokePaint = (fill: DistrictFill | undefined): string | null =>
   fill?.kind === 'category' ? fill.colour : null;
 
-/** The ceasefire line's own label. Not a tier: one line, named along itself. */
+/**
+ * The ceasefire line's own label. Not a tier: one line, named along itself.
+ *
+ * Two forms, because in a crowded frame the choice is between shortening this name and drawing it
+ * through someone else's. The abbreviation is the one every map of Kashmir uses, and it is a
+ * concession made only when the full name has nowhere clear to go — never a first choice.
+ */
 const LOC_LABEL = 'Line of Control';
+const LOC_LABEL_SHORT = 'LoC';
 const LOC_TYPE = { size: 9.5, tracking: 1.6 };
 
 /**
@@ -278,16 +285,13 @@ export function renderBaselineMap(
         return screen === null ? [] : [transform.apply(screen) as [number, number]];
       }),
     );
-    return labelAlongLine(projected, {
-      ...LOC_LABEL_OPTIONS,
-      bounds: size,
-      awayFrom: transform.apply(interior) as [number, number],
-      clear: (candidate) => {
-        // Not over a name already on the map, and not over ground the map draws. The second is
-        // asked of the geography rather than of the DOM, and both are asked only until a
-        // candidate answers — in practice the first one does.
-        const box = footprint(candidate);
-        if (taken.some((other) => overlaps(box, other))) return false;
+    // Never over another name; preferably not over drawn land either. Ground is asked of the
+    // geography rather than of the DOM, and both are asked only until a candidate answers.
+    const form = (text: string) => ({
+      text,
+      permits: (candidate: PlacedLineLabel) =>
+        !taken.some((other) => overlaps(footprint(candidate, text), other)),
+      prefers: (candidate: PlacedLineLabel) => {
         const ground = project.invert?.(transform.invert([candidate.x, candidate.y]));
         return (
           ground === undefined ||
@@ -296,21 +300,26 @@ export function renderBaselineMap(
         );
       },
     });
+
+    return labelAlongLine(projected, {
+      ...LOC_LABEL_OPTIONS,
+      bounds: size,
+      awayFrom: transform.apply(interior) as [number, number],
+      forms: [form(LOC_LABEL), form(LOC_LABEL_SHORT)],
+    });
   }
 
   /**
    * The rectangle a name on its side actually occupies. A label measured lying flat and drawn
    * rotated reserves the wrong ground, which is how a division name comes to sit across it.
    */
-  function footprint(placed: PlacedLineLabel): Rect {
+  function footprint(placed: PlacedLineLabel, text: string): Rect {
     const width =
       ruler === null
-        ? LOC_LABEL.length * LOC_TYPE.size * 0.62
+        ? text.length * LOC_TYPE.size * 0.62
         : (() => {
             ruler.font = `${LOC_TYPE.size}px ${SERIF}`;
-            return (
-              ruler.measureText(LOC_LABEL.toUpperCase()).width + LOC_TYPE.tracking * LOC_LABEL.length
-            );
+            return ruler.measureText(text.toUpperCase()).width + LOC_TYPE.tracking * text.length;
           })();
     const radians = (placed.angle * Math.PI) / 180;
     const [cos, sin] = [Math.abs(Math.cos(radians)), Math.abs(Math.sin(radians))];
@@ -373,7 +382,7 @@ export function renderBaselineMap(
       .attr('x', (label) => label.x)
       .attr('y', (label) => label.y)
       .attr('transform', (label) => `rotate(${label.angle} ${label.x} ${label.y})`)
-      .text(LOC_LABEL);
+      .text((label) => label.text);
   }
 
   /**

@@ -104,18 +104,39 @@ export interface LineLabelOptions {
   /** Half the chord the angle is taken from. Larger follows the run of the line, not a kink. */
   readonly reach: number;
   /**
-   * Whether the name may be set here — in practice, whether it lands off the drawn land and
-   * clear of the names already on the map. Optional; without it the side is chosen by
-   * `awayFrom` alone.
+   * The forms the name may take, longest first — in practice the full name and an abbreviation.
+   * Each is tried everywhere along the line before the next is considered, so the name shortens
+   * only when the full one has nowhere left to go.
+   */
+  readonly forms?: readonly LineLabelForm[];
+}
+
+/**
+ * One way of setting the name, and the two questions asked of every position it could take.
+ *
+ * The two are deliberately not one predicate. Sitting over drawn land is a compromise; sitting
+ * over another name is a defect — it makes two names unreadable instead of one, and `layoutLabels`
+ * refuses it for every other name on this map. Bundled together, the only way to place a name at
+ * all in a crowded frame is to give up both at once, which is how "LINE OF CONTROL" came to be
+ * drawn through "GILGIT-BALTISTAN" and to truncate "Malakand" to "Mal".
+ */
+export interface LineLabelForm {
+  readonly text: string;
+  /**
+   * Whether the name may be set here at all — in practice, whether it is clear of every name
+   * already on the map. Inviolable: no fallback overrides it, and a form with nowhere left that
+   * satisfies it gives way to the next, or the name is not drawn.
+   */
+  readonly permits: (candidate: PlacedLineLabel) => boolean;
+  /**
+   * Whether this is also somewhere the name *wants* to be — in practice, off the drawn land.
+   * Tried first everywhere, then given up, because a name over land still reads.
    *
    * `awayFrom` gets the side right along most of this line and wrong where it matters. The
    * ceasefire line turns east twice, and on those stretches "away from the middle of Pakistan"
-   * is north — which is Gilgit-Baltistan, not India. The name would then sit over a territory it
-   * does not name, which is the one thing `layoutLabels` refuses to do for every other name on
-   * the map. So both sides and a few positions along the run are tried in turn, and the first
-   * one the caller accepts wins.
+   * is north — which is Gilgit-Baltistan, not India.
    */
-  readonly clear?: (candidate: PlacedLineLabel) => boolean;
+  readonly prefers?: (candidate: PlacedLineLabel) => boolean;
 }
 
 export interface PlacedLineLabel {
@@ -123,9 +144,14 @@ export interface PlacedLineLabel {
   readonly y: number;
   /** Degrees, for an SVG rotate. Never outside ±90, so the name is never upside down. */
   readonly angle: number;
+  /** Which form was placed. The caller draws this, not the name it asked for. */
+  readonly text: string;
 }
 
 type Point = readonly [number, number];
+
+/** No name and nothing to avoid: the geometry alone decides, which is all a test usually wants. */
+const ANONYMOUS: readonly LineLabelForm[] = [{ text: '', permits: () => true }];
 
 const distance = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
@@ -137,12 +163,14 @@ const distance = (a: Point, b: Point): number => Math.hypot(b[0] - a[0], b[1] - 
  * line has gone. That is what keeps the labelling alive when the reader zooms into one end of
  * it, where a name pinned to the line's true midpoint would simply be off screen.
  *
- * Returns `null` rather than placing a label on a stub. Same rule as `layoutLabels`: a name is
- * drawn where it describes something, or it is not drawn.
+ * Returns `null` rather than placing a label on a stub, or on a name. Same rule as `layoutLabels`:
+ * a name is drawn where it describes something and where it can be read, or it is not drawn. The
+ * dash is keyed in the legend under every basis, so a frame too crowded to name the line still
+ * explains it.
  */
 export function labelAlongLine(
   lines: readonly (readonly Point[])[],
-  { bounds, margin, offset, minRun, reach, awayFrom, clear }: LineLabelOptions,
+  { bounds, margin, offset, minRun, reach, awayFrom, forms = ANONYMOUS }: LineLabelOptions,
 ): PlacedLineLabel | null {
   const inside = (point: Point): boolean =>
     point[0] >= margin &&
@@ -196,7 +224,7 @@ export function labelAlongLine(
   };
 
   /** The name set at `along` px into the run, offset to whichever side `outward` picks. */
-  const place = (along: number, outward: boolean): PlacedLineLabel => {
+  const place = (along: number, outward: boolean, text: string): PlacedLineLabel => {
     const anchor = at(along);
     const from = at(Math.max(0, along - reach));
     const to = at(Math.min(bestLength, along + reach));
@@ -216,21 +244,40 @@ export function labelAlongLine(
       x: anchor[0] + candidate[0] * offset * sign,
       y: anchor[1] + candidate[1] * offset * sign,
       angle: (Math.atan2(run[1], run[0]) * 180) / Math.PI,
+      text,
     };
   };
 
   // Nearest the middle first, then either way along the run: a name at the middle of what is on
   // screen is the one a reader finds without hunting for it.
-  const fractions = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74];
-  for (const outward of [true, false]) {
-    for (const fraction of fractions) {
-      const candidate = place(bestLength * fraction, outward);
-      if (!inside([candidate.x, candidate.y])) continue;
-      if (clear === undefined || clear(candidate)) return candidate;
+  //
+  // Walked finely, because the step between candidates is the real cost of refusing to collide.
+  // Now that a crowded frame shortens the name rather than overprinting one, a coarse walk spends
+  // the full name on the first gap it fails to find — the label has the whole length of the line
+  // available and should be made to use it before it concedes anything.
+  const fractions = [0.5];
+  for (let step = 1; step <= 9; step += 1) {
+    fractions.push(0.5 + step * 0.045, 0.5 - step * 0.045);
+  }
+
+  // Each form is exhausted before the next is tried, and within a form the preferred ground is
+  // exhausted before it is given up. So the order of concessions is: the full name on clear paper,
+  // the full name over land, the short name on clear paper, the short name over land — and then
+  // nothing. `permits` is never given up at any step, which is the whole point: a name that
+  // cannot be set clear of the other names is not set at all.
+  for (const form of forms) {
+    for (const insist of [true, false]) {
+      for (const outward of [true, false]) {
+        for (const fraction of fractions) {
+          const candidate = place(bestLength * fraction, outward, form.text);
+          if (!inside([candidate.x, candidate.y])) continue;
+          if (!form.permits(candidate)) continue;
+          if (insist && form.prefers !== undefined && !form.prefers(candidate)) continue;
+          return candidate;
+        }
+      }
     }
   }
 
-  // Nowhere clear: fall back to the middle, on the side away from the country. Better a name
-  // over land than a boundary drawn differently from every other one and left unexplained.
-  return place(bestLength / 2, true);
+  return null;
 }
