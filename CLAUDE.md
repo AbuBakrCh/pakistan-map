@@ -154,6 +154,39 @@ Runtime makes zero network calls.
 > runtime fetching was rejected: upstream OSM edits would silently mutate boundaries between
 > page loads.
 
+### Test seam
+
+One command, no arguments, no fixtures:
+
+```
+npm test          # vitest run — the whole suite, once
+npm run typecheck # tsc --noEmit
+```
+
+The suite is a **single seam over the committed bundle** (#12). It runs against
+`data/bundle/` — the exact artifact that ships — so there is no network, no Overpass, no mocks
+and no fixtures, and it is fast and deterministic. Everything that can go seriously wrong with
+this app is a property of that artifact: if a unit's population is wrong, we have published a
+false figure about Pakistani provinces.
+
+What it holds:
+
+| Property | Where |
+|---|---|
+| Referential integrity — every district under a real division and a real province, the two agreeing; no empty division; every fold landing on a drawn district | `bundle.test.ts` |
+| Vintage rule — every one of the 136 census districts present exactly once, none null or zero, 2023 fields only, AJK/GB listed as absent rather than as zero | `statistics.test.ts` |
+| Statistical integrity — districts summing to all 31 division totals, to the 5 province totals and to the 241,499,431 national total, against figures typed from PBS Table 1 rather than read back off the artifact | `statistics.test.ts` |
+| No network, and one entry point | `seam.test.ts` |
+
+Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
+offline property rather than assuming it: no module the suite loads may name a network
+primitive, nothing may import `fetch-osm.ts`, and every input must be committed — so a fresh
+clone runs the suite with the machine unplugged.
+
+CI (`.github/workflows/ci.yml`) runs exactly those two commands on every push and pull request,
+on a pinned Node 22. It has nothing else to do: the artifacts are baked and committed, so there
+is no build to guard.
+
 ---
 
 ## Interaction

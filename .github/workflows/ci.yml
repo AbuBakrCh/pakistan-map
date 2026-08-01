@@ -1,0 +1,36 @@
+# The bundle test seam, run on every change.
+#
+# There is no build step to guard here — the data artifacts are baked and committed (D19), so
+# what CI checks is that the committed bundle still satisfies its invariants and that the code
+# around it type-checks. The suite reads only committed files, so this job needs no secrets, no
+# network beyond the checkout and the registry, and no Overpass.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned rather than floating. The repo uses `with { type: 'json' }` import attributes and
+      # Vite 6, which need Node 22 or newer; a floating `latest` would make a green build
+      # unreproducible, which is the same objection that put the data artifacts in git.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
