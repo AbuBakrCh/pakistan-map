@@ -3,10 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Pakistan Map</title>
+    <title>Pakistan — provinces and divisions</title>
+    <meta
+      name="description"
+      content="The administrative map of Pakistan as it stands: provinces, territories and divisions, pinned to the 2023 census."
+    />
   </head>
   <body>
-    <main id="app"></main>
+    <main id="app">
+      <header class="masthead">
+        <h1>Pakistan</h1>
+        <p class="dek">Provinces, territories and divisions, as they stand</p>
+      </header>
+
+      <figure class="frame">
+        <div id="map" class="map-well"></div>
+        <figcaption class="legend" id="legend"></figcaption>
+      </figure>
+
+      <footer class="colophon" id="colophon"></footer>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
