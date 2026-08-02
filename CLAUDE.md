@@ -2,15 +2,16 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, scenario content in draft (15 of 17 variants migrated into the typed
-module — the whole Language basis, L1 to L7, the whole Administrative one, A1 to A5, and H1, H3
-and H4 on the Historical; only H2 and D1 are left. L2 and
+**Status:** design agreed, scenario content in draft (16 of 17 variants migrated into the typed
+module — the whole Language basis, L1 to L7, the whole Administrative one, A1 to A5, and the whole
+Historical one, H1 to H4; only D1 is left. L2 and
 L3 are the two wider readings of the Seraiki claim, and L3 is the one *transcribed* proposal whose
 province crosses an existing provincial boundary; L6 and L7 are the first two variants this build
 **draws itself**, from census plurality rather than from anybody's document, and A1 to A4 are the
 four the rule engine draws from population and distance — six derived boundaries in all, every one
 of them re-derived by the suite. A5 is the one variant that redraws nothing: it promotes
-Gilgit-Baltistan and Azad Kashmir to provinces and moves not a single district), pipeline and
+Gilgit-Baltistan and Azad Kashmir to provinces and moves not a single district, and H2 is the
+oldest map in the app and the only one carrying **no population figure at all**), pipeline and
 bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
@@ -364,6 +365,55 @@ because drawing them identically and saying nothing would report the weaker clai
 Both still carry no population, since PBS published none for either (D25): calling a territory a
 province does not conjure a figure, and both are set aside from the spread by name.
 
+**H2 is the map with no figures on it, and that is what lets it draw 1947 at all** (#30). It is the
+oldest demarcation in the app — the four provinces with the eleven acceding princely states this
+map can draw, from Bahawalpur and Khairpur through Kalat, Las Bela, Kharan and Makran to Swat, Dir,
+Chitral, Hunza and Nagar — and the **only variant in the app that publishes no population figure
+anywhere**: not on a unit, not as a total, not as a spread. 2023 figures counted people inside
+districts that did not exist in 1947, in states abolished sixty-eight years before the count, so
+attaching them would describe a Pakistan nobody has ever counted. The variant withholds them in its
+own words, `scorecard.ts` voids the spread on the `variant` branch rather than the census one, and
+the build now gives **every unit of a withholding variant a `null` population** — the scorecard's
+voided total is not enough on its own, because a unit's own line is a second place a figure appears.
+The card tells the two absences apart in words as it does everywhere else: Punjab's figure is being
+*declined* and Azad Jammu & Kashmir's *does not exist*, and wording them the same would say the
+census reaches ground it does not.
+
+**That absence is also what admits Hunza and Nagar, and it is the second narrowing of open item
+2b.** Both were states in their own right and both are Gilgit-Baltistan districts today — two of
+ten, so neither is a whole territory under its own name and A5's `promotedTerritoryOf` correctly
+does not reach them. What admits them is `withoutModernFigures` in `scenarios.ts`, on the same
+shape of argument #28 used: the *stated* reason `TERRITORY_CLAIM_POLICY` is `forbid` is arithmetic —
+a unit holding *some* uncounted districts has a population short by an unknowable amount and looks
+exactly like a unit whose population is right — and that reason cannot reach a variant with no
+population figures to be short. **The width is stated rather than discovered:** this is the wider of
+the two carve-outs, admitting *any* shape of territory claim on a withholding variant rather than
+one named whole territory. What keeps it honest is that withholding is itself a loud declaration
+with a reason printed where the figures would be, and that the reason is checked — a variant may not
+buy the exception with a blank field. `TERRITORY_CLAIM_POLICY` is untouched at **`forbid`**, and 2b
+is still open for the case it is actually about: a variant that carries figures and reaches in.
+
+**Three things H2 says out loud rather than tidying away.** Its **Balochistan is the first genuinely
+non-contiguous unit in the shipped set** — with Kalat, Las Bela, Kharan and Makran drawn around it,
+**Awaran** touches no other district of the province it is left in. Flagged and drawn (D7), named on
+the card, and the footnote says the stranding is this map's approximation of Kalat rather than the
+1947 arrangement's. **Gwadar is drawn inside Makran and for part of the period was Omani** — the town
+and its coastal strip were an exclave of Oman until 8 September 1958, after this map ends, and the
+district cannot be split without inventing the boundary. And the **tribal agencies are drawn inside
+North-West Frontier Province**, which they were not: they were federally administered throughout, and
+separating them is H3's subject rather than this one's. Islamabad sits inside Punjab here for the
+same class of reason — the capital territory was carved out of Rawalpindi district in 1960 — which is
+the call H1 already made.
+
+**Its districts-moved figure is 59 and decomposes into four things**, because the bare number reads
+as a redraw of a third of the country: 22 districts drawn as princely states, 28 as North-West
+Frontier Province (Khyber Pakhtunkhwa under the name it carried until 2010), 8 left in the Gilgit
+Agency once Hunza and Nagar are drawn out of it, and Islamabad. Only the first group is ground held
+by something other than a province; the rest is this map using the names of 1947, which the "moved"
+rule counts because it decides what carries a unit forward on the unit's **name**. Azad Jammu &
+Kashmir keeps its name and moves nothing. The four figures are on the card and the suite checks them
+against the partition rather than against themselves.
+
 **The mother-tongue rule engine draws the two Language variants nobody published** (#26).
 `scripts/lib/mother-tongue-partition.ts` assigns each district to the region of its dominant
 mother tongue in Table 11, then splits each language into the **connected groups its districts
@@ -443,6 +493,11 @@ What it holds:
 | The Administrative basis (#28) — all four rule-drawn maps **re-run** from the committed census, the committed graph and the committed geometry and compared unit by unit against what shipped, the card's rule statement held to be the engine's own words rather than a paraphrase that can drift from the arithmetic; the count stated as a *finding* where it is one and as an instruction where it is not; A4's 300 km re-measured district by district and the 635 km its card quotes for Gwadar–Quetta checked against the geometry it is quoted from. And the trade-off asserted rather than described: **zero** non-contiguous units under every rule, because contiguity is the method, with the spread moving from 2.3:1 to 65.3:1 across the four — a ceiling more even than a count, and fourteen units less even than twelve | `bundle.test.ts` |
 | A5, the variant that redraws nothing — nought districts moved and the *only* variant of which that is true, every unit exactly one of today's first-level entities holding exactly its districts; the two territories `proposed` and still carrying no population, set aside by name rather than voided, the spread over the five units the census reaches; the two halves said to be unequally sourced, naming the 2020 announcement, the assembly resolution and the 1974 Act; India's rejection first on the opposition line and not alone on it; and the boundary `transcribed` and badged `documented`, since crediting a government's announcement to this build's arithmetic is what a `derived` badge would do | `bundle.test.ts` |
 | A promotion is not a claim (#28, open item 2b) — a whole territory under its own name admitted with `TERRITORY_CLAIM_POLICY` still `forbid`, and each of the three conditions refused by name where it fails: nine districts of ten, ten plus a counted district, and the whole ten renamed. Held over the artifact as well, where the carve-out is asserted to fire for exactly A5's two units — an exclusion that never excludes anything passes a test perfectly | `scenarios.test.ts`, `bundle.test.ts` |
+| A variant with no figures has nothing to be short of (#30, open item 2b) — the second narrowing, held on the **pair** that is its whole content: the same units on a variant that withholds and on one that does not, admitted and then refused by name, so an exception written to fire on anything would fail. Refused too where the withholding is asserted and not explained, since the reason is what the card prints where the figures would be; `forbid` still `forbid` and `allow` still a different setting. And over the artifact, asserted to admit **exactly H2's Hunza and Nagar** and nothing else in the shipped set | `scenarios.test.ts`, `bundle.test.ts` |
+| H2, the map with no figures on it (#30) — the eleven drawable princely states named one by one rather than counted, and the partition still complete over all 156; Amb and Phulra named as omitted *with the reason*; **no population anywhere** — not a unit, not a total, not a spread — with the census-independent lines shown to survive it; voided by the variant's own judgement rather than by a census gap, the four uncounted units still set aside by name; its own vintage, since its basis declares a rule for finding a date and not a date; each state's accession shown on its own unit and the instruments cited; both district counts on the five states a post-census fold splits, each fold named; unadvocated and opposed anyway, with Kalat's own disputed accession on the opposition line; and the collision with H4 wired both ways | `bundle.test.ts` |
+| The 59 districts H2 calls moved, decomposed (#30) — 22 as princely states, 28 as North-West Frontier Province, 8 in the Gilgit Agency and Islamabad, each checked against the partition rather than against the figure; AJK absent from the origins, since it keeps its own name and moves nothing. The card carries all four numbers, because 59 read alone is a redraw of a third of the country and what it mostly records is this map using the names of 1947 | `bundle.test.ts` |
+| The first non-contiguous unit the shipped set actually has (#30) — H2's **Balochistan**, two pieces, **Awaran** named as the stranded one, flagged and drawn with no error path (D7); and asserted to be the *only* one in the whole set, so the flag is not decoration on the other 165 outlines | `bundle.test.ts` |
+| A withheld figure and an absent one, worded apart on one card (#30) — H2's Punjab has a 2023 population and declines to print it; its Azad Jammu & Kashmir has none to print. Both carry `null`, so a card reading only that field would say the census does not reach Punjab — which is why the census-coverage sentence is asked *first* and the variant's own withholding second | `card.test.ts` |
 | What the mother-tongue rule does at its own seam — the cases the real map cannot show: a language dominant in two unconnected places, split and named apart rather than drawn as one province in two pieces; a district the census does not reach **refused** and a district it reaches without a dominant tongue returned **unassigned**, the two absences answered differently; the same regions from a shuffled scope, which is the determinism claim; and `soleRegionOf` refusing to pick when a claim stated as one province comes out as two | `mother-tongue-partition.test.ts` |
 | The three readings of the Seraiki claim — L1 ⊂ L2 ⊂ L3, held as containment rather than as three district lists, so a reading that quietly dropped a district from the middle one fails; the two each adds named (Mianwali and Bhakkar, then Dera Ismail Khan and Tank); and the three claim-against-drawing counts, 13-for-11, 15-for-13 and 18-for-15. **L3 is the only proposal that crosses a provincial boundary** — *crossing* meaning part of one province and part of another, which is why merging five whole ones (H1) is not it — and it holds the Waziristans out by name: both post-census halves fold onto the one South Waziristan the map draws, that district is drawn, and Khyber Pakhtunkhwa keeps it | `bundle.test.ts` |
 | Unit outlines — every unit exactly the union of the districts it claims: its arcs are the ones its districts do not share, its area theirs to floating point, every ring closed; the outlines cut against the geometry that ships beside them rather than some other build; a unit of two districts that touch nowhere drawing as several pieces without error | `bundle.test.ts` |
@@ -463,8 +518,8 @@ What it holds:
 | The simplification threshold — the fraction is of *points* and counted across every arc, the weights sorted however they arrive, both ends of the range meaning what they say, and unweighted ring endpoints ignored rather than counted as zero. Shared by both geometry builds instead of copied into each, which is what makes it reachable from here at all | `scripts/lib/simplify.test.ts` |
 | City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat **qualified** (`Lahore Division` beside `Lahore`) rather than dropped — the other 31 left unqualified, the dot winning the frame too tight for both, and both names plus Mardan returning at 3× | `src/lib/labels.test.ts` |
 | **The 390px bar** (#34), held over a second viewport rather than a second assertion: every province and *both territories* named — **Gilgit-Baltistan included**, which is what this ticket exists for, since the layout dropped it and a territory drawn but anonymous is the one failure the politically sensitive section is written to prevent; `GB` set only because the ground is too small for the name, checked against the same layout at 1200px still setting it in full, so the abbreviation is a fit and not a rename; the expansion present in the table the colophon prints from, so a short form added without a gloss fails here rather than appearing unexplained; no two names overlapping at the size where they least fit; and which divisions and which seats give way — **named, not counted**, Peshawar among them, whose division name goes too, so at this size the word is nowhere on the map and only the dot marks the place | `src/lib/labels.test.ts` |
-| Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The fifteen this build cannot name — H3's *Northern Areas*, L7's two mother-tongue pockets and A1 to A3's eleven rule-drawn units (#28) — are listed one by one and explained rather than counted, and **every one shown to come back as soon as there is room**, which is what makes the gap a matter of pixels rather than of policy | `src/lib/labels.test.ts` |
-| Territories rank first inside the unit tier (#28) — asked at the seam where the rule is decided rather than of the picture it produces, and of **every variant**: every territory unit outranks every unit that is not one, and still ranks inside its own tier rather than over the map. Keyed on the kind the bundle records, so H3's renamed *Northern Areas* is caught and A5's two **promotions** are correctly not — asserted, not left to be inferred from an empty list. And the outcome held beside the rule: **no territory anonymous under any variant**, with H3's one exception shown to be a name running off the frame edge rather than a name outranked, since no priority reaches that and a coined short form is what the table refuses | `src/lib/labels.test.ts` |
+| Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The nineteen this build cannot name — H3's *Northern Areas*, L7's two mother-tongue pockets, A1 to A3's eleven rule-drawn units (#28) and H2's four (#30) — are listed one by one and explained rather than counted, and **every one shown to come back as soon as there is room**, which is what makes the gap a matter of pixels rather than of policy | `src/lib/labels.test.ts` |
+| Territories rank first inside the unit tier (#28) — asked at the seam where the rule is decided rather than of the picture it produces, and of **every variant**: every territory unit outranks every unit that is not one, and still ranks inside its own tier rather than over the map. Keyed on the kind the bundle records, so H3's renamed *Northern Areas* is caught and A5's two **promotions** are correctly not — asserted, not left to be inferred from an empty list. And the outcome held beside the rule: **no territory anonymous under any variant**, with the two exceptions — H3's *Northern Areas* and H2's *Gilgit Agency and Baltistan*, the longest unit name in the app — each shown to be a name running off the frame edge rather than a name outranked, since no priority reaches that and a coined short form is what the table refuses. The two failures are told apart by assertion rather than in prose | `src/lib/labels.test.ts` |
 | District names (#34) — every drawn district named exactly once and each anchor inside its own district; ranked **below every division**, checked against the largest district and the smallest division rather than on average, since Chagai is bigger than several divisions; and offered only past a zoom threshold that is itself past the one the district *lines* come in at | `src/lib/labels.test.ts` |
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
@@ -473,14 +528,14 @@ What it holds:
 | Deep links — every selection this build can *reach* round-tripping through its own hash, the baseline's URL among them; a basis named alone entering its first variant and saying the URL was corrected; an unknown variant and an unshadeable basis both answered with the country rather than with the nearest proposal — `#/historical/h1`, `h3` and `h4` named one by one, since those are complete drawable variants whose basis has no fill yet — as, now, are `#/administrative/a1` to `a5` and are exactly the URLs a reader may already have been sent; a hash whose two halves disagree settled by the variant; case, whitespace and stray slashes read as one link; and garbage — a lone `%`, four segments, 4,096 characters — answered without an exception | `src/lib/deep-link.test.ts` |
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
 | The scorecard — every figure recomputed from the committed census and the committed partition rather than read back, naming the unit whose numbers moved; each unit's population equal to its own districts' rows; the census join stamped, so a scorecard summed from a rebuilt census fails rather than adding up to the wrong vintage. Anchored outside our own derivation on the province totals typed from PBS Table 1 — Sindh, KP and Balochistan to the person, and South Punjab plus the Punjab it leaves behind equal to Punjab; the twenty uncounted districts set aside by name against `withoutCensusData`; a spread or a reason for having none, never both; contiguity absent from the block, because #16 answers it. Two states the shipped set can now show for itself: **H1** puts every census district in one unit, so there is one counted unit, its population *is* the national total, and the ratio is absent rather than 1; **H3** renames two first-level units and so counts 45 districts moved where only 7 change hands, with the footnote that says which seven asserted beside the figure | `bundle.test.ts` |
-| What a *voided* scorecard looks like — the states the shipped set cannot show, on five districts: a unit reaching into ground the census does not cover, a variant withholding its own figures, one counted unit and no ratio to give, nothing counted at all. And the "moved" rule against the two readings it refuses — a shrinking province keeping its districts, a territory promoted keeping its ground | `scorecard.test.ts` |
+| What a *voided* scorecard looks like — the states the shipped set cannot show, on five districts: a unit reaching into ground the census does not cover, one counted unit and no ratio to give, nothing counted at all. And the "moved" rule against the two readings it refuses — a shrinking province keeping its districts, a territory promoted keeping its ground. A variant withholding its own figures is no longer among them: H2 (#30) is that state on the real map, and is asserted over the artifact | `scorecard.test.ts`, `bundle.test.ts` |
 | The scorecard on the card — five figures in a fixed order; census populations in full and never rounded to a headline; the total qualified by which units it is over and which are outside it; a missing ratio said rather than printed as 1; the stranded districts of a broken unit named; and population voided in the words of whatever is missing it — a variant's own reason and a census gap worded apart | `card.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | The vintage through the bake — each variant's own date compared against `VARIANTS` rather than read back off the artifact, naming the variant and both strings where they differ; and every Historical variant dated by itself, named rather than counted, since its basis declares a rule for finding a date and not a date | `scripts/lib/bundle.test.ts` |
 | Provenance (#21) — every basis and every variant carrying a badge, a source **and a vintage**, held over `BASES` and `VARIANTS` where a content diff is actually made rather than only over the artifact; badges from the closed vocabulary at both tiers, naming the basis or variant *and* the word; both the **Advocated by** and the **Opposed by** line, with *unadvocated* held as the stated state it is; the one vintage (D24) anchored against the string all five committed artifacts stamp, and a `census` badge at any other vintage failing by name; and a boundary this build **derived** refused unless it says so — in both directions, since an unbadged derived line passes our arithmetic off as somebody's proposal and a `derived` badge over a transcribed one credits their document to us | `provenance.test.ts` |
 | The About panel (#21) — every source row and every basis carrying all three, none blank and each named; a boundary dated by **OpenStreetMap's own edit date** and a figure by the census, and neither by the date the build ran; every drawn surface reached, named rather than counted, so a row lost to a renamed bundle key is a failure and not a silence; the discrepancies present **with their figures** — 1,041,342 people, 6,374 households, the flush-toilet share and the 48,010-household denominator — and the geometry's own disagreements with PBS quoted whole rather than summarised; what the panel leaves off said on the panel; and a date set by hand rather than by the browser's locale, for the reason `groupDigits` exists | `src/lib/about.test.ts` |
-| The export band (#32) — the six things D22 requires, held one at a time on every variant rather than counted: the scenario name, *Proposed — not official* in those words, the badge with its gloss, the basis, a vintage, the sources and the licence line. The baseline's own band, which names the current map and never calls it a proposal, keys the three tiers it actually draws, and does not spend the accent on a map with nothing proposed on it; the key derived from the same two functions the screen's is, with the six nowhere-dominant categories left off by name and the ceasefire line keyed under every basis; the accent reserved for `proposed` and the two absences painted apart; and a layout whose height is a result — wrapping rather than running off a 390px band, growing taller as it narrows, losing no row it was given, and setting the standing line above the key and the small print. Above all **the date this build would otherwise have got wrong**: H1, H3 and H4 inherit a basis whose "vintage" is a deferral, and the band is held to printing the proposal's own source instead of quoting it — asserted per variant, since a plausible date in the right place is a silent failure | `src/lib/export-band.test.ts` |
+| The export band (#32) — the six things D22 requires, held one at a time on every variant rather than counted: the scenario name, *Proposed — not official* in those words, the badge with its gloss, the basis, a vintage, the sources and the licence line. The baseline's own band, which names the current map and never calls it a proposal, keys the three tiers it actually draws, and does not spend the accent on a map with nothing proposed on it; the key derived from the same two functions the screen's is, with the six nowhere-dominant categories left off by name and the ceasefire line keyed under every basis; the accent reserved for `proposed` and the two absences painted apart; and a layout whose height is a result — wrapping rather than running off a 390px band, growing taller as it narrows, losing no row it was given, and setting the standing line above the key and the small print. Above all **the date this build would otherwise have got wrong**: H1 to H4 inherit a basis whose "vintage" is a deferral, and the band is held to printing each proposal's own date instead of quoting it — asserted per variant, since a plausible date in the right place is a silent failure. H2's is a period rather than a day, because its accessions and its abolitions are both spread over years | `src/lib/export-band.test.ts` |
 | The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
 | The rule engine — a rule partitioning the real 136 exactly once, every unit contiguous against the committed graph, every unit's people its own districts' census rows and the whole partition equal to Table 1's national figure; the same rule drawing a byte-identical map twice and again from a shuffled scope and every map reversed, which is the determinism claim; a ceiling holding on every unit and never in fewer units than the arithmetic floor; a distance limit re-measured from the committed geometry; the output validating as a variant, both universes, with `TERRITORY_CLAIM_POLICY` still `forbid`. And what it refuses, each naming the district — the twenty AJK and GB districts the census cannot see, Lahore where a ceiling is below a district that cannot be split, and a district no unit could grow into | `partitioner.test.ts` |
 | The bottom sheet's velocity (#33) — measured over the **end** of the drag and not averaged over it, which is the whole reason the flick rule is reachable at all: the gesture it is written for — dragged far down, flicked back up — has a net displacement near zero, so an average reports no gesture and `settle` leaves the sheet where it started. Never a division by zero from a drag with one sample or no elapsed time, since an infinity reads as a flick and would move the sheet on a gesture nobody made; and a drag whose samples arrive further apart than the window measured rather than reported as still | `src/lib/sheet.test.ts` |
@@ -1113,8 +1168,8 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   variant switching functional at 390px.** Pakistan's internet is overwhelmingly mobile-first, so
   this is where most of the audience meets the app. Panel becomes a bottom sheet; hover becomes
   tap; `Space` becomes a button. Where the bar is **not** met it is met by name and not by silence:
-  the fifteen unit labels A1 to A3, H3 and L7 cannot set at this size are listed one by one in the
-  suite, with what a reader gets instead — see the labelling section. The breakpoint is stated **once, in the stylesheet** (`--sheet`)
+  the nineteen unit labels A1 to A3, H2, H3 and L7 cannot set at this size are listed one by one in
+  the suite, with what a reader gets instead — see the labelling section. The breakpoint is stated **once, in the stylesheet** (`--sheet`)
   and read from there by `sheet.ts`, the same arrangement `--switch` already has and for the same
   reason: a JS copy of `560px` eventually disagrees with the CSS one, and a sheet whose script
   thinks it is a sheet while its CSS thinks it is a column sets a height on a box that is not
@@ -1162,13 +1217,19 @@ Numbered by the grilling question that settled each.
    Taftan is not a district at all. See `docs/research/balochistan-division-district-set.md`.
    The current-day 41-district roster remains unresolvable without the provincial gazette —
    which no longer blocks anything, since under ADR-0001 none of it is drawn.
-2b. **Can a variant claim AJK territory?** H2 (#30) references AJK districts, which
-   are drawn but unshaded and carry no PBS-direct statistics. L2 was the second example until #24
-   was written; the reading that shipped claims no territory district, so the question now rests
-   on H2 alone. Product decision outstanding — the
+2b. **Can a variant claim AJK or GB territory?** Those districts are drawn but unshaded and carry
+   no PBS-direct statistics. Product decision outstanding — the
    build's provisional answer is **no**: `TERRITORY_CLAIM_POLICY` is `forbid`, so the first
    variant that needs it fails loudly naming the district instead of settling a constitutional
    question by accident. Both answers are expressible and both are tested.
+
+   **Two narrowings have been made and neither is an answer to it.** Both take the *stated* reason
+   for `forbid` — which is arithmetic, and only arithmetic — and observe that it does not reach a
+   particular shape. Both are made out loud, tested at both seams, and asserted to fire for exactly
+   the units they were written for, since an exclusion that never excludes anything passes a test
+   perfectly. The question 2b actually asks is still open, and what still asks it is a hypothetical
+   rather than a shipped variant: **a unit that carries population figures and reaches into ground
+   the census does not cover.** Nothing in the app does that, and the build would refuse it by name.
 
    **A5 (#28) does not move it, and the reason is worth reading rather than assuming.** A5
    promotes both territories to provinces, which looks like the case this policy forbids and is
@@ -1183,13 +1244,25 @@ Numbered by the grilling question that settled each.
    them plus a Punjab district is a population that is short), and **under its own name** (moved
    districts are decided on a unit's name, so a territory promoted *and* renamed would read as ten
    districts changing hands when none has, and is refused rather than counted wrongly). The
-   narrowing is a change to what counts as a *claim*, made out loud and tested at both seams; it is
-   not an answer to 2b, which H2 still asks.
+   narrowing is a change to what counts as a *claim*, made out loud and tested at both seams.
+
+   **H2 (#30) is the second, and it is the wider of the two.** It draws Hunza and Nagar as the
+   princely states they were, and both are Gilgit-Baltistan districts today — two of ten, so
+   `promotedTerritoryOf` does not reach them and should not: a promotion is a change of standing,
+   and this is a demarcation predating the territory it sits inside. What admits them is
+   `withoutModernFigures`: H2 publishes **no population figure anywhere**, so it has no unit whose
+   population can be short by an unknowable amount, and the arithmetic reason has nothing to
+   protect. Unlike the promotion carve-out this one is about the *variant* rather than the unit, so
+   it admits any shape of territory claim on a variant that withholds — stated here rather than
+   discovered later. What keeps it honest is that withholding is a declaration with a reason
+   printed on the card where the figures would be, and that the reason is checked: a variant may
+   not buy the exception with a blank field, and a variant that carries figures is refused exactly
+   as before.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 4. **`SCENARIOS-DRAFT.md` is temporary.** The typed data module now exists
    (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries the whole Language
-   basis, L1 to L7, the whole Administrative one, A1 to A5, plus H1, H3 and H4; the markdown is
-   deleted once the other two have migrated into it (#36) — H2 and D1. The draft's estimate of
+   basis, L1 to L7, the whole Administrative one, A1 to A5, and the whole Historical one, H1 to H4;
+   the markdown is deleted once the last one has migrated into it (#36) — **D1 alone**. The draft's estimate of
    ~9 units for A1 was made at division resolution; the district-resolution answer is 16, the count
    is a finding and the card says so. Until then the two coexist and
    the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
@@ -1201,10 +1274,14 @@ Numbered by the grilling question that settled each.
    rests on general usage by the territory's own government and assembly. It wants the treatment
    open item 1 gave AJK's district names: a check against a published document, recorded in
    `docs/research/`. Related, and the owner's call rather than the build's: **what H3's advocates
-   call the *Northern Areas* short**, and what L7's *Pushto (Keamari)* and *Kohiostani* are called
-   short, since without attested forms those three cannot be named at the 390px bar at all. All
-   three are named at desktop size, so this is a legibility gap on one device rather than a unit
-   the app cannot draw.
+   call the *Northern Areas* short**, what H2's ***Gilgit Agency and Baltistan*** is called short —
+   at 279px the longest unit name in the app, and the second territory this build cannot name at the
+   bar (#30) — and what L7's *Pushto (Keamari)* and *Kohiostani* are called short, since without
+   attested forms those four cannot be named at the 390px bar at all. All
+   four are named at desktop size, so this is a legibility gap on one device rather than a unit
+   the app cannot draw. **H2's *Khairpur*, *Dir* and *Nagar* are not this item**: they are proposed
+   units already at their shortest true names, crowded out by neighbours the same size, which is the
+   A1-to-A3 case below rather than a missing source.
 
    **A1 to A3's eleven unnamed units are not this open item**, and filing them here would be asking
    a question with no one to answer it (#28). A rule-drawn unit has no advocates to have a short
@@ -1213,9 +1290,10 @@ Numbered by the grilling question that settled each.
    met for those three variants, which is stated where the labelling doctrine is rather than left
    waiting on a source that does not exist.
 
-**Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,
-Development 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a
-boundary). Karachi and Pashtun Balochistan are attributed variants, not algorithmic by-products.
+**Scenario content: 17 variants approved, 16 built** — Language 7, Administrative 5, Historical 4,
+Development 1; only D1 is outstanding. H2 omits Amb and Phulra (sub-district, cannot be drawn
+without inventing a boundary) and names both on the card. Karachi and Pashtun Balochistan are
+attributed variants, not algorithmic by-products.
 
 ---
 

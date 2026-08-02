@@ -98,13 +98,14 @@ describe('basisChoices', () => {
   });
 
   it('refuses a basis whose variants exist but whose shading does not', () => {
-    // No longer hypothetical: Historical carries H1, H3 and H4, all three complete partitions the
-    // build has already dissolved, and there is no fill behind them. It must not be selectable,
-    // because a basis that fades the boundaries back and shades nothing is a proposal drawn
-    // against no evidence at all (D14).
+    // No longer hypothetical: Historical carries the whole basis now — H1 to H4, four complete
+    // partitions the build has already dissolved, and there is no fill behind them. It must not be
+    // selectable, because a basis that fades the boundaries back and shades nothing is a proposal
+    // drawn against no evidence at all (D14). The order is the module's own: H1 stays first, so a
+    // reader entering the basis lands on One Unit rather than on the 1947 states (D13).
     const historical = choices.find((c) => c.basis.id === 'historical');
     expect(historical?.available).toBe(false);
-    expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h3', 'h4']);
+    expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h2', 'h3', 'h4']);
     expect(historical?.unavailable).toBe('Historical: no shading is built yet.');
 
     // And the same for Administrative, which #28 put in exactly this position: five complete

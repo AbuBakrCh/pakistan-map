@@ -291,16 +291,35 @@ function unitStanding(kind: UnitKind): string {
 }
 
 
-/** What a unit's population line says, including when there is none to say. */
-function unitPopulation(unit: UnitRecord): string {
-  if (unit.population !== null) return `${groupDigits(unit.population)} people`;
+/**
+ * What a unit's population line says, including when there is none to say.
+ *
+ * Three absences, worded three ways, because `null` in the bundle means three different things and
+ * a card that read only the field would print the wrong one of them. The variant's own withholding
+ * comes first: on H2 (#30) every unit carries `null`, including Punjab, whose 2023 population is
+ * perfectly well known and is being declined rather than missing — saying the census does not reach
+ * Punjab would be a false statement about the census, made by a card trying to explain a blank.
+ */
+function unitPopulation(unit: UnitRecord, withholding: boolean): string {
   // The twenty AJK and Gilgit-Baltistan districts (D25). Said as coverage — the census did not ask
   // here — rather than as a failure, and never as a zero, which would be a claim about who lives
-  // on ground Pakistan administers.
-  return unit.uncounted.length === unit.districts.length
-    ? 'The 2023 census does not cover its districts, so it carries no population figure'
-    : `${plural(unit.uncounted.length, 'district')} of it lie outside the 2023 census, so its ` +
-        `population would be short by an unknown amount and is not given`;
+  // on ground Pakistan administers. Asked **before** the variant's own withholding, and on H2 the
+  // difference is visible on one card: no unit there carries a figure, but Punjab's is being
+  // declined and Azad Jammu & Kashmir's does not exist. Wording the two the same would say the
+  // census reaches ground it does not, on the one basis whose whole subject is what used to be
+  // true.
+  if (unit.uncounted.length === unit.districts.length) {
+    return 'The 2023 census does not cover its districts, so it carries no population figure';
+  }
+  if (withholding) {
+    return (
+      'No population figure — this variant does not attach 2023 census figures to its ' +
+      'boundaries, for the reason it gives above'
+    );
+  }
+  if (unit.population !== null) return `${groupDigits(unit.population)} people`;
+  return `${plural(unit.uncounted.length, 'district')} of it lie outside the 2023 census, so its ` +
+    `population would be short by an unknown amount and is not given`;
 }
 
 function unitDistricts(unit: VariantRecord['units'][number]): string {
@@ -319,6 +338,8 @@ function unitDistricts(unit: VariantRecord['units'][number]): string {
  */
 function unitsOf(variant: VariantRecord): readonly CardUnit[] {
   const rank: Readonly<Record<UnitKind, number>> = { proposed: 0, unchanged: 1, territory: 2 };
+  // A property of the variant, read once: whether *this card* prints a population anywhere.
+  const withholding = !variant.statistics.modernFigures;
   return [...variant.units]
     .map((unit, index) => ({ unit, index }))
     .sort((a, b) => rank[a.unit.kind] - rank[b.unit.kind] || a.index - b.index)
@@ -329,7 +350,7 @@ function unitsOf(variant: VariantRecord): readonly CardUnit[] {
       kind: unit.kind,
       standing: unitStanding(unit.kind),
       districts: unitDistricts(unit),
-      population: unitPopulation(unit),
+      population: unitPopulation(unit, withholding),
       note: unit.note,
     }));
 }

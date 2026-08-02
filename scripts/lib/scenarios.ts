@@ -296,10 +296,14 @@ export interface Variant {
  * would let the first variant that needs it answer a live constitutional question on its own and
  * publish a province drawn across a ceasefire line with a population nobody can source.
  *
- * One case is not a claim at all and is admitted under `forbid`: a unit that is **one territory's
- * whole district set under that territory's own name**, which is a change of standing rather than
- * a change of ground (A5, #28). See `promotedTerritoryOf` for why the reason above does not reach
- * it, and for the three conditions it has to meet.
+ * Two cases are not claims at all and are admitted under `forbid`. Both are narrowings of what
+ * counts as a *claim*, and neither widens the policy:
+ *
+ *  - A unit that is **one territory's whole district set under that territory's own name**, which
+ *    is a change of standing rather than a change of ground (A5, #28). See `promotedTerritoryOf`.
+ *  - A unit on a variant that publishes **no population figure at all** (H2, #30), where there is
+ *    no figure to be short by an unknowable amount. See `withoutModernFigures`, which also states
+ *    why it is the wider of the two.
  */
 export type TerritoryClaimPolicy = 'forbid' | 'allow';
 export const TERRITORY_CLAIM_POLICY: TerritoryClaimPolicy = 'forbid';
@@ -564,6 +568,42 @@ const TERRITORY_DISTRICT_SETS: readonly { readonly name: string; readonly distri
  *    tested; this narrows what counts as a *claim*, and says so out loud, rather than answering a
  *    constitutional question by widening a switch.
  */
+/**
+ * Whether this variant publishes **no population figure at all** — the second case in which the
+ * refusal above has nothing to protect (#30, H2).
+ *
+ * The reasoning is `promotedTerritoryOf`'s, applied one level up. `forbid` is answered for an
+ * arithmetic reason and one only: a unit holding *some* of AJK's or Gilgit-Baltistan's districts
+ * has a population short by an unknowable amount, and looks on the card exactly like a unit whose
+ * population is right. A variant that suppresses modern figures outright has no such unit, because
+ * it has no population figures — `scorecard.ts` voids the spread in the variant's own words, and
+ * the build gives every one of its units a `null` population rather than a sum that would be short.
+ * There is nothing left for the refusal to be protecting.
+ *
+ * H2 is why this exists. It draws the map of 1947–1955, when Hunza and Nagar were princely states
+ * in their own right; both are Gilgit-Baltistan districts today, and neither is a whole territory
+ * under its own name, so `promotedTerritoryOf` does not reach them and never should — a promotion
+ * is a change of standing, and this is a demarcation that predates the territory it sits inside.
+ *
+ * **This is the wider of the two carve-outs, and the width is stated rather than discovered.** It
+ * admits *any* shape of territory claim on a variant that withholds — not one whole territory, not
+ * one named unit. What keeps it honest is that withholding is itself a loud, reviewed declaration
+ * with a reason printed where the population lines would be, and that the reason is checked here:
+ * a variant may not buy the exception with a blank field. What it is *not* is an answer to open
+ * item 2b, which is about a variant that carries figures and reaches into ground the census does
+ * not cover. That is still refused, and `TERRITORY_CLAIM_POLICY` is still `forbid`.
+ */
+function withoutModernFigures(variant: Variant): boolean {
+  const statistics = variant.statistics;
+  if (statistics === undefined || statistics.modernFigures) return false;
+  // A withholding nobody explained is not a withholding. The reason is card copy — it is the
+  // sentence the scorecard sets where the figures would be — and the validator refuses a blank one
+  // a few lines above; refusing the claim as well is what stops a variant buying the exception
+  // with an empty string and failing on a message about a missing reason instead of about a
+  // district of Gilgit-Baltistan.
+  return statistics.reason.trim() !== '';
+}
+
 function promotedTerritoryOf(unit: Unit, districts: readonly string[]): string | null {
   if (unit.kind !== 'proposed') return null;
   const held = new Set(districts);
@@ -669,6 +709,9 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
   }
 
   // ---- units -----------------------------------------------------------------------------
+  // Asked once for the whole variant rather than per unit, because that is what it is a property
+  // of: whether *this card* prints a population anywhere. See `withoutModernFigures`.
+  const noFigures = withoutModernFigures(variant);
   const unitIds = new Set<string>();
   const resolved: ResolvedUnit[] = [];
   /** District -> the unit that claimed it, so a collision names both sides. */
@@ -783,6 +826,7 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
         territory !== undefined &&
         resolvedUnit.kind !== 'territory' &&
         promoted === null &&
+        !noFigures &&
         policy === 'forbid'
       ) {
         problems.push(

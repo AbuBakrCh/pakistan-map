@@ -580,6 +580,12 @@ describe('a variant at the 390px bar', () => {
     a1: ['Karachi East', 'Gujranwala', 'Rawalpindi', 'Faisalabad', 'Mardan'],
     a2: ['Gujranwala', 'Peshawar', 'Faisalabad'],
     a3: ['Multan', 'Lahore', 'Rawalpindi', 'Bahawalnagar', 'Mardan'],
+    // H2 draws seventeen units, eleven of them princely states of one to four districts (#30), so
+    // it is the most crowded map in the app after A1. Three of the states lose the frame to a
+    // neighbour: *Khairpur* to the Sindh names around it, and *Dir* and *Nagar* to *Chitral*,
+    // *Swat* and *Hunza*, which are the same size and are drawn beside them. The fourth is the
+    // territory, and it is a different failure — see the exception below.
+    h2: ['Khairpur', 'Dir', 'Nagar', 'Gilgit Agency and Baltistan'],
     h3: ['Northern Areas'],
     l7: ['Pushto (Keamari)', 'Kohiostani'],
   };
@@ -634,24 +640,41 @@ describe('a variant at the 390px bar', () => {
      * named** — carried through into the variant views, where until #28 it was only true by luck:
      * with eight units there was room for everything, and with sixteen there is not.
      *
-     * H3's *Northern Areas* is the one territory this build still cannot name at the bar, and the
-     * reason is asserted rather than asserted-about-in-a-comment: at 145px set 71px from the right
-     * edge the box runs off the frame, and `layoutLabels` drops an off-frame name rather than
-     * dragging it back over ground it does not name. No priority reaches that, and the alternative
-     * — coining a short form for Pakistani-administered ground that no source uses — is the thing
-     * `SHORT_FORMS` exists to refuse. It is open item 5, not a layout bug.
+     * Two territories this build still cannot name at the bar, and both for the same reason, which
+     * is asserted rather than asserted-about-in-a-comment: the box runs off the right edge of the
+     * frame, and `layoutLabels` drops an off-frame name rather than dragging it back over ground it
+     * does not name. No priority reaches that, and the alternative — coining a short form for
+     * Pakistani-administered ground that no source uses — is the thing `SHORT_FORMS` exists to
+     * refuse. It is open item 5, not a layout bug.
+     *
+     * H3 calls the ground the *Northern Areas*; H2 (#30) calls it the *Gilgit Agency and
+     * Baltistan*, which at 279px is the longest unit name in the app and is anchored further east
+     * still, because Hunza and Nagar are drawn out of its western end as the states they were. The
+     * baseline names the same ground because `GB` exists to be set there; neither historical name
+     * has an attested short form, and inventing one is what open item 5 refuses.
      */
+    const ANONYMOUS_AT_390: Readonly<Record<string, readonly string[]>> = {
+      h2: ['Gilgit Agency and Baltistan'],
+      h3: ['Northern Areas'],
+    };
     for (const variant of scenarios.variants) {
       const drawn = variantAt(variant.id, BAR_390);
       const anonymous = drawn.territories.filter(
         (name) => !drawn.placed.has(labelKey('unit', name)),
       );
-      expect(anonymous, variant.id).toEqual(variant.id === 'h3' ? ['Northern Areas'] : []);
+      expect(anonymous, variant.id).toEqual(ANONYMOUS_AT_390[variant.id] ?? []);
     }
 
-    const h3 = variantAt('h3', BAR_390);
-    const box = h3.sized.get(labelKey('unit', 'Northern Areas')) as LabelBox;
-    expect(box.x + box.width / 2).toBeGreaterThan(h3.viewport.width);
+    // The cause, for both: a name whose centre is past the right edge of the paper. A territory
+    // *outranked* would be a ranking failure and is what #28 fixed; a territory that does not fit
+    // the frame is a different thing, and the two are told apart here rather than in prose.
+    for (const [id, names] of Object.entries(ANONYMOUS_AT_390)) {
+      const drawn = variantAt(id, BAR_390);
+      for (const name of names) {
+        const box = drawn.sized.get(labelKey('unit', name)) as LabelBox;
+        expect(box.x + box.width / 2, `${id}: ${name}`).toBeGreaterThan(drawn.viewport.width);
+      }
+    }
   });
 
   it(

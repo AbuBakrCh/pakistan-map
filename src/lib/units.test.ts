@@ -184,6 +184,12 @@ describe('unitBoundaries', () => {
       // single thing #28 asked to be sure of.
       a5: ['Gilgit-Baltistan', 'Azad Jammu & Kashmir'],
       h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      // H2 (#30) is the third name this ground goes by in the shipped set, and the first variant
+      // that does not hold the territory in one piece: Hunza and Nagar are drawn out of it as the
+      // princely states they were, leaving the rest as the Gilgit Agency. Neither state touches the
+      // ceasefire line — both sit on the China frontier in the north-west — so the line is still
+      // held out of exactly two units, and the one it runs along is the remainder.
+      h2: ['Gilgit Agency and Baltistan', 'Azad Jammu & Kashmir'],
       h3: ['Northern Areas', 'Azad Jammu & Kashmir'],
       h4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
     });

@@ -881,6 +881,17 @@ const H1: Variant = {
         'scheme working as it was designed to, not an artefact of how the figure is counted.',
     },
   ],
+  notes: [
+    {
+      label: 'What it absorbed, and what came back',
+      text:
+        'The map One Unit replaced is H2: four provinces and eleven acceding princely states, ' +
+        'every one of which this scheme merged into a single province. The map that replaced One ' +
+        'Unit is H3, which restored the four provinces and not one of the states. Read in order ' +
+        'the three are how Pakistan’s first-level geography got from many units to four.',
+      relatedVariants: ['h2', 'h3'],
+    },
+  ],
   sources: [
     {
       label:
@@ -898,6 +909,400 @@ const H1: Variant = {
         'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
         'district set this partition is expressed in',
       url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
+// ---------------------------------------------------------------------------------------------
+// H2 — the provinces and the princely states, 1947 to 1955 (#30).
+//
+// The one variant in this app that draws a map older than the units it is drawn out of, and the
+// only one that publishes no population figure at all. Both facts follow from the same thing: what
+// is drawn is the arrangement that stood between accession and One Unit, and PBS counted people in
+// 2023, inside districts that did not exist then, in states that had been abolished for sixty-eight
+// years. Attaching those figures here would describe a Pakistan nobody has ever counted, so the
+// variant withholds them in its own words and the scorecard prints the reason where the population
+// lines would be.
+//
+// It is also the variant that asked CLAUDE.md open item 2b and got the second of its two
+// narrowings. Hunza and Nagar were princely states in their own right and are Gilgit-Baltistan
+// districts today; neither is a whole territory under its own name, so A5's promotion carve-out
+// does not reach them and should not. What admits them is `withoutModernFigures` in `scenarios.ts`:
+// a variant with no population figures has no unit whose population can be short, which is the only
+// reason `forbid` was ever answered. `TERRITORY_CLAIM_POLICY` is untouched.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The eleven acceding states this map can draw, each as the 2023 districts covering its territory.
+ *
+ * The claims are stated in the districts that cover the ground **today**, post-census ones
+ * included, and the validator folds them onto the 2023 set (ADR-0001) — so Kalat is stated as four
+ * districts and drawn as three, and the card prints both with the fold named. That is the same
+ * treatment South Punjab's 13-for-11 gets, and it is the honest one here for the same reason: Wadh
+ * and Tump are real ground that a reader can find on a current map and cannot find on this one.
+ *
+ * Two of the eleven are approximations and are footnoted as such rather than presented as exact.
+ * The princely states' boundaries were not district boundaries, and this map has no others to draw
+ * with — so where a state's territory and a modern district disagree, the district wins and the
+ * card says where.
+ */
+const PRINCELY_STATES: NonEmpty<Unit> = [
+  {
+    id: 'bahawalpur-state',
+    name: 'Bahawalpur',
+    kind: 'proposed',
+    claims: ['Bahawalpur', 'Bahawalnagar', 'Rahim Yar Khan'],
+    note:
+      'Acceded October 1947, retaining internal self-government. The one state on this map whose ' +
+      'restoration is still argued for — H4 draws that claim on today’s boundaries.',
+  },
+  {
+    id: 'khairpur-state',
+    name: 'Khairpur',
+    kind: 'proposed',
+    claims: ['Khairpur'],
+    note: 'Acceded October 1947. Its territory is one district of Sindh today, unchanged since.',
+  },
+  {
+    id: 'kalat-state',
+    name: 'Kalat',
+    kind: 'proposed',
+    claims: ['Kalat', 'Khuzdar', 'Wadh', 'Surab'],
+    note:
+      'Acceded 27 March 1948, the last and the most disputed of the accessions on this map. Drawn ' +
+      'approximately — see the footnote.',
+  },
+  {
+    id: 'las-bela-state',
+    name: 'Las Bela',
+    kind: 'proposed',
+    claims: ['Lasbela', 'Hub'],
+    note: 'Acceded March 1948. Hub was carved out of Lasbela in 2022 and folds back into it here.',
+  },
+  {
+    id: 'kharan-state',
+    name: 'Kharan',
+    kind: 'proposed',
+    claims: ['Kharan', 'Washuk'],
+    note: 'Acceded March 1948.',
+  },
+  {
+    id: 'makran-state',
+    name: 'Makran',
+    kind: 'proposed',
+    claims: ['Kech', 'Gwadar', 'Panjgur', 'Tump'],
+    note:
+      'Acceded March 1948. Gwadar town and its coastal strip were not part of it — see the ' +
+      'footnote on Oman.',
+  },
+  {
+    id: 'swat-state',
+    name: 'Swat',
+    kind: 'proposed',
+    claims: ['Swat', 'Upper Swat', 'Shangla', 'Buner'],
+    note: 'Acceded November 1947. Drawn approximately — see the footnote.',
+  },
+  {
+    id: 'dir-state',
+    name: 'Dir',
+    kind: 'proposed',
+    claims: ['Lower Dir', 'Upper Dir', 'Central Dir'],
+    note: 'Acceded November 1947.',
+  },
+  {
+    id: 'chitral-state',
+    name: 'Chitral',
+    kind: 'proposed',
+    claims: ['Upper Chitral', 'Lower Chitral'],
+    note: 'Acceded 1947. Its territory is the two Chitral districts today, unchanged since.',
+  },
+  {
+    id: 'hunza-state',
+    name: 'Hunza',
+    kind: 'proposed',
+    claims: ['Hunza'],
+    note:
+      'Acceded November 1947, after the Gilgit Agency passed to Pakistan. A district of ' +
+      'Gilgit-Baltistan today, which is why this variant needed open item 2b narrowing.',
+  },
+  {
+    id: 'nagar-state',
+    name: 'Nagar',
+    kind: 'proposed',
+    claims: ['Nagar'],
+    note: 'Acceded November 1947, alongside Hunza across the river from it.',
+  },
+];
+
+/** Every district the eleven states claim, for the remainders the four provinces are written as. */
+const PRINCELY_CLAIMS: readonly string[] = PRINCELY_STATES.flatMap((state) => [...state.claims]);
+
+/** H2 — the provinces and the acceding princely states, 1947–1955. */
+const H2: Variant = {
+  id: 'h2',
+  basis: 'historical',
+  name: 'Provinces and princely states',
+  tagline: '1947–1955, before One Unit absorbed them all',
+  rationale:
+    'The four provinces as they were at independence, with the princely states that acceded ' +
+    'between August 1947 and March 1948 drawn as the self-governing units they then were. It is ' +
+    'the oldest map in this app and the only one that predates every proposal in it: eleven of ' +
+    'the units here were states with their own rulers, and all of them were gone by 1969. What it ' +
+    'shows is that a Pakistan of many small units is not a novel idea being argued for — it is ' +
+    'the arrangement the country started with and then dismantled.',
+  status:
+    'Historical, and abolished in stages rather than at once. The Balochistan States Union — ' +
+    'Kalat, Las Bela, Kharan and Makran — was formed in 1952 and merged into West Pakistan by the ' +
+    'Establishment of West Pakistan Act, 1955, which absorbed Bahawalpur and Khairpur at the same ' +
+    'time. Swat, Dir and Chitral kept their internal self-government longest and were merged into ' +
+    'the North-West Frontier Province in 1969. None was restored when West Pakistan was dissolved ' +
+    'in 1970, and no state has had its separate status returned since.',
+  advocacy: {
+    kind: 'unadvocated',
+    note:
+      'Nobody proposes restoring the princely states. This is drawn as a demarcation that ' +
+      'existed, not as a proposal — the app carries it because it is the arrangement every later ' +
+      'map in this file departed from, and because one piece of it is still argued for: ' +
+      'Bahawalpur’s restoration is a live claim, and H4 draws that claim on its own terms rather ' +
+      'than as a fragment of this one.',
+  },
+  opposedBy: [
+    'anyone for whom hereditary states are not a constitutional arrangement to return to — the ' +
+      'states were merged into the provinces between 1955 and 1969, and no party proposes ' +
+      'restoring the rulers whose self-government is what this map draws',
+    'Baloch nationalist opinion, for which the accession of Kalat in March 1948 is itself ' +
+      'disputed: drawing the state inside Pakistan states a settlement that opinion does not ' +
+      'accept, and the map cannot draw the state without also drawing that',
+  ],
+  universe: 'drawn',
+  // The period the arrangement stood, not a single day: the accessions run from August 1947 to
+  // March 1948 and the abolitions from 1955 to 1969, so a date here would be a date for one state
+  // rather than for the map. The Historical basis defers to the variant for exactly this reason,
+  // and a variant that stated none would print its basis's deferral where a date should be.
+  vintage:
+    'August 1947 to 14 October 1955 — the provinces and the acceding princely states as they ' +
+    'stood before the Establishment of West Pakistan Act absorbed them',
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the Instruments of Accession of 1947 and 1948 and the states as they stood until One Unit, ' +
+      'expressed in the 2023 districts covering their territory',
+  },
+  // The hard rule of this variant, and the reason it has one. Stated as card copy because the
+  // scorecard prints it where the population lines would otherwise be (#20).
+  statistics: {
+    modernFigures: false,
+    reason:
+      'This map is the boundaries of 1947 to 1955. The 2023 census counted people inside ' +
+      'districts that did not exist then, in states that had been abolished for sixty-eight ' +
+      'years, so its figures describe none of the units drawn here. No population figure is given ' +
+      'anywhere on this variant — not for a state, not for a province, and not as a total.',
+  },
+  units: [
+    ...PRINCELY_STATES,
+    // Renamed and smaller, exactly as in H3 and for the same reason: a unit called North-West
+    // Frontier Province holding 28 of Khyber Pakhtunkhwa's districts is not "unchanged from the
+    // current map", which is what an `unchanged` unit says on the card.
+    {
+      id: 'nwfp',
+      name: 'North-West Frontier Province',
+      alsoKnownAs: ['NWFP'],
+      kind: 'proposed',
+      claims: remainderOf('Khyber Pakhtunkhwa', PRINCELY_CLAIMS),
+      note:
+        'Renamed Khyber Pakhtunkhwa by the 18th Amendment in 2010. Smaller here than today by the ' +
+        'three Malakand states, which it absorbed in 1969.',
+    },
+    // The three provinces that kept their names. Each is smaller than it is today by the states
+    // drawn out of it, which is what `unchanged` means throughout this app — the unit carrying the
+    // province's name forward, whatever it has lost.
+    {
+      id: 'punjab',
+      name: 'Punjab',
+      kind: 'unchanged',
+      // Islamabad is inside Punjab here, which is what the ground was: the capital territory was
+      // carved out of Rawalpindi district in 1960 and did not exist during this period at all.
+      // Drawing it as its own unit would put a 1960s federal territory on a 1947 map; H1 made the
+      // same call for the same reason, and the footnote below says so.
+      claims: [...remainderOf('Punjab', PRINCELY_CLAIMS), 'Islamabad'],
+      note:
+        'Smaller than today’s Punjab by Bahawalpur, and larger by the ground Islamabad Capital ' +
+        'Territory now covers, which was part of Rawalpindi district until 1960.',
+    },
+    {
+      id: 'sindh',
+      name: 'Sindh',
+      kind: 'unchanged',
+      claims: remainderOf('Sindh', PRINCELY_CLAIMS),
+      note: 'Smaller than today’s Sindh by Khairpur.',
+    },
+    {
+      id: 'balochistan',
+      name: 'Balochistan',
+      kind: 'unchanged',
+      claims: remainderOf('Balochistan', PRINCELY_CLAIMS),
+      note:
+        'The Chief Commissioner’s Province — British Balochistan — without the four states beside ' +
+        'it, which were separately governed and from 1952 formed the Balochistan States Union.',
+    },
+    // The Gilgit Agency, less the two states inside it. `territory` because that is what it was and
+    // is: administered federally throughout this period, and not a province then or now.
+    {
+      id: 'gilgit-agency',
+      name: 'Gilgit Agency and Baltistan',
+      alsoKnownAs: ['Northern Areas', 'Gilgit-Baltistan'],
+      kind: 'territory',
+      claims: remainderOf('Gilgit-Baltistan', PRINCELY_CLAIMS),
+      note:
+        'Administered directly by the federal government throughout, as the Northern Areas were ' +
+        'until 2009. Hunza and Nagar are drawn out of it as the states they were.',
+    },
+    intactProvince('Azad Jammu & Kashmir'),
+  ],
+  footnotes: [
+    // The ticket's own requirement, and the app's standing refusal: what cannot be drawn from a
+    // source is named rather than approximated.
+    {
+      kind: 'omission',
+      text:
+        'Amb and Phulra are omitted. Both acceded in 1947 and both were smaller than any district ' +
+        'this map draws — Amb straddled the Indus around Darband and Phulra was smaller still, and ' +
+        'their territory is today inside Mansehra and Haripur. Drawing either would mean inventing ' +
+        'a boundary inside a district drawn whole, which is the one thing this app does not do. ' +
+        'They are named here instead, and the ground they covered is inside North-West Frontier ' +
+        'Province on this map.',
+    },
+    {
+      kind: 'district-count',
+      text:
+        'Five of the states are stated in more districts than are drawn, because five districts ' +
+        'created after the 2023 census fold back into the districts that carry them (ADR-0001): ' +
+        'Wadh inside Khuzdar and Tump inside Kech, both notified in 2026; Upper Swat inside Swat; ' +
+        'Central Dir inside Lower Dir; and Hub inside Lasbela. Nothing is lost — the same ground ' +
+        'is drawn either way — but the counts differ, and both are printed rather than either ' +
+        'alone.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Kalat is drawn approximately, and it is the largest approximation on this map. The state ' +
+        'at its greatest extent covered Mastung and Awaran as well, and claimed Las Bela, Kharan ' +
+        'and Makran as its vassals — the three acceded to Pakistan separately in March 1948, which ' +
+        'Kalat disputed. Drawn here are the four districts of its core territory; Mastung and ' +
+        'Awaran are inside Balochistan, and the three other states are drawn as themselves. That ' +
+        'is what leaves Balochistan in two pieces on this map: with Kalat, Las Bela, Kharan and ' +
+        'Makran drawn around it, Awaran touches no other district of the province it is in. The ' +
+        'scorecard reports it rather than the map hiding it, and the stranding is this ' +
+        'approximation’s doing rather than the 1947 arrangement’s.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Swat is drawn approximately. The state’s northern edge ran through what is now Upper ' +
+        'Swat and into the Kalam valley, and its eastern boundary with the Kohistan districts was ' +
+        'never a district line. What is drawn is Swat, Shangla and Buner, which is the closest the ' +
+        '2023 district set comes to it.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Gwadar is drawn inside Makran, and for part of this period it was not Pakistani at all. ' +
+        'Gwadar town and its coastal strip were an exclave of Oman until Pakistan purchased them ' +
+        'on 8 September 1958 — after this map ends. The rest of what is now Gwadar district was ' +
+        'Makran State’s, and the district cannot be split without inventing the boundary between ' +
+        'the two, so the whole of it is drawn here and the exception is stated.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The tribal agencies are drawn inside North-West Frontier Province, which they were not. ' +
+        'Throughout this period they were federally administered and outside the province ' +
+        'altogether — the arrangement H3 draws for 1970, where they are a unit of their own. They ' +
+        'are not separated here because this map’s subject is the princely states, and drawing a ' +
+        'third tier of federally administered ground would put two different arguments on one ' +
+        'picture.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Baltistan is drawn with the Gilgit Agency, which is right for most of this period and not ' +
+        'for its start. Baltistan was part of the Ladakh wazarat of Jammu and Kashmir until 1948 ' +
+        'and was administered with Gilgit afterwards, as the Northern Areas. Hunza and Nagar are ' +
+        'drawn out of the Agency as the states they were until 1974.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The districts-moved figure reads 59, and it is made of four things rather than one: the ' +
+        '22 districts drawn as princely states, the 28 of North-West Frontier Province, which is ' +
+        'Khyber Pakhtunkhwa under the name it carried until 2010, the 8 left in the Gilgit Agency ' +
+        'once Hunza and Nagar are drawn out of it, and Islamabad. Only the first group is ground ' +
+        'held by something other than a province; the rest is this map using the names of 1947, ' +
+        'because what carries a first-level unit forward is decided on its name. Azad Jammu & ' +
+        'Kashmir keeps its name here and so counts as moving nothing at all.',
+    },
+  ],
+  notes: [
+    {
+      label: 'Collision with the Bahawalpur restoration and the southern-province claims',
+      text:
+        'Bahawalpur is drawn here as the state it was until 1955, and H4 draws the same three ' +
+        'districts as the province its restoration movement is asking for — the difference being ' +
+        'that H4 is a live claim about today and this is a record of what existed. The same three ' +
+        'districts are the eastern third of every southern-province reading in the app, whose ' +
+        'advocates would fold them into one Seraiki province instead. The app draws one variant at ' +
+        'a time and never a compromise between two claims (D8).',
+      relatedVariants: ['h4', 'l1', 'l2', 'l3'],
+    },
+    {
+      label: 'What One Unit absorbed, and what 1970 did not restore',
+      text:
+        'Every unit on this map west of India was merged into the single province of West Pakistan ' +
+        'in 1955, which H1 draws. When West Pakistan was dissolved in 1970 the four provinces came ' +
+        'back and not one of the states did, which is the map H3 draws. Read in order the three ' +
+        'are the whole of how Pakistan’s first-level geography got from many units to four.',
+      relatedVariants: ['h1', 'h3'],
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Instruments of Accession of the acceding states, 1947–1948 — Bahawalpur and Khairpur ' +
+        '(October 1947), Swat, Dir, Chitral, Hunza and Nagar (November 1947), Las Bela, Kharan and ' +
+        'Makran (March 1948) and Kalat (27 March 1948), each retaining internal self-government',
+    },
+    {
+      label:
+        'Balochistan States Union, 1952 — Kalat, Las Bela, Kharan and Makran federated into one ' +
+        'unit before its merger into West Pakistan',
+    },
+    {
+      label:
+        'Establishment of West Pakistan Act, 1955 — the provinces, the states and the tribal areas ' +
+        'of the western wing merged into one province with effect from 14 October 1955, which is ' +
+        'where this map ends',
+    },
+    {
+      label:
+        'Dir, Swat and Chitral (Merger) Regulation, 1969 — the three Malakand states merged into ' +
+        'the North-West Frontier Province, the last of the accessions on this map to lose its ' +
+        'separate status',
+    },
+    {
+      label:
+        'Gwadar — transferred from Oman to Pakistan on 8 September 1958, after the period this ' +
+        'map draws, which is why the footnote states it rather than the boundary showing it',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+    {
+      label:
+        'data/reference/post-census-district-folds.json — Wadh, Tump, Upper Swat, Central Dir and ' +
+        'Hub, each created after the census and folded into its 2023 parent under ADR-0001',
     },
   ],
 };
@@ -1037,6 +1442,17 @@ const H3: Variant = {
         'territory here and not a province — nothing in this app calls it one, on any variant.',
     },
   ],
+  notes: [
+    {
+      label: 'What was not restored',
+      text:
+        'The four provinces came back in 1970 and none of the eleven princely states did. H2 draws ' +
+        'the map they were part of, and H1 draws the scheme that abolished them — so the ' +
+        'difference between this variant and H2 is not the dissolution of One Unit but everything ' +
+        'the states lost and never got back.',
+      relatedVariants: ['h1', 'h2'],
+    },
+  ],
   sources: [
     {
       label:
@@ -1168,6 +1584,15 @@ const H4: Variant = {
       // whichever was written first: a collision a card knows about in one direction reads as
       // neutral from the other. The validator checks that each id names a variant that exists.
       relatedVariants: ['l1', 'l2', 'l3'],
+    },
+    {
+      label: 'The state this restores',
+      text:
+        'H2 draws Bahawalpur as the acceding state it was until 1955, alongside the ten other ' +
+        'states of that period. This variant is the live claim rather than the record: it argues ' +
+        'for the same three districts as a province of Pakistan today, on the strength of what the ' +
+        'state was, and it is the only piece of the 1947 map that anybody is still asking for.',
+      relatedVariants: ['h2'],
     },
   ],
   sources: [
@@ -2284,7 +2709,13 @@ export function variantsFrom(context: DerivationContext): readonly Variant[] {
     fourteenUnits(context),
     distanceToCapital(context),
     A5,
+    // H1 stays first, and the ordering is otherwise chronological. A reader entering the Historical
+    // basis lands on its first variant (D13), and that landing is One Unit rather than the states
+    // of 1947 — the most dramatic map on the basis, and the one the other three are legible
+    // against. Reordering the group to put H2 first would change which map the basis opens on,
+    // which is a product decision and not a consequence of adding a variant.
     H1,
+    H2,
     H3,
     H4,
   ];

@@ -202,8 +202,14 @@ function emit(
          * reach all of them — the twenty AJK and Gilgit-Baltistan districts PBS published no
          * results for (D25). Never a partial sum wearing the look of a whole one, and the districts
          * that are missing are named rather than counted.
+         *
+         * `null` for **every** unit of a variant that withholds modern figures (H2, #30). The
+         * scorecard voids its spread already, but a unit's own line is a second place a figure
+         * appears, and 2023 populations printed against the princely states of 1947 would be the
+         * exact claim the variant exists to refuse — one the card's voided total would not undo.
+         * The rule is the variant's, so it is applied here rather than per unit.
          */
-        population: populations.get(unit.id)?.population ?? null,
+        population: statistics.modernFigures ? populations.get(unit.id)?.population ?? null : null,
         uncounted: populations.get(unit.id)?.uncounted ?? [],
         /**
          * Flagged, never blocked (D7). `detached` is every group but the largest, named — the

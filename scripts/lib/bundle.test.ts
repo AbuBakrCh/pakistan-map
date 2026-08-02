@@ -539,6 +539,8 @@ interface EmittedUnit {
   readonly folded: readonly { readonly from: string; readonly into: string }[];
   readonly excludes: readonly string[];
   readonly alsoKnownAs: readonly string[];
+  /** The unit's own aside on the card — where H2 puts each state's accession date (#30). */
+  readonly note: string | null;
   readonly contiguity: {
     readonly contiguous: boolean;
     readonly pieces: number;
@@ -713,26 +715,42 @@ describe('bundle scenarios', () => {
           territory.districts.every((district) => unit.districts.includes(district)),
       );
 
-    const claimed = variants.flatMap((variant) =>
+    /** Every territory district a unit holds while being neither a territory nor a promotion. */
+    const reachesIn = (variant: EmittedVariant): readonly string[] =>
       variant.units
         .filter((unit) => unit.kind !== 'territory' && !promotes(unit))
         .flatMap((unit) =>
           unit.districts
             .filter((d) => territoryDistricts.has(d))
             .map((d) => `${variant.id} "${unit.name}" claims ${d}`),
-        ),
-    );
+        );
+
+    // A variant that publishes no population anywhere is the second narrowing (#30, H2): there is
+    // no figure that can be short by an unknowable amount, which is the only reason `forbid` was
+    // ever answered. Held out here and named on its own below, never merely skipped.
+    const claimed = variants
+      .filter((variant) => variant.statistics.modernFigures)
+      .flatMap(reachesIn);
     expect(claimed).toEqual([]);
 
-    // And the carve-out is not vacuous: A5 is the one variant that uses it, and it uses it for
-    // exactly the two units the ticket is about. A test that only ever proves an exclusion never
-    // fires is a test that would pass with the exclusion written wrongly.
+    // And neither carve-out is vacuous. A test that only ever proves an exclusion never fires is a
+    // test that would pass with the exclusion written wrongly — so both are held to firing for
+    // exactly the units they were written for, by name.
     const promoted = variants.flatMap((variant) =>
       variant.units
         .filter((unit) => unit.kind === 'proposed' && promotes(unit))
         .map((unit) => `${variant.id} ${unit.name}`),
     );
     expect(promoted).toEqual(['a5 Gilgit-Baltistan', 'a5 Azad Jammu & Kashmir']);
+
+    // H2 draws Hunza and Nagar as the princely states they were until 1974, and they are districts
+    // of Gilgit-Baltistan today — two of ten, so neither is a promotion and `promotedTerritoryOf`
+    // correctly does not reach them. These two units, on this one variant, are the whole of what
+    // the withholding carve-out admits in the shipped set.
+    const withheld = variants
+      .filter((variant) => !variant.statistics.modernFigures)
+      .flatMap(reachesIn);
+    expect(withheld).toEqual(['h2 "Hunza" claims Hunza', 'h2 "Nagar" claims Nagar']);
   });
 
   it('records what a claim says alongside what this map draws it as', () => {
@@ -1279,6 +1297,195 @@ describe('bundle administrative variants', () => {
 });
 
 /**
+ * H2 — the provinces and the acceding princely states, 1947 to 1955 (#30).
+ *
+ * The variant that publishes no population figure at all, and the only one in the app of which that
+ * is true. Everything below is a consequence of that or of the fact that what it draws is older
+ * than the districts it is drawn out of, so both are asserted rather than described.
+ */
+describe('bundle H2, the map with no figures on it', () => {
+  const h2 = () => variants.find((v) => v.id === 'h2') as EmittedVariant;
+
+  it('draws each mappable princely state as its own unit, and nothing else as one', () => {
+    // The eleven the ticket names. Held as an exact list rather than a count, because a state added
+    // or lost is a change to what this map claims existed in 1947.
+    const states = h2()
+      .units.filter((unit) => unit.kind === 'proposed')
+      .map((unit) => unit.name);
+    expect(states).toEqual([
+      'Bahawalpur',
+      'Khairpur',
+      'Kalat',
+      'Las Bela',
+      'Kharan',
+      'Makran',
+      'Swat',
+      'Dir',
+      'Chitral',
+      'Hunza',
+      'Nagar',
+      // Not a state: the province under the name it carried until 2010, smaller than Khyber
+      // Pakhtunkhwa by the three Malakand states, exactly as H3 draws it.
+      'North-West Frontier Province',
+    ]);
+    // And it is a complete partition of everything drawn, like every other variant (D6).
+    expect(h2().partition.universe).toBe('drawn');
+    expect(h2().partition.districts).toBe(ROSTER_DISTRICT_COUNT);
+  });
+
+  it('names Amb and Phulra as omitted, and says why rather than dropping them silently', () => {
+    // The app's standing refusal: what cannot be drawn from a source is named, never approximated.
+    // Both states acceded and neither is the size of a district, so drawing either would mean
+    // inventing a boundary inside a district this map draws whole.
+    const omission = h2().footnotes.filter((note) => note.kind === 'omission');
+    expect(omission).toHaveLength(1);
+    const text = omission[0]?.text ?? '';
+    expect(text).toMatch(/Amb/);
+    expect(text).toMatch(/Phulra/);
+    expect(text).toMatch(/smaller than any district/);
+    expect(text).toMatch(/Mansehra and Haripur/);
+  });
+
+  it('carries no population figure anywhere — not a unit, not a total, not a spread', () => {
+    // The ticket's hard rule, and the reason the variant needed one: 2023 figures describe none of
+    // the units drawn here. Asserted at all three places a figure could appear.
+    const variant = h2();
+    expect(variant.statistics.modernFigures).toBe(false);
+    expect(variant.scorecard.population).toBeNull();
+    expect(variant.scorecard.populationWithheld).toEqual({
+      kind: 'variant',
+      reason: expect.stringContaining('1947'),
+    });
+    for (const unit of variant.units) {
+      expect(unit.population, unit.name).toBeNull();
+    }
+    // The census-independent lines survive it: a variant that withheld its unit count as well
+    // would have nothing left to be judged on.
+    expect(variant.scorecard.units).toBe(17);
+    expect(variant.scorecard.districtsMoved.of).toBe(ROSTER_DISTRICT_COUNT);
+  });
+
+  it('is voided by its own judgement, not by a gap in the census', () => {
+    // The two absences the scorecard keeps apart. H2 withholds; it does not reach into ground PBS
+    // did not publish and come up short. The territories are still set aside by name, because that
+    // is true of them whatever this variant decides about figures.
+    const scorecard = h2().scorecard;
+    expect(scorecard.populationWithheld?.kind).toBe('variant');
+    expect(scorecard.outsideTheCensus.map((unit) => unit.name)).toEqual([
+      'Hunza',
+      'Nagar',
+      'Gilgit Agency and Baltistan',
+      'Azad Jammu & Kashmir',
+    ]);
+  });
+
+  it('dates itself, because its basis declares a rule for finding a date and not a date', () => {
+    // The Historical basis defers ("stated per variant, not shared"), so a variant here that stated
+    // nothing would print that deferral where a date belongs — which is what #32 caught for H1, H3
+    // and H4. H2's own date is the period the arrangement stood, not a day, because the accessions
+    // and the abolitions are both spread over years.
+    const vintage = h2().vintage ?? '';
+    expect(vintage).toMatch(/1947/);
+    expect(vintage).toMatch(/1955/);
+    expect(vintage).not.toBe(scenarios.provenance.vintage);
+    expect(vintage).not.toBe(scenarios.bases.historical.vintage);
+  });
+
+  it('shows when the states acceded, and cites the instruments that did it', () => {
+    // "Accession dates and sources are shown" — on the units, where a reader meets each state, and
+    // in the sources, which is where the claim is answerable.
+    const dated = h2().units.filter((unit) => /acceded/i.test(unit.note ?? ''));
+    expect(dated.map((unit) => unit.name)).toEqual([
+      'Bahawalpur',
+      'Khairpur',
+      'Kalat',
+      'Las Bela',
+      'Kharan',
+      'Makran',
+      'Swat',
+      'Dir',
+      'Chitral',
+      'Hunza',
+      'Nagar',
+    ]);
+    const sources = h2().sources.map((source) => source.label).join('\n');
+    expect(sources).toMatch(/Instruments of Accession/);
+    expect(sources).toMatch(/27 March 1948/);
+    expect(sources).toMatch(/Establishment of West Pakistan Act, 1955/);
+  });
+
+  it('prints both district counts where a post-census fold makes them differ', () => {
+    // Five states are stated in more districts than are drawn (ADR-0001), so the card owes both
+    // numbers and the fold that explains them — the same treatment South Punjab's 13-for-11 gets.
+    const folded = h2()
+      .units.filter((unit) => unit.claimed.length !== unit.districts.length)
+      .map((unit) => `${unit.name} ${unit.claimed.length}/${unit.districts.length}`);
+    expect(folded).toEqual([
+      'Kalat 4/3',
+      'Las Bela 2/1',
+      'Makran 4/3',
+      'Swat 4/3',
+      'Dir 3/2',
+    ]);
+    const footnote = h2().footnotes.find((note) => note.kind === 'district-count')?.text ?? '';
+    for (const fold of ['Wadh', 'Tump', 'Upper Swat', 'Central Dir', 'Hub']) {
+      expect(footnote, fold).toMatch(new RegExp(fold));
+    }
+  });
+
+  it('accounts for every district it calls moved, since almost none of it changes hands', () => {
+    // 59 of 156, and the card decomposes it because the bare figure reads as a redraw. The states
+    // are the only group that is really ground held by something other than a province; the rest
+    // is this map using the names of 1947, which the "moved" rule counts because it decides what
+    // carries a unit forward on the unit's name. The footnote states the four numbers, and they
+    // are checked here against the partition rather than against themselves.
+    const variant = h2();
+    const districtsOf = (name: string) =>
+      variant.units.find((unit) => unit.name === name)?.districts.length ?? 0;
+    const states = variant.units
+      .filter((unit) => unit.kind === 'proposed' && unit.name !== 'North-West Frontier Province')
+      .reduce((n, unit) => n + unit.districts.length, 0);
+    expect(states).toBe(22);
+    expect(districtsOf('North-West Frontier Province')).toBe(28);
+    expect(districtsOf('Gilgit Agency and Baltistan')).toBe(8);
+    expect(variant.scorecard.districtsMoved.count).toBe(states + 28 + 8 + 1);
+    expect(variant.scorecard.districtsMoved.count).toBe(59);
+
+    // Azad Jammu & Kashmir keeps its own name and its own ten districts, so it moves nothing —
+    // which is what makes the figure a statement about naming rather than about territory.
+    expect(
+      variant.scorecard.districtsMoved.byOrigin.find((o) => o.from === 'Azad Jammu & Kashmir'),
+    ).toBeUndefined();
+
+    const footnote = variant.footnotes.map((note) => note.text).join('\n');
+    for (const figure of ['59', '22', '28', '8']) {
+      expect(footnote, figure).toMatch(new RegExp(`\\b${figure}\\b`));
+    }
+  });
+
+  it('says that nobody proposes it, and is opposed anyway', () => {
+    // Like H1 and L7: a demarcation that existed is not a proposal, and an empty advocacy list
+    // would read as an oversight rather than as the fact it is. The opposition line is still
+    // required — without one the app reads as advocating whatever is on screen.
+    expect(h2().advocacy.kind).toBe('unadvocated');
+    expect(h2().opposedBy.length).toBeGreaterThan(1);
+    // The accession of Kalat is itself disputed, and drawing the state states a settlement.
+    expect(h2().opposedBy.join('\n')).toMatch(/Kalat/);
+  });
+
+  it('wires its collision with the Bahawalpur restoration both ways', () => {
+    // H2 draws Bahawalpur as the state it was; H4 argues for it as a province today. A collision
+    // only one card knows about reads as neutral from the other.
+    const pointsAt = (from: string, to: string) =>
+      (variants.find((v) => v.id === from) as EmittedVariant).notes.some((note) =>
+        (note.relatedVariants ?? []).includes(to),
+      );
+    expect(pointsAt('h2', 'h4'), 'h2 -> h4').toBe(true);
+    expect(pointsAt('h4', 'h2'), 'h4 -> h2').toBe(true);
+  });
+});
+
+/**
  * The dissolved unit outlines (#15), checked against the districts they were cut from.
  *
  * `unit-outlines.test.ts` holds the arithmetic on a topology of three squares. This is the same
@@ -1621,12 +1828,33 @@ describe('bundle contiguity flags', () => {
     );
   });
 
+  it('flags the one unit the shipped set actually leaves in two pieces, and refuses nothing', () => {
+    // H2 (#30) is the first variant in the app with a genuinely broken unit, and it is not a
+    // proposed one: with Kalat, Las Bela, Kharan and Makran drawn around it, Awaran touches no
+    // other district of the Balochistan it is left in. Flagged and drawn (D7) — there is no error
+    // path, because refusing to draw a claim is a stronger editorial act than drawing it with a
+    // note, and the note here names the district rather than reporting a count.
+    const h2 = variants.find((v) => v.id === 'h2') as EmittedVariant;
+    const broken = h2.units.filter((unit) => !unit.contiguity.contiguous);
+    expect(broken.map((unit) => unit.name)).toEqual(['Balochistan']);
+    expect(broken[0]?.contiguity.pieces).toBe(2);
+    expect(broken[0]?.contiguity.detached).toEqual([['Awaran']]);
+    expect(h2.counts['nonContiguousUnits']).toBe(1);
+
+    // And it is the only one in the whole set, so the flag is not decoration anywhere else.
+    const everywhere = variants.flatMap((variant) =>
+      variant.units
+        .filter((unit) => !unit.contiguity.contiguous)
+        .map((unit) => `${variant.id} ${unit.name}`),
+    );
+    expect(everywhere).toEqual(['h2 Balochistan']);
+  });
+
   it('flags a non-contiguous unit and refuses nothing, over the real map', () => {
-    // No variant proposes one yet, and contiguity is flagged and never blocked (D7), so the
-    // property is held over the shipped graph with two districts that share nothing: Lower Chitral
-    // on the Afghan border and Karachi South on the sea. There is no error path to exercise —
-    // that is the point. A `Contiguity` has no failure state; it reports two pieces and names the
-    // stranded one, and `outlineProblems` on the same pair is silent.
+    // The same property at the seam rather than in the artifact, on two districts that share
+    // nothing: Lower Chitral on the Afghan border and Karachi South on the sea. There is no error
+    // path to exercise — that is the point. A `Contiguity` has no failure state; it reports two
+    // pieces and names the stranded one, and `outlineProblems` on the same pair is silent.
     const apart = ['Lower Chitral', 'Karachi South'];
     const contiguity = contiguityOf(shipped, apart);
 
@@ -1680,6 +1908,19 @@ describe('bundle scorecard', () => {
     // reader to find which of its units the million is in.
     const wrong = variants.flatMap((variant) =>
       variant.units.flatMap((unit) => {
+        // A variant that withholds modern figures (H2, #30) carries none on its units either. The
+        // scorecard's voided spread is not enough on its own: a unit's own line is a second place a
+        // figure appears, and a 2023 population set against a princely state of 1947 is exactly the
+        // claim the variant exists to refuse. Asserted as `null` rather than merely tolerated, so
+        // that suppressing the spread while leaving the units populated fails here.
+        if (!variant.statistics.modernFigures) {
+          return unit.population === null
+            ? []
+            : [
+                `${variant.id} "${unit.name}" carries a population of ${unit.population} on a ` +
+                  `variant that withholds modern figures`,
+              ];
+        }
         const uncounted = unit.districts.filter((d) => !censusPopulations.has(d));
         if (uncounted.length > 0) {
           return unit.population === null

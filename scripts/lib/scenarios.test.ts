@@ -11,6 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import { CENSUS_DISTRICTS, ROSTER } from './roster.ts';
 import {
+  TERRITORY_CLAIM_POLICY,
   intactProvince,
   remainderOf,
   universeDistricts,
@@ -367,6 +368,76 @@ describe('a territory promoted, which is a change of standing and not a claim (#
     const { problems } = validateVariant(variantOf(around(unchanged)));
     expect(problems.join('\n')).toMatch(/Gilgit-Baltistan/);
     expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+  });
+});
+
+describe('a variant that carries no population at all, which has nothing to be short of (#30, H2)', () => {
+  /**
+   * The second narrowing of open item 2b, on the same reasoning as the first.
+   *
+   * `forbid` is answered for an arithmetic reason: a unit holding *some* AJK or GB districts has a
+   * population short by an unknowable amount and looks exactly like a unit whose population is
+   * right. A variant that publishes no population figure anywhere has no such unit — there is no
+   * figure to be short, so the refusal has nothing to protect.
+   */
+  const withheld = {
+    statistics: {
+      modernFigures: false as const,
+      reason: '1947 boundaries; 2023 census figures do not describe them.',
+    },
+  };
+
+  /** Two of Gilgit-Baltistan's ten, which is a claim on territory by every other measure. */
+  const hunzaAndNagar: Unit = {
+    id: 'hunza',
+    name: 'Hunza',
+    kind: 'proposed',
+    claims: ['Hunza', 'Nagar'],
+  };
+  const units = [
+    hunzaAndNagar,
+    ...everythingElse([]).filter((u) => u.id !== 'gilgit-baltistan'),
+    {
+      id: 'gilgit-agency',
+      name: 'Gilgit Agency',
+      kind: 'territory' as const,
+      claims: remainderOf('Gilgit-Baltistan', ['Hunza', 'Nagar']),
+    },
+  ];
+
+  it('admits the claim, because no figure on the card can be short by an unknowable amount', () => {
+    const { partition, problems } = validateVariant(variantOf(units, withheld));
+    expect(problems).toEqual([]);
+    expect(partition?.units.find((u) => u.id === 'hunza')?.districts).toEqual(['Hunza', 'Nagar']);
+  });
+
+  it('refuses the identical claim on a variant that does carry figures, naming the district', () => {
+    // The control, and the whole content of the carve-out: the units are the same units and only
+    // the variant's own statistics policy differs. Without this pair the exception could be
+    // written to fire on anything and both halves would still pass.
+    const { problems } = validateVariant(variantOf(units));
+    expect(problems.join('\n')).toMatch(/Hunza/);
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+    expect(problems.join('\n')).toMatch(/open product decision/);
+  });
+
+  it('refuses it where the withholding is asserted and not explained', () => {
+    // A variant may not buy the carve-out with a blank field. The reason is card copy — it is what
+    // the scorecard prints where the population lines would be — so a withholding nobody stated is
+    // not a withholding, and the claim is refused on top of the reason being missing.
+    const { problems } = validateVariant(
+      variantOf(units, { statistics: { modernFigures: false, reason: '   ' } }),
+    );
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+    expect(problems.join('\n')).toMatch(/reason/i);
+  });
+
+  it('is not a licence to hold territory quietly: `allow` and this are still different settings', () => {
+    // The carve-out turns on the variant, so it says nothing about a variant that carries figures —
+    // which is every other variant in the app. `forbid` is untouched, and the policy is still the
+    // one-line answer to 2b rather than something this exception has settled.
+    expect(TERRITORY_CLAIM_POLICY).toBe('forbid');
+    expect(validateVariant(variantOf(units), { territoryClaims: 'allow' }).problems).toEqual([]);
   });
 });
 

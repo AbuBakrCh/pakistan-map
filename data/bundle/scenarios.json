@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T11:45:11.169Z",
+    "generated": "2026-08-02T13:37:07.891Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -12,9 +12,9 @@
       "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums"
     },
     "counts": {
-      "variants": 15,
+      "variants": 16,
       "bases": 4,
-      "units": 149
+      "units": 166
     },
     "universes": {
       "drawn": 156,
@@ -27,7 +27,7 @@
     },
     "contiguity": {
       "from": "data/bundle/adjacency.json",
-      "nonContiguousUnits": 0,
+      "nonContiguousUnits": 1,
       "note": "Every unit carries a `contiguity` block, read off the district adjacency graph rather than off the shape it draws as. Contiguity is flagged, never blocked (D7): a unit in two pieces is a legitimate proposal — several real ones are — and refusing to draw a claim is a stronger editorial act than drawing it with a note. It is not the same number as the outline’s `polygons`, which counts shapes on paper and so counts islands: South Punjab is one piece and three polygons."
     },
     "scorecard": {
@@ -8680,7 +8680,16 @@
           "text": "Every one of the 136 districts the census covers changes hands in this variant, because not one of them stays inside a unit named after the province it is in today. That is the scheme working as it was designed to, not an artefact of how the figure is counted."
         }
       ],
-      "notes": [],
+      "notes": [
+        {
+          "label": "What it absorbed, and what came back",
+          "text": "The map One Unit replaced is H2: four provinces and eleven acceding princely states, every one of which this scheme merged into a single province. The map that replaced One Unit is H3, which restored the four provinces and not one of the states. Read in order the three are how Pakistan’s first-level geography got from many units to four.",
+          "relatedVariants": [
+            "h2",
+            "h3"
+          ]
+        }
+      ],
       "sources": [
         {
           "label": "Establishment of West Pakistan Act, 1955 — the four provinces, the princely states and the tribal areas of the western wing merged into one province with effect from 14 October 1955"
@@ -9186,6 +9195,926 @@
       ]
     },
     {
+      "id": "h2",
+      "basis": "historical",
+      "name": "Provinces and princely states",
+      "tagline": "1947–1955, before One Unit absorbed them all",
+      "badges": [
+        "documented"
+      ],
+      "vintage": "August 1947 to 14 October 1955 — the provinces and the acceding princely states as they stood before the Establishment of West Pakistan Act absorbed them",
+      "rationale": "The four provinces as they were at independence, with the princely states that acceded between August 1947 and March 1948 drawn as the self-governing units they then were. It is the oldest map in this app and the only one that predates every proposal in it: eleven of the units here were states with their own rulers, and all of them were gone by 1969. What it shows is that a Pakistan of many small units is not a novel idea being argued for — it is the arrangement the country started with and then dismantled.",
+      "status": "Historical, and abolished in stages rather than at once. The Balochistan States Union — Kalat, Las Bela, Kharan and Makran — was formed in 1952 and merged into West Pakistan by the Establishment of West Pakistan Act, 1955, which absorbed Bahawalpur and Khairpur at the same time. Swat, Dir and Chitral kept their internal self-government longest and were merged into the North-West Frontier Province in 1969. None was restored when West Pakistan was dissolved in 1970, and no state has had its separate status returned since.",
+      "advocacy": {
+        "kind": "unadvocated",
+        "note": "Nobody proposes restoring the princely states. This is drawn as a demarcation that existed, not as a proposal — the app carries it because it is the arrangement every later map in this file departed from, and because one piece of it is still argued for: Bahawalpur’s restoration is a live claim, and H4 draws that claim on its own terms rather than as a fragment of this one."
+      },
+      "opposedBy": [
+        "anyone for whom hereditary states are not a constitutional arrangement to return to — the states were merged into the provinces between 1955 and 1969, and no party proposes restoring the rulers whose self-government is what this map draws",
+        "Baloch nationalist opinion, for which the accession of Kalat in March 1948 is itself disputed: drawing the state inside Pakistan states a settlement that opinion does not accept, and the map cannot draw the state without also drawing that"
+      ],
+      "composition": {
+        "kind": "transcribed",
+        "from": "the Instruments of Accession of 1947 and 1948 and the states as they stood until One Unit, expressed in the 2023 districts covering their territory"
+      },
+      "footnotes": [
+        {
+          "kind": "omission",
+          "text": "Amb and Phulra are omitted. Both acceded in 1947 and both were smaller than any district this map draws — Amb straddled the Indus around Darband and Phulra was smaller still, and their territory is today inside Mansehra and Haripur. Drawing either would mean inventing a boundary inside a district drawn whole, which is the one thing this app does not do. They are named here instead, and the ground they covered is inside North-West Frontier Province on this map."
+        },
+        {
+          "kind": "district-count",
+          "text": "Five of the states are stated in more districts than are drawn, because five districts created after the 2023 census fold back into the districts that carry them (ADR-0001): Wadh inside Khuzdar and Tump inside Kech, both notified in 2026; Upper Swat inside Swat; Central Dir inside Lower Dir; and Hub inside Lasbela. Nothing is lost — the same ground is drawn either way — but the counts differ, and both are printed rather than either alone."
+        },
+        {
+          "kind": "note",
+          "text": "Kalat is drawn approximately, and it is the largest approximation on this map. The state at its greatest extent covered Mastung and Awaran as well, and claimed Las Bela, Kharan and Makran as its vassals — the three acceded to Pakistan separately in March 1948, which Kalat disputed. Drawn here are the four districts of its core territory; Mastung and Awaran are inside Balochistan, and the three other states are drawn as themselves. That is what leaves Balochistan in two pieces on this map: with Kalat, Las Bela, Kharan and Makran drawn around it, Awaran touches no other district of the province it is in. The scorecard reports it rather than the map hiding it, and the stranding is this approximation’s doing rather than the 1947 arrangement’s."
+        },
+        {
+          "kind": "note",
+          "text": "Swat is drawn approximately. The state’s northern edge ran through what is now Upper Swat and into the Kalam valley, and its eastern boundary with the Kohistan districts was never a district line. What is drawn is Swat, Shangla and Buner, which is the closest the 2023 district set comes to it."
+        },
+        {
+          "kind": "note",
+          "text": "Gwadar is drawn inside Makran, and for part of this period it was not Pakistani at all. Gwadar town and its coastal strip were an exclave of Oman until Pakistan purchased them on 8 September 1958 — after this map ends. The rest of what is now Gwadar district was Makran State’s, and the district cannot be split without inventing the boundary between the two, so the whole of it is drawn here and the exception is stated."
+        },
+        {
+          "kind": "note",
+          "text": "The tribal agencies are drawn inside North-West Frontier Province, which they were not. Throughout this period they were federally administered and outside the province altogether — the arrangement H3 draws for 1970, where they are a unit of their own. They are not separated here because this map’s subject is the princely states, and drawing a third tier of federally administered ground would put two different arguments on one picture."
+        },
+        {
+          "kind": "note",
+          "text": "Baltistan is drawn with the Gilgit Agency, which is right for most of this period and not for its start. Baltistan was part of the Ladakh wazarat of Jammu and Kashmir until 1948 and was administered with Gilgit afterwards, as the Northern Areas. Hunza and Nagar are drawn out of the Agency as the states they were until 1974."
+        },
+        {
+          "kind": "note",
+          "text": "The districts-moved figure reads 59, and it is made of four things rather than one: the 22 districts drawn as princely states, the 28 of North-West Frontier Province, which is Khyber Pakhtunkhwa under the name it carried until 2010, the 8 left in the Gilgit Agency once Hunza and Nagar are drawn out of it, and Islamabad. Only the first group is ground held by something other than a province; the rest is this map using the names of 1947, because what carries a first-level unit forward is decided on its name. Azad Jammu & Kashmir keeps its name here and so counts as moving nothing at all."
+        }
+      ],
+      "notes": [
+        {
+          "label": "Collision with the Bahawalpur restoration and the southern-province claims",
+          "text": "Bahawalpur is drawn here as the state it was until 1955, and H4 draws the same three districts as the province its restoration movement is asking for — the difference being that H4 is a live claim about today and this is a record of what existed. The same three districts are the eastern third of every southern-province reading in the app, whose advocates would fold them into one Seraiki province instead. The app draws one variant at a time and never a compromise between two claims (D8).",
+          "relatedVariants": [
+            "h4",
+            "l1",
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "label": "What One Unit absorbed, and what 1970 did not restore",
+          "text": "Every unit on this map west of India was merged into the single province of West Pakistan in 1955, which H1 draws. When West Pakistan was dissolved in 1970 the four provinces came back and not one of the states did, which is the map H3 draws. Read in order the three are the whole of how Pakistan’s first-level geography got from many units to four.",
+          "relatedVariants": [
+            "h1",
+            "h3"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "label": "Instruments of Accession of the acceding states, 1947–1948 — Bahawalpur and Khairpur (October 1947), Swat, Dir, Chitral, Hunza and Nagar (November 1947), Las Bela, Kharan and Makran (March 1948) and Kalat (27 March 1948), each retaining internal self-government"
+        },
+        {
+          "label": "Balochistan States Union, 1952 — Kalat, Las Bela, Kharan and Makran federated into one unit before its merger into West Pakistan"
+        },
+        {
+          "label": "Establishment of West Pakistan Act, 1955 — the provinces, the states and the tribal areas of the western wing merged into one province with effect from 14 October 1955, which is where this map ends"
+        },
+        {
+          "label": "Dir, Swat and Chitral (Merger) Regulation, 1969 — the three Malakand states merged into the North-West Frontier Province, the last of the accessions on this map to lose its separate status"
+        },
+        {
+          "label": "Gwadar — transferred from Oman to Pakistan on 8 September 1958, after the period this map draws, which is why the footnote states it rather than the boundary showing it"
+        },
+        {
+          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+        },
+        {
+          "label": "data/reference/post-census-district-folds.json — Wadh, Tump, Upper Swat, Central Dir and Hub, each created after the census and folded into its 2023 parent under ADR-0001"
+        }
+      ],
+      "statistics": {
+        "modernFigures": false,
+        "reason": "This map is the boundaries of 1947 to 1955. The 2023 census counted people inside districts that did not exist then, in states that had been abolished for sixty-eight years, so its figures describe none of the units drawn here. No population figure is given anywhere on this variant — not for a state, not for a province, and not as a total."
+      },
+      "partition": {
+        "universe": "drawn",
+        "districts": 156,
+        "claimed": 161
+      },
+      "counts": {
+        "units": 17,
+        "proposedUnits": 12,
+        "claimedDistricts": 55,
+        "drawnDistricts": 50,
+        "nonContiguousUnits": 1
+      },
+      "scorecard": {
+        "units": 17,
+        "proposedUnits": 12,
+        "districtsMoved": {
+          "count": 59,
+          "of": 156,
+          "byOrigin": [
+            {
+              "from": "Khyber Pakhtunkhwa",
+              "districts": 35
+            },
+            {
+              "from": "Gilgit-Baltistan",
+              "districts": 10
+            },
+            {
+              "from": "Balochistan",
+              "districts": 9
+            },
+            {
+              "from": "Punjab",
+              "districts": 3
+            },
+            {
+              "from": "Islamabad Capital Territory",
+              "districts": 1
+            },
+            {
+              "from": "Sindh",
+              "districts": 1
+            }
+          ]
+        },
+        "population": null,
+        "populationWithheld": {
+          "kind": "variant",
+          "reason": "This map is the boundaries of 1947 to 1955. The 2023 census counted people inside districts that did not exist then, in states that had been abolished for sixty-eight years, so its figures describe none of the units drawn here. No population figure is given anywhere on this variant — not for a state, not for a province, and not as a total."
+        },
+        "outsideTheCensus": [
+          {
+            "unit": "hunza-state",
+            "name": "Hunza",
+            "districts": [
+              "Hunza"
+            ]
+          },
+          {
+            "unit": "nagar-state",
+            "name": "Nagar",
+            "districts": [
+              "Nagar"
+            ]
+          },
+          {
+            "unit": "gilgit-agency",
+            "name": "Gilgit Agency and Baltistan",
+            "districts": [
+              "Gilgit",
+              "Ghizer",
+              "Skardu",
+              "Kharmaung",
+              "Shigar",
+              "Ghanche",
+              "Astore",
+              "Diamir"
+            ]
+          },
+          {
+            "unit": "azad-jammu-kashmir",
+            "name": "Azad Jammu & Kashmir",
+            "districts": [
+              "Hattian Bala",
+              "Muzaffarabad",
+              "Neelum",
+              "Bagh",
+              "Haveli",
+              "Sudhnoti",
+              "Poonch",
+              "Bhimber",
+              "Mirpur",
+              "Kotli"
+            ]
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "bahawalpur-state",
+          "name": "Bahawalpur",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded October 1947, retaining internal self-government. The one state on this map whose restoration is still argued for — H4 draws that claim on today’s boundaries.",
+          "claimed": [
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan"
+          ],
+          "districts": [
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "khairpur-state",
+          "name": "Khairpur",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded October 1947. Its territory is one district of Sindh today, unchanged since.",
+          "claimed": [
+            "Khairpur"
+          ],
+          "districts": [
+            "Khairpur"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "kalat-state",
+          "name": "Kalat",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded 27 March 1948, the last and the most disputed of the accessions on this map. Drawn approximately — see the footnote.",
+          "claimed": [
+            "Kalat",
+            "Khuzdar",
+            "Wadh",
+            "Surab"
+          ],
+          "districts": [
+            "Kalat",
+            "Khuzdar",
+            "Surab"
+          ],
+          "folded": [
+            {
+              "from": "Wadh",
+              "into": "Khuzdar"
+            }
+          ],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "las-bela-state",
+          "name": "Las Bela",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded March 1948. Hub was carved out of Lasbela in 2022 and folds back into it here.",
+          "claimed": [
+            "Lasbela",
+            "Hub"
+          ],
+          "districts": [
+            "Lasbela"
+          ],
+          "folded": [
+            {
+              "from": "Hub",
+              "into": "Lasbela"
+            }
+          ],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "kharan-state",
+          "name": "Kharan",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded March 1948.",
+          "claimed": [
+            "Kharan",
+            "Washuk"
+          ],
+          "districts": [
+            "Kharan",
+            "Washuk"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "makran-state",
+          "name": "Makran",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded March 1948. Gwadar town and its coastal strip were not part of it — see the footnote on Oman.",
+          "claimed": [
+            "Kech",
+            "Gwadar",
+            "Panjgur",
+            "Tump"
+          ],
+          "districts": [
+            "Kech",
+            "Gwadar",
+            "Panjgur"
+          ],
+          "folded": [
+            {
+              "from": "Tump",
+              "into": "Kech"
+            }
+          ],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "swat-state",
+          "name": "Swat",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded November 1947. Drawn approximately — see the footnote.",
+          "claimed": [
+            "Swat",
+            "Upper Swat",
+            "Shangla",
+            "Buner"
+          ],
+          "districts": [
+            "Swat",
+            "Shangla",
+            "Buner"
+          ],
+          "folded": [
+            {
+              "from": "Upper Swat",
+              "into": "Swat"
+            }
+          ],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "dir-state",
+          "name": "Dir",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded November 1947.",
+          "claimed": [
+            "Lower Dir",
+            "Upper Dir",
+            "Central Dir"
+          ],
+          "districts": [
+            "Lower Dir",
+            "Upper Dir"
+          ],
+          "folded": [
+            {
+              "from": "Central Dir",
+              "into": "Lower Dir"
+            }
+          ],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "chitral-state",
+          "name": "Chitral",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded 1947. Its territory is the two Chitral districts today, unchanged since.",
+          "claimed": [
+            "Upper Chitral",
+            "Lower Chitral"
+          ],
+          "districts": [
+            "Upper Chitral",
+            "Lower Chitral"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "hunza-state",
+          "name": "Hunza",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded November 1947, after the Gilgit Agency passed to Pakistan. A district of Gilgit-Baltistan today, which is why this variant needed open item 2b narrowing.",
+          "claimed": [
+            "Hunza"
+          ],
+          "districts": [
+            "Hunza"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Hunza"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "nagar-state",
+          "name": "Nagar",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "Acceded November 1947, alongside Hunza across the river from it.",
+          "claimed": [
+            "Nagar"
+          ],
+          "districts": [
+            "Nagar"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Nagar"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "nwfp",
+          "name": "North-West Frontier Province",
+          "alsoKnownAs": [
+            "NWFP"
+          ],
+          "kind": "proposed",
+          "note": "Renamed Khyber Pakhtunkhwa by the 18th Amendment in 2010. Smaller here than today by the three Malakand states, which it absorbed in 1969.",
+          "claimed": [
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "districts": [
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "punjab",
+          "name": "Punjab",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": "Smaller than today’s Punjab by Bahawalpur, and larger by the ground Islamabad Capital Territory now covers, which was part of Rawalpindi district until 1960.",
+          "claimed": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan",
+            "Vehari",
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Dera Ghazi Khan",
+            "Rajanpur",
+            "Layyah",
+            "Muzaffargarh",
+            "Islamabad"
+          ],
+          "districts": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan",
+            "Vehari",
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Dera Ghazi Khan",
+            "Rajanpur",
+            "Layyah",
+            "Muzaffargarh",
+            "Islamabad"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "sindh",
+          "name": "Sindh",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": "Smaller than today’s Sindh by Khairpur.",
+          "claimed": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "districts": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "balochistan",
+          "name": "Balochistan",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": "The Chief Commissioner’s Province — British Balochistan — without the four states beside it, which were separately governed and from 1952 formed the Balochistan States Union.",
+          "claimed": [
+            "Quetta",
+            "Pishin",
+            "Killa Abdullah",
+            "Chaman",
+            "Chagai",
+            "Nushki",
+            "Loralai",
+            "Duki",
+            "Barkhan",
+            "Musa Khel",
+            "Killa Saifullah",
+            "Zhob",
+            "Sherani",
+            "Sibi",
+            "Harnai",
+            "Ziarat",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Mastung",
+            "Awaran"
+          ],
+          "districts": [
+            "Quetta",
+            "Pishin",
+            "Killa Abdullah",
+            "Chaman",
+            "Chagai",
+            "Nushki",
+            "Loralai",
+            "Duki",
+            "Barkhan",
+            "Musa Khel",
+            "Killa Saifullah",
+            "Zhob",
+            "Sherani",
+            "Sibi",
+            "Harnai",
+            "Ziarat",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Mastung",
+            "Awaran"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": false,
+            "pieces": 2,
+            "detached": [
+              [
+                "Awaran"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "gilgit-agency",
+          "name": "Gilgit Agency and Baltistan",
+          "alsoKnownAs": [
+            "Northern Areas",
+            "Gilgit-Baltistan"
+          ],
+          "kind": "territory",
+          "note": "Administered directly by the federal government throughout, as the Northern Areas were until 2009. Hunza and Nagar are drawn out of it as the states they were.",
+          "claimed": [
+            "Gilgit",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "districts": [
+            "Gilgit",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Gilgit",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "azad-jammu-kashmir",
+          "name": "Azad Jammu & Kashmir",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "districts": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        }
+      ]
+    },
+    {
       "id": "h3",
       "basis": "historical",
       "name": "1970 restoration",
@@ -9222,7 +10151,16 @@
           "text": "The Northern Areas and Gilgit-Baltistan are the same ground under two names, so this variant draws the territory exactly where the current map draws it. It is still a territory here and not a province — nothing in this app calls it one, on any variant."
         }
       ],
-      "notes": [],
+      "notes": [
+        {
+          "label": "What was not restored",
+          "text": "The four provinces came back in 1970 and none of the eleven princely states did. H2 draws the map they were part of, and H1 draws the scheme that abolished them — so the difference between this variant and H2 is not the dissolution of One Unit but everything the states lost and never got back.",
+          "relatedVariants": [
+            "h1",
+            "h2"
+          ]
+        }
+      ],
       "sources": [
         {
           "label": "The Province of West Pakistan (Dissolution) Order, 1970 — the four provinces restored with effect from 1 July 1970"
@@ -9867,6 +10805,13 @@
             "l1",
             "l2",
             "l3"
+          ]
+        },
+        {
+          "label": "The state this restores",
+          "text": "H2 draws Bahawalpur as the acceding state it was until 1955, alongside the ten other states of that period. This variant is the live claim rather than the record: it argues for the same three districts as a province of Pakistan today, on the strength of what the state was, and it is the only piece of the 1947 map that anybody is still asking for.",
+          "relatedVariants": [
+            "h2"
           ]
         }
       ],

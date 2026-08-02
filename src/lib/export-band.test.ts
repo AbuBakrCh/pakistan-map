@@ -172,12 +172,17 @@ describe('the vintage, and whether there is one to print at all', () => {
    * of them carries the basis's deferral — "the date of each demarcation, 1947 onward, stated per
    * variant, not shared", which is the rule for finding a date and not a date.
    */
-  it('prints each Historical variant’s own demarcation date — H1, H3 and H4', () => {
+  it('prints each Historical variant’s own demarcation date — H1 to H4', () => {
     const deferral = bundle.bases['historical'].vintage;
     expect(deferral).not.toBe(projectVintage);
 
     for (const [id, year] of [
       ['h1', '1955'],
+      // H2 (#30) is the oldest map in the app and the one whose date is a period rather than a
+      // day: the accessions run to March 1948 and the abolitions from 1955, so the band prints the
+      // span. A variant that stated none would print the deferral, which is the failure this whole
+      // block exists to catch.
+      ['h2', '1947'],
       ['h3', '1970'],
       ['h4', '2023'],
     ] as const) {

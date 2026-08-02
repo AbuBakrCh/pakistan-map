@@ -475,6 +475,25 @@ describe('variantCard — the scorecard (#20)', () => {
     expect(reaching.scorecard.withheld).toContain('short by an unknown amount');
   });
 
+  it('tells a withheld unit figure apart from a census gap, on the one variant that has both', () => {
+    // H2 (#30) is where the two absences meet, and where wording them the same would be a lie.
+    // Punjab has a 2023 population and this variant declines to print it; Azad Jammu & Kashmir has
+    // none to print. Both units carry `null`, so a card reading only that field would say the
+    // census does not cover Punjab.
+    const h2 = variantCard(bundle, variantNamed('h2'));
+    const punjab = h2.units.find((unit) => unit.id === 'punjab')?.population ?? '';
+    const ajk = h2.units.find((unit) => unit.id === 'azad-jammu-kashmir')?.population ?? '';
+    expect(punjab).not.toMatch(/census does not cover/);
+    expect(punjab).toMatch(/withholds|1947|does not attach/i);
+    expect(ajk).toMatch(/census does not cover/);
+    expect(punjab).not.toBe(ajk);
+    // And no figure anywhere on it, which is the ticket's hard rule.
+    for (const unit of h2.units) {
+      expect(unit.population, unit.name).toBeTruthy();
+      expect(unit.population, unit.name).not.toMatch(/[0-9],[0-9]{3}/);
+    }
+  });
+
   it('says a unit’s population, or says why it has none — never a zero and never a blank', () => {
     expect(card.units.find((unit) => unit.id === 'south-punjab')?.population).toBe(
       '40,377,576 people',
