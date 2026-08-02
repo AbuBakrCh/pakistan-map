@@ -79,6 +79,12 @@ export interface ResolvedSeats {
    * a province whose capital is not major.
    */
   readonly missing: string[];
+  /**
+   * Units whose seat node is in the cache but carries no English name, with the node id to go and
+   * look at. Reported apart from `missing` because the two are different upstream events with
+   * different fixes — see `resolveSeats`. Both still fail the build; only the sentence differs.
+   */
+  readonly unnamed: { unit: string; node: number }[];
 }
 
 /**
@@ -99,6 +105,7 @@ export function resolveSeats(
   const byCode = new Map(units.map((unit) => [unit.code, unit]));
   const seats: Seat[] = [];
   const found = new Set<string>();
+  const unnamed: { unit: string; node: number }[] = [];
 
   for (const relation of relations) {
     const code = relation.iso === undefined ? undefined : FIRST_LEVEL_CODES[relation.iso];
@@ -110,7 +117,15 @@ export function resolveSeats(
       (candidate) => candidate.type === 'node' && candidate.role === 'admin_centre',
     );
     const node = member?.ref === undefined ? undefined : byId.get(member.ref);
-    if (node === undefined || node.name === '') continue;
+    if (node === undefined) continue;
+    // Two different upstream events, kept apart because they call for different work. No node at
+    // all means the relation does not name its seat and the query has to change; a node with no
+    // English name means OSM has the seat but not in the language this app displays, and the fix
+    // is an alias. Folding them together would send a maintainer to read the wrong file.
+    if (node.name === '') {
+      unnamed.push({ unit: unit.name, node: node.id });
+      continue;
+    }
 
     found.add(unit.name);
     seats.push({
@@ -125,6 +140,9 @@ export function resolveSeats(
   return {
     // Sorted by name so the artifact does not reshuffle with whatever order Overpass replied in.
     seats: seats.sort((a, b) => a.name.localeCompare(b.name)),
-    missing: units.filter((unit) => !found.has(unit.name)).map((unit) => unit.name),
+    missing: units
+      .filter((unit) => !found.has(unit.name) && !unnamed.some((u) => u.unit === unit.name))
+      .map((unit) => unit.name),
+    unnamed,
   };
 }

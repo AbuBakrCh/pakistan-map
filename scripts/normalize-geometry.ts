@@ -45,6 +45,7 @@ import {
   provinceOf,
 } from './lib/roster.ts';
 import { type Position, assemblePolygons } from './lib/rings.ts';
+import { thresholdFor } from './lib/simplify.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const RAW_DIR = resolve(ROOT, 'data/raw');
@@ -833,16 +834,5 @@ function main(): void {
   );
 }
 
-/** Pick the simplification threshold that retains `fraction` of the topology's points. */
-function thresholdFor(topo: unknown, fraction: number): number {
-  const weights: number[] = [];
-  for (const arc of (topo as { arcs: [number, number, number?][][] }).arcs) {
-    for (const point of arc) if (point[2] !== undefined) weights.push(point[2]);
-  }
-  if (weights.length === 0) return 0;
-  weights.sort((a, b) => a - b);
-  const index = Math.floor((1 - fraction) * (weights.length - 1));
-  return weights[index] ?? 0;
-}
 
 main();

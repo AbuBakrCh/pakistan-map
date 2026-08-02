@@ -232,7 +232,13 @@ function renderColophon(active: Selection, variant: VariantRecord | null): void 
  */
 function durandFootnote(): string {
   const note = boundaryNote(contextProvenance, 'AF');
-  return note === null ? '' : `<p><strong>Durand Line</strong> ${note}</p>`;
+  if (note === null) return '';
+  // The badge and the source ride with the prose. A footnote making historical assertions in the
+  // app's own voice is the last place an unsourced claim should be able to hide.
+  return (
+    `<p><strong>Durand Line</strong> <span class="badge">${note.badge}</span> ${note.text} ` +
+    `<span class="source">${note.source}</span></p>`
+  );
 }
 
 /**

@@ -116,17 +116,34 @@ describe('the Durand Line footnote', () => {
   });
 
   it('says the boundary is the Durand Line and that Afghanistan has never recognised it', () => {
-    expect(note).toMatch(/Durand Line/);
-    expect(note).toMatch(/1893/);
-    expect(note).toMatch(/No Afghan government has recognised it/);
+    expect(note?.text).toMatch(/Durand Line/);
+    expect(note?.text).toMatch(/1893/);
+    expect(note?.text).toMatch(/No Afghan government has recognised it/);
   });
 
   it('says it is drawn as an ordinary boundary, not dashed', () => {
     // The distinction D12 exists to protect: the dash means *ceasefire line*, and there is one of
     // those on this map. A footnote that did not say which line it is talking about would leave a
     // reader to infer that a disputed boundary and a ceasefire line are the same kind of thing.
-    expect(note).toMatch(/not dashed/);
-    expect(note).toMatch(/Line of Control/);
+    expect(note?.text).toMatch(/not dashed/);
+    expect(note?.text).toMatch(/Line of Control/);
+  });
+
+  it('cites the documents it argues from, and is badged for the kind of claim it is', () => {
+    // The assertions above only check the app says what it means to say — quoting a sentence back
+    // at itself proves nothing about whether it is true. What can be checked is that the claim is
+    // traceable: every date the note asserts as fact appears in a source line beside it, and the
+    // note wears a badge from the closed vocabulary. That is the working agreement's actual
+    // requirement — not that the prose be right, but that a reader be able to go and check it.
+    expect(note?.badge).toBe('documented');
+    expect(note?.source).toMatch(/1893/);
+    expect(note?.source).toMatch(/1949/);
+    // Every year the prose states as fact is a year the source accounts for.
+    const claimed = new Set(note?.text.match(/\b1[89]\d{2}\b/g) ?? []);
+    const cited = new Set(note?.source.match(/\b1[89]\d{2}\b/g) ?? []);
+    // 1947 is Pakistan's inheritance of the line, not a document the note argues from.
+    claimed.delete('1947');
+    expect([...claimed].filter((year) => !cited.has(year))).toEqual([]);
   });
 
   it('is the only boundary note, because it is the only ordinary boundary in dispute', () => {

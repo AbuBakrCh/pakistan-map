@@ -64,12 +64,18 @@ describe('resolveSeats', () => {
   });
 
   it('refuses an admin_centre with no English name rather than drawing an unnamed dot', () => {
-    const { missing } = resolveSeats(
+    // And says which of the two things went wrong. A seat the cache does not hold and a seat it
+    // holds under an Urdu name are different upstream events with different fixes — the first is
+    // a query to change, the second an alias to add — so they are reported apart and the node id
+    // comes with the second, because the fix starts by going and looking at it. Reported as
+    // "missing", a maintainer would go hunting for a relation that is in fact right there.
+    const { missing, unnamed } = resolveSeats(
       [relation('PK-PB', 1)],
       [{ id: 1, lat: 31.5656, lon: 74.3142, name: '' }],
       UNITS,
     );
-    expect(missing).toContain('Punjab');
+    expect(unnamed).toEqual([{ unit: 'Punjab', node: 1 }]);
+    expect(missing).not.toContain('Punjab');
   });
 
   it('ignores the strays the area query brings back, without reporting them', () => {

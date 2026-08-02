@@ -43,13 +43,27 @@ export type Cities = FeatureCollection<Point, CityProperties>;
  * note is in the geography bundle: the caveat travels with the geometry, so it cannot be lost
  * while the line it qualifies is still on screen.
  */
+/**
+ * A footnote a drawn boundary carries, with the provenance every surface in this app carries.
+ *
+ * Declared here rather than imported from `scripts/lib/neighbours.ts`: the runtime reads the
+ * committed bundle and never reaches into the build, so the two halves agree by the artifact
+ * between them. `badge` is the closed vocabulary's `documented` — the note asserts only dated
+ * documents, which is the same ground the Historical basis stands on.
+ */
+export interface BoundaryNote {
+  readonly text: string;
+  readonly source: string;
+  readonly badge: 'documented';
+}
+
 export interface ContextProvenance {
   readonly sources: Readonly<Record<string, string>>;
   readonly neighbours: {
     readonly method: string;
     readonly kashmir: string;
     readonly countries: readonly NeighbourProperties[];
-    readonly boundaryNotes: Readonly<Record<string, string>>;
+    readonly boundaryNotes: Readonly<Record<string, BoundaryNote>>;
   };
   readonly cities: {
     readonly criterion: string;
@@ -92,7 +106,9 @@ function read<P, G extends Geometry>(topology: Topology, object: string): Featur
  * words, under the map.
  *
  * Returned by ISO code rather than by country name so the call site cannot drift onto a spelling.
+ * The note arrives with its source and its badge attached rather than as bare prose, because a
+ * footnote is a surface and this app sources every surface it draws.
  */
-export function boundaryNote(provenance: ContextProvenance, iso: string): string | null {
+export function boundaryNote(provenance: ContextProvenance, iso: string): BoundaryNote | null {
   return provenance.neighbours.boundaryNotes[iso] ?? null;
 }

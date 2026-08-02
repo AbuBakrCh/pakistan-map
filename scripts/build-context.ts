@@ -30,6 +30,7 @@ import {
   silhouetteOf,
 } from './lib/neighbours.ts';
 import { ROSTER } from './lib/roster.ts';
+import { thresholdFor } from './lib/simplify.ts';
 import { type FirstLevelRelation, type SeatNode, resolveSeats } from './lib/seats.ts';
 import type { Position } from './lib/rings.ts';
 
@@ -170,7 +171,7 @@ function main(): void {
       name: element.tags?.['name:en'] ?? '',
     }));
 
-  const { seats, missing } = resolveSeats(
+  const { seats, missing, unnamed } = resolveSeats(
     relations,
     nodes,
     ROSTER.map((province) => ({ code: province.code, name: province.name, kind: province.kind })),
@@ -180,6 +181,14 @@ function main(): void {
       `${missing.length} first-level unit(s) have no admin_centre node in the cache: ` +
         `${missing.join(', ')}. The seven seats are the whole of the city set, so one absent is ` +
         `a province with no dot on it — which looks like a province whose capital is not major.`,
+    );
+  }
+  if (unnamed.length > 0) {
+    fail(
+      `${unnamed.length} first-level unit(s) name an admin_centre the cache holds but which ` +
+        `carries no English name: ${unnamed.map((u) => `${u.unit} (node ${u.node})`).join(', ')}. ` +
+        `The seat is there and the query is right — OSM's primary name on it is not English, the ` +
+        `way it is not on the AJK districts. That is an alias to add, not a query to change.`,
     );
   }
 
@@ -277,16 +286,5 @@ function main(): void {
   );
 }
 
-/** Pick the simplification threshold that retains `fraction` of the topology's points. */
-function thresholdFor(topo: unknown, fraction: number): number {
-  const weights: number[] = [];
-  for (const arc of (topo as { arcs: [number, number, number?][][] }).arcs) {
-    for (const point of arc) if (point[2] !== undefined) weights.push(point[2]);
-  }
-  if (weights.length === 0) return 0;
-  weights.sort((a, b) => a - b);
-  const index = Math.floor((1 - fraction) * (weights.length - 1));
-  return weights[index] ?? 0;
-}
 
 main();

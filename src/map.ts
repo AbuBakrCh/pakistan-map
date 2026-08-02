@@ -404,6 +404,13 @@ export function renderMap(
     );
     // Never over another name; preferably not over drawn land either. Ground is asked of the
     // geography rather than of the DOM, and both are asked only until a candidate answers.
+    //
+    // "Clear paper" has to mean paper, not merely ground outside Pakistan. Until #8 the far side
+    // of the ceasefire line was blank, so the two were the same question and asking only about
+    // the provinces answered it. Now India is drawn there, and a placement scored as clear would
+    // in fact be sitting on a silhouette — the top-ranked spot would be the one over foreign
+    // ground rather than the one over none. Both sides are asked, so the ordering means again
+    // what CLAUDE.md says it means.
     const form = (text: string) => ({
       text,
       permits: (candidate: PlacedLineLabel) =>
@@ -413,7 +420,8 @@ export function renderMap(
         return (
           ground === undefined ||
           ground === null ||
-          !geoContains(geography.provinces as never, ground)
+          (!geoContains(geography.provinces as never, ground) &&
+            !geoContains(silhouettes as never, ground))
         );
       },
     });

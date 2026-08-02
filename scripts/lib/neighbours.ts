@@ -102,17 +102,36 @@ export const NEIGHBOURS: readonly NeighbourSpec[] = [
  * here would say the two are the same kind of line, which they are not. What the disagreement
  * costs instead is a footnote, carried with the silhouette of the country that makes it rather
  * than typed into the renderer, so the note cannot be lost while the line is still on screen.
+ *
+ * A footnote is a surface, so it is sourced and badged like every other one. Everything the note
+ * asserts as fact is a dated document — the 1893 agreement and the 1949 Loya Jirga resolution —
+ * which is what `documented` means in this app's vocabulary and the badge the Historical basis
+ * already wears. Without it the one paragraph of prose the map states in its own voice would be
+ * the only claim in the bundle a reader could not trace, which is precisely the failure the
+ * working agreement names.
  */
-export const BOUNDARY_NOTES: Readonly<Record<string, string>> = {
-  AF:
-    'The Pakistan–Afghanistan boundary is the Durand Line, agreed between the Government of ' +
-    'India and Amir Abdur Rahman Khan in 1893 and inherited by Pakistan in 1947. No Afghan ' +
-    'government has recognised it: the Loya Jirga of 1949 declared the 1893 agreement void, and ' +
-    'no administration since has accepted it as an international border. It is drawn here as an ' +
-    'ordinary boundary and not dashed — the dash belongs to the Line of Control, which is a ' +
-    'ceasefire line, and using it for a disputed international boundary would say the two are ' +
-    'the same kind of line. Pakistan administers up to it and it is the limit of every figure in ' +
-    'this app; the dispute is over its standing, not over where it runs.',
+export interface BoundaryNote {
+  readonly text: string;
+  readonly source: string;
+  readonly badge: 'documented';
+}
+
+export const BOUNDARY_NOTES: Readonly<Record<string, BoundaryNote>> = {
+  AF: {
+    text:
+      'The Pakistan–Afghanistan boundary is the Durand Line, agreed between the Government of ' +
+      'India and Amir Abdur Rahman Khan in 1893 and inherited by Pakistan in 1947. No Afghan ' +
+      'government has recognised it: the Loya Jirga of 1949 declared the 1893 agreement void, ' +
+      'and no administration since has accepted it as an international border. It is drawn here ' +
+      'as an ordinary boundary and not dashed — the dash belongs to the Line of Control, which ' +
+      'is a ceasefire line, and using it for a disputed international boundary would say the ' +
+      'two are the same kind of line. Pakistan administers up to it and it is the limit of ' +
+      'every figure in this app; the dispute is over its standing, not over where it runs.',
+    source:
+      'Agreement between Amir Abdur Rahman Khan and Sir Mortimer Durand, Kabul, 12 November ' +
+      '1893; Afghan Loya Jirga resolution of July 1949 repudiating it.',
+    badge: 'documented',
+  },
 };
 
 /** The extent as a polygon, wound clockwise for d3-geo the way the rest of the bundle is. */

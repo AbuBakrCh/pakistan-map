@@ -25,9 +25,14 @@
  *   both and the footnote says why.
  *
  * The scorecard — population spread, largest:smallest ratio, districts moved, non-contiguous
- * units — is **#20's, not this module's**. It needs the adjacency graph (#16) and per-variant
- * derived statistics, neither of which exists yet. Its seam is `VariantCard.scorecard`, declared
- * here as `null` and rendered by `panel.ts` between the units and the footnotes.
+ * units — is **#20's, not this module's**. Its seam is `VariantCard.scorecard`, declared here as
+ * `null` and rendered by `panel.ts` between the units and the footnotes.
+ *
+ * One of its five figures has since arrived: #16 landed the adjacency graph, so `contiguity` is
+ * on every unit record and `counts.nonContiguousUnits` on every variant. The card still shows
+ * none of it, deliberately — a lone contiguity line above an empty space is not a scorecard, and
+ * the four population figures it belongs beside are #20's to compute. What is *not* true any
+ * more is that the data is missing, so the null is now waiting on one ticket rather than two.
  */
 
 import type {

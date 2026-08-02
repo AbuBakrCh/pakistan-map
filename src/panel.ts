@@ -275,7 +275,8 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
 
     // #20's scorecard slots in here — population spread, largest:smallest ratio, districts moved
     // and non-contiguous units, between the units it summarises and the footnotes that qualify
-    // them. `card.scorecard` is its seam and is null until #16's adjacency graph exists.
+    // them. `card.scorecard` is its seam. #16 has since supplied the contiguity figure; the other
+    // four are #20's, which is what the null is now waiting on.
 
     if (card.footnotes.length > 0) {
       const footnotes = el(detail, 'section', 'card-section');

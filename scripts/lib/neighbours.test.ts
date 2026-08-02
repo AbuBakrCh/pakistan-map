@@ -139,6 +139,11 @@ describe('the neighbour roster', () => {
     // Indian one is not an ordinary boundary at all along the stretch that is disputed, and that
     // stretch is drawn dashed and explained on its own terms (D12).
     expect(Object.keys(BOUNDARY_NOTES)).toEqual(['AF']);
-    expect(BOUNDARY_NOTES['AF']).toMatch(/never been|No Afghan government has recognised it/);
+    expect(BOUNDARY_NOTES['AF']?.text).toMatch(/never been|No Afghan government has recognised it/);
+  });
+
+  it('sources and badges the note, because a footnote is a surface like any other', () => {
+    expect(BOUNDARY_NOTES['AF']?.badge).toBe('documented');
+    expect(BOUNDARY_NOTES['AF']?.source).not.toBe('');
   });
 });
