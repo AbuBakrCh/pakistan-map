@@ -401,7 +401,7 @@ What it holds:
 | The simplification threshold — the fraction is of *points* and counted across every arc, the weights sorted however they arrive, both ends of the range meaning what they say, and unweighted ring endpoints ignored rather than counted as zero. Shared by both geometry builds instead of copied into each, which is what makes it reachable from here at all | `scripts/lib/simplify.test.ts` |
 | City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat **qualified** (`Lahore Division` beside `Lahore`) rather than dropped — the other 31 left unqualified, the dot winning the frame too tight for both, and both names plus Mardan returning at 3× | `src/lib/labels.test.ts` |
 | **The 390px bar** (#34), held over a second viewport rather than a second assertion: every province and *both territories* named — **Gilgit-Baltistan included**, which is what this ticket exists for, since the layout dropped it and a territory drawn but anonymous is the one failure the politically sensitive section is written to prevent; `GB` set only because the ground is too small for the name, checked against the same layout at 1200px still setting it in full, so the abbreviation is a fit and not a rename; the expansion present in the table the colophon prints from, so a short form added without a gloss fails here rather than appearing unexplained; no two names overlapping at the size where they least fit; and which divisions and which seats give way — **named, not counted**, Peshawar among them, whose division name goes too, so at this size the word is nowhere on the map and only the dot marks the place | `src/lib/labels.test.ts` |
-| Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The one this build cannot name is named and explained rather than counted, and shown to come back as soon as there is room | `src/lib/labels.test.ts` |
+| Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The three this build cannot name — H3's *Northern Areas* and L7's two mother-tongue pockets — are listed and explained rather than counted, and **every one shown to come back as soon as there is room**, which is what makes the gap a matter of pixels rather than of policy | `src/lib/labels.test.ts` |
 | District names (#34) — every drawn district named exactly once and each anchor inside its own district; ranked **below every division**, checked against the largest district and the smallest division rather than on average, since Chagai is bigger than several divisions; and offered only past a zoom threshold that is itself past the one the district *lines* come in at | `src/lib/labels.test.ts` |
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
@@ -618,8 +618,10 @@ government without this project having yet checked it against a published docume
 district names were checked. It is there rather than absent because the alternative — leaving the
 territory unnamed — breaks a harder rule. H3's `NWFP` and `FATA` were added with it, and are the
 forms those units were administered under; H3's **Northern Areas** has no attested initialism, so it
-keeps its full name, loses the layout and goes **unnamed at 390px** — stated in the suite by name,
-because a coinage would be a name for Pakistani-administered ground that no source uses. Units are named at this size too, since a proposal nobody can read the names of is a
+keeps its full name, loses the layout and goes **unnamed at 390px** — as do L7's two smallest
+pockets, *Pushto (Keamari)* and *Kohiostani*, for the same reason at a smaller scale. All three are
+stated in the suite by name and all three are shown to return at desktop size, because a coinage
+would be a name for Pakistani-administered ground that no source uses. Units are named at this size too, since a proposal nobody can read the names of is a
 set of coloured shapes. What gives way is the division tier and two of the seven seats, which is
 the ranking working as written — and the price is stated rather than counted: **Peshawar** loses
 its division name *and* its seat name, so at 390px the word is nowhere on the map and only the dot
@@ -1000,8 +1002,10 @@ Numbered by the grilling question that settled each.
    rests on general usage by the territory's own government and assembly. It wants the treatment
    open item 1 gave AJK's district names: a check against a published document, recorded in
    `docs/research/`. Related, and the owner's call rather than the build's: **what H3's advocates
-   call the *Northern Areas* short**, since without an attested form that unit cannot be named at
-   the 390px bar at all.
+   call the *Northern Areas* short**, and what L7's *Pushto (Keamari)* and *Kohiostani* are called
+   short, since without attested forms those three cannot be named at the 390px bar at all. All
+   three are named at desktop size, so this is a legibility gap on one device rather than a unit
+   the app cannot draw.
 
 **Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,
 Development 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a

@@ -520,34 +520,44 @@ describe('the baseline map at the 390px bar', () => {
  */
 describe('a variant at the 390px bar', () => {
   /**
-   * The one unit this build cannot name at 390px, and why it is a name rather than a number.
+   * The units this build cannot name at 390px — listed, because a count would hide which.
    *
-   * H3's *Northern Areas* is thirteen characters set at province size over ground about a fifth
-   * that wide on a phone. Every other long name in the app has an attested abbreviation to fall
-   * back to — AJK, ICT, KP, GB, and H3's own NWFP and FATA. This one has none, and `SHORT_FORMS`
-   * forbids inventing one: a coinage would be a name for Pakistani-administered territory that no
-   * source uses, which is a worse thing to put on this map than a missing label.
+   * All three are the same shape of problem: a long name over ground that is a fraction as wide on
+   * a phone, and no attested abbreviation to fall back to. Every other long name in the app has
+   * one — AJK, ICT, KP, GB, and H3's own NWFP and FATA — and `SHORT_FORMS` forbids inventing the
+   * missing ones: a coinage would be a name for Pakistani-administered ground that no source uses,
+   * which is a worse thing to put on this map than a missing label.
    *
-   * So it keeps its full name, loses the layout, and goes unnamed at this size — stated here
-   * rather than smoothed over, and raised as open item 5 because what a proposal's advocates call
-   * their own units short is content, and content is the owner's call.
+   * H3's *Northern Areas* is Gilgit-Baltistan under the name that variant gives it. L7's two are
+   * the small pockets a mother-tongue partition leaves behind — Keamari is a single Karachi
+   * district, and Kohiostani's ground is smaller still.
+   *
+   * The list is what makes this honest rather than a silent floor, and the test below is what
+   * makes it acceptable: not one of them is lost for good.
    */
-  const UNNAMEABLE_AT_390 = { variant: 'h3', unit: 'Northern Areas' };
+  const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
+    h3: ['Northern Areas'],
+    l7: ['Pushto (Keamari)', 'Kohiostani'],
+  };
 
   for (const variant of scenarios.variants) {
     it(`names every unit of ${variant.id}, so no proposed province is an unlabelled shape`, () => {
       const drawn = variantAt(variant.id, BAR_390);
       const unnamed = drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
-      const expected =
-        variant.id === UNNAMEABLE_AT_390.variant ? [UNNAMEABLE_AT_390.unit] : [];
-      expect(unnamed).toEqual(expected);
+      expect(unnamed).toEqual(UNNAMEABLE_AT_390[variant.id] ?? []);
     });
   }
 
-  it('names the one it cannot name as soon as there is room, so nothing is lost for good', () => {
-    // The gap above is only defensible because it is a matter of pixels rather than of policy.
-    const drawn = variantAt(UNNAMEABLE_AT_390.variant, { width: 1200, height: 800 });
-    expect(drawn.placed.has(labelKey('unit', UNNAMEABLE_AT_390.unit))).toBe(true);
+  it('names every one of them as soon as there is room, so nothing is lost for good', () => {
+    // What makes the list above a matter of pixels rather than of policy. A unit that could not be
+    // named at *any* size would be a unit this app cannot draw honestly, and would belong in the
+    // open items rather than in a layout test.
+    for (const [id, units] of Object.entries(UNNAMEABLE_AT_390)) {
+      const drawn = variantAt(id, { width: 1200, height: 800 });
+      for (const unit of units) {
+        expect(drawn.placed.has(labelKey('unit', unit)), `${id}: ${unit}`).toBe(true);
+      }
+    }
   });
 });
 
