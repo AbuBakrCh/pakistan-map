@@ -312,13 +312,6 @@ body {
   font-size: 0.95rem;
 }
 
-/* Set as Urdu, in its own direction. Absent from the bundle today — see `tooltip.ts`. */
-.tooltip-name-urdu {
-  color: var(--ink);
-  display: block;
-  font-size: 0.95rem;
-}
-
 .tooltip-where {
   display: block;
   font-style: italic;

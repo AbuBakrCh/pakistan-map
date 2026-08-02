@@ -3,7 +3,12 @@ import bundle from '../../data/bundle/geography.topojson.json';
 import statistics from '../../data/bundle/statistics.json';
 import type { CensusStatistics } from '../bundle.ts';
 import { readDistricts, type ProvinceKind } from './geography.ts';
-import { districtTooltip, placeTooltip, type DistrictTooltip } from './tooltip.ts';
+import {
+  districtTooltip,
+  placeTooltip,
+  spokenTooltip,
+  type DistrictTooltip,
+} from './tooltip.ts';
 
 const census = statistics as unknown as CensusStatistics;
 const districts = readDistricts(bundle as never);
@@ -161,19 +166,30 @@ describe('districtTooltip — over the whole drawn set', () => {
     expect(residual.map((t) => t.name)).toEqual([]);
   });
 
-  it('carries no Urdu name, because the bundle carries none — and prints one the moment it does', () => {
-    // The acceptance criterion asks for the Urdu name beside the English one. OSM holds `name:ur`
-    // for 155 of the 156 drawn districts, but `normalize-geometry.ts` does not carry it into the
-    // bundle, and this app never invents a name or transliterates one. So the field is read, not
-    // typed: today every tooltip omits the line, and the day the pipeline emits `nameUrdu` the
-    // tooltip sets it with no further change.
-    expect(all.filter((t) => t.nameUrdu !== null)).toEqual([]);
-    const withUrdu = districtTooltip(
-      { name: 'Lahore', nameUrdu: 'لاہور', division: 'Lahore', province: 'Punjab' },
-      'province',
-      census,
-    );
-    expect(withUrdu.nameUrdu).toBe('لاہور');
+});
+
+describe('spokenTooltip', () => {
+  // `role="img"` on the map makes the live region the only hover surface a screen reader gets,
+  // so these are not a convenience copy of the tooltip — they are what that reader is told.
+  it('speaks the figures a district has', () => {
+    const spoken = spokenTooltip(tooltipFor('Lahore'));
+    expect(spoken).toContain('Lahore, Lahore division, Punjab');
+    expect(spoken).toContain('Population');
+    expect(spoken).toContain('Dominant mother tongue Punjabi');
+  });
+
+  it('speaks the reason a territory has none, rather than a label with nothing after it', () => {
+    const spoken = spokenTooltip(tooltipFor('Muzaffarabad'));
+    expect(spoken).toContain('The 2023 census does not cover it');
+    expect(spoken).not.toMatch(/Population\s*\.?$/);
+    expect(spoken).not.toContain('Population ');
+  });
+
+  it("speaks Chitral's absent dominant tongue as the note, never as a bare label", () => {
+    const spoken = spokenTooltip(tooltipFor('Upper Chitral'));
+    expect(spoken).toContain('The census names none');
+    // The bug this guards: a null value printed as "Dominant mother tongue: " and then nothing.
+    expect(spoken).not.toContain('Dominant mother tongue:');
   });
 });
 

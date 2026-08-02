@@ -10,9 +10,9 @@
  * - **counted, and the census names none.** Chitral: Khowar has no column in Table 11, so the
  *   residual holds the district. The population is still published and is still shown — the
  *   absence is in one column, not in the district. The language line says the census names none
- *   and quotes that district's own residual. It never prints `Others`: a residual is not a
- *   language, and printing the largest *named* category instead would put "Urdu" over a district
- *   where 150 people in 195,161 speak it.
+ *   and names that residual — `Others` appears, but as the residual it is and never in the
+ *   dominant-tongue slot, because a residual is not a language. Printing the largest *named*
+ *   category there instead would put "Urdu" over a district where 150 people in 195,161 speak it.
  * - **never counted.** AJK's ten districts and GB's ten (D25). No figures at all — not a zero,
  *   not a blank — and a line saying the census does not cover them, so the absence reads as
  *   coverage rather than as data that failed to load.
@@ -43,15 +43,6 @@ export interface TooltipFigure {
 
 export interface DistrictTooltip {
   readonly name: string;
-  /**
-   * The district's name in Urdu, when the bundle carries one.
-   *
-   * Read, never invented. OSM holds `name:ur` on 155 of the 156 drawn district relations, but
-   * `normalize-geometry.ts` does not carry it into the bundle today, so this is null everywhere
-   * and the tooltip sets no Urdu line at all. Transliterating one here would be this app's only
-   * unsourced surface.
-   */
-  readonly nameUrdu: string | null;
   readonly division: string;
   readonly province: string;
   /** Province, capital territory, or territory-and-not-a-province (D12). */
@@ -62,14 +53,11 @@ export interface DistrictTooltip {
   readonly absence: string | null;
 }
 
-/** What the tooltip needs off the geometry. The Urdu name is optional because the bundle has none. */
-export type TooltipDistrict = DistrictProperties & { readonly nameUrdu?: string | null };
-
 const grouped = (value: number): string => value.toLocaleString('en-GB');
 const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
 
 export function districtTooltip(
-  district: TooltipDistrict,
+  district: DistrictProperties,
   kind: ProvinceKind,
   statistics: CensusStatistics,
 ): DistrictTooltip {
@@ -77,7 +65,6 @@ export function districtTooltip(
   const record = statistics.districts[district.name];
   const common = {
     name: district.name,
-    nameUrdu: district.nameUrdu ?? null,
     division: district.division,
     province: district.province,
     standing: status,
@@ -131,6 +118,23 @@ export function districtTooltip(
     ],
     absence: null,
   };
+}
+
+/**
+ * The same content as one sentence, for the live region.
+ *
+ * Here and not in the renderer for the reason the rest of this module is: `role="img"` on the map
+ * means the live region is the *only* hover surface a screen reader gets, so this sentence is not
+ * a convenience copy of the tooltip — it is the tooltip, for that reader. A figure with no value
+ * speaks its note, never its label followed by nothing.
+ */
+export function spokenTooltip(content: DistrictTooltip): string {
+  const where = `${content.name}, ${content.division} division, ${content.province}. ${content.standing}.`;
+  if (content.absence !== null) return `${where} ${content.absence}`;
+  const figures = content.figures
+    .map((figure) => (figure.value === null ? figure.note : `${figure.label} ${figure.value}`))
+    .filter((line): line is string => line !== null);
+  return `${where} ${figures.join('. ')}.`;
 }
 
 /** The table, without the sentence describing it — the artifact's own citation, shortened at its dash. */

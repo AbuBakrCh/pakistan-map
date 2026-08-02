@@ -20,7 +20,12 @@ import type { Topology } from 'topojson-specification';
 import type { CensusStatistics } from './bundle.ts';
 import { linesFromArcs, readDistricts, readGeography, tierArcs } from './lib/geography.ts';
 import { districtLocator, type DistrictFeature } from './lib/hit-test.ts';
-import { districtTooltip, placeTooltip, type DistrictTooltip } from './lib/tooltip.ts';
+import {
+  districtTooltip,
+  placeTooltip,
+  spokenTooltip,
+  type DistrictTooltip,
+} from './lib/tooltip.ts';
 import type { DistrictFill } from './lib/mother-tongue.ts';
 import {
   baselineLabelSites,
@@ -434,16 +439,27 @@ export function renderBaselineMap(
       hovered = feature.properties.name;
       // Standing comes from the province the district sits in; whether it has *figures* comes
       // from whether the census has a row for it, which is `districtTooltip`'s question.
-      const kind = kindOf.get(feature.properties.province) ?? 'province';
+      //
+      // Both lookups throw rather than falling back, for the reason `readGeography` gives: a
+      // missing `kind` defaulted to `province` prints "Province" under Muzaffarabad, which is a
+      // constitutional claim this app does not make (D12), and a district whose province is not
+      // in the tier means the bundle has come apart and is to be fixed, not rendered around.
+      const province = provinceOf.get(feature.properties.province);
+      const kind = kindOf.get(feature.properties.province);
+      if (province === undefined || kind === undefined) {
+        throw new Error(
+          `${feature.properties.name} sits in "${feature.properties.province}", which is not a ` +
+            `province in this bundle. The district and province tiers disagree.`,
+        );
+      }
       const content = districtTooltip(feature.properties, kind, statistics);
       renderTooltip(content);
-      readout.text(spoken(content));
+      readout.text(spokenTooltip(content));
 
-      const province = provinceOf.get(feature.properties.province);
       hoverLayer
         .selectAll<SVGPathElement, { role: string; d: string | null }>('path')
         .data([
-          { role: 'province', d: province === undefined ? null : path(province) },
+          { role: 'province', d: path(province) },
           { role: 'district', d: path(feature) },
         ])
         .join('path')
@@ -474,15 +490,6 @@ export function renderBaselineMap(
     hoverLayer.selectAll('path').remove();
   }
 
-  /** The same content as one sentence, for the live region. */
-  function spoken(content: DistrictTooltip): string {
-    const where = `${content.name}, ${content.division} division, ${content.province}. ${content.standing}.`;
-    if (content.absence !== null) return `${where} ${content.absence}`;
-    return `${where} ${content.figures
-      .map((f) => (f.value === null ? `${f.label}: ${f.note ?? ''}` : `${f.label} ${f.value}`))
-      .join('. ')}.`;
-  }
-
   /**
    * Built as elements rather than as markup, so a district name is text and can never be read as
    * HTML — and so the absences keep their own shapes. A figure with no value prints its note and
@@ -499,11 +506,6 @@ export function renderBaselineMap(
     };
 
     line('tooltip-name', content.name);
-    if (content.nameUrdu !== null) {
-      const urdu = line('tooltip-name-urdu', content.nameUrdu);
-      urdu.lang = 'ur';
-      urdu.dir = 'rtl';
-    }
     line('tooltip-where', `${content.division} division · ${content.province}`);
     if (content.standing !== 'Province') line('tooltip-standing', content.standing);
 
