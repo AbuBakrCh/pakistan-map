@@ -52,7 +52,7 @@ export interface ScorecardUnit {
 export type DistrictPopulations = ReadonlyMap<string, number>;
 
 /** District -> the first-level entity it belongs to today. What "moved" is measured against. */
-export type DistrictProvinces = ReadonlyMap<string, string>;
+export type DistrictOrigins = ReadonlyMap<string, string>;
 
 export interface UnitPopulation {
   readonly unit: string;
@@ -137,7 +137,7 @@ export interface DistrictsMoved {
   /** Out of how many the partition covers, so the count is readable without the card's help. */
   readonly of: number;
   /** Where they come from, largest contributor first. Named: "11 out of Punjab" is the finding. */
-  readonly byProvince: readonly { readonly province: string; readonly districts: number }[];
+  readonly byOrigin: readonly { readonly from: string; readonly districts: number }[];
 }
 
 export interface Scorecard {
@@ -151,13 +151,26 @@ export interface Scorecard {
   readonly districtsMoved: DistrictsMoved;
 }
 
-/** Two decimals. Fixed here so the artifact is byte-stable across rebuilds of the same data. */
-const RATIO_DECIMALS = 2;
+/**
+ * One decimal. Fixed here so the artifact is byte-stable across rebuilds of the same data — and
+ * fixed at the precision the card actually sets, so the bundle and the screen cannot disagree.
+ *
+ * The card was rounding a second time on the way out, which meant a figure the artifact carried
+ * was one nothing could ever display: 36.94 baked, `36.9 : 1` printed. A ratio of two census
+ * counts does not carry a hundredth anyway, so the rounding happens once, here, and the card
+ * formats what it is given rather than deciding it again.
+ */
+const RATIO_DECIMALS = 1;
 const round = (value: number): number =>
   Math.round(value * 10 ** RATIO_DECIMALS) / 10 ** RATIO_DECIMALS;
 
 /**
- * Which districts change province, and out of where.
+ * Which districts change hands, and out of where.
+ *
+ * Not "change province": a district's current first-level entity may be Islamabad Capital
+ * Territory, Azad Jammu & Kashmir or Gilgit-Baltistan, none of which is a province, and this map's
+ * vocabulary is careful about that everywhere else. Hence `DistrictOrigins` and `byOrigin` — the
+ * thing a district comes *out of*, whatever kind of thing that is.
  *
  * A district has moved iff the unit holding it is not the one carrying its current first-level
  * entity forward, and *carrying forward* is decided on the unit's **name**: the unit called Punjab
@@ -178,7 +191,7 @@ const round = (value: number): number =>
  */
 export function districtsMoved(
   units: readonly ScorecardUnit[],
-  provinces: DistrictProvinces,
+  origins: DistrictOrigins,
 ): DistrictsMoved {
   const out = new Map<string, number>();
   let count = 0;
@@ -188,32 +201,32 @@ export function districtsMoved(
     const carriesForward = normalizeName(unit.name);
     for (const district of unit.districts) {
       of += 1;
-      const province = provinces.get(district);
-      if (province === undefined || normalizeName(province) === carriesForward) continue;
+      const origin = origins.get(district);
+      if (origin === undefined || normalizeName(origin) === carriesForward) continue;
       count += 1;
-      out.set(province, (out.get(province) ?? 0) + 1);
+      out.set(origin, (out.get(origin) ?? 0) + 1);
     }
   }
 
   return {
     count,
     of,
-    byProvince: [...out]
-      .map(([province, districts]) => ({ province, districts }))
-      .sort((a, b) => b.districts - a.districts || a.province.localeCompare(b.province)),
+    byOrigin: [...out]
+      .map(([from, districts]) => ({ from, districts }))
+      .sort((a, b) => b.districts - a.districts || a.from.localeCompare(b.from)),
   };
 }
 
 export interface ScorecardInput {
   readonly populations: DistrictPopulations;
-  readonly provinces: DistrictProvinces;
+  readonly origins: DistrictOrigins;
   /** The variant's own statistics policy. `false` withholds every population figure, with a reason. */
   readonly modernFigures: { readonly modernFigures: true } | { readonly modernFigures: false; readonly reason: string };
 }
 
 /** The whole scorecard for one variant. Pure: give it a census and a roster and it decides nothing else. */
 export function scorecardOf(units: readonly ScorecardUnit[], input: ScorecardInput): Scorecard {
-  const moved = districtsMoved(units, input.provinces);
+  const moved = districtsMoved(units, input.origins);
   const populations = unitPopulations(units, input.populations);
   const base = {
     units: units.length,

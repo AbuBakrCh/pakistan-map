@@ -112,6 +112,17 @@ describe('readRoute', () => {
     });
   });
 
+  it('refuses a real variant under a basis that is not one, rather than drawing half a URL', () => {
+    // A disagreement between two segments that each name something real is settled above. This is
+    // the different case: the first segment names nothing at all, so the hash is not a link with a
+    // disagreement in it but a link this app did not write. Drawing L1 here would put a proposal on
+    // screen on the strength of the half of the URL that happened to parse — and #23 asks for the
+    // baseline, which is the one view that claims nothing.
+    for (const hash of ['#/nonsense/l1', '#/langauge/l1', '#/l1/l1']) {
+      expect(route(hash).selection, hash).toBeNull();
+    }
+  });
+
   it('reads an empty hash as the baseline, and asks to be given the baseline’s URL', () => {
     // A first visit. The view is right and the address bar is not, so the caller replaces it —
     // which is what gives the baseline its stable URL without putting an entry behind the page

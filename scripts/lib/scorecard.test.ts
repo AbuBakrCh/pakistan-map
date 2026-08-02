@@ -26,7 +26,7 @@ import {
  * Five drawn districts in three first-level entities, of which Far is this fixture's AJK: drawn
  * and named, and in no census table. Populations chosen so every sum below is readable.
  */
-const PROVINCES = new Map([
+const ORIGINS = new Map([
   ['Alpha', 'North'],
   ['Bravo', 'North'],
   ['Charlie', 'North'],
@@ -75,14 +75,14 @@ describe('unit populations', () => {
 });
 
 describe('districts moved', () => {
-  it('counts a district that leaves its province, and says which province it left', () => {
+  it('counts a district that changes hands, and says what it came out of', () => {
     const moved = districtsMoved(
       [unit('New Charlie', ['Charlie'], 'proposed'), unit('North', ['Alpha', 'Bravo'])],
-      PROVINCES,
+      ORIGINS,
     );
     expect(moved.count).toBe(1);
     expect(moved.of).toBe(3);
-    expect(moved.byProvince).toEqual([{ province: 'North', districts: 1 }]);
+    expect(moved.byOrigin).toEqual([{ from: 'North', districts: 1 }]);
   });
 
   it('leaves the districts a shrinking province keeps where they are', () => {
@@ -90,28 +90,28 @@ describe('districts moved', () => {
     // its remaining two "moved" would report a province that has gone nowhere as having moved.
     const moved = districtsMoved(
       [unit('New Charlie', ['Charlie'], 'proposed'), unit('North', ['Alpha', 'Bravo'])],
-      PROVINCES,
+      ORIGINS,
     );
-    expect(moved.byProvince.map((from) => from.districts)).toEqual([1]);
+    expect(moved.byOrigin.map((from) => from.districts)).toEqual([1]);
   });
 
   it('moves nothing where a unit only changes standing, keeping its province’s name', () => {
     // A territory promoted to a province is the case that breaks every structural rule tried
     // instead: no ground changes hands, and counting all of it as moved would say it had.
-    const promoted = districtsMoved([unit('Far', ['Echo'], 'proposed')], PROVINCES);
+    const promoted = districtsMoved([unit('Far', ['Echo'], 'proposed')], ORIGINS);
     expect(promoted.count).toBe(0);
-    expect(promoted.byProvince).toEqual([]);
+    expect(promoted.byOrigin).toEqual([]);
   });
 
-  it('reports every province a merged unit draws from, largest contributor first', () => {
+  it('reports everything a merged unit draws from, largest contributor first', () => {
     const merged = districtsMoved(
       [unit('Union', ['Alpha', 'Bravo', 'Charlie', 'Delta'], 'proposed'), unit('Far', ['Echo'])],
-      PROVINCES,
+      ORIGINS,
     );
     expect(merged.count).toBe(4);
-    expect(merged.byProvince).toEqual([
-      { province: 'North', districts: 3 },
-      { province: 'South', districts: 1 },
+    expect(merged.byOrigin).toEqual([
+      { from: 'North', districts: 3 },
+      { from: 'South', districts: 1 },
     ]);
   });
 });
@@ -124,7 +124,7 @@ describe('the population spread', () => {
   ];
   const scorecard = scorecardOf(units, {
     populations: POPULATIONS,
-    provinces: PROVINCES,
+    origins: ORIGINS,
     modernFigures: SHOWN,
   });
 
@@ -139,7 +139,10 @@ describe('the population spread', () => {
       name: 'North',
       population: 3_000_000,
     });
-    expect(scorecard.population?.ratio).toBe(2.67);
+    // One decimal, which is the precision the card sets. Rounded once, here, so the artifact never
+    // carries a figure that nothing on screen can show: 8 ÷ 3 is 2.666…, baked as 2.7 and printed
+    // as `2.7 : 1`.
+    expect(scorecard.population?.ratio).toBe(2.7);
     expect(scorecard.population?.total).toBe(15_000_000);
     expect(scorecard.populationWithheld).toBeNull();
   });
@@ -149,7 +152,7 @@ describe('the population spread', () => {
     // reaches, the one it does not is listed, and no figure is invented for it.
     const withTerritory = scorecardOf([...units, unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
-      provinces: PROVINCES,
+      origins: ORIGINS,
       modernFigures: SHOWN,
     });
     expect(withTerritory.population?.units).toBe(3);
@@ -165,7 +168,7 @@ describe('the population spread', () => {
     // a spread taken around it would be a comparison this app cannot support.
     const reaching = scorecardOf(
       [unit('Greater Charlie', ['Charlie', UNCOUNTED], 'proposed'), unit('North', ['Alpha', 'Bravo'])],
-      { populations: POPULATIONS, provinces: PROVINCES, modernFigures: SHOWN },
+      { populations: POPULATIONS, origins: ORIGINS, modernFigures: SHOWN },
     );
     expect(reaching.population).toBeNull();
     expect(reaching.populationWithheld).toEqual({
@@ -182,7 +185,7 @@ describe('the population spread', () => {
     // and the reason travels with the withholding rather than being paraphrased downstream.
     const historical = scorecardOf(units, {
       populations: POPULATIONS,
-      provinces: PROVINCES,
+      origins: ORIGINS,
       modernFigures: {
         modernFigures: false,
         reason: 'These are 1947’s boundaries; nobody was counted inside them in 2023.',
@@ -200,7 +203,7 @@ describe('the population spread', () => {
     // 1 is a number, and a partition of one counted unit would read as perfectly even.
     const alone = scorecardOf([unit('North', ['Alpha']), unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
-      provinces: PROVINCES,
+      origins: ORIGINS,
       modernFigures: SHOWN,
     });
     expect(alone.population?.units).toBe(1);
@@ -211,7 +214,7 @@ describe('the population spread', () => {
   it('says so where nothing at all is counted, rather than reporting an empty spread', () => {
     const nothing = scorecardOf([unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
-      provinces: PROVINCES,
+      origins: ORIGINS,
       modernFigures: SHOWN,
     });
     expect(nothing.population).toBeNull();
@@ -221,15 +224,15 @@ describe('the population spread', () => {
 
   it('never carries both a spread and a reason for having none, or neither', () => {
     const cases = [
-      scorecardOf(units, { populations: POPULATIONS, provinces: PROVINCES, modernFigures: SHOWN }),
+      scorecardOf(units, { populations: POPULATIONS, origins: ORIGINS, modernFigures: SHOWN }),
       scorecardOf(units, {
         populations: POPULATIONS,
-        provinces: PROVINCES,
+        origins: ORIGINS,
         modernFigures: { modernFigures: false, reason: 'stated' },
       }),
       scorecardOf([unit('Far', [UNCOUNTED], 'territory')], {
         populations: POPULATIONS,
-        provinces: PROVINCES,
+        origins: ORIGINS,
         modernFigures: SHOWN,
       }),
     ];

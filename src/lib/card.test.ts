@@ -421,30 +421,37 @@ describe('variantCard — the scorecard (#20)', () => {
     expect(card.scorecard.withheld).toBeNull();
   });
 
-  it('voids the population lines in the variant’s own words where it withholds figures', () => {
+  it('voids the population lines where a variant withholds figures, and states its reason once', () => {
     // H2 draws 1947's map (#30). The reason is the variant's judgement, quoted rather than
     // paraphrased, and the lines that do not depend on the census survive it.
     const l1 = variantNamed('l1');
+    const reason = 'These are 1947’s boundaries; nobody was counted inside them in 2023.';
     const historical = variantCard(
       bundle,
       like('historical', {
+        statistics: { modernFigures: false, reason },
         scorecard: {
           ...l1.scorecard,
           population: null,
-          populationWithheld: {
-            kind: 'variant',
-            reason: 'These are 1947’s boundaries; nobody was counted inside them in 2023.',
-          },
+          populationWithheld: { kind: 'variant', reason },
         },
       }),
     );
     expect(historical.scorecard.withheld).toContain('No population figures');
-    expect(historical.scorecard.withheld).toContain('nobody was counted inside them in 2023');
     expect(historical.scorecard.lines.map((found) => found.label)).toEqual([
       'Units',
       'Districts moved',
       'Contiguity',
     ]);
+
+    // Once, and only once. The variant's own words belong to the argument column, where the card
+    // has carried them since #19; repeating them over the scorecard would set the same sentence
+    // twice on one card and read as though there were two reasons rather than one.
+    expect(historical.figuresWithheld).toBe(reason);
+    const wherever = [historical.figuresWithheld, historical.scorecard.withheld].filter((line) =>
+      line?.includes('nobody was counted inside them in 2023'),
+    );
+    expect(wherever).toHaveLength(1);
   });
 
   it('names the unit and the districts where a census gap voids the comparison', () => {

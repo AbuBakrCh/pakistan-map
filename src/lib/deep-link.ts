@@ -115,11 +115,19 @@ function resolve(
     return { basis: choice.basis.id, variant: firstVariant.id };
   }
 
+  // The first segment must name a basis this app has heard of, even though the variant is what
+  // decides which one is used. A hash naming no basis at all is not a link with a disagreement in
+  // it — it is a link this app did not write, and #23 says a malformed hash falls back to the
+  // baseline. Reading `#/nonsense/l1` as L1 would put a proposal on screen on the strength of the
+  // half of the URL that happened to parse.
+  if (!choices.some((candidate) => candidate.basis.id === first)) return BASELINE;
+
   const variant = scenarios.variants.find((candidate) => candidate.id === second);
   if (variant === undefined) return BASELINE;
-  // The basis is the variant's own, exactly as it is when a control switches variants: a variant
-  // shaded against evidence it was not argued from would be a different claim. So a hash whose two
-  // halves disagree is not refused — the variant wins and the URL is corrected under the reader.
+  // Between two segments that each name something real, the basis is the variant's own, exactly as
+  // it is when a control switches variants: a variant shaded against evidence it was not argued
+  // from would be a different claim. So `#/historical/l1` is not refused — the variant wins and the
+  // URL is corrected under the reader.
   if (!drawable(choices, variant.basis)) return BASELINE;
   return { basis: variant.basis, variant: variant.id };
 }

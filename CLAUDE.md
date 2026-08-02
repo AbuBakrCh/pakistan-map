@@ -616,7 +616,8 @@ count, and never confuses being in two pieces with drawing as two shapes.
 ## Stack
 
 - **Vanilla TypeScript + Vite + D3.** No framework — runtime state is four values (active
-  basis, active variant, hovered district, compare-held); no routing, no async, no forms.
+  basis, active variant, hovered district, compare-held); no async, no forms. Routing is the
+  URL hash and nothing else (#23): one parser, one `hashchange` listener, no router.
 - **Inline SVG, custom projection, no basemap.** Showing only Pakistan deletes the reason to
   use a mapping library. D3 owns the SVG *and* renders the panel lists.
 - Pan/zoom via `d3-zoom`. Sparse major-city dots instead of a basemap — seven of them, and

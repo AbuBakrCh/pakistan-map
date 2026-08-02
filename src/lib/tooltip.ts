@@ -22,6 +22,7 @@
  */
 
 import type { CensusStatistics, UnitKind } from '../bundle.ts';
+import { groupDigits } from './figures.ts';
 import { describeKind, type DistrictProperties, type ProvinceKind } from './geography.ts';
 
 /**
@@ -134,7 +135,7 @@ function unitFigure(membership: UnitMembership): TooltipUnit {
   }
 }
 
-const grouped = (value: number): string => value.toLocaleString('en-GB');
+const grouped = groupDigits;
 const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
 
 export function districtTooltip(

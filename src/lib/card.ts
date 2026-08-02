@@ -43,6 +43,7 @@ import type {
   UnitRecord,
   VariantRecord,
 } from '../bundle.ts';
+import { groupDigits } from './figures.ts';
 
 /**
  * What each provenance word means, in the reader's terms rather than the pipeline's.
@@ -281,20 +282,6 @@ function unitStanding(kind: UnitKind): string {
   }
 }
 
-/**
- * Digits grouped in threes — 87,311,346.
- *
- * Written out rather than left to `toLocaleString`, which answers to whatever locale the browser
- * happens to be in: a census figure that renders as 8,73,11,346 in one place and 87.311.346 in
- * another is one number wearing three faces, and the tests would be asserting the test runner's
- * locale rather than the card's words. Never abbreviated to "87.3 m" — the census counted people
- * one at a time and publishes the count, and rounding it is this app interpolating.
- */
-function groupDigits(value: number): string {
-  const digits = String(Math.trunc(Math.abs(value)));
-  const grouped = digits.replace(/\B(?=(\d{3})+$)/g, ',');
-  return value < 0 ? `-${grouped}` : grouped;
-}
 
 /** What a unit's population line says, including when there is none to say. */
 function unitPopulation(unit: UnitRecord): string {
@@ -403,9 +390,12 @@ function scorecardOf(variant: VariantRecord): CardScorecard {
         : `${districtsMoved.count} of ${districtsMoved.of}`,
     note:
       districtsMoved.count === 0
-        ? 'Every district stays in the province it is in today.'
+        ? // Not "the province it is in today": eleven of the districts this sentence covers are in
+          // Islamabad, Azad Jammu & Kashmir or Gilgit-Baltistan, none of which is a province, and
+          // the card is the one surface that must never say otherwise.
+          'Every district stays where it is today.'
         : `${sentenceList(
-            districtsMoved.byProvince.map((from) => `${from.districts} out of ${from.province}`),
+            districtsMoved.byOrigin.map((origin) => `${origin.districts} out of ${origin.from}`),
           )}.`,
   });
 
@@ -440,9 +430,12 @@ function withheldOf(scorecard: ScorecardRecord): string | null {
   if (withheld === null) return null;
   switch (withheld.kind) {
     case 'variant':
-      // The variant's own reason, verbatim: H2 draws 1947's map, and why 2023 figures do not
-      // belong on it is an editorial judgement this module has no standing to paraphrase.
-      return `No population figures. ${withheld.reason}`;
+      // The bare fact, and not the reason. The variant's own words are already on this card, in
+      // the argument column, as `figuresWithheld` — printing them here as well would set the same
+      // sentence twice a few centimetres apart and read as though the card had two things to say.
+      // So the scorecard states the absence, which is what a reader looking for figures needs, and
+      // leaves the editorial reason where it was already being made.
+      return 'No population figures — this variant withholds modern ones, for the reason given above.';
     case 'incomplete':
       return (
         `No population figures. ` +
@@ -455,12 +448,20 @@ function withheldOf(scorecard: ScorecardRecord): string | null {
         )}, so its population would be short by an unknown amount — and a largest compared ` +
         `against a smallest that is missing people is worse than no comparison at all.`
       );
-    default:
+    case 'uncounted':
       return (
         'No population figures: no unit of this variant lies inside the 136 districts PBS ' +
         'published 2023 results for.'
       );
   }
+  // Named rather than defaulted. A fourth kind of absence added upstream would otherwise fall into
+  // whichever branch happened to be last and be described as something it is not — and telling the
+  // kinds of absence apart is the entire job of this function.
+  const unreachable: never = withheld;
+  throw new Error(
+    `Unknown population withholding: ${JSON.stringify(unreachable)}. Every kind of absence has to ` +
+      `be worded as itself.`,
+  );
 }
 
 function footnotesOf(variant: VariantRecord): readonly CardFootnote[] {

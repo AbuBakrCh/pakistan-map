@@ -192,7 +192,7 @@ export interface ScorecardRecord {
   readonly districtsMoved: {
     readonly count: number;
     readonly of: number;
-    readonly byProvince: readonly { readonly province: string; readonly districts: number }[];
+    readonly byOrigin: readonly { readonly from: string; readonly districts: number }[];
   };
 }
 

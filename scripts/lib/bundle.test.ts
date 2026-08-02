@@ -1072,7 +1072,7 @@ const censusPopulations = new Map<string, number>(
   ),
 );
 /** Today's map, which "moved" is measured against — every drawn district, AJK's and GB's included. */
-const currentProvinces = new Map<string, string>(
+const currentOrigins = new Map<string, string>(
   ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
 );
 const provinceTotals = statistics.totals.provinces as Record<string, number>;
@@ -1123,7 +1123,7 @@ describe('bundle scorecard', () => {
       expect(variant.scorecard, variant.id).toEqual(
         scorecardOf(variant.units, {
           populations: censusPopulations,
-          provinces: currentProvinces,
+          origins: currentOrigins,
           modernFigures: variant.statistics,
         }),
       );
@@ -1195,17 +1195,17 @@ describe('bundle scorecard', () => {
     expect(l1.scorecard.districtsMoved).toEqual({
       count: 11,
       of: ROSTER_DISTRICT_COUNT,
-      byProvince: [{ province: 'Punjab', districts: 11 }],
+      byOrigin: [{ from: 'Punjab', districts: 11 }],
     });
     expect(south.districts).toHaveLength(11);
     expect(south.claimed).toHaveLength(13);
-    expect(south.districts.every((d) => currentProvinces.get(d) === 'Punjab')).toBe(true);
+    expect(south.districts.every((d) => currentOrigins.get(d) === 'Punjab')).toBe(true);
     // Every other unit of L1 keeps its own province's name and moves nothing, which is what makes
     // eleven the whole answer rather than the part of it the proposal admits to.
     expect(
       districtsMoved(
         l1.units.filter((u) => u.id !== 'south-punjab'),
-        currentProvinces,
+        currentOrigins,
       ).count,
     ).toBe(0);
   });
@@ -1230,7 +1230,9 @@ describe('bundle scorecard', () => {
       const spread = variant.scorecard.population;
       if (spread === null) continue;
       const ratio = spread.largest.population / spread.smallest.population;
-      expect(spread.ratio, variant.id).toBe(Math.round(ratio * 100) / 100);
+      // One decimal, which is the precision the card sets — the artifact does not carry a figure
+      // that nothing on screen can show.
+      expect(spread.ratio, variant.id).toBe(Math.round(ratio * 10) / 10);
       expect(spread.largest.population, variant.id).toBeGreaterThanOrEqual(
         spread.smallest.population,
       );

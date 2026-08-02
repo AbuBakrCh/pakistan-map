@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T07:40:34.617Z",
+    "generated": "2026-08-02T08:06:46.299Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -152,9 +152,9 @@
         "districtsMoved": {
           "count": 11,
           "of": 156,
-          "byProvince": [
+          "byOrigin": [
             {
-              "province": "Punjab",
+              "from": "Punjab",
               "districts": 11
             }
           ]
@@ -172,7 +172,7 @@
             "name": "Islamabad Capital Territory",
             "population": 2363863
           },
-          "ratio": 36.94
+          "ratio": 36.9
         },
         "populationWithheld": null,
         "outsideTheCensus": [

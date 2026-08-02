@@ -67,7 +67,7 @@ import {
   scorecardOf,
   unitPopulations,
   type DistrictPopulations,
-  type DistrictProvinces,
+  type DistrictOrigins,
 } from './lib/scorecard.ts';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
 import { VARIANTS } from './lib/variants.ts';
@@ -101,7 +101,7 @@ function fail(message: string): never {
 /** What the scorecard is computed against: the census, and today's map. */
 interface Census {
   readonly populations: DistrictPopulations;
-  readonly provinces: DistrictProvinces;
+  readonly origins: DistrictOrigins;
 }
 
 /** The card's own view of a variant, with the partition resolved onto drawn districts. */
@@ -165,7 +165,7 @@ function emit(
      */
     scorecard: scorecardOf(partition.units, {
       populations: census.populations,
-      provinces: census.provinces,
+      origins: census.origins,
       modernFigures: statistics,
     }),
     units: partition.units.map((unit) => {
@@ -359,19 +359,28 @@ function main(): void {
     }
     populations.set(district, record.population);
   }
-  if (populations.size !== CENSUS_DISTRICT_COUNT) {
+  // Named, never counted. "137 where 136 were expected" sends a maintainer to diff two artifacts
+  // by hand; the district that is missing — or the one that should not be there — is the whole of
+  // what the failure has to say.
+  const expected = ROSTER.filter((entry) => entry.kind !== 'territory').flatMap(
+    (entry) => entry.districts,
+  );
+  const missing = expected.filter((district) => !populations.has(district));
+  const unexpected = [...populations.keys()].filter((district) => !expected.includes(district));
+  if (missing.length > 0 || unexpected.length > 0) {
     fail(
-      `${STATISTICS_BUNDLE} holds ${populations.size} districts with a population, and the 2023 ` +
-        `census covers ${CENSUS_DISTRICT_COUNT}. A short census leaves units silently outside the ` +
-        `figures rather than counted.`,
+      `${STATISTICS_BUNDLE} does not cover the ${CENSUS_DISTRICT_COUNT} districts of the 2023 ` +
+        `census. A short census leaves units silently outside the figures rather than counted.` +
+        (missing.length === 0 ? '' : ` Missing: ${missing.join(', ')}.`) +
+        (unexpected.length === 0 ? '' : ` Not census districts: ${unexpected.join(', ')}.`),
     );
   }
   // Today's map, which "districts moved" is measured against, from the roster the geometry is
-  // drawn from — so every drawn district has a province, AJK's and GB's twenty included.
-  const provinces = new Map<string, string>(
-    ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
+  // drawn from — so every drawn district has a first-level entity, AJK's and GB's twenty included.
+  const origins = new Map<string, string>(
+    ROSTER.flatMap((entry) => entry.districts.map((d) => [d, entry.name] as const)),
   );
-  const census = { populations, provinces };
+  const census = { populations, origins };
 
   const scenarios = {
     provenance: {
@@ -469,11 +478,11 @@ function main(): void {
       ).padStart(2)} units, ${String(partition.districts).padStart(3)} districts ` +
         `(${proposed.length} proposed: ${proposed.map((u) => u.name).join(', ')})`,
     );
-    const scorecard = scorecardOf(partition.units, {
-      populations,
-      provinces,
-      modernFigures: variant.statistics ?? { modernFigures: true },
-    });
+    // Read off what was just written, never computed a second time: a build log quoting its own
+    // recomputation could agree with itself while disagreeing with the artifact, which is the one
+    // failure a log is supposed to catch.
+    const scorecard = scenarios.variants.find((emitted) => emitted.id === variant.id)?.scorecard;
+    if (scorecard === undefined) continue;
     const spread =
       scorecard.population === null
         ? `no population figures (${scorecard.populationWithheld?.kind})`
@@ -481,7 +490,7 @@ function main(): void {
           `smallest, ${scorecard.population.ratio ?? '—'}:1`;
     console.log(
       `       scorecard: ${scorecard.districtsMoved.count} of ${scorecard.districtsMoved.of} ` +
-        `districts change province; ${spread}`,
+        `districts change hands; ${spread}`,
     );
   }
 
