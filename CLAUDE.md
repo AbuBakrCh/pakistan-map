@@ -745,8 +745,10 @@ Numbered by the grilling question that settled each.
    Taftan is not a district at all. See `docs/research/balochistan-division-district-set.md`.
    The current-day 41-district roster remains unresolvable without the provincial gazette —
    which no longer blocks anything, since under ADR-0001 none of it is drawn.
-2b. **Can a variant claim AJK territory?** L2 (#24) and H2 (#30) reference AJK districts, which
-   are drawn but unshaded and carry no PBS-direct statistics. Product decision outstanding — the
+2b. **Can a variant claim AJK territory?** H2 (#30) references AJK districts, which
+   are drawn but unshaded and carry no PBS-direct statistics. L2 was the second example until #24
+   was written; the reading that shipped claims no territory district, so the question now rests
+   on H2 alone. Product decision outstanding — the
    build's provisional answer is **no**: `TERRITORY_CLAIM_POLICY` is `forbid`, so the first
    variant that needs it fails loudly naming the district instead of settling a constitutional
    question by accident. Both answers are expressible and both are tested.

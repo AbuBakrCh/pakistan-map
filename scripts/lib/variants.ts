@@ -145,8 +145,9 @@ const L1: Variant = {
       text:
         'This is the narrowest of the three southern-province readings in this app, and the only ' +
         'one that follows an administrative boundary rather than a language one. The PPP reading ' +
-        'adds Mianwali and Bhakkar; the Saraikistan Qaumi Council’s adds Dera Ismail Khan and ' +
-        'Tank on top of those, leaving Punjab altogether. They differ in extent and in what they ' +
+        'adds Mianwali and Bhakkar; the Saraikistan Qaumi Council’s adds Dera Ismail Khan, Tank ' +
+        'and Paharpur on top of those, leaving Punjab altogether. They differ in extent and in ' +
+        'what they ' +
         'are arguing from, and each is drawn as its own advocates state it.',
       relatedVariants: ['l2', 'l3'],
     },
@@ -246,7 +247,7 @@ const L2: Variant = {
         'Mianwali and Bhakkar. Taunsa was carved out of Dera Ghazi Khan and Kot Addu out of ' +
         'Muzaffargarh that year, so the same territory is 15 districts today. This map is pinned ' +
         'to the 2023 census, in which neither new district has a population row, so both are ' +
-        'drawn inside their parents and the unit reads as 13. Thirteen as claimed, fifteen now, ' +
+        'drawn inside their parents and the unit reads as 13. Thirteen then, fifteen now, ' +
         'thirteen drawn — and the first and the last are the same thirteen districts.',
     },
     {
@@ -265,8 +266,9 @@ const L2: Variant = {
       text:
         'This is the middle of the three southern-province readings in this app. The South Punjab ' +
         'Secretariat draws the three southern divisions and stops at the provincial boundary; the ' +
-        'Saraikistan Qaumi Council’s reading adds Dera Ismail Khan and Tank on top of these ' +
-        'fifteen districts and crosses it. The app draws one at a time and never a compromise ' +
+        'Saraikistan Qaumi Council’s reading adds Dera Ismail Khan, Tank and Paharpur on top of ' +
+        'these fifteen districts and crosses it. The app draws one at a time and never a ' +
+        'compromise ' +
         'between them (D8).',
       relatedVariants: ['l1', 'l3'],
     },
@@ -286,6 +288,12 @@ const L2: Variant = {
         'Pakistan Peoples Party — stated position on a southern province: the districts of the ' +
         'Multan, Bahawalpur and Dera Ghazi Khan divisions as they then stood, together with ' +
         'Mianwali and Bhakkar',
+    },
+    {
+      label:
+        'Contemporary press reporting of public opposition in Mianwali and Bhakkar to inclusion ' +
+        'in a southern province, argued there on the grounds of a Punjabi rather than a Seraiki ' +
+        'identity — the assertion this card’s contested-edge footnote makes',
     },
     {
       label:
@@ -348,8 +356,9 @@ const L3: Variant = {
   status:
     'A nationalist demand, unimplemented. The Saraikistan Qaumi Council argues for a Seraiki ' +
     'province on this extent. No province has been created and no constitutional amendment to ' +
-    'create one has passed, and no government proposal — the South Punjab Secretariat included — ' +
-    'has ever reached across the provincial boundary for the two Khyber Pakhtunkhwa districts.',
+    'create one has passed. The one southern-province scheme that has been given administrative ' +
+    'effect — the South Punjab Secretariat, operational since 2020 — covers three Punjab ' +
+    'divisions and does not reach across the provincial boundary at all.',
   advocacy: {
     kind: 'advocated',
     by: [
@@ -421,12 +430,14 @@ const L3: Variant = {
         'same frame.',
     },
     {
-      kind: 'note',
+      kind: 'contested-edge',
       text:
         'Tank is inside the line and shades Pushto: the census records it as the mother tongue of ' +
-        '83.3% of those counted there. The claim includes it and this map draws the claim, so the ' +
-        'disagreement between the outline and the shading beneath it is left visible rather than ' +
-        'footnoted away — it is the most informative thing on this variant.',
+        '83.3% of those counted there, where Dera Ismail Khan beside it shades Saraiki. The ' +
+        'claim includes Tank and this map draws the claim, so the disagreement between the ' +
+        'outline and the shading beneath it is left visible rather than footnoted away — it is ' +
+        'the most informative thing on this variant, and it is where the opposition named above ' +
+        'is argued from.',
     },
   ],
   notes: [
@@ -466,6 +477,12 @@ const L3: Variant = {
       label:
         'PBS 2023 Digital Census, district table — South Waziristan’s population of 888,675, the ' +
         'figure quoted for the district this claim excludes',
+    },
+    {
+      label:
+        'Government of the Punjab — South Punjab Secretariat, established 15 October 2020, ' +
+        'covering the Multan, Bahawalpur and Dera Ghazi Khan divisions: the remit this card cites ' +
+        'as the scheme that stops at the provincial boundary',
     },
     {
       label:

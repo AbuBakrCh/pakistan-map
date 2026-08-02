@@ -283,8 +283,10 @@ export interface Variant {
 /**
  * Whether a unit that is not a territory may take an AJK or Gilgit-Baltistan district.
  *
- * **This is CLAUDE.md open item 2b, and it is a product decision that is not settled.** L2 and
- * H2 reference AJK districts; those districts are drawn but carry no PBS statistic of any kind,
+ * **This is CLAUDE.md open item 2b, and it is a product decision that is not settled.** H2
+ * references AJK districts — L2 was the other example until #24 wrote it, and the reading that
+ * shipped claims none, so the question now rests on H2 alone. Those districts are drawn but carry
+ * no PBS statistic of any kind,
  * so a unit containing one has a population that is short by an unknowable amount and a shading
  * with a hole in it. Both answers are expressible — the policy is a parameter, and both branches
  * are tested — so settling it is a one-line change here rather than a rewrite.
@@ -623,6 +625,8 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
     }
 
     const excludes: string[] = [];
+    /** Resolved district -> the exclusion that named it, so a repeat can be told from a fold. */
+    const seenExclusions = new Map<string, string>();
     for (const excluded of unit.excludes ?? []) {
       const match = resolveClaimedDistrict(excluded);
       if (match === null) {
@@ -639,10 +643,20 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
             `say one thing and the map draw the other.`,
         );
       }
-      // Deduplicated for the same reason the claims above are: two post-census districts can be
-      // two halves of one 2023 district, and L3 excludes both halves of South Waziristan by the
-      // names they carry today. Listing the drawn district twice would read as two exclusions.
-      if (!excludes.includes(match.district)) excludes.push(match.district);
+      // Held to exactly the shape the claims loop above uses, and for the same two reasons. Two
+      // post-census districts can be two halves of one 2023 district — L3 excludes both halves of
+      // South Waziristan by the names they carry today — so the resolved list is deduplicated,
+      // because naming the drawn district twice would read as two exclusions. The same name twice
+      // is not that; it is a paste, and it is reported rather than swallowed.
+      const previouslyExcluded = seenExclusions.get(match.district);
+      if (previouslyExcluded !== undefined) {
+        if (normalizeName(previouslyExcluded) === normalizeName(excluded)) {
+          problems.push(`${at} unit "${unit.name}" excludes ${excluded} twice.`);
+        }
+        continue;
+      }
+      seenExclusions.set(match.district, excluded);
+      excludes.push(match.district);
     }
 
     const resolvedUnit: ResolvedUnit = {
