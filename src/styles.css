@@ -1191,3 +1191,204 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/*
+ * "About the data" (#21) — the audit surface.
+ *
+ * A `<details>`, closed by default and set at the colophon's own weight, because it is the
+ * reference behind the map rather than a second subject: opening it should read as unfolding the
+ * small print, not as arriving somewhere. Everything inside is a single column at any width — the
+ * rows are source, vintage and caveat, and a caveat set in a 20rem column beside its source is a
+ * caveat nobody finishes. That is also what makes the 390px bar free rather than a special case.
+ */
+.about-well {
+  border-top: 1px solid var(--land-hatch);
+  padding-top: 0.5rem;
+}
+
+.about-summary {
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  /* A tap target, not a line of text: the bar is a phone and this is the only way in. */
+  padding: 0.35rem 0;
+}
+
+.about-summary:hover,
+.about-summary:focus-visible {
+  color: var(--ink);
+}
+
+.about-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  /* The prose measure. A source note set the full width of a 1180px page is a note nobody reads. */
+  max-width: 64rem;
+  padding: 0.5rem 0 0.9rem;
+}
+
+.about-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.about-lead {
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.about-section {
+  border-top: 1px solid var(--land-hatch);
+  padding-top: 0.6rem;
+}
+
+.about-section-label {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.about-prose,
+.about-vintage-statement {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  margin: 0 0 0.45rem;
+}
+
+/* The one sentence the whole vintage rule reduces to, so it is set at the app's own voice. */
+.about-vintage-statement {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.about-stamps {
+  display: grid;
+  gap: 0.2rem 1rem;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  margin: 0;
+}
+
+.about-stamp-label {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.about-stamp-value {
+  color: var(--ink);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+/* The exact stamp, set small beside the readable date: it is what matches the file, not the page. */
+.about-stamp-iso {
+  color: var(--ink-faint);
+  display: block;
+  font-size: 0.66rem;
+}
+
+.about-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.about-row {
+  border-left: 1px solid var(--land-hatch);
+  padding-left: 0.6rem;
+}
+
+.about-row-what {
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.about-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.25rem;
+}
+
+.about-gloss,
+.about-row-source,
+.about-row-vintage,
+.about-row-caveat {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin: 0 0 0.2rem;
+}
+
+.about-gloss {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.about-row-source {
+  color: var(--ink-soft);
+  /* URLs are long and must not push the page sideways on a 390px screen. */
+  overflow-wrap: anywhere;
+}
+
+.about-row-vintage {
+  color: var(--ink-soft);
+}
+
+.about-row-caveat {
+  color: var(--ink-soft);
+}
+
+/*
+ * A discrepancy is not decoration and is not an error: it is the app being straight about a source
+ * that disagrees with another. Marked with the same rule as any other row, at the accent, so it
+ * reads as deliberate rather than as a warning about a bug.
+ */
+.about-row-discrepancy {
+  border-left-color: var(--accent);
+}
+
+.about-figure {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.about-licences {
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  gap: 0.2rem;
+  line-height: 1.5;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 560px) {
+  /*
+   * Nothing is dropped at the hard bar — a source list that hid half its rows on a phone would be
+   * an audit surface that cannot be audited on the device most readers will open it on. The one
+   * change is the stamp table, which stops pretending to be two columns.
+   */
+  .about-stamps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .about-stamp-value {
+    margin: 0 0 0.3rem;
+  }
+}

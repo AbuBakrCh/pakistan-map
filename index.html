@@ -27,6 +27,14 @@
       <aside class="card-well" id="card" aria-label="The variant on screen" hidden></aside>
 
       <footer class="colophon" id="colophon"></footer>
+
+      <!--
+        The audit surface (#21). A `details` rather than a dialog or a route: it needs no
+        JavaScript to open, no hover to discover and no width to fit, which is what makes it work
+        at 390px — and it is closed by default because it is the reference behind the map, not the
+        map. It sits under the colophon, which is the short form of the same claim.
+      -->
+      <section class="about-well" id="about"></section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -14,6 +14,7 @@
 
 import { select } from 'd3';
 import type { BasisId, ScenarioBundle } from './bundle.ts';
+import type { AboutBadge, AboutTheData } from './lib/about.ts';
 import type { CardList, CardScorecard, CardUnit, VariantCard } from './lib/card.ts';
 import { COMPARE_HINT, COMPARE_LABEL, COMPARE_TITLE } from './lib/compare.ts';
 import {
@@ -368,4 +369,106 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
 
   show(null);
   return { show };
+}
+
+/**
+ * The "About the data" panel (#21) — the surface the app's own central claim is checked against.
+ *
+ * Imperative D3 against the DOM like the rest of this file, and like the rest of it composes not
+ * one sentence: every word, every figure and every badge gloss is decided in `lib/about.ts`, under
+ * test, and read off the committed bundles there. What is left here is which element gets which
+ * class.
+ *
+ * A `<details>` and nothing cleverer. It opens with no JavaScript, is reachable by keyboard and by
+ * tap, needs no hover to be discovered, and collapses to a single line of text at 390px — which is
+ * the bar this has to clear. A modal would need a close button, a focus trap and a width; a
+ * separate route would put the provenance one page away from the map it qualifies.
+ *
+ * Rendered once, at load. Nothing on it answers to the selection: the sources, the vintages and
+ * the build dates are the same under every basis and every proposal, and redrawing it on each
+ * change would be the page moving underneath a reader who is reading it.
+ */
+export function renderAbout(container: HTMLElement, about: AboutTheData): void {
+  const root = select(container).append('details').attr('class', 'about').node();
+  if (root === null) return;
+
+  el(root, 'summary', 'about-summary', about.summary);
+  const body = el(root, 'div', 'about-body');
+  el(body, 'h2', 'about-title', about.title);
+  el(body, 'p', 'about-lead', about.lead);
+
+  const vintage = section(body, 'Vintage');
+  el(vintage, 'p', 'about-vintage-statement', about.vintage.statement);
+  el(vintage, 'p', 'about-prose', about.vintage.consequence);
+
+  const built = section(body, 'Built');
+  el(built, 'p', 'about-prose', about.built.lead);
+  const stamps = el(built, 'dl', 'about-stamps');
+  for (const stamp of about.built.stamps) {
+    el(stamps, 'dt', 'about-stamp-label', stamp.label);
+    const value = el(stamps, 'dd', 'about-stamp-value', stamp.date);
+    // The machine-readable form beside the readable one, so a reader can match the line against
+    // the timestamp inside the file rather than against a date that could be either of two days.
+    const exact = el(value, 'time', 'about-stamp-iso', stamp.iso);
+    exact.dateTime = stamp.iso;
+  }
+
+  const bases = section(body, 'Bases');
+  el(bases, 'p', 'about-prose', about.bases.lead);
+  const basisList = el(bases, 'ul', 'about-rows');
+  for (const basis of about.bases.items) {
+    const row = el(basisList, 'li', 'about-row');
+    el(row, 'h4', 'about-row-what', basis.name);
+    renderBadges(row, basis.badges);
+    el(row, 'p', 'about-row-source', basis.source);
+    el(row, 'p', 'about-row-vintage', basis.vintage);
+  }
+
+  const sources = section(body, 'Sources');
+  el(sources, 'p', 'about-prose', about.sources.lead);
+  const sourceList = el(sources, 'ul', 'about-rows');
+  for (const source of about.sources.items) {
+    const row = el(sourceList, 'li', 'about-row');
+    el(row, 'h4', 'about-row-what', source.what);
+    renderBadges(row, source.badges);
+    el(row, 'p', 'about-row-source', source.source);
+    el(row, 'p', 'about-row-vintage', source.vintage);
+    if (source.caveat !== null) el(row, 'p', 'about-row-caveat', source.caveat);
+  }
+
+  // Not a footnote and not last: a panel that listed the sources and buried the places they
+  // disagree would make the data look tidier than it is, which is the failure it exists to
+  // prevent.
+  const discrepancies = section(body, 'Where the sources disagree');
+  el(discrepancies, 'p', 'about-prose', about.discrepancies.lead);
+  const items = el(discrepancies, 'ul', 'about-rows');
+  for (const item of about.discrepancies.items) {
+    const row = el(items, 'li', 'about-row about-row-discrepancy');
+    const label = el(row, 'h4', 'about-row-what', item.label);
+    if (item.figure !== null) {
+      label.append(' ');
+      el(label, 'span', 'about-figure', item.figure);
+    }
+    el(row, 'p', 'about-row-caveat', item.text);
+  }
+
+  const rest = section(body, 'Not on this panel');
+  el(rest, 'p', 'about-prose', about.omitted);
+
+  const licences = section(body, 'Attribution');
+  const list = el(licences, 'ul', 'about-licences');
+  for (const licence of about.licences) el(list, 'li', 'about-licence', licence);
+}
+
+function section(parent: HTMLElement, label: string): HTMLElement {
+  const node = el(parent, 'section', 'about-section');
+  el(node, 'h3', 'about-section-label', label);
+  return node;
+}
+
+/** Glossed on the panel, never in a `title`: the panel that explains the badges least of all. */
+function renderBadges(parent: HTMLElement, list: readonly AboutBadge[]): void {
+  const row = el(parent, 'p', 'about-badges');
+  for (const item of list) el(row, 'span', 'badge badge-provenance', item.label);
+  el(parent, 'p', 'about-gloss', list.map((item) => item.gloss).join(' · '));
 }

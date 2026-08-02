@@ -8,8 +8,9 @@ bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
 contiguity (#16), the **scorecard** (#20) carrying the figures a proposal is judged on, the
-**compare gesture** holding a proposal off the map (#22), and every view carrying a **deep link**
-of its own (#23).
+**compare gesture** holding a proposal off the map (#22), every view carrying a **deep link**
+of its own (#23), and the **About the data** panel (#21) putting every source, its vintage and the
+bundle's own build dates on one auditable surface.
 
 ---
 
@@ -59,6 +60,16 @@ Basis (4)  →  Variant (17 total)  →  Units  →  Districts
 | **Administrative** | 2023 census population + derived geometry | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
 | **Development** | PBS 2023 Census Tables 12, 23, 24 — literacy, drinking water, toilet facilities | `census` for the three published rates; `synthesized` for any composite of them (#31) |
+
+A basis carries a **vintage** as well as a badge and a source (#21), and the field is checked
+rather than assumed: a badge says which *kind* of claim a shading is and the vintage says which
+census, and either alone is half a provenance. Three of the four declare exactly the project's one
+vintage (D24, ADR-0001) and a `census` badge at any other date fails the build naming the basis;
+Historical is the exception the rule allows for, since its demarcations are dated one by one, so it
+declares that and each variant carries its own document's date. A variant may carry a `vintage` of
+its own for the same reason — H2 draws 1947 — and where it does not, it is read at its basis's and
+the resolution says so, so that no surface prints the census's year against a boundary the census
+had nothing to do with.
 
 **Deliberately cut:**
 
@@ -131,7 +142,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6, the coastline, the four neighbour countries and the first-level `admin_centre` nodes → `data/raw/`, retrying across four Overpass mirrors. Level 4 sources ICT and, now, each unit's seat |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
-| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant. Refuses, besides, a basis or a variant short of a badge, a source or a vintage; a badge outside the closed vocabulary; a `census` badge at a vintage that is not the project's; and a boundary this build derived that does not say so — each naming the basis or variant and the word (#21) |
 | `scripts/build-context.ts` | `build:data:context` | Stitches each neighbour relation into closed polygons with the districts' own stitcher → intersects them with `CONTEXT_EXTENT` → pairs each first-level unit with its `admin_centre` node → simplifies to 4% and quantizes → `data/bundle/context.topojson.json`. Fails on a country whose ISO code is not in the cache, a ring that will not stitch shut, a silhouette that clips to nothing, a shape that does not contain its own capital, or a unit with no seat — each named. **A separate artifact from the geography bundle, deliberately:** nothing here shares an edge with anything in there, and merging them would renumber every arc in the country to add a background and imply the two sides of a border are one line. Quantization comes *after* simplification, the opposite order from the geometry build, because `presimplify` restores absolute coordinates for arcs and not for **points** — quantized first, every city dot lands in the Bay of Bengal |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
@@ -338,6 +349,8 @@ What it holds:
 | The scorecard on the card — five figures in a fixed order; census populations in full and never rounded to a headline; the total qualified by which units it is over and which are outside it; a missing ratio said rather than printed as 1; the stranded districts of a broken unit named; and population voided in the words of whatever is missing it — a variant's own reason and a census gap worded apart | `card.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
+| Provenance (#21) — every basis and every variant carrying a badge, a source **and a vintage**, held over `BASES` and `VARIANTS` where a content diff is actually made rather than only over the artifact; badges from the closed vocabulary at both tiers, naming the basis or variant *and* the word; both the **Advocated by** and the **Opposed by** line, with *unadvocated* held as the stated state it is; the one vintage (D24) anchored against the string all five committed artifacts stamp, and a `census` badge at any other vintage failing by name; and a boundary this build **derived** refused unless it says so — in both directions, since an unbadged derived line passes our arithmetic off as somebody's proposal and a `derived` badge over a transcribed one credits their document to us | `provenance.test.ts` |
+| The About panel (#21) — every source row and every basis carrying all three, none blank and each named; a boundary dated by **OpenStreetMap's own edit date** and a figure by the census, and neither by the date the build ran; every drawn surface reached, named rather than counted, so a row lost to a renamed bundle key is a failure and not a silence; the discrepancies present **with their figures** — 1,041,342 people, 6,374 households, the flush-toilet share and the 48,010-household denominator — and the geometry's own disagreements with PBS quoted whole rather than summarised; what the panel leaves off said on the panel; and a date set by hand rather than by the browser's locale, for the reason `groupDigits` exists | `src/lib/about.test.ts` |
 | The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
 | The rule engine — a rule partitioning the real 136 exactly once, every unit contiguous against the committed graph, every unit's people its own districts' census rows and the whole partition equal to Table 1's national figure; the same rule drawing a byte-identical map twice and again from a shuffled scope and every map reversed, which is the determinism claim; a ceiling holding on every unit and never in fewer units than the arithmetic floor; a distance limit re-measured from the committed geometry; the output validating as a variant, both universes, with `TERRITORY_CLAIM_POLICY` still `forbid`. And what it refuses, each naming the district — the twenty AJK and GB districts the census cannot see, Lahore where a ceiling is below a district that cannot be split, and a district no unit could grow into | `partitioner.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
@@ -563,6 +576,34 @@ Contiguity is **flagged, never blocked** — computed at build time off the dist
 (#16) and carried on the unit, so the card names the stranded districts rather than reporting a
 count, and never confuses being in two pieces with drawing as two shapes.
 
+**About the data (#21)** — the audit surface. The working agreement's claim is that no surface
+here is unsourced; until this panel existed that claim was checkable by us and by nobody else,
+since the badges are on the card, the vintage is in the colophon and the reconciliations are
+inside `data/bundle/statistics.json`. One `<details>` under the colophon now carries every source,
+its badge, **its own vintage**, and the date each committed artifact was baked. A `<details>`
+rather than a dialog or a route: it opens with no JavaScript, needs no hover to be found, takes a
+tap, and collapses to one line — which is what makes the 390px bar free rather than a special
+case. Closed by default, because it is the reference behind the map and not the map.
+
+Three things it does that a source list would not. **Vintages are per source, never one string
+repeated**: OpenStreetMap's own edit dates sit under the boundaries and PBS's census under the
+figures, because printing the census's date under a border would say the border was surveyed by a
+census — and neither is the date the build ran, which has a section of its own. **The
+discrepancies get a section above the small print, not a footnote**: the 1,041,342 people Table 11
+counts short of Table 1, the 6,374 households PBS's two releases of Table 23 disagree by, the
+absence of any improved-*sanitation* column, the 48,010-household denominator, the division totals
+that are a cross-table check and not a second source, and the geometry's own disagreements with
+PBS's published areas. A panel that listed the tables and hid those would use the audit surface to
+make the data look tidier than it is, which is the failure it exists to prevent. And **what it
+leaves off is on it**: the SHA-256 cache digests, the province and division reconciliation tables
+and the per-district mother-tongue excesses are an auditor's appendix of some hundreds of rows,
+they stay in the artifacts where the suite re-derives them every run, and the panel says so and
+names the files.
+
+Nothing on it answers to the selection — the sources, the vintages and the build dates are the
+same under every basis and every proposal — so it is rendered once, at load. The words are decided
+in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with the card.
+
 ---
 
 ## Politically sensitive rendering
@@ -726,7 +767,11 @@ boundary). Karachi and Pashtun Balochistan are attributed variants, not algorith
   machinery is not. Political judgments get reviewed in a diffable table, not through the
   distraction of a running UI.
 - No unsourced surface anywhere. Every fill, every number, every boundary traces to a published
-  figure or a published boundary, and carries a badge saying which.
+  figure or a published boundary, and carries a badge saying which — and a **vintage**, because a
+  badge without a date is half a provenance. The claim is no longer only ours to check: the
+  **About the data** panel (#21) puts every source, every vintage and every build date on one
+  surface, discrepancies included, and the build refuses a basis or a variant that is short of any
+  of the three.
 
 ---
 

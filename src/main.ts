@@ -56,9 +56,10 @@ import {
 } from './lib/selection.ts';
 import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
+import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
 import { renderMap, type MapView } from './map.ts';
-import { renderControls, renderVariantCard } from './panel.ts';
+import { renderAbout, renderControls, renderVariantCard } from './panel.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
@@ -66,6 +67,8 @@ const controlMount = document.getElementById('controls');
 if (controlMount === null) throw new Error('#controls is missing from index.html');
 const cardMount = document.getElementById('card');
 if (cardMount === null) throw new Error('#card is missing from index.html');
+const aboutMount = document.getElementById('about');
+if (aboutMount === null) throw new Error('#about is missing from index.html');
 
 /**
  * What each basis shades districts with — and, by being the same object, which bases may be
@@ -151,6 +154,25 @@ const panel = renderControls(controlMount, scenarioBundle, choices, go, () => {
   render();
 });
 const card = renderVariantCard(cardMount);
+
+/*
+ * The audit surface (#21), rendered once and never again.
+ *
+ * Nothing on it answers to the selection: the sources, their vintages and the build dates are the
+ * same under every basis and every proposal, and a panel that redrew on each change would be the
+ * page moving underneath a reader who is reading it. It takes the committed bundles whole, because
+ * the point of it is to be the same files the map is drawn from rather than a description of them.
+ */
+renderAbout(
+  aboutMount,
+  aboutTheData({
+    geography: provenance,
+    context: contextProvenance,
+    census: censusStatistics,
+    scenarios: scenarioBundle,
+    outlines: unitOutlineBundle,
+  }),
+);
 
 /**
  * A view the reader chose, which is the only kind that takes a history entry.

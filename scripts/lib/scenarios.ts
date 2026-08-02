@@ -55,11 +55,42 @@ export type ProvenanceBadge =
   | 'documented'
   | 'synthesized';
 
+/** The closed vocabulary as a value, so a check can iterate it rather than retype it. */
+export const PROVENANCE_BADGES: readonly ProvenanceBadge[] = [
+  'official',
+  'census',
+  'proxy',
+  'derived',
+  'documented',
+  'synthesized',
+];
+
+/**
+ * The one vintage (D24, ADR-0001), spelled once.
+ *
+ * Every artifact in `data/bundle/` stamps this same string, and the suite holds the constant
+ * against what the committed bundle actually says — so a basis declaring a vintage is declaring
+ * the project's, not one of its own. That is the whole content of the rule: a second vintage
+ * anywhere on this map means a district is drawn at one date and counted at another.
+ */
+export const DATA_VINTAGE =
+  '2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001';
+
 export interface Basis {
   readonly id: BasisId;
   readonly name: string;
   /** What the boundaries are argued from, and what the map shades by. */
   readonly source: string;
+  /**
+   * When the data behind the basis was collected — not when this build ran.
+   *
+   * First-class rather than left to the bundle's own header, because a badge and a source without
+   * a date are half a provenance: `census` says which kind of claim a shading is, and the vintage
+   * says which census. Three of the four bases shade from PBS 2023 and declare exactly
+   * `DATA_VINTAGE`; the Historical basis stands on dated documents instead, and says so here, with
+   * each variant free to carry the date of its own.
+   */
+  readonly vintage: string;
   /** The default badges for variants on this basis; a variant may carry its own (L7). */
   readonly badges: NonEmpty<ProvenanceBadge>;
 }
@@ -69,18 +100,24 @@ export const BASES: Readonly<Record<BasisId, Basis>> = {
     id: 'language',
     name: 'Language / dialect',
     source: 'PBS 2023 Census Table 11 — mother tongue by district',
+    vintage: DATA_VINTAGE,
     badges: ['census', 'proxy'],
   },
   administrative: {
     id: 'administrative',
     name: 'Administrative',
     source: '2023 census population + derived geometry',
+    vintage: DATA_VINTAGE,
     badges: ['census', 'derived'],
   },
   historical: {
     id: 'historical',
     name: 'Historical',
     source: 'Documented past demarcations, 1947 onward',
+    // The one basis that is not the census, so the one basis whose vintage is not `DATA_VINTAGE`.
+    // A single date would be false here — the demarcations it draws run from 1947 to the 1970s —
+    // so the basis says what kind of date it has and each variant carries its document's own.
+    vintage: 'The date of each demarcation, 1947 onward — stated per variant, not shared',
     badges: ['documented'],
   },
   development: {
@@ -93,6 +130,7 @@ export const BASES: Readonly<Record<BasisId, Basis>> = {
     // them is `synthesized` and is #31's to badge, on the variant that builds one.
     source:
       'PBS 2023 Census — literacy (10+), improved drinking water, households with a flush toilet',
+    vintage: DATA_VINTAGE,
     badges: ['census'],
   },
 };
@@ -217,6 +255,15 @@ export interface Variant {
   readonly tagline?: string;
   /** Overrides the basis default, for a variant whose provenance differs (L7, D1). */
   readonly badges?: NonEmpty<ProvenanceBadge>;
+  /**
+   * When *this boundary's* source was published, where the variant has a date of its own.
+   *
+   * H2 draws the map of 1947 and L1 transcribes a remit dated 2020; neither is the census's date,
+   * and printing the census's beside them would put a wrong year under a right badge. Left unset,
+   * the variant is argued at its basis's vintage and `vintageOf` says so rather than pretending
+   * the variant stated it.
+   */
+  readonly vintage?: string;
   /** Two to three sentences. Rendered on the card. */
   readonly rationale: string;
   /** Where the proposal actually stands in the world. */
@@ -252,6 +299,79 @@ export const TERRITORY_CLAIM_POLICY: TerritoryClaimPolicy = 'forbid';
 
 export interface ValidationOptions {
   readonly territoryClaims?: TerritoryClaimPolicy;
+}
+
+/** The badges a variant actually carries: its own where it has them, its basis's where it does not. */
+export function badgesOf(
+  variant: Variant,
+  bases: Readonly<Record<BasisId, Basis>> = BASES,
+): readonly ProvenanceBadge[] {
+  return variant.badges ?? bases[variant.basis].badges;
+}
+
+/**
+ * The vintage a variant is argued at, and whether it said so itself.
+ *
+ * `from` is not bookkeeping. A variant that carries no date of its own is being read at its
+ * basis's, and a surface that printed that as though the variant had stated it would put the
+ * census's year against a boundary the census had nothing to do with — which is precisely the
+ * confusion the badge vocabulary exists to prevent. So the fallback is reported as a fallback.
+ */
+export interface ResolvedVintage {
+  readonly vintage: string;
+  readonly from: 'variant' | 'basis';
+}
+
+export function vintageOf(
+  variant: Variant,
+  bases: Readonly<Record<BasisId, Basis>> = BASES,
+): ResolvedVintage {
+  const own = variant.vintage;
+  if (own !== undefined && own.trim() !== '') return { vintage: own, from: 'variant' };
+  return { vintage: bases[variant.basis].vintage, from: 'basis' };
+}
+
+/**
+ * The four bases, held to the same rule as everything else: a badge, a source and a vintage.
+ *
+ * Separate from `validateVariant` because a basis is not a partition — nothing about it can be
+ * checked against the district set — but it is on screen under every proposal argued on it, and
+ * the working agreement does not exempt a control from carrying its provenance.
+ */
+export function validateBases(bases: Readonly<Record<BasisId, Basis>> = BASES): readonly string[] {
+  const problems: string[] = [];
+  for (const [id, basis] of Object.entries(bases) as [BasisId, Basis][]) {
+    if (basis.name.trim() === '') problems.push(`basis ${id} has no name.`);
+    if (basis.source.trim() === '') {
+      problems.push(`basis ${id} cites no source. No unsourced surface anywhere.`);
+    }
+    if (basis.vintage.trim() === '') {
+      problems.push(
+        `basis ${id} declares no vintage. A badge and a source without a date are half a ` +
+          `provenance: "census" says which kind of claim the shading is, the vintage says which ` +
+          `census.`,
+      );
+    }
+    if (basis.badges.length === 0) problems.push(`basis ${id} carries no provenance badge.`);
+    for (const badge of basis.badges) {
+      if (!PROVENANCE_BADGES.includes(badge)) {
+        problems.push(
+          `basis ${id} carries the badge "${badge}", which is not one of ` +
+            `${PROVENANCE_BADGES.join(', ')}.`,
+        );
+      }
+    }
+    // The vintage rule (D24, ADR-0001) as an assertion rather than a habit: a basis that shades
+    // from the census shades from *this* census. A second one would mean districts drawn at one
+    // date and counted at another, which is the single failure ADR-0001 exists to prevent.
+    if (basis.badges.includes('census') && basis.vintage !== DATA_VINTAGE) {
+      problems.push(
+        `basis ${id} is badged "census" and declares the vintage "${basis.vintage}", which is not ` +
+          `the project's single vintage "${DATA_VINTAGE}" (D24, ADR-0001).`,
+      );
+    }
+  }
+  return problems;
 }
 
 /** A claimed district, resolved onto the 2023 set the map draws. */
@@ -394,6 +514,67 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
     problems.push(`${at} cites no source. No unsourced surface anywhere.`);
   }
 
+  // ---- provenance (#21) --------------------------------------------------------------------
+  // A badge, a source and a vintage on every variant, and the badge telling the truth about the
+  // boundary underneath it. Held here rather than only in the suite because these are the claims
+  // the card puts on screen beside a proposal: a wrong one is not a failing test, it is a
+  // published statement about where a boundary came from.
+  const badges = badgesOf(variant);
+  if (badges.length === 0) {
+    problems.push(
+      `${at} carries no provenance badge. Every boundary on this map says what kind of claim it ` +
+        `is.`,
+    );
+  }
+  for (const badge of badges) {
+    if (!PROVENANCE_BADGES.includes(badge)) {
+      problems.push(
+        `${at} carries the provenance badge "${badge}", which is not one of ` +
+          `${PROVENANCE_BADGES.join(', ')}. The vocabulary is closed because a badge is a claim ` +
+          `about where a boundary came from.`,
+      );
+    }
+  }
+  if (variant.vintage !== undefined && variant.vintage.trim() === '') {
+    problems.push(
+      `${at} carries an empty vintage. A variant with no date of its own leaves the field unset ` +
+        `and is read at its basis's; a blank one asserts a date and names none.`,
+    );
+  }
+  const vintage = vintageOf(variant);
+  if (vintage.vintage.trim() === '') {
+    problems.push(`${at} resolves to no vintage at all, from itself or from its basis.`);
+  }
+  // A variant reading published census figures reads *this* census (D24, ADR-0001).
+  if (badges.includes('census') && vintage.vintage !== DATA_VINTAGE) {
+    problems.push(
+      `${at} is badged "census" and is argued at the vintage "${vintage.vintage}", which is not ` +
+        `the project's single vintage "${DATA_VINTAGE}" (D24, ADR-0001).`,
+    );
+  }
+
+  // A derived boundary must say on screen that it was drawn from data rather than copied from a
+  // proposal — the rule this module's header has stated in prose since it was written, now
+  // enforced. Both directions, because each says something different and each is a lie the card
+  // would print without complaint: an unbadged derived boundary passes off this build's own line
+  // as somebody's published claim, and a `derived` badge over a transcribed boundary credits a
+  // movement's document to our arithmetic.
+  const derivedBadges = badges.filter((b) => b === 'derived' || b === 'synthesized');
+  if (variant.composition.kind === 'derived' && derivedBadges.length === 0) {
+    problems.push(
+      `${at} draws a boundary this build derived from data ("${variant.composition.rule}") and ` +
+        `badges it ${badges.join(' · ')} — neither "derived" nor "synthesized". A line nobody ` +
+        `published must say so where it is drawn, or it reads as somebody's proposal.`,
+    );
+  }
+  if (variant.composition.kind === 'transcribed' && derivedBadges.length > 0) {
+    problems.push(
+      `${at} is badged "${derivedBadges.join(' · ')}" but its boundary is transcribed from ` +
+        `${variant.composition.from}. The badge claims this build computed a line somebody else ` +
+        `published.`,
+    );
+  }
+
   // ---- units -----------------------------------------------------------------------------
   const unitIds = new Set<string>();
   const resolved: ResolvedUnit[] = [];
@@ -532,7 +713,7 @@ export function validateScenarios(
   variants: readonly Variant[],
   options: ValidationOptions = {},
 ): ScenarioValidation {
-  const problems: string[] = [];
+  const problems: string[] = [...validateBases()];
   const ids = new Set<string>();
   for (const variant of variants) {
     if (ids.has(variant.id)) {

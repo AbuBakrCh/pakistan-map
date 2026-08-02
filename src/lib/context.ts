@@ -58,6 +58,9 @@ export interface BoundaryNote {
 }
 
 export interface ContextProvenance {
+  /** When this artifact was baked, and when OSM itself was last edited under each query. */
+  readonly generated: string;
+  readonly osmBaseTimestamp: Readonly<Record<string, string>>;
   readonly sources: Readonly<Record<string, string>>;
   readonly neighbours: {
     readonly method: string;
