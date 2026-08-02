@@ -72,15 +72,41 @@ export function labelAnchor(shape: Shape): [number, number] {
 /**
  * Abbreviations to fall back on where a name is wider than the ground it names.
  *
- * Only forms the units use for themselves are here — AJK is the AJK Bureau of Statistics'
- * own initialism, ICT and KP are PBS's. Nothing is invented: a shortening this app made up
- * would be a name no source uses, and a unit with no attested short form keeps its full name
- * and takes the overflow instead. The expansions are printed under the map.
+ * Only forms the units use for themselves are here. **Nothing is invented**: a shortening this app
+ * made up would be a name no source uses, and a unit with no attested short form keeps its full
+ * name and takes the overflow instead — which is a real cost and not a hypothetical one. H3's
+ * *Northern Areas* has no attested initialism, so at 390px it keeps its full name, loses the
+ * layout, and goes unnamed; that is stated in the suite by name rather than papered over with a
+ * coinage. The expansions are printed under the map.
  */
 const SHORT_FORMS: Readonly<Record<string, string>> = {
   'Azad Jammu & Kashmir': 'AJK',
+  /*
+   * Gilgit-Baltistan. Added for the 390px bar (#34), where it is not a nicety: fifteen characters
+   * set at province size is far wider than the ground it names on a phone, so the layout dropped
+   * the name entirely — and a territory drawn but *anonymous* is exactly the failure the
+   * politically sensitive rendering section exists to prevent. AJK, whose full name is longer
+   * still, kept its place only because it had an abbreviation to fall back to.
+   *
+   * **The weakest-sourced entry here, and it is flagged rather than dressed up.** The other four
+   * name a publishing agency — AJK is the AJK Bureau of Statistics' own initialism, ICT and KP are
+   * PBS's, and NWFP and FATA are the forms those units were administered under and the ones the
+   * GADM-derived sets D2/D3 rejects still carry. "GB" is in general use by the territory's own
+   * government and assembly, but this project has not yet checked it against a published document
+   * the way `docs/research/ajk-district-set.md` checked AJK's district names. It is open item 5,
+   * and it is here rather than absent because the alternative is leaving the territory unnamed,
+   * which breaks a harder rule than this one.
+   */
+  'Gilgit-Baltistan': 'GB',
   'Islamabad Capital Territory': 'ICT',
   'Khyber Pakhtunkhwa': 'KP',
+  /*
+   * The two units H3 draws that no longer exist, at the forms they were administered under — the
+   * same forms the GADM-derived sets D2/D3 rejects still print, which is where this project has
+   * them attested. Without these, H3 was three units short of a full set of names at 390px.
+   */
+  'North-West Frontier Province': 'NWFP',
+  'Federally Administered Tribal Areas': 'FATA',
 };
 
 /** The expansions the colophon has to carry, so an abbreviation on the map is never unexplained. */
@@ -102,7 +128,34 @@ export function labelText(
   return short !== undefined && measure(name) > shapeWidth ? short : name;
 }
 
-export type LabelTier = 'unit' | 'province' | 'city' | 'division';
+export type LabelTier = 'unit' | 'province' | 'city' | 'division' | 'district';
+
+/**
+ * The zoom at which district names start being offered to the layout (#34).
+ *
+ * Districts are the building block every proposal is stated in (D23), not a tier the base map
+ * draws: 156 names over a 369px phone frame is not a map, it is a word search. So they are the one
+ * tier with a threshold — below it they are not laid out at all, and a reader gets a district by
+ * **tapping** it, which answers with the name, its division, its province, its population and its
+ * dominant mother tongue rather than with a name alone. Above it there is room for the names to
+ * mean something, and they come in under every other tier.
+ *
+ * 6x rather than the 4x the district *lines* appear at: a line only has to be seen, a name has to
+ * be read, and at 4x the smaller districts of central Punjab are still too close together to take
+ * one.
+ */
+export const DISTRICT_LABEL_ZOOM = 6;
+
+/**
+ * District names, ranked beneath everything else on the map.
+ *
+ * The floor is negative, which is what keeps them there: every other tier's floor is zero or
+ * above and `geoArea` is a fraction of the sphere, so no district can climb past a division however
+ * large it is. A district name is the first thing to give way in a crowded frame, and at this zoom
+ * the frame is not crowded by anything else.
+ */
+export const districtLabelSites = (districts: readonly Shape[]): LabelSite[] =>
+  sitesOf(districts, 'district', -10);
 
 /**
  * What identifies a name across the tiers.

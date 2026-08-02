@@ -3,17 +3,21 @@ import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
 import context from '../../data/bundle/context.topojson.json';
 import outlines from '../../data/bundle/unit-outlines.json';
+import scenarios from '../../data/bundle/scenarios.json';
 import type { UnitOutlineBundle } from '../bundle.ts';
 import { readCities } from './context.ts';
-import { readGeography } from './geography.ts';
+import { readDistricts, readGeography } from './geography.ts';
 import { readUnitOutlines } from './units.ts';
-import { fitProjection } from './projection.ts';
+import { fitProjection, frameInset } from './projection.ts';
 import {
   baselineLabelSites,
+  districtLabelSites,
+  DISTRICT_LABEL_ZOOM,
   labelAnchor,
   labelKey,
   labelText,
   layoutLabels,
+  shortFormExpansions,
   measureLabel,
   variantLabelSites,
   type LabelBox,
@@ -198,20 +202,28 @@ describe('labelText', () => {
  * rather than by a browser, so the width is generous: a layout that clears at 0.58em per
  * character clears at whatever the serif actually measures.
  */
-describe('the baseline map at default zoom', () => {
-  const viewport = { width: 1200, height: 800, padding: 32 };
+// No browser here, so widths are estimated — generously, and with the stylesheet's capitals and
+// tracking accounted for, because a layout that clears at these widths clears at the real ones.
+// Units are set as provinces are — same size, same tracking, told apart by colour and not by
+// scale — so they measure the same way here.
+const measure = (text: string, tier: LabelTier) => {
+  if (tier === 'division') return { width: text.length * 10.5 * 0.5, height: 10.5 };
+  // A city name is set roman and smaller than a division's — it names a point, not an area.
+  if (tier === 'city') return { width: text.length * 9.5 * 0.5, height: 9.5 };
+  return { width: text.length * (13 * 0.68 + 1.5), height: 13 };
+};
+
+/**
+ * The whole baseline layout, at one frame — the renderer's own pipeline, in order.
+ *
+ * A function rather than a block, because the layout has to be asked the same questions at more
+ * than one size. Everything that goes wrong at 390px goes wrong *only* at 390px: a name that fits
+ * a desktop frame and not a phone's is invisible to a suite that only ever measures one viewport,
+ * which is how Gilgit-Baltistan came to be drawn and anonymous on the device most readers use.
+ */
+function baselineAt(viewport: { width: number; height: number; padding: number }) {
   const project = fitProjection(provinces, viewport);
   const path = geoPath(project);
-  // No browser here, so widths are estimated — generously, and with the stylesheet's capitals and
-  // tracking accounted for, because a layout that clears at these widths clears at the real ones.
-  // Units are set as provinces are — same size, same tracking, told apart by colour and not by
-  // scale — so they measure the same way here.
-  const measure = (text: string, tier: LabelTier) => {
-    if (tier === 'division') return { width: text.length * 10.5 * 0.5, height: 10.5 };
-    // A city name is set roman and smaller than a division's — it names a point, not an area.
-    if (tier === 'city') return { width: text.length * 9.5 * 0.5, height: 9.5 };
-    return { width: text.length * (13 * 0.68 + 1.5), height: 13 };
-  };
   const width = (f: { geometry: unknown }) => {
     const [[west], [east]] = path.bounds(f as never);
     return east - west;
@@ -237,7 +249,60 @@ describe('the baseline map at default zoom', () => {
     measured.map((m) => m.box),
     { bounds: viewport, gap: 3 },
   );
-  const sized = new Map(measured.map((m) => [m.box.key, m.box]));
+  return {
+    project,
+    shapeWidth,
+    result,
+    sized: new Map(measured.map((m) => [m.box.key, m.box])),
+    /** What each name is actually *set as* — the full form, or the unit's own abbreviation. */
+    drawnText: new Map(measured.map((m) => [m.box.key, m.text])),
+  };
+}
+
+/**
+ * The map's own box on a 390px phone, measured in a real browser rather than guessed, with the
+ * renderer's own inset applied by importing it rather than by copying the formula.
+ */
+const BAR_390 = { width: 369, height: 336 };
+
+const framed = (frame: { width: number; height: number }) => ({
+  ...frame,
+  padding: frameInset(frame.width),
+});
+
+/** The variant layout at one frame: which unit names the page would actually set. */
+function variantAt(id: string, frame: { width: number; height: number }) {
+  const viewport = framed(frame);
+  const project = fitProjection(provinces, viewport);
+  const path = geoPath(project);
+  const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, id);
+  const width = (f: { geometry: unknown }) => {
+    const [[west], [east]] = path.bounds(f as never);
+    return east - west;
+  };
+  const shapeWidth = new Map([
+    ...units.features.map((f) => [labelKey('unit', f.properties.name), width(f)] as const),
+    ...divisions.features.map((f) => [labelKey('division', f.properties.name), width(f)] as const),
+  ]);
+  const measured = variantLabelSites({ divisions }, units.features, cities).flatMap((site) => {
+    const point = project(site.anchor);
+    if (point === null) return [];
+    return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
+  });
+  return {
+    units: units.features.map((f) => f.properties.name),
+    placed: new Set(
+      layoutLabels(
+        measured.map((m) => m.box),
+        { bounds: viewport, gap: 3 },
+      ).map((l) => l.key),
+    ),
+  };
+}
+
+describe('the baseline map at default zoom', () => {
+  const viewport = { width: 1200, height: 800, padding: 32 };
+  const { project, shapeWidth, result, sized } = baselineAt(viewport);
 
   it('draws no two names on top of one another', () => {
     for (const a of result) {
@@ -325,6 +390,219 @@ describe('the baseline map at default zoom', () => {
       .map((city) => city.name)
       .filter((name) => !drawn.has(labelKey('city', name)));
     expect(unnamed).toEqual([]);
+  });
+});
+
+/**
+ * The 390px bar (#34) — the hard one, and the one the suite could not see until now.
+ *
+ * The frame is the map's own box on a 390px phone, measured in a real browser rather than guessed:
+ * 369 x 336 inside the well, with the renderer's own inset formula applied to it. Everything below
+ * fails *only* at this size, which is the whole argument for a second viewport case — a suite that
+ * measures one frame reports a country as fully named while the device most of its readers use
+ * draws a territory with no name on it.
+ */
+describe('the baseline map at the 390px bar', () => {
+  const { result, sized, drawnText } = baselineAt(framed(BAR_390));
+
+  it('names every province and both territories, Gilgit-Baltistan included', () => {
+    /*
+     * The finding this ticket exists for, from the owner's own measurement on #34: at this size
+     * the layout placed six of seven provinces, and the one it dropped was **Gilgit-Baltistan**.
+     *
+     * That is not a legibility miss, it is the failure the politically sensitive rendering section
+     * is written to prevent — AJK and GB are to be drawn *and named*, and a territory drawn but
+     * anonymous says something about Pakistan-administered ground that this app does not get to
+     * say by accident. Neither has a second chance further down a tier the way a division does.
+     */
+    const drawn = new Set(keys(result));
+    const unnamed = provinces.features
+      .map((p) => p.properties.name)
+      .filter((name) => !drawn.has(labelKey('province', name)));
+    expect(unnamed).toEqual([]);
+  });
+
+  it('shortens Gilgit-Baltistan only because the ground is small, not everywhere', () => {
+    // The fix is an abbreviation, and an abbreviation that fired at every size would be this app
+    // renaming a territory rather than fitting a name to its ground. Held at both frames at once,
+    // which is the only way that distinction can be asserted at all.
+    expect(drawnText.get(labelKey('province', 'Gilgit-Baltistan'))).toBe('GB');
+    const wide = baselineAt({ width: 1200, height: 800, padding: 32 });
+    expect(wide.drawnText.get(labelKey('province', 'Gilgit-Baltistan'))).toBe('Gilgit-Baltistan');
+  });
+
+  it('explains the abbreviation it just used, since the colophon carries the expansions', () => {
+    // An abbreviation on the map is never unexplained — the same obligation AJK, ICT and KP are
+    // already under. Read off the exported table the colophon prints from, so a short form added
+    // without an expansion fails here rather than appearing unglossed on the page.
+    expect(shortFormExpansions).toContainEqual(['GB', 'Gilgit-Baltistan']);
+  });
+
+  it('draws no two names on top of one another, at the size where they least fit', () => {
+    for (const a of result) {
+      const boxA = sized.get(a.key) as LabelBox;
+      for (const b of result) {
+        if (a.key === b.key) continue;
+        const boxB = sized.get(b.key) as LabelBox;
+        const apart =
+          Math.abs(a.x - b.x) >= (boxA.width + boxB.width) / 2 ||
+          Math.abs(a.y - b.y) >= (boxA.height + boxB.height) / 2;
+        expect(apart, `${a.key} overlaps ${b.key} at 390px`).toBe(true);
+      }
+    }
+  });
+
+  it('drops these divisions at the 390px bar, and no others', () => {
+    // Named, never counted — the same rule the 1200px case follows and for the same reason. A
+    // phone frame is a fifth of a desktop's area, so a great many division names give way here;
+    // that is the tier doing what it is ranked to do. What must not happen is the list changing
+    // without anyone seeing it, because this list *is* the opening view of the country on the
+    // device most readers will meet it on.
+    const drawn = new Set(keys(result));
+    const dropped = divisions.features
+      .filter((d) => d.properties.pseudo !== true)
+      .map((d) => d.properties.name)
+      .filter(
+        (name) => !drawn.has(labelKey('division', name)) && !drawn.has(labelKey('city', name)),
+      );
+    expect(dropped.sort()).toEqual([
+      'Baltistan',
+      'Dera Ismail Khan',
+      'Diamer-Astore',
+      'Faisalabad',
+      'Gujranwala',
+      'Hazara',
+      'Hyderabad',
+      'Loralai',
+      'Mirpur',
+      'Multan',
+      'Muzaffarabad',
+      'Nasirabad',
+      'Peshawar',
+      'Poonch',
+      'Rawalpindi',
+      'Sahiwal',
+      'Shaheed Benazirabad',
+    ]);
+  });
+
+  it('keeps five of the seven seats named, and says which two give way', () => {
+    /*
+     * The dot is drawn whatever happens; it is the *name* that yields (#8). Two cannot be set
+     * clear at this size, and both sit in the crowded north where KP, AJK, GB, ICT and the
+     * ceasefire line's own name are all competing for one corner.
+     *
+     * Peshawar is the one to look at: its division name is dropped in the list above as well, so
+     * at 390px the word appears **nowhere** on the map, and only the dot marks the place. That is
+     * the documented ranking working as written — provinces outrank cities, because a map that has
+     * lost "Khyber Pakhtunkhwa" and kept "Peshawar" is disorienting in a way the reverse is not —
+     * and the name returns on the first zoom step. It is asserted by name so that a change to it
+     * is a change somebody sees.
+     */
+    const drawn = new Set(keys(result));
+    const unnamed = cities
+      .map((city) => city.name)
+      .filter((name) => !drawn.has(labelKey('city', name)));
+    expect(unnamed.sort()).toEqual(['Muzaffarabad', 'Peshawar']);
+  });
+});
+
+/**
+ * Unit labels persist at the 390px bar (#34) — the criterion that a proposal stays legible.
+ *
+ * Stratum 3 is what a variant view is *for*: a reader on a phone who cannot see what the proposed
+ * provinces are called is looking at coloured shapes.
+ *
+ * Asked of **every variant**, not of one, for the reason `units.test.ts` gives about the same
+ * ground — "those two units are not always called the same thing". Held over L1 alone this passed
+ * while H3 left three units unnamed, including the Northern Areas, which is Gilgit-Baltistan under
+ * the name that variant gives it: the very territory #34 was raised to stop going anonymous.
+ */
+describe('a variant at the 390px bar', () => {
+  /**
+   * The units this build cannot name at 390px — listed, because a count would hide which.
+   *
+   * All three are the same shape of problem: a long name over ground that is a fraction as wide on
+   * a phone, and no attested abbreviation to fall back to. Every other long name in the app has
+   * one — AJK, ICT, KP, GB, and H3's own NWFP and FATA — and `SHORT_FORMS` forbids inventing the
+   * missing ones: a coinage would be a name for Pakistani-administered ground that no source uses,
+   * which is a worse thing to put on this map than a missing label.
+   *
+   * H3's *Northern Areas* is Gilgit-Baltistan under the name that variant gives it. L7's two are
+   * the small pockets a mother-tongue partition leaves behind — Keamari is a single Karachi
+   * district, and Kohiostani's ground is smaller still.
+   *
+   * The list is what makes this honest rather than a silent floor, and the test below is what
+   * makes it acceptable: not one of them is lost for good.
+   */
+  const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
+    h3: ['Northern Areas'],
+    l7: ['Pushto (Keamari)', 'Kohiostani'],
+  };
+
+  for (const variant of scenarios.variants) {
+    it(`names every unit of ${variant.id}, so no proposed province is an unlabelled shape`, () => {
+      const drawn = variantAt(variant.id, BAR_390);
+      const unnamed = drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
+      expect(unnamed).toEqual(UNNAMEABLE_AT_390[variant.id] ?? []);
+    });
+  }
+
+  it('names every one of them as soon as there is room, so nothing is lost for good', () => {
+    // What makes the list above a matter of pixels rather than of policy. A unit that could not be
+    // named at *any* size would be a unit this app cannot draw honestly, and would belong in the
+    // open items rather than in a layout test.
+    for (const [id, units] of Object.entries(UNNAMEABLE_AT_390)) {
+      const drawn = variantAt(id, { width: 1200, height: 800 });
+      for (const unit of units) {
+        expect(drawn.placed.has(labelKey('unit', unit)), `${id}: ${unit}`).toBe(true);
+      }
+    }
+  });
+});
+
+describe('districtLabelSites', () => {
+  const districts = readDistricts(bundle as never);
+  const sites = districtLabelSites(districts.features as never);
+
+  it('names every drawn district exactly once', () => {
+    expect(sites).toHaveLength(districts.features.length);
+    expect(new Set(sites.map((s) => s.key)).size).toBe(sites.length);
+    expect(sites.every((s) => s.tier === 'district')).toBe(true);
+  });
+
+  it('ranks every district below every division, so it can never take a division´s frame', () => {
+    // The floor is negative and `geoArea` is a fraction of the sphere, so this holds for the
+    // largest district against the smallest division rather than merely on average — which is the
+    // property that matters, since Chagai is bigger than several divisions.
+    const highestDistrict = Math.max(...sites.map((s) => s.priority));
+    const lowestDivision = Math.min(
+      ...baselineLabelSites({ provinces, divisions }, cities)
+        .filter((s) => s.tier === 'division')
+        .map((s) => s.priority),
+    );
+    expect(highestDistrict).toBeLessThan(lowestDivision);
+  });
+
+  it('puts every district name inside the district it names', () => {
+    const outside = districts.features
+      .filter((f) => !geoContains(f as never, labelAnchor(f as never)))
+      .map((f) => f.properties.name);
+    expect(outside).toEqual([]);
+  });
+
+  it('is offered only above a zoom threshold, and the threshold is past the 390px frame', () => {
+    /*
+     * The criterion is that district names *drop below a zoom threshold and appear on tap
+     * instead* (#34). The threshold is what makes both halves true: 156 names over a 369px frame
+     * is a word search rather than a map, so below it they are never laid out and the reader gets
+     * a district by tapping it (#33) — which answers with the division, the province, the
+     * population and the dominant tongue, not a name alone.
+     */
+    expect(DISTRICT_LABEL_ZOOM).toBeGreaterThan(1);
+    // Past the zoom the district *lines* come in at, because a line has only to be seen and a
+    // name has to be read.
+    expect(DISTRICT_LABEL_ZOOM).toBeGreaterThanOrEqual(4);
   });
 });
 

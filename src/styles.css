@@ -602,6 +602,17 @@ body {
  * point and not an area. Roman against the divisions' italic is the atlas convention for exactly
  * that distinction, and it is what keeps "Quetta" at a dot from reading as a second division.
  */
+/*
+ * District names (#34). The tier under everything, and the only one with a zoom threshold: they
+ * appear from 6x and are laid out beneath every other name, so a district can never take the frame
+ * from the province it sits in. Set lighter than a division for the same reason.
+ */
+.label-district {
+  fill: var(--ink-faint);
+  font-size: 8.5px;
+  font-style: italic;
+}
+
 .label-city {
   fill: var(--ink);
   font-size: 9.5px;
@@ -1551,6 +1562,35 @@ body {
   /* The source follows its own note on the same line, so the two read as one attribution. */
   .tooltip-source::before {
     content: ' · ';
+  }
+
+  /*
+   * Stratum 3's line work, thinned for the bar (#34).
+   *
+   * The strokes are `non-scaling-stroke`, so they are the same screen px on a 369px-wide country as
+   * on a 1200px one — which means that relative to the ground they describe they are three times
+   * heavier here. At the desktop weights a proposed boundary across the narrow waist of Punjab is
+   * wide enough to swallow the districts on either side of it, and the casing, whose whole job is
+   * to lift the line off a busy fill, starts erasing the fill instead.
+   *
+   * The *ratios* are kept — casing to line, proposed to unchanged — because those are what say
+   * which line is a proposal and which is the country. Only the absolute weights come down.
+   */
+  .unit-casing {
+    stroke-width: 3;
+  }
+
+  .unit-casing-unchanged,
+  .unit-casing-territory {
+    stroke-width: 2.4;
+  }
+
+  .unit-line {
+    stroke-width: 1.1;
+  }
+
+  .unit-line-proposed {
+    stroke-width: 1.7;
   }
 }
 

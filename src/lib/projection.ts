@@ -16,6 +16,16 @@
 import { geoConicConformal, geoBounds, type GeoProjection } from 'd3';
 import type { GeoGeometryObjects } from 'd3-geo';
 
+/**
+ * The frame inset, in px — proportional, capped at both ends.
+ *
+ * A fixed 36px inset would cost a 390px phone a fifth of its map; a fixed 12px would crowd a
+ * desktop frame. Here rather than in `map.ts` because the test seam needs the same number: a suite
+ * that re-implements the renderer's inset measures a frame the app never draws, and would go on
+ * passing after the renderer changed it. `map.ts` imports it from here.
+ */
+export const frameInset = (width: number): number => Math.max(12, Math.min(36, width * 0.05));
+
 export interface Viewport {
   readonly width: number;
   readonly height: number;

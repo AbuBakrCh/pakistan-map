@@ -77,14 +77,21 @@ function frame(): SheetFrame {
 
 export interface SheetHandle {
   /**
-   * Put the sheet back to the height a proposal presents itself at.
+   * There is a proposal on screen, so the sheet holds one: it takes up room and offers its grip.
    *
-   * Called when the card goes away, not when one arrives. Whether the sheet is *visible* is not
-   * this module's business at all — `panel.ts` hides the whole container at the baseline — so this
-   * says only what it does: forget where the last reader dragged it. A sheet left at `full` from
-   * two proposals ago would open the next one over the map they chose it to look at.
+   * Idempotent, because `main.ts` redraws on every selection and most redraws do not change this.
    */
-  reset(): void;
+  holdCard(): void;
+  /**
+   * There is none, so the sheet **takes up no room at all**.
+   *
+   * `panel.ts` hides the container at the baseline, and a reserved height left standing behind it
+   * would float the furniture that rides above the sheet — the compare and export buttons — into
+   * the middle of a map with no sheet under it. Releasing also forgets the reader's detent: the
+   * next proposal is a different argument and presents itself the way the first one did, rather
+   * than opening at `full` because somebody dragged it there two variants ago.
+   */
+  releaseCard(): void;
 }
 
 /** Where a proposal first presents itself: the ticket's own 40%. */
@@ -111,6 +118,8 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   container.insertBefore(handle, container.firstChild);
 
   let detent: Detent = OPENS_AT;
+  /** Whether there is a proposal on screen for the sheet to hold. */
+  let hasCard = false;
   /** Null except between a pointer going down on the grip and coming back up. */
   let dragging: { readonly from: Detent; readonly y: number } | null = null;
   /**
@@ -142,7 +151,17 @@ export function attachSheet(container: HTMLElement): SheetHandle {
       handle.hidden = true;
       return;
     }
-    handle.hidden = false;
+    /*
+     * No card, no sheet, and no room kept for one. `--sheet-h` is what the compare and export
+     * buttons sit above, so leaving it at the last detent while the card is hidden strands them
+     * 338px up a map that has nothing underneath them.
+     */
+    handle.hidden = !hasCard;
+    if (!hasCard) {
+      container.removeAttribute('data-detent');
+      document.documentElement.style.setProperty('--sheet-h', '0px');
+      return;
+    }
     const state = handleState(detent);
     label.textContent = state.label;
     handle.setAttribute('aria-expanded', state.expanded ? 'true' : 'false');
@@ -213,11 +232,17 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   // fractions of it either way.
   window.addEventListener('resize', paint);
 
-  function reset(): void {
+  function holdCard(): void {
+    hasCard = true;
+    paint();
+  }
+
+  function releaseCard(): void {
     detent = OPENS_AT;
+    hasCard = false;
     paint();
   }
 
   paint();
-  return { reset };
+  return { holdCard, releaseCard };
 }
