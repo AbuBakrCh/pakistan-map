@@ -108,6 +108,14 @@ export interface DevelopmentRecord {
 
 export interface DistrictRecord {
   readonly population: number;
+  /**
+   * Land area in km² as PBS published it in Census-2023 Table 1 (#49) — the one column of that
+   * table the `PakPC2023` package does not republish, so it is transcribed and committed.
+   * Published, never measured: the drawn polygons are clipped to OSM's coastline and knowingly
+   * disagree with these figures where the shoreline and the published area measure different
+   * things.
+   */
+  readonly areaSqKm: number;
   readonly division: string;
   readonly province: string;
   readonly motherTongue: MotherTongueRecord;
@@ -158,6 +166,33 @@ export interface CensusStatistics {
       readonly published: number;
       readonly difference: number;
       readonly note: string;
+    };
+  };
+  /**
+   * The published district areas and how they were checked (#49).
+   *
+   * A block of its own rather than a column of the reconciliation below, because this tier is
+   * anchored differently: PBS publishes no division area to check against, and the transcription
+   * carries a check the cached tables do not need — nobody had to copy those out of a PDF.
+   */
+  readonly area: {
+    readonly source: string;
+    readonly unit: string;
+    readonly note: string;
+    readonly pakistan: number;
+    readonly provinces: Readonly<Record<string, number>>;
+    readonly published: {
+      readonly pakistan: number;
+      readonly provinces: Readonly<Record<string, number>>;
+    };
+    readonly withoutPublishedArea: { readonly reason: string; readonly districts: readonly string[] };
+    readonly transcription: {
+      readonly method: string;
+      readonly agreesWithPackage: number;
+      readonly differences: {
+        readonly note: string;
+        readonly byDistrict: Readonly<Record<string, number>>;
+      };
     };
   };
   /** How the district sums were checked upward, and against which source at each tier. */
@@ -251,6 +286,17 @@ export interface UnitRecord {
    */
   readonly population: number | null;
   readonly uncounted: readonly string[];
+  /**
+   * The sum of its districts' **published** areas in km² (#49), and `null` where PBS published none
+   * for one of them — the same twenty districts, since Table 1 is the same census.
+   *
+   * PBS's figure and never this project's geometry: the drawn districts are clipped to OSM's
+   * coastline and knowingly disagree with the published areas by thousands of km² on the Indus
+   * delta. Unlike the population it survives a variant withholding modern figures, which is the
+   * whole reason it exists — ground has not moved since 1947.
+   */
+  readonly areaSqKm: number | null;
+  readonly withoutPublishedArea: readonly string[];
 }
 
 /** A unit at one end of the population spread. */
@@ -294,6 +340,13 @@ export interface ScorecardRecord {
     readonly ratio: number | null;
   } | null;
   readonly populationWithheld: PopulationWithholding | null;
+  /**
+   * The variant's ground, from PBS's published district areas (#49) — carried on every variant, and
+   * printed by the card only where the population lines are missing. Deliberately a total and not a
+   * spread: it is here so that a withholding variant's scorecard reads as a whole block, not so
+   * that proposals gain a second largest-to-smallest.
+   */
+  readonly area: { readonly units: number; readonly total: number } | null;
   /** Units wholly outside the census, set aside from the spread by name rather than as zeroes. */
   readonly outsideTheCensus: readonly {
     readonly unit: string;

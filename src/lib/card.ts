@@ -87,6 +87,13 @@ export interface CardUnit {
   readonly districts: string;
   /** Its people, or the sentence saying the census does not reach them. Never a zero, never blank. */
   readonly population: string;
+  /**
+   * Its ground, in km², on a variant that withholds modern figures (#49) — where this unit's own
+   * line would otherwise carry no figure at all. `null` everywhere else, including on the units PBS
+   * published no area for, whose population line already says the census does not reach them: one
+   * absence, said once.
+   */
+  readonly area: string | null;
   readonly note: string | null;
 }
 
@@ -354,12 +361,18 @@ function unitsOf(variant: VariantRecord): readonly CardUnit[] {
       standing: unitStanding(unit.kind),
       districts: unitDistricts(unit),
       population: unitPopulation(unit, withholding),
+      // Ground where this unit's own line has no people to give (#49), which is the withholding
+      // and not the voided spread: the two surfaces answer different questions. A variant voided
+      // by a census hole still prints every unit's population, so an area beside it would be a
+      // second figure nobody is missing — where a withholding variant's unit line has none at all.
+      // Asked of `figuresWithheld`, so this line and the population above it cannot disagree (#48).
+      area: withholding && unit.areaSqKm !== null ? `${groupDigits(unit.areaSqKm)} km²` : null,
       note: unit.note,
     }));
 }
 
 /**
- * The scorecard's five lines (#20).
+ * The scorecard's five lines (#20), and the sixth that stands in for two of them (#49).
  *
  * Contiguity is read off the units and off `counts.nonContiguousUnits`, which #16 already wrote —
  * never recounted here, because two derivations of one fact are two answers to it and a card is the
@@ -411,6 +424,47 @@ function scorecardOf(variant: VariantRecord): CardScorecard {
             note: null,
           },
     );
+  }
+
+  /*
+   * Area, and only where there is no population (#49).
+   *
+   * #30 removed the last modern figure from H2 — 2023 counts do not describe 1947 boundaries — and
+   * left its scorecard as the one in the app with nothing quantitative on it at all. Ground is the
+   * figure that survives the withholding, because a district's area has not moved since 1947 where
+   * its population is a count taken in 2023, and printing it is what makes the block read as whole
+   * rather than as what was left of it.
+   *
+   * Not on every card, deliberately, and the decision is the product call #49 asked for. The
+   * scorecard is a fixed column a reader compares straight down between two proposals, and a sixth
+   * line on all seventeen would be a change to that comparison surface that nothing here needs;
+   * area earns its place exactly where the lines above it are missing. The bundle carries it for
+   * every variant regardless — a figure derived for one card is a figure nothing else can check —
+   * so what is conditional is the printing and never the arithmetic.
+   */
+  if (population === null && scorecard.area !== null) {
+    const { area } = scorecard;
+    // The units left out of *this* total, which is not the same list as the ones the census does
+    // not reach. `outsideTheCensus` is the units wholly outside it; a unit only *partly* outside it
+    // has no published area either, drops out of the total exactly the same way, and appears on
+    // neither list — so a card qualifying this figure with that one would say "across all N units"
+    // with a unit missing from the sum. Read off the field that decides the exclusion.
+    const withoutArea = variant.units.filter((unit) => unit.areaSqKm === null);
+    lines.push({
+      label: 'Area',
+      value: `${groupDigits(area.total)} km²`,
+      note:
+        // The qualification travels with its own figure, as the population total's does: a total
+        // described as the variant's while four of its units are missing from it is a wrong number,
+        // and this is what makes it a right one.
+        (withoutArea.length === 0
+          ? `Across all ${plural(area.units, 'unit')}. `
+          : `Across the ${area.units} of ${scorecard.units} units PBS publishes an area for. ` +
+            `${sentenceList(withoutArea.map((unit) => unit.name))} ` +
+            `${withoutArea.length === 1 ? 'is' : 'are'} outside the figure: PBS published no 2023 ` +
+            `area for their districts. `) +
+        'Published in Census-2023 Table 1, district by district — not measured off this map.',
+    });
   }
 
   const { districtsMoved } = scorecard;

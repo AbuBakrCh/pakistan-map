@@ -161,6 +161,17 @@ describe('every source on the panel carries a badge, a source and a vintage', ()
     expect(stated?.text).toContain('not poverty');
   });
 
+  it('says the district areas are published rather than measured off the map (#49)', () => {
+    // The row a card now prints from, on the one variant that withholds its populations. This
+    // build measures its own polygons and knows they disagree with PBS — the clip took half of
+    // Gwadar — so a reader has to be able to see which of the two a printed figure is.
+    const areas = about.sources.items.find((row) => row.what.startsWith('District areas'));
+    expect(areas?.badges.map((badge) => badge.label)).toEqual(['census']);
+    expect(areas?.caveat).toMatch(/never measured/i);
+    expect(areas?.source).toContain('Table 1');
+    expect(areas?.vintage).toBe(inputs.census.provenance.vintage);
+  });
+
   it('badges every row from the closed vocabulary and glosses each on the panel', () => {
     for (const row of about.sources.items) {
       for (const badge of row.badges) {
@@ -242,6 +253,17 @@ describe('the discrepancies, which are the point of the panel', () => {
     // 48,010 fewer households in the housing tables than in the district table, in all 136
     // districts. Quoted from the artifact rather than retyped, so the figure has one home.
     expect(text).toContain('48,010');
+  });
+
+  it('says where PBS’s own two releases put people in different districts', () => {
+    // Found by transcribing Table 1's areas (#49): its populations disagree with the census
+    // package's in eight districts, four cancelling pairs of neighbours. It changes no figure this
+    // app publishes, which is exactly why it could have been left off — and a panel that listed
+    // the tables and hid where they disagree is the failure this section exists to prevent.
+    const both = about.discrepancies.items.find((item) => item.label.includes('Table 1 and its'));
+    expect(both?.figure).toBe('8 districts');
+    expect(both?.text).toContain('cancels within its province');
+    expect(Object.keys(inputs.census.area.transcription.differences.byDistrict)).toHaveLength(8);
   });
 
   it('says the division totals are a cross-check and not a second source', () => {

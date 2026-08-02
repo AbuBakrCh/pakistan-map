@@ -438,8 +438,12 @@ describe('variantCard — the scorecard (#20)', () => {
       }),
     );
     expect(historical.scorecard.withheld).toContain('No population figures');
+    // Area stands where the two population lines were (#49), so the block reads as a whole
+    // scorecard rather than as what survived — which is the substitute #30 asked for and #49
+    // supplied. It is ground, and ground has not moved since 1947.
     expect(historical.scorecard.lines.map((found) => found.label)).toEqual([
       'Units',
+      'Area',
       'Districts moved',
       'Contiguity',
     ]);
@@ -498,6 +502,71 @@ describe('variantCard — the scorecard (#20)', () => {
       expect(unit.population, unit.name).toBeTruthy();
       expect(unit.population, unit.name).not.toMatch(/[0-9],[0-9]{3}/);
     }
+  });
+
+  it('shows H2 the ground it can state, in full and grouped, where it states no people', () => {
+    // #30's own brief: the card shows area and composition only. Composition shipped and area did
+    // not, so H2 was the one scorecard in the app with nothing quantitative on it at all (#49).
+    const h2 = variantCard(bundle, variantNamed('h2'));
+    const area = h2.scorecard.lines.find((found) => found.label === 'Area');
+    // Grouped and never rounded to a headline, exactly as a population is: PBS publishes the
+    // figure, and abbreviating it would be this app interpolating somebody else's number.
+    expect(area?.value).toBe('796,096 km²');
+    expect(area?.note).toContain('not measured off this map');
+    // The qualification travels with the figure, because a total described as the variant's while
+    // four of its units are missing from it is a wrong number.
+    expect(area?.note).toContain('Gilgit Agency and Baltistan');
+    expect(area?.note).toContain('Azad Jammu & Kashmir');
+
+    const punjab = h2.units.find((unit) => unit.id === 'punjab');
+    expect(punjab?.area).toBe('160,663 km²');
+    // And the units PBS published no area for print none rather than a zero or a second sentence:
+    // their population line already says the census does not reach them.
+    expect(h2.units.find((unit) => unit.id === 'azad-jammu-kashmir')?.area).toBeNull();
+  });
+
+  it('names the units missing from the area total, and not the ones the census misses', () => {
+    // The state the shipped set cannot show, and the one where the two lists come apart. A unit
+    // only *partly* outside the census is not in `outsideTheCensus` — that is the wholly-outside
+    // list — and it still has no published area, so it drops out of the total exactly the same way.
+    // Qualifying the figure with the wrong list would print "across all N units" with a unit
+    // missing from the sum, which is the wrong number this note exists to make right.
+    const l1 = variantNamed('l1');
+    const partly = variantCard(
+      bundle,
+      like('partly', {
+        scorecard: {
+          ...l1.scorecard,
+          population: null,
+          populationWithheld: {
+            kind: 'incomplete',
+            units: [{ unit: 'south-punjab', name: 'South Punjab', uncounted: ['Mirpur'] }],
+          },
+          outsideTheCensus: [],
+          area: { units: l1.units.length - 1, total: 500_000 },
+        },
+        units: l1.units.map((unit) =>
+          unit.id === 'south-punjab'
+            ? { ...unit, areaSqKm: null, withoutPublishedArea: ['Mirpur'] }
+            : unit,
+        ),
+      }),
+    );
+    const area = partly.scorecard.lines.find((found) => found.label === 'Area');
+    expect(area?.note).toContain('South Punjab');
+    expect(area?.note).not.toContain('Across all');
+    expect(area?.note).toContain(`Across the ${l1.units.length - 1} of ${l1.units.length} units`);
+    // And no unit carries an area here: this variant prints every population it has, so a ground
+    // figure beside them would be a second figure nobody is missing.
+    for (const unit of partly.units) expect(unit.area, unit.name).toBeNull();
+  });
+
+  it('keeps area off a card that has populations to show', () => {
+    // The product call #49 asked for, asserted rather than left to the reading: the scorecard is a
+    // fixed column a reader compares straight down between two proposals, and area is there where
+    // the population lines are not. L1 has them, so it has no area line and no unit areas.
+    expect(card.scorecard.lines.map((found) => found.label)).not.toContain('Area');
+    for (const unit of card.units) expect(unit.area, unit.name).toBeNull();
   });
 
   it('says a unit’s population, or says why it has none — never a zero and never a blank', () => {

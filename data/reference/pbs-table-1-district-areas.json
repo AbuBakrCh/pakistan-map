@@ -1,0 +1,843 @@
+{
+  "about": "Land area in square kilometres for each of the 136 districts the 2023 census covers, transcribed from PBS Census-2023 Table 1. Area is the one published figure this project needs that the PakPC2023 package does not republish: its district table carries households, population and growth rates and no area column, so this table is typed from the PDFs PBS publishes Table 1 as. Hand-maintained, and committed for the reason the fold table is — it changes when PBS republishes, and that change should arrive as a reviewable diff.",
+  "vintage": "PBS 2023 Digital Census, as on 01-03-2023",
+  "unit": "square kilometre, as published — never measured off this project's geometry",
+  "naming": "Each district is keyed by the name Table 1 itself prints, upper case and all, rather than by the roster's spelling. The transcription is then somebody else's document rather than our own names copied back at us, and the join goes through the same normalization and alias table every other PBS spelling does — Table 1 prints TANDO AHYAR where the district list prints Tando Allah Yar, which is the sort of disagreement between PBS's own documents this repo resolves by alias and never by editing the source.",
+  "reconciliation": "Two checks, both exact and both in the suite. The 136 areas sum to each province's own published area and to the 796,096 sq km Table 1 prints for Pakistan. And every row carries the population Table 1 prints beside the area, which is not read into any artifact and exists only so that a row can be shown to be the district it claims to be: an area transposed between two districts sums correctly and would otherwise pass. Those populations agree with the PakPC2023 package's district table in 128 of 136 districts; the eight that differ are pinned in scripts/lib/areas.ts as four pairs of neighbours, each pair's difference cancelling within its province.",
+  "sources": {
+    "national": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf",
+    "Khyber Pakhtunkhwa": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_kp_districts.pdf",
+    "Punjab": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_punjab_districts.pdf",
+    "Sindh": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_sindh_districts.pdf",
+    "Balochistan": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_balochistan_districts.pdf",
+    "Islamabad Capital Territory": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_1_national.pdf — the capital is one district and PBS publishes no district table of its own for it, so its area is the row the national table prints for Islamabad"
+  },
+  "published": {
+    "pakistan": 796096,
+    "provinces": {
+      "Khyber Pakhtunkhwa": 101741,
+      "Punjab": 205345,
+      "Sindh": 140914,
+      "Balochistan": 347190,
+      "Islamabad Capital Territory": 906
+    }
+  },
+  "districts": [
+    {
+      "district": "ABBOTTABAD",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1967,
+      "population2023": 1419072
+    },
+    {
+      "district": "BAJAUR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1290,
+      "population2023": 1287960
+    },
+    {
+      "district": "BANNU",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1972,
+      "population2023": 1357890
+    },
+    {
+      "district": "BATAGRAM",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1301,
+      "population2023": 554133
+    },
+    {
+      "district": "BUNER",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1865,
+      "population2023": 1016869
+    },
+    {
+      "district": "CHARSADDA",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 996,
+      "population2023": 1835504
+    },
+    {
+      "district": "DERA ISMAIL KHAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 9334,
+      "population2023": 1829811
+    },
+    {
+      "district": "HANGU",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1097,
+      "population2023": 528902
+    },
+    {
+      "district": "HARIPUR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1725,
+      "population2023": 1174783
+    },
+    {
+      "district": "KARAK",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 3371,
+      "population2023": 815878
+    },
+    {
+      "district": "KHYBER",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 2576,
+      "population2023": 1146267
+    },
+    {
+      "district": "KOHAT",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 2991,
+      "population2023": 1234661
+    },
+    {
+      "district": "KOLAI PALAS KOHISTAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1410,
+      "population2023": 280162
+    },
+    {
+      "district": "KURRAM",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 3380,
+      "population2023": 785434
+    },
+    {
+      "district": "LAKKI MARWAT",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 3296,
+      "population2023": 1040856
+    },
+    {
+      "district": "LOWER CHITRAL",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 6458,
+      "population2023": 320407
+    },
+    {
+      "district": "LOWER DIR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1583,
+      "population2023": 1650183
+    },
+    {
+      "district": "LOWER KOHISTAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 642,
+      "population2023": 340017
+    },
+    {
+      "district": "MALAKAND",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 952,
+      "population2023": 826250
+    },
+    {
+      "district": "MANSEHRA",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 4125,
+      "population2023": 1797177
+    },
+    {
+      "district": "MARDAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1632,
+      "population2023": 2744898
+    },
+    {
+      "district": "MOHMAND",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 2296,
+      "population2023": 553933
+    },
+    {
+      "district": "NORTH WAZIRISTAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 4707,
+      "population2023": 693332
+    },
+    {
+      "district": "NOWSHERA",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1748,
+      "population2023": 1740705
+    },
+    {
+      "district": "ORAKZAI",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1538,
+      "population2023": 387561
+    },
+    {
+      "district": "PESHAWAR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1518,
+      "population2023": 4758762
+    },
+    {
+      "district": "SHANGLA",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1586,
+      "population2023": 891252
+    },
+    {
+      "district": "SOUTH WAZIRISTAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 6620,
+      "population2023": 888675
+    },
+    {
+      "district": "SWABI",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 1543,
+      "population2023": 1894600
+    },
+    {
+      "district": "SWAT",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 5337,
+      "population2023": 2687384
+    },
+    {
+      "district": "TANK",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 2900,
+      "population2023": 470293
+    },
+    {
+      "district": "TORGHAR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 454,
+      "population2023": 200445
+    },
+    {
+      "district": "UPPER CHITRAL",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 8392,
+      "population2023": 195528
+    },
+    {
+      "district": "UPPER DIR",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 3699,
+      "population2023": 1083566
+    },
+    {
+      "district": "UPPER KOHISTAN",
+      "province": "Khyber Pakhtunkhwa",
+      "areaSqKm": 5440,
+      "population2023": 422947
+    },
+    {
+      "district": "ATTOCK",
+      "province": "Punjab",
+      "areaSqKm": 6857,
+      "population2023": 2170423
+    },
+    {
+      "district": "BAHAWALNAGAR",
+      "province": "Punjab",
+      "areaSqKm": 8878,
+      "population2023": 3550342
+    },
+    {
+      "district": "BAHAWALPUR",
+      "province": "Punjab",
+      "areaSqKm": 24830,
+      "population2023": 4284964
+    },
+    {
+      "district": "BHAKKAR",
+      "province": "Punjab",
+      "areaSqKm": 8153,
+      "population2023": 1957470
+    },
+    {
+      "district": "CHAKWAL",
+      "province": "Punjab",
+      "areaSqKm": 6525,
+      "population2023": 1734854
+    },
+    {
+      "district": "CHINIOT",
+      "province": "Punjab",
+      "areaSqKm": 2643,
+      "population2023": 1563024
+    },
+    {
+      "district": "DERA GHAZI KHAN",
+      "province": "Punjab",
+      "areaSqKm": 11922,
+      "population2023": 3393705
+    },
+    {
+      "district": "FAISALABAD",
+      "province": "Punjab",
+      "areaSqKm": 5857,
+      "population2023": 9075819
+    },
+    {
+      "district": "GUJRANWALA",
+      "province": "Punjab",
+      "areaSqKm": 3622,
+      "population2023": 5959750
+    },
+    {
+      "district": "GUJRAT",
+      "province": "Punjab",
+      "areaSqKm": 3192,
+      "population2023": 3219375
+    },
+    {
+      "district": "HAFIZABAD",
+      "province": "Punjab",
+      "areaSqKm": 2367,
+      "population2023": 1319909
+    },
+    {
+      "district": "JHANG",
+      "province": "Punjab",
+      "areaSqKm": 6166,
+      "population2023": 3065639
+    },
+    {
+      "district": "JHELUM",
+      "province": "Punjab",
+      "areaSqKm": 3587,
+      "population2023": 1382308
+    },
+    {
+      "district": "KASUR",
+      "province": "Punjab",
+      "areaSqKm": 3995,
+      "population2023": 4084286
+    },
+    {
+      "district": "KHANEWAL",
+      "province": "Punjab",
+      "areaSqKm": 4349,
+      "population2023": 3364077
+    },
+    {
+      "district": "KHUSHAB",
+      "province": "Punjab",
+      "areaSqKm": 6511,
+      "population2023": 1501089
+    },
+    {
+      "district": "LAHORE",
+      "province": "Punjab",
+      "areaSqKm": 1772,
+      "population2023": 13004135
+    },
+    {
+      "district": "LAYYAH",
+      "province": "Punjab",
+      "areaSqKm": 6289,
+      "population2023": 2102386
+    },
+    {
+      "district": "LODHRAN",
+      "province": "Punjab",
+      "areaSqKm": 2778,
+      "population2023": 1928299
+    },
+    {
+      "district": "MANDI BAHAUDDIN",
+      "province": "Punjab",
+      "areaSqKm": 2673,
+      "population2023": 1829486
+    },
+    {
+      "district": "MIANWALI",
+      "province": "Punjab",
+      "areaSqKm": 5840,
+      "population2023": 1798268
+    },
+    {
+      "district": "MULTAN",
+      "province": "Punjab",
+      "areaSqKm": 3720,
+      "population2023": 5362305
+    },
+    {
+      "district": "MUZAFFARGARH",
+      "province": "Punjab",
+      "areaSqKm": 8249,
+      "population2023": 5015325
+    },
+    {
+      "district": "NANKANA SAHIB",
+      "province": "Punjab",
+      "areaSqKm": 2216,
+      "population2023": 1634871
+    },
+    {
+      "district": "NAROWAL",
+      "province": "Punjab",
+      "areaSqKm": 2337,
+      "population2023": 1950954
+    },
+    {
+      "district": "OKARA",
+      "province": "Punjab",
+      "areaSqKm": 4377,
+      "population2023": 3515490
+    },
+    {
+      "district": "PAKPATTAN",
+      "province": "Punjab",
+      "areaSqKm": 2724,
+      "population2023": 2136170
+    },
+    {
+      "district": "RAHIM YAR KHAN",
+      "province": "Punjab",
+      "areaSqKm": 11880,
+      "population2023": 5564703
+    },
+    {
+      "district": "RAJANPUR",
+      "province": "Punjab",
+      "areaSqKm": 12318,
+      "population2023": 2381049
+    },
+    {
+      "district": "RAWALPINDI",
+      "province": "Punjab",
+      "areaSqKm": 5285,
+      "population2023": 6118911
+    },
+    {
+      "district": "SAHIWAL",
+      "province": "Punjab",
+      "areaSqKm": 3201,
+      "population2023": 2881811
+    },
+    {
+      "district": "SARGODHA",
+      "province": "Punjab",
+      "areaSqKm": 5856,
+      "population2023": 4334448
+    },
+    {
+      "district": "SHEIKHUPURA",
+      "province": "Punjab",
+      "areaSqKm": 3744,
+      "population2023": 4049418
+    },
+    {
+      "district": "SIALKOT",
+      "province": "Punjab",
+      "areaSqKm": 3016,
+      "population2023": 4499394
+    },
+    {
+      "district": "TOBA TEK SINGH",
+      "province": "Punjab",
+      "areaSqKm": 3252,
+      "population2023": 2524044
+    },
+    {
+      "district": "VEHARI",
+      "province": "Punjab",
+      "areaSqKm": 4364,
+      "population2023": 3430421
+    },
+    {
+      "district": "BADIN",
+      "province": "Sindh",
+      "areaSqKm": 6858,
+      "population2023": 1947081
+    },
+    {
+      "district": "DADU",
+      "province": "Sindh",
+      "areaSqKm": 7866,
+      "population2023": 1742320
+    },
+    {
+      "district": "GHOTKI",
+      "province": "Sindh",
+      "areaSqKm": 6083,
+      "population2023": 1772609
+    },
+    {
+      "district": "HYDERABAD",
+      "province": "Sindh",
+      "areaSqKm": 993,
+      "population2023": 2432540
+    },
+    {
+      "district": "JACOBABAD",
+      "province": "Sindh",
+      "areaSqKm": 2698,
+      "population2023": 1174097
+    },
+    {
+      "district": "JAMSHORO",
+      "province": "Sindh",
+      "areaSqKm": 11204,
+      "population2023": 1117308
+    },
+    {
+      "district": "KAMBAR SHAHDAD KOT",
+      "province": "Sindh",
+      "areaSqKm": 5475,
+      "population2023": 1514869
+    },
+    {
+      "district": "KARACHI CENTRAL",
+      "province": "Sindh",
+      "areaSqKm": 69,
+      "population2023": 3822325
+    },
+    {
+      "district": "KARACHI EAST",
+      "province": "Sindh",
+      "areaSqKm": 139,
+      "population2023": 3921742
+    },
+    {
+      "district": "KARACHI SOUTH",
+      "province": "Sindh",
+      "areaSqKm": 122,
+      "population2023": 2329764
+    },
+    {
+      "district": "KARACHI WEST",
+      "province": "Sindh",
+      "areaSqKm": 370,
+      "population2023": 2679380
+    },
+    {
+      "district": "KASHMORE",
+      "province": "Sindh",
+      "areaSqKm": 2580,
+      "population2023": 1233957
+    },
+    {
+      "district": "KEAMARI",
+      "province": "Sindh",
+      "areaSqKm": 559,
+      "population2023": 2068451
+    },
+    {
+      "district": "KHAIRPUR",
+      "province": "Sindh",
+      "areaSqKm": 15910,
+      "population2023": 2597535
+    },
+    {
+      "district": "KORANGI",
+      "province": "Sindh",
+      "areaSqKm": 108,
+      "population2023": 3128971
+    },
+    {
+      "district": "LARKANA",
+      "province": "Sindh",
+      "areaSqKm": 1948,
+      "population2023": 1784453
+    },
+    {
+      "district": "MALIR",
+      "province": "Sindh",
+      "areaSqKm": 2160,
+      "population2023": 2432248
+    },
+    {
+      "district": "MATIARI",
+      "province": "Sindh",
+      "areaSqKm": 1417,
+      "population2023": 849383
+    },
+    {
+      "district": "MIRPUR KHAS",
+      "province": "Sindh",
+      "areaSqKm": 2925,
+      "population2023": 1681386
+    },
+    {
+      "district": "NAUSHAHRO FEROZE",
+      "province": "Sindh",
+      "areaSqKm": 2946,
+      "population2023": 1777082
+    },
+    {
+      "district": "SANGHAR",
+      "province": "Sindh",
+      "areaSqKm": 10728,
+      "population2023": 2308465
+    },
+    {
+      "district": "SHAHEED BENAZIRABAD",
+      "province": "Sindh",
+      "areaSqKm": 4502,
+      "population2023": 1845102
+    },
+    {
+      "district": "SHIKARPUR",
+      "province": "Sindh",
+      "areaSqKm": 2512,
+      "population2023": 1386330
+    },
+    {
+      "district": "SUJAWAL",
+      "province": "Sindh",
+      "areaSqKm": 8785,
+      "population2023": 839292
+    },
+    {
+      "district": "SUKKUR",
+      "province": "Sindh",
+      "areaSqKm": 5165,
+      "population2023": 1639897
+    },
+    {
+      "district": "TANDO AHYAR",
+      "province": "Sindh",
+      "areaSqKm": 1554,
+      "population2023": 922012
+    },
+    {
+      "district": "TANDO MUHAMMAD KHAN",
+      "province": "Sindh",
+      "areaSqKm": 1423,
+      "population2023": 726119
+    },
+    {
+      "district": "THARPARKAR",
+      "province": "Sindh",
+      "areaSqKm": 19637,
+      "population2023": 1778407
+    },
+    {
+      "district": "THATTA",
+      "province": "Sindh",
+      "areaSqKm": 8570,
+      "population2023": 1083191
+    },
+    {
+      "district": "UMER KOT",
+      "province": "Sindh",
+      "areaSqKm": 5608,
+      "population2023": 1159831
+    },
+    {
+      "district": "AWARAN",
+      "province": "Balochistan",
+      "areaSqKm": 29510,
+      "population2023": 178958
+    },
+    {
+      "district": "BARKHAN",
+      "province": "Balochistan",
+      "areaSqKm": 3514,
+      "population2023": 210249
+    },
+    {
+      "district": "CHAGAI",
+      "province": "Balochistan",
+      "areaSqKm": 44748,
+      "population2023": 269192
+    },
+    {
+      "district": "CHAMAN",
+      "province": "Balochistan",
+      "areaSqKm": 1341,
+      "population2023": 466218
+    },
+    {
+      "district": "DERA BUGTI",
+      "province": "Balochistan",
+      "areaSqKm": 10160,
+      "population2023": 355274
+    },
+    {
+      "district": "DUKI",
+      "province": "Balochistan",
+      "areaSqKm": 4233,
+      "population2023": 205044
+    },
+    {
+      "district": "GWADAR",
+      "province": "Balochistan",
+      "areaSqKm": 12637,
+      "population2023": 305160
+    },
+    {
+      "district": "HARNAI",
+      "province": "Balochistan",
+      "areaSqKm": 2492,
+      "population2023": 127571
+    },
+    {
+      "district": "JAFFARABAD",
+      "province": "Balochistan",
+      "areaSqKm": 1643,
+      "population2023": 594558
+    },
+    {
+      "district": "JHAL MAGSI",
+      "province": "Balochistan",
+      "areaSqKm": 3615,
+      "population2023": 203368
+    },
+    {
+      "district": "KACHHI",
+      "province": "Balochistan",
+      "areaSqKm": 5682,
+      "population2023": 442674
+    },
+    {
+      "district": "KALAT",
+      "province": "Balochistan",
+      "areaSqKm": 7654,
+      "population2023": 271560
+    },
+    {
+      "district": "KECH",
+      "province": "Balochistan",
+      "areaSqKm": 22539,
+      "population2023": 1060931
+    },
+    {
+      "district": "KHARAN",
+      "province": "Balochistan",
+      "areaSqKm": 14958,
+      "population2023": 260352
+    },
+    {
+      "district": "KHUZDAR",
+      "province": "Balochistan",
+      "areaSqKm": 35380,
+      "population2023": 997214
+    },
+    {
+      "district": "KILLA ABDULLAH",
+      "province": "Balochistan",
+      "areaSqKm": 3553,
+      "population2023": 361971
+    },
+    {
+      "district": "KILLA SAIFULLAH",
+      "province": "Balochistan",
+      "areaSqKm": 6831,
+      "population2023": 380200
+    },
+    {
+      "district": "KOHLU",
+      "province": "Balochistan",
+      "areaSqKm": 7610,
+      "population2023": 260220
+    },
+    {
+      "district": "LASBELA",
+      "province": "Balochistan",
+      "areaSqKm": 15153,
+      "population2023": 680977
+    },
+    {
+      "district": "LORALAI",
+      "province": "Balochistan",
+      "areaSqKm": 3785,
+      "population2023": 272432
+    },
+    {
+      "district": "MASTUNG",
+      "province": "Balochistan",
+      "areaSqKm": 3308,
+      "population2023": 313271
+    },
+    {
+      "district": "MUSAKHEL",
+      "province": "Balochistan",
+      "areaSqKm": 5728,
+      "population2023": 182275
+    },
+    {
+      "district": "NASIRABAD",
+      "province": "Balochistan",
+      "areaSqKm": 3387,
+      "population2023": 563315
+    },
+    {
+      "district": "NUSHKI",
+      "province": "Balochistan",
+      "areaSqKm": 5797,
+      "population2023": 207834
+    },
+    {
+      "district": "PANJGUR",
+      "province": "Balochistan",
+      "areaSqKm": 16891,
+      "population2023": 509781
+    },
+    {
+      "district": "PISHIN",
+      "province": "Balochistan",
+      "areaSqKm": 6218,
+      "population2023": 835482
+    },
+    {
+      "district": "QUETTA",
+      "province": "Balochistan",
+      "areaSqKm": 3447,
+      "population2023": 2595492
+    },
+    {
+      "district": "SHERANI",
+      "province": "Balochistan",
+      "areaSqKm": 4310,
+      "population2023": 191687
+    },
+    {
+      "district": "SIBI",
+      "province": "Balochistan",
+      "areaSqKm": 7121,
+      "population2023": 224148
+    },
+    {
+      "district": "SOHBATPUR",
+      "province": "Balochistan",
+      "areaSqKm": 802,
+      "population2023": 240106
+    },
+    {
+      "district": "SURAB",
+      "province": "Balochistan",
+      "areaSqKm": 762,
+      "population2023": 279038
+    },
+    {
+      "district": "WASHUK",
+      "province": "Balochistan",
+      "areaSqKm": 33093,
+      "population2023": 302623
+    },
+    {
+      "district": "ZHOB",
+      "province": "Balochistan",
+      "areaSqKm": 15987,
+      "population2023": 355692
+    },
+    {
+      "district": "ZIARAT",
+      "province": "Balochistan",
+      "areaSqKm": 3301,
+      "population2023": 189535
+    },
+    {
+      "district": "ISLAMABAD",
+      "province": "Islamabad Capital Territory",
+      "areaSqKm": 906,
+      "population2023": 2363863
+    }
+  ]
+}

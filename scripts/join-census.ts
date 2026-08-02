@@ -65,12 +65,20 @@ import {
   type Discrepancy,
 } from './lib/census.ts';
 import {
+  TABLE_1_POPULATION_DELTAS,
+  joinAreas,
+  reconcileTranscription,
+  sumAreasByProvince,
+  type AreaRow,
+} from './lib/areas.ts';
+import {
   CENSUS_DISTRICT_COUNT,
   POST_CENSUS_DISTRICT_FOLDS,
   POST_CENSUS_FOLD_TABLE,
   ROSTER,
   ROSTER_DISTRICT_COUNT,
 } from './lib/roster.ts';
+import districtAreas from '../data/reference/pbs-table-1-district-areas.json' with { type: 'json' };
 import { decompressRData, readDataFrames, type Cell, type DataFrame } from './lib/rdata.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -120,6 +128,12 @@ const SOURCE_URLS = {
     'TABLE_24); the province figures checked against are typed from ' +
     'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf, ' +
     'table_23_national.pdf and table_24_national.pdf',
+  // Area is the one Table 1 column PakPC2023 does not republish (#49), so it is transcribed from
+  // the province district tables PBS publishes Table 1 as, and committed. Same source, same table
+  // and same vintage as the population beside it — reached a different way because the structured
+  // release drops the column, which is stated here rather than left to be inferred from a
+  // reference file appearing in the tree.
+  areas: 'data/reference/pbs-table-1-district-areas.json — PBS Census-2023 Table 1, by province',
   folds: 'data/reference/post-census-district-folds.json',
   roster:
     'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
@@ -502,6 +516,72 @@ async function main(): Promise<void> {
       `(${join.withoutCensusData.length} drawn without census data)`,
   );
 
+  // ---- 1a. Table 1's areas -> districts (#49) -------------------------------------------------
+  // Transcribed rather than read out of the cache, because the package republishes no area column.
+  // Everything below is the population join's own discipline applied to the transcription: no row
+  // dropped, no district left without one, and the sums checked against the totals PBS printed
+  // above them — plus the printed population beside each area, which is what makes a *swap*
+  // between two neighbours detectable at all.
+  const areaRows = districtAreas.districts as readonly AreaRow[];
+  const areaJoin = joinAreas(areaRows);
+  if (areaJoin.unmatched.length > 0) {
+    fail(
+      `${areaJoin.unmatched.length} Table 1 area row(s) matched no district in the 2023 roster. ` +
+        `Every row must be placed — a skipped row is a district with no published area, and a ` +
+        `unit containing it would carry no area at all. Add an alias in scripts/lib/census.ts:\n` +
+        areaJoin.unmatched.map((r) => `    ${r.province} / ${r.district}`).join('\n'),
+    );
+  }
+  if (areaJoin.collisions.length > 0) {
+    fail(
+      `two Table 1 area rows resolved to one district, so another district now has no area:\n` +
+        areaJoin.collisions
+          .map((c) => `    ${c.district.padEnd(28)} ← ${c.publishedNames.join(', ')}`)
+          .join('\n'),
+    );
+  }
+  if (areaJoin.misplaced.length > 0) {
+    fail(
+      `${areaJoin.misplaced.length} Table 1 area row(s) name a province the roster disagrees ` +
+        `with; one of the two names resolved to the wrong district:\n` +
+        areaJoin.misplaced
+          .map((m) => `    ${m.district.padEnd(28)} published ${m.published}, roster ${m.roster}`)
+          .join('\n'),
+    );
+  }
+  if (areaJoin.missing.length > 0) {
+    fail(
+      `${areaJoin.missing.length} census district(s) have no published area: ` +
+        `${areaJoin.missing.join(', ')}`,
+    );
+  }
+  report(
+    'district population against Table 1 (transcription check)',
+    reconcileTranscription(
+      areaRows,
+      new Map(districts.map((d) => [d.district, d.population])),
+    ),
+  );
+  const areasByProvince = sumAreasByProvince(areaJoin.areas);
+  report(
+    'province area (PBS Table 1)',
+    reconcileTotals(
+      areasByProvince,
+      new Map(Object.entries(districtAreas.published.provinces)),
+    ),
+  );
+  const nationalArea = [...areasByProvince.values()].reduce((sum, km2) => sum + km2, 0);
+  if (nationalArea !== districtAreas.published.pakistan) {
+    fail(
+      `district areas sum to ${nationalArea.toLocaleString('en-US')} km², but PBS published ` +
+        `${districtAreas.published.pakistan.toLocaleString('en-US')} km² for Pakistan`,
+    );
+  }
+  console.log(
+    `  areas: ${areaRows.length} Table 1 rows → ${areaJoin.areas.size} districts, ` +
+      `${nationalArea.toLocaleString('en-US')} km² over ${areasByProvince.size} provinces`,
+  );
+
   // ---- 1b. Table 11 -> districts (#10) --------------------------------------------------------
   // Summed from tehsils: PakPC2023 republishes Table 11 at tehsil level only, so the district
   // tier this project shades by does not exist upstream and is added up here — under the
@@ -830,6 +910,10 @@ async function main(): Promise<void> {
             d.district,
             {
               population: d.population,
+              // PBS's published figure, never this project's geometry (#49). The drawn polygons
+              // are clipped to OSM's coastline and disagree with PBS by thousands of km² on the
+              // Indus delta; measuring them would put our own number under a `census` badge.
+              areaSqKm: areaJoin.areas.get(d.district) ?? fail(`${d.district} has no area`),
               households: d.households,
               division: d.division,
               province: d.province,
@@ -1108,6 +1192,50 @@ async function main(): Promise<void> {
       pakistan: national,
       provinces: sorted(byProvince),
       divisions: sorted(byDivision),
+    },
+    /**
+     * The published areas, kept as their own block (#49).
+     *
+     * A section of its own rather than a column folded into the reconciliation above, because the
+     * area tier is anchored differently from the population one: there is no division total to
+     * check against — PBS publishes none — and the transcription carries a check the cached tables
+     * do not need, since nobody had to copy those out of a PDF.
+     */
+    area: {
+      source: SOURCE_URLS.areas,
+      unit: districtAreas.unit,
+      note:
+        'Published per district by PBS, never measured off this project\'s geometry. The drawn ' +
+        'districts are clipped to OSM\'s coastline and knowingly disagree with these figures — ' +
+        'see the geometry bundle\'s own limitations — so a measured area would be a number of ' +
+        'ours wearing the census\'s badge.',
+      pakistan: nationalArea,
+      provinces: Object.fromEntries([...areasByProvince].sort(([a], [b]) => a.localeCompare(b))),
+      published: districtAreas.published,
+      withoutPublishedArea: {
+        reason:
+          'PBS published Table 1 for the four provinces and the capital. AJK and ' +
+          'Gilgit-Baltistan have no row in it, so their twenty districts have no published area ' +
+          'exactly as they have no published population (D25) — and, exactly as there, the ' +
+          'absence is stated rather than filled in with a measurement.',
+        districts: join.withoutCensusData,
+      },
+      transcription: {
+        method:
+          'Every row carries the population Table 1 prints beside the area. It is not read into ' +
+          'this artifact — the populations here are the PakPC2023 cache\'s — and exists so that ' +
+          'a row can be shown to be the district it claims to be: two areas swapped between ' +
+          'neighbours sum to their province correctly and would otherwise pass.',
+        agreesWithPackage: areaRows.length - Object.keys(TABLE_1_POPULATION_DELTAS).length,
+        differences: {
+          note:
+            'Table 1\'s district populations minus the package\'s. Eight districts, in four pairs of ' +
+            'neighbours: PBS\'s PDF and PBS\'s structured release put a tehsil\'s worth of people ' +
+            'on different sides of a district line, and each pair\'s difference cancels within its ' +
+            'province — which is why both agree to the person at province and national level.',
+          byDistrict: TABLE_1_POPULATION_DELTAS,
+        },
+      },
     },
     reconciliation: {
       method:

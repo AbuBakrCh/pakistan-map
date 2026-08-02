@@ -30,6 +30,7 @@ const geography = JSON.parse(
 
 interface DistrictStatisticsRecord {
   population: number;
+  areaSqKm: number;
   households: number;
   division: string;
   province: string;
@@ -75,6 +76,25 @@ const PUBLISHED_PROVINCE_TOTALS: Record<string, number> = {
 };
 const PUBLISHED_NATIONAL_TOTAL = 241_499_431;
 
+/**
+ * The same table's area column, typed out for the same reason (#49).
+ *
+ * These are the figures a reader can check against the published PDF without running anything, and
+ * they are what makes the transcribed district table safe: 136 hand-typed numbers that add up
+ * exactly to five published province totals and to a published national one did not get typed
+ * wrongly. Note what 796,096 km² is and is not — it is Pakistan as the census covers it, the four
+ * provinces and the capital, and it excludes AJK and Gilgit-Baltistan exactly as the population
+ * total does.
+ */
+const PUBLISHED_PROVINCE_AREAS: Record<string, number> = {
+  Punjab: 205_345,
+  Sindh: 140_914,
+  'Khyber Pakhtunkhwa': 101_741,
+  Balochistan: 347_190,
+  'Islamabad Capital Territory': 906,
+};
+const PUBLISHED_NATIONAL_AREA = 796_096;
+
 describe('statistics coverage', () => {
   it('carries every one of the 136 census districts, exactly once', () => {
     expect(entries).toHaveLength(CENSUS_DISTRICT_COUNT);
@@ -94,6 +114,7 @@ describe('statistics coverage', () => {
     // comparison the rule exists to prevent, on a district set reorganised in between.
     for (const [name, record] of entries) {
       expect(Object.keys(record).sort(), name).toEqual([
+        'areaSqKm',
         'development',
         'division',
         'households',
@@ -157,6 +178,91 @@ describe('statistics totals', () => {
   it('carries totals that agree with the districts they were derived from', () => {
     expect(statistics.totals.provinces).toEqual(Object.fromEntries(sumBy('province')));
     expect(statistics.totals.divisions).toEqual(Object.fromEntries(sumBy('division')));
+  });
+});
+
+/**
+ * The published district areas (#49).
+ *
+ * The one figure in this artifact nobody could copy out of the census package, because the package
+ * does not republish the column — so 136 numbers were typed out of PBS's PDFs, and everything here
+ * is what makes that safe. Two anchors outside our own derivation, both from the same published
+ * table: five province totals and a national one. A transposed digit anywhere in the transcription
+ * breaks one of them.
+ */
+describe('published district areas', () => {
+  const areaBy = (): Map<string, number> => {
+    const totals = new Map<string, number>();
+    for (const record of Object.values(districts)) {
+      totals.set(record.province, (totals.get(record.province) ?? 0) + record.areaSqKm);
+    }
+    return totals;
+  };
+
+  it('gives every census district a real area, never null and never zero', () => {
+    for (const [name, record] of entries) {
+      expect(Number.isInteger(record.areaSqKm), name).toBe(true);
+      expect(record.areaSqKm, name).toBeGreaterThan(0);
+    }
+  });
+
+  it('sums districts to the province areas PBS published', () => {
+    const summed = areaBy();
+    for (const [province, published] of Object.entries(PUBLISHED_PROVINCE_AREAS)) {
+      expect(summed.get(province), province).toBe(published);
+    }
+    expect([...summed.keys()].sort()).toEqual(Object.keys(PUBLISHED_PROVINCE_AREAS).sort());
+  });
+
+  it('sums districts to the national area PBS published', () => {
+    const national = Object.values(districts).reduce((km2, d) => km2 + d.areaSqKm, 0);
+    expect(national).toBe(PUBLISHED_NATIONAL_AREA);
+    expect(statistics.area.pakistan).toBe(PUBLISHED_NATIONAL_AREA);
+    expect(statistics.area.published.pakistan).toBe(PUBLISHED_NATIONAL_AREA);
+  });
+
+  it('is PBS’s figure and says so, rather than a measurement of the drawn map', () => {
+    // The distinction this whole block turns on. Gwadar's drawn polygon lost half its area to the
+    // coastline clip (#38) and the geometry bundle records the disagreement; the *published* area
+    // is what a card prints, so the two are checked against each other nowhere and confused
+    // nowhere. 12,637 is the figure PBS prints and `normalize-geometry.ts` measures against.
+    expect(districts['Gwadar']?.areaSqKm).toBe(12_637);
+    expect(statistics.area.note).toMatch(/never measured/i);
+    expect(statistics.area.source).toMatch(/Table 1/);
+  });
+
+  it('states the twenty districts with no published area rather than giving them one', () => {
+    // The same absence as the population's, because it is the same census: PBS published Table 1
+    // for the four provinces and the capital (D25). Never a measured figure standing in for it —
+    // that would be this build inventing ground for AJK and Gilgit-Baltistan.
+    const absent = statistics.area.withoutPublishedArea.districts as string[];
+    expect(new Set(absent)).toEqual(new Set(statistics.withoutCensusData.districts));
+    for (const district of absent) expect(districts[district]).toBeUndefined();
+  });
+
+  it('checks each transcribed row against the population printed beside it', () => {
+    // What catches a swap: two areas exchanged between neighbours sum to their province exactly.
+    // 128 of the 136 rows agree with the census package to the person, and the eight that do not
+    // are PBS's own two releases disagreeing — pinned by district, in four cancelling pairs.
+    const transcription = statistics.area.transcription as {
+      agreesWithPackage: number;
+      differences: { byDistrict: Record<string, number> };
+    };
+    const deltas = transcription.differences.byDistrict;
+    expect(transcription.agreesWithPackage).toBe(CENSUS_DISTRICT_COUNT - Object.keys(deltas).length);
+    expect(Object.keys(deltas).sort()).toEqual([
+      'Jhang',
+      'Kachhi (Bolan)',
+      'Kalat',
+      'Karachi East',
+      'Malir',
+      'Nasirabad',
+      'Surab',
+      'Toba Tek Singh',
+    ]);
+    // Cancelling, which is why both releases still agree at province and national level — and why
+    // this is a disagreement to state rather than a figure to choose between.
+    expect(Object.values(deltas).reduce((sum, delta) => sum + delta, 0)).toBe(0);
   });
 });
 

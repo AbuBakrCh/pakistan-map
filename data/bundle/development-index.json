@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T16:58:10.750Z",
+    "generated": "2026-08-02T18:27:09.455Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/statistics.json and data/bundle/geography.topojson.json, on the district `name` property",
@@ -110,7 +110,7 @@
       ]
     },
     "statistics": {
-      "generated": "2026-08-02T16:58:07.181Z",
+      "generated": "2026-08-02T18:27:08.233Z",
       "districts": 136
     },
     "sources": {
