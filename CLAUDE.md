@@ -5,8 +5,8 @@ Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 **Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
 module), pipeline and bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
-**variant card** rendering beside it (#19), and the **adjacency graph** flagging each unit's
-contiguity (#16).
+**variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
+contiguity (#16), and every view carrying a **deep link** of its own (#23).
 
 ---
 
@@ -281,6 +281,7 @@ What it holds:
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
 | The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
+| Deep links — every selection round-tripping through its own hash, the baseline's URL among them; a basis named alone entering its first variant and saying the URL was corrected; an unknown variant and an unshadeable basis both answered with the country rather than with the nearest proposal; a hash whose two halves disagree settled by the variant; case, whitespace and stray slashes read as one link; and garbage — a lone `%`, four segments, 4,096 characters — answered without an exception | `src/lib/deep-link.test.ts` |
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
@@ -329,8 +330,33 @@ because the strata fade in CSS and the outlines fade in JS and the two have to a
 half-animates. That settles `prefers-reduced-motion` for free: the media query sets `--switch` to
 `0ms` and both halves become a straight swap.
 
-**Deep links are #23's**, not this ticket's. The temporary `#/language` hash that stood in for a
-control is gone, and nothing reads the URL until #23 lands.
+**Deep links (#23).** The hash *is* the selection — `#/language/l1` — so an argument can be
+conducted by pointing at the live thing rather than at a screenshot, which is the same case D22
+makes for the PNG export: a link arrives with the badges, the sources and the **Opposed by** line
+still attached, and a screenshot strips all three off. The baseline has a URL of its own, `#/`,
+because it is a view and not the absence of one — it is what every variant is argued against
+(D17), so leaving a variant changes the URL rather than deleting it.
+
+What an *unreadable* hash does is the decision here, and only one substitution is made. A hash
+naming a **basis alone** resolves to that basis's first variant, because D13 says a basis is never
+active on its own and there is no state to fall back to. A hash naming a variant this build has
+never heard of — or a basis it cannot yet shade, which is three of the four — resolves to the
+**baseline**, never to the nearest variant: substituting one proposal for another puts a claim on
+screen that the link did not make, and a reader arriving from a stranger's URL cannot tell the two
+apart. Nothing throws; the parser is handed strings typed by strangers and truncated by mailers,
+and refusing to render over one would answer a bad link with a blank screen.
+
+**A view the reader chose is a history entry; a view this app derived is not.** Selecting a basis
+or a variant `pushState`s, so back and forward walk the proposals — a reader comparing three of
+them expects the browser's own undo to walk back through the three. Every correction
+`replaceState`s: `#/language` expanded to `#/language/l1`, a dead id dropped for the baseline, and
+a first visit given `#/`. Following a basis-only link therefore leaves one entry and not two,
+since the state back would restore is the one state this app has decided cannot exist. Traversal
+is read on `hashchange` rather than `popstate` — `pushState` does not fire it, so the app's own
+writes cannot loop, while every back, forward and hand-edited address does.
+
+Parsing and serialising are pure and live in `src/lib/deep-link.ts` under test; `main.ts` holds
+only the three history calls, which have no DOM seam to be asserted in.
 
 **Three visual strata** — over a ground of context that is not one of them. The neighbour
 silhouettes and the city dots (#8) are furniture: they never change with a basis or a variant,
