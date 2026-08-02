@@ -42,7 +42,10 @@ describe('basisChoices', () => {
     const language = choices.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(true);
     expect(language?.unavailable).toBeNull();
-    expect(language?.variants.map((v) => v.id)).toEqual(['l1', 'l4', 'l5']);
+    // The order the selector offers them in, which is the order they are written in the module: a
+    // reader entering the basis lands on the first (D13), and the three southern readings sit
+    // together and widest-last so that walking down the group walks outward from one claim.
+    expect(language?.variants.map((v) => v.id)).toEqual(['l1', 'l2', 'l3', 'l4', 'l5']);
     expect(language?.variants[0]?.tagline).toBe('the version that partly exists');
   });
 
@@ -98,7 +101,11 @@ describe('basisChoices', () => {
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     const language = unshaded.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(false);
-    expect(language?.variants).toHaveLength(3);
+    // What is missing is the fill, not the proposals: the refusal drops no variant, and saying so
+    // against the shaded list rather than against a number keeps this test about that.
+    expect(language?.variants.map((v) => v.id)).toEqual(
+      choices.find((c) => c.basis.id === 'language')?.variants.map((v) => v.id),
+    );
     expect(language?.unavailable).toBe('Language / dialect: no shading is built yet.');
   });
 

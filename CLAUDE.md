@@ -2,8 +2,10 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, scenario content in draft (6 of 17 variants migrated into the typed
-module — L1, L4 and L5 on the Language basis, H1, H3 and H4 on the Historical one), pipeline and
+**Status:** design agreed, scenario content in draft (8 of 17 variants migrated into the typed
+module — L1, L2, L3, L4 and L5 on the Language basis, H1, H3 and H4 on the Historical one; L2 and
+L3 are the two wider readings of the Seraiki claim, and L3 is the one proposal here whose province
+crosses an existing provincial boundary), pipeline and
 bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
@@ -322,6 +324,7 @@ What it holds:
 | Development — every census district carrying all three indicators with both halves of each rate; shares proportions in 0–1 and equal to their own halves; toilet categories partitioning their own households; districts summing to the counts PBS printed per province and nationally; the 6,374-household improved-water difference asserted exactly rather than tolerated; folded districts inheriting their parent's indicators | `statistics.test.ts` |
 | Partition integrity — every variant covering the district set it declares exactly once, every unit's districts drawn by the geography bundle, no district in two units, no fold landing off the map, no unit both claiming and excluding a district | `bundle.test.ts` |
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids; both district counts wherever a claim and the drawing disagree, each with a `district-count` footnote saying why — South Punjab's 13-for-11 and Hazara's 9-for-8, with Allai named as the fold; and every card cross-reference pointing at a variant that exists, the L1↔H4 collision wired **both** ways so neither proposal reads as the uncontested one | `bundle.test.ts` |
+| The three readings of the Seraiki claim — L1 ⊂ L2 ⊂ L3, held as containment rather than as three district lists, so a reading that quietly dropped a district from the middle one fails; the two each adds named (Mianwali and Bhakkar, then Dera Ismail Khan and Tank); and the three claim-against-drawing counts, 13-for-11, 15-for-13 and 18-for-15. **L3 is the only proposal that crosses a provincial boundary** — *crossing* meaning part of one province and part of another, which is why merging five whole ones (H1) is not it — and it holds the Waziristans out by name: both post-census halves fold onto the one South Waziristan the map draws, that district is drawn, and Khyber Pakhtunkhwa keeps it | `bundle.test.ts` |
 | Unit outlines — every unit exactly the union of the districts it claims: its arcs are the ones its districts do not share, its area theirs to floating point, every ring closed; the outlines cut against the geometry that ships beside them rather than some other build; a unit of two districts that touch nowhere drawing as several pieces without error | `bundle.test.ts` |
 | What a *wrong* dissolve looks like — an internal border left in, an outline that is not the union of its members, a ring that does not close — each named, on a topology of three squares | `unit-outlines.test.ts` |
 | Adjacency — the shipped graph re-derived from the committed arcs and compared district by district, naming the ones whose neighbours moved; symmetric, nobody their own neighbour, no arc shared by three districts; borders checkable on any atlas rather than only against our own derivation (Islamabad's two, Chaman's one — every other side of it is Afghanistan, so a second would mean the graph had started joining across the Durand Line); no district cut loose by the coastline clip, and 156 districts in **one** component | `bundle.test.ts` |
@@ -352,6 +355,7 @@ What it holds:
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | Provenance (#21) — every basis and every variant carrying a badge, a source **and a vintage**, held over `BASES` and `VARIANTS` where a content diff is actually made rather than only over the artifact; badges from the closed vocabulary at both tiers, naming the basis or variant *and* the word; both the **Advocated by** and the **Opposed by** line, with *unadvocated* held as the stated state it is; the one vintage (D24) anchored against the string all five committed artifacts stamp, and a `census` badge at any other vintage failing by name; and a boundary this build **derived** refused unless it says so — in both directions, since an unbadged derived line passes our arithmetic off as somebody's proposal and a `derived` badge over a transcribed one credits their document to us | `provenance.test.ts` |
 | The About panel (#21) — every source row and every basis carrying all three, none blank and each named; a boundary dated by **OpenStreetMap's own edit date** and a figure by the census, and neither by the date the build ran; every drawn surface reached, named rather than counted, so a row lost to a renamed bundle key is a failure and not a silence; the discrepancies present **with their figures** — 1,041,342 people, 6,374 households, the flush-toilet share and the 48,010-household denominator — and the geometry's own disagreements with PBS quoted whole rather than summarised; what the panel leaves off said on the panel; and a date set by hand rather than by the browser's locale, for the reason `groupDigits` exists | `src/lib/about.test.ts` |
+| The export band (#32) — the six things D22 requires, held one at a time on every variant rather than counted: the scenario name, *Proposed — not official* in those words, the badge with its gloss, the basis, a vintage, the sources and the licence line. The baseline's own band, which names the current map and never calls it a proposal, keys the three tiers it actually draws, and does not spend the accent on a map with nothing proposed on it; the key derived from the same two functions the screen's is, with the six nowhere-dominant categories left off by name and the ceasefire line keyed under every basis; the accent reserved for `proposed` and the two absences painted apart; and a layout whose height is a result — wrapping rather than running off a 390px band, growing taller as it narrows, losing no row it was given, and setting the standing line above the key and the small print. Above all **the date this build would otherwise have got wrong**: H1, H3 and H4 inherit a basis whose "vintage" is a deferral, and the band is held to printing the proposal's own source instead of quoting it — asserted per variant, since a plausible date in the right place is a silent failure | `src/lib/export-band.test.ts` |
 | The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
 | The rule engine — a rule partitioning the real 136 exactly once, every unit contiguous against the committed graph, every unit's people its own districts' census rows and the whole partition equal to Table 1's national figure; the same rule drawing a byte-identical map twice and again from a shuffled scope and every map reversed, which is the determinism claim; a ceiling holding on every unit and never in fewer units than the arithmetic floor; a distance limit re-measured from the committed geometry; the output validating as a variant, both universes, with `TERRITORY_CLAIM_POLICY` still `forbid`. And what it refuses, each naming the district — the twenty AJK and GB districts the census cannot see, Lahore where a ceiling is below a district that cannot be split, and a district no unit could grow into | `partitioner.test.ts` |
 | The bottom sheet's velocity (#33) — measured over the **end** of the drag and not averaged over it, which is the whole reason the flick rule is reachable at all: the gesture it is written for — dragged far down, flicked back up — has a net displacement near zero, so an average reports no gesture and `settle` leaves the sheet where it started. Never a division by zero from a drag with one sample or no elapsed time, since an infinity reads as a flick and would move the sheet on a gesture nobody made; and a drag whose samples arrive further apart than the window measured rather than reported as still | `src/lib/sheet.test.ts` |
@@ -493,6 +497,15 @@ wins the tight frame and the qualified name returns with the room. The cost is p
 zoom by **Mardan**, which now gives way to `Peshawar Division` in the most crowded corner of KP —
 named in the suite, not absorbed into a count, and back on the first zoom step.
 
+**Download PNG (#32)** — the export button, beside Compare. Present at the baseline as well as
+under a proposal, unlike Compare: the current map is exactly as likely to be screenshotted as a
+proposed one, and the sanctioned copy is the one carrying its own sources. One format and one
+resolution, no menu — the whole argument for the feature is that it must be less effort than the
+screenshot key. Disabled for the duration of the encode rather than debounced, since on a phone a
+second press lands before the first PNG is done and two files is a confusing answer to one press;
+a failure is spoken rather than swallowed, because a button that silently does nothing reads as a
+broken page.
+
 **Compare (#22)** — hold `Space` (or press Compare) to drop strata 1 and 3 and restore the real
 map at full strength. The *only* map comparison; no side-by-side, no cross-variant table (D17).
 
@@ -533,7 +546,9 @@ let through, and none of them may restart a cross-fade mid-fade. The full access
 #35's; this is the narrower obligation not to leave it a conflict to find.
 
 **On a phone (#33)** — the card is a **bottom sheet**, hover is a **tap**, and Compare moves to the
-corner a thumb reaches. None of the three is a second version of the app: the sheet holds the same
+corner a thumb reaches — as one row with the PNG export (#32), because the two are the same kind of
+control and #32 says so itself: neither chooses what the map shows, and both act on whatever is
+already on it. None of the three is a second version of the app: the sheet holds the same
 card, whole, because a card that hid its opposition line on a phone would read as an endorsement on
 a phone; and the Compare button is the gesture it already was (#22), holding the comparison until it
 is pressed again, moved rather than redefined.
@@ -729,8 +744,55 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   Turkmenistan, Uzbekistan and Oman are — the silhouettes exist for the boundary, not for the
   corner of the frame.
 - **PNG export bakes in** scenario name, legend, provenance badge, data vintage, source, and
-  "proposed — not official". This content will travel as WhatsApp and X screenshots regardless;
-  the sanctioned export exists so circulating copies carry their own disclaimer.
+  "proposed — not official" (#32). This content will travel as WhatsApp and X screenshots
+  regardless; the sanctioned export exists so circulating copies carry their own disclaimer.
+  A 2× raster of the current view with a footer band under it, produced **entirely on the
+  machine** — the SVG is serialised into a `data:` URL, decoded by an `<img>` and read back off a
+  canvas, so no server ever sees a reader's composition of a politically live picture (D19).
+
+  Four things the band settles that a source list would not. **The standing line is not
+  conditional prose**: every band carries one, and it says which of the two maps this is — a
+  proposal says *Proposed — not official*, and the baseline says it is the official geography,
+  because an export of the real provinces stamped "not official" would be this app disclaiming the
+  government's own map. It is set in the accent **only when something is proposed**, since the
+  accent means exactly that everywhere else. **An inherited vintage says whose it is, and a basis
+  with no date to lend says that instead** — the Historical basis's declared vintage is not a date
+  but the rule for finding one ("stated per variant, not shared"), so H1, H3 and H4 print *the date
+  of this proposal's own source* and point at the Source line, where 1947, 1955 and 1970 actually
+  are; quoting the deferral after "Vintage:" would put a sentence on the image saying the date is
+  stated per variant, on a variant that states none. **The key is derived, never transcribed**,
+  from the same `unitLegend` and `motherTongueLegend` the on-screen legend is built from — less the
+  six categories dominant in no district, which on a band would push the nine that matter onto a
+  line of their own. And **the badges are glossed in the image**, because a PNG has no hover and a
+  provenance word a reader cannot check is a claim.
+
+  **The band describes the picture, never the selection**, which is the one place this could have
+  gone badly wrong. While compare is held the map has been given the baseline whole (#22), so a band
+  built from the selection would caption the real provinces with a proposal's name, badge it and
+  stamp it *Proposed — not official* — the single most damaging image this app could emit, and
+  exactly the thing the ticket exists to prevent. So the export asks what the *map* is showing and
+  gets the baseline's own band while the comparison is held; `shadedBy` is the renderer's answer for
+  the same reason, since three of the four bases can be selected and shade nothing, and the band
+  **refuses by name** to key a basis it has no fill for rather than printing one basis's colours
+  under another's title.
+
+  Two things had to be got right about the picture rather than the words, and both are stated
+  because both were wrong first. The crop is the union of the drawn land **and every name and dot
+  over it**, clipped to the frame — the ceasefire line's name is deliberately placed on clear paper
+  beside the line, and a crop taken to the coastline slices it off the one copy that travels with
+  nothing to explain the dash. And the export **photographs a settled map, never a cross-fade**:
+  the strata fade in CSS and the outlines in the renderer, so both are stilled for the length of one
+  read — otherwise pressing Download within `--switch` of a variant change bakes one proposal half
+  dissolved into another, with nothing in the picture to say so. Stilling is `map.photograph`'s, a
+  callback rather than a getter, because stilling the map and reading it have to be one operation
+  and the knowledge of what animates belongs in the file that animates it. The band also defines its
+  **own** hatch and stipple: the map's are counter-scaled by 1/k so their texture survives a 24×
+  zoom, which is right inside the zoomed group and wrong in a legend, where it would collapse the
+  pitch to a fraction of a pixel and leave a swatch keying nothing.
+
+  The words and the arithmetic are decided in `src/lib/export-band.ts`, under test; the crop is
+  `map.image()`'s; `src/export-image.ts` rasterises and composes no sentence of its own, exactly as
+  `panel.ts` composes none of the card's.
 - **Naming:** units named as *their own advocates* name them, alternatives shown in the card
   ("South Punjab (also: Saraikistan, Saraiki Wasaib)"). The app reports what people call
   things; it doesn't adjudicate.
@@ -744,9 +806,14 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
 - **Vanilla TypeScript + Vite + D3.** No framework — runtime state is five values (active
   basis, active variant, hovered district, compare-held, and on a phone the sheet's detent); no
   async, no forms. Routing is the URL hash and nothing else (#23): one parser, one `hashchange`
-  listener, no router. The fifth is deliberately **not** in the URL and not in `main.ts`: how far
-  a reader has pulled the card open is a property of the device in their hand, not of the view
-  being argued, and a shared link that restored it would move a stranger's sheet.
+  listener, no router.
+
+  Two near-misses, counted deliberately. The sheet's detent (#33) **is** one of the five, but it is
+  kept out of the URL and out of `main.ts`: how far a reader has pulled the card open is a property
+  of the device in their hand, not of the view being argued, and a shared link that restored it
+  would move a stranger's sheet. The export button's busy state (#32) is **not** one at all — it
+  belongs to the control, which disables itself for the length of one encode, and the app is never
+  told: a download in flight changes nothing about what the map shows.
 - **Inline SVG, custom projection, no basemap.** Showing only Pakistan deletes the reason to
   use a mapping library. D3 owns the SVG *and* renders the panel lists.
 - Pan/zoom via `d3-zoom`. Sparse major-city dots instead of a basemap — seven of them, and
@@ -816,15 +883,17 @@ Numbered by the grilling question that settled each.
    Taftan is not a district at all. See `docs/research/balochistan-division-district-set.md`.
    The current-day 41-district roster remains unresolvable without the provincial gazette —
    which no longer blocks anything, since under ADR-0001 none of it is drawn.
-2b. **Can a variant claim AJK territory?** L2 (#24) and H2 (#30) reference AJK districts, which
-   are drawn but unshaded and carry no PBS-direct statistics. Product decision outstanding — the
+2b. **Can a variant claim AJK territory?** H2 (#30) references AJK districts, which
+   are drawn but unshaded and carry no PBS-direct statistics. L2 was the second example until #24
+   was written; the reading that shipped claims no territory district, so the question now rests
+   on H2 alone. Product decision outstanding — the
    build's provisional answer is **no**: `TERRITORY_CLAIM_POLICY` is `forbid`, so the first
    variant that needs it fails loudly naming the district instead of settling a constitutional
    question by accident. Both answers are expressible and both are tested.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 4. **`SCENARIOS-DRAFT.md` is temporary.** The typed data module now exists
-   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries L1, L4, L5, H1, H3
-   and H4; the markdown is deleted once the other eleven have migrated into it (#36) — L2, L3, L6
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries L1, L2, L3, L4,
+   L5, H1, H3 and H4; the markdown is deleted once the other nine have migrated into it (#36) — L6
    and L7, the five Administrative variants, H2, and D1. Until then the two coexist and
    the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
    rendered variant-card content, not documentation. Keeping both would be two sources of truth.
