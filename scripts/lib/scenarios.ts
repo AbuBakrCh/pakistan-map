@@ -639,7 +639,10 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
             `say one thing and the map draw the other.`,
         );
       }
-      excludes.push(match.district);
+      // Deduplicated for the same reason the claims above are: two post-census districts can be
+      // two halves of one 2023 district, and L3 excludes both halves of South Waziristan by the
+      // names they carry today. Listing the drawn district twice would read as two exclusions.
+      if (!excludes.includes(match.district)) excludes.push(match.district);
     }
 
     const resolvedUnit: ResolvedUnit = {

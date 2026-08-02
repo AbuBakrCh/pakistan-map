@@ -2,8 +2,10 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, scenario content in draft (6 of 17 variants migrated into the typed
-module — L1, L4 and L5 on the Language basis, H1, H3 and H4 on the Historical one), pipeline and
+**Status:** design agreed, scenario content in draft (8 of 17 variants migrated into the typed
+module — L1, L2, L3, L4 and L5 on the Language basis, H1, H3 and H4 on the Historical one; L2 and
+L3 are the two wider readings of the Seraiki claim, and L3 is the one proposal here whose province
+crosses an existing provincial boundary), pipeline and
 bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
@@ -321,6 +323,7 @@ What it holds:
 | Development — every census district carrying all three indicators with both halves of each rate; shares proportions in 0–1 and equal to their own halves; toilet categories partitioning their own households; districts summing to the counts PBS printed per province and nationally; the 6,374-household improved-water difference asserted exactly rather than tolerated; folded districts inheriting their parent's indicators | `statistics.test.ts` |
 | Partition integrity — every variant covering the district set it declares exactly once, every unit's districts drawn by the geography bundle, no district in two units, no fold landing off the map, no unit both claiming and excluding a district | `bundle.test.ts` |
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids; both district counts wherever a claim and the drawing disagree, each with a `district-count` footnote saying why — South Punjab's 13-for-11 and Hazara's 9-for-8, with Allai named as the fold; and every card cross-reference pointing at a variant that exists, the L1↔H4 collision wired **both** ways so neither proposal reads as the uncontested one | `bundle.test.ts` |
+| The three readings of the Seraiki claim — L1 ⊂ L2 ⊂ L3, held as containment rather than as three district lists, so a reading that quietly dropped a district from the middle one fails; the two each adds named (Mianwali and Bhakkar, then Dera Ismail Khan and Tank); and the three claim-against-drawing counts, 13-for-11, 15-for-13 and 18-for-15. **L3 is the only proposal that crosses a provincial boundary** — *crossing* meaning part of one province and part of another, which is why merging five whole ones (H1) is not it — and it holds the Waziristans out by name: both post-census halves fold onto the one South Waziristan the map draws, that district is drawn, and Khyber Pakhtunkhwa keeps it | `bundle.test.ts` |
 | Unit outlines — every unit exactly the union of the districts it claims: its arcs are the ones its districts do not share, its area theirs to floating point, every ring closed; the outlines cut against the geometry that ships beside them rather than some other build; a unit of two districts that touch nowhere drawing as several pieces without error | `bundle.test.ts` |
 | What a *wrong* dissolve looks like — an internal border left in, an outline that is not the union of its members, a ring that does not close — each named, on a topology of three squares | `unit-outlines.test.ts` |
 | Adjacency — the shipped graph re-derived from the committed arcs and compared district by district, naming the ones whose neighbours moved; symmetric, nobody their own neighbour, no arc shared by three districts; borders checkable on any atlas rather than only against our own derivation (Islamabad's two, Chaman's one — every other side of it is Afghanistan, so a second would mean the graph had started joining across the Durand Line); no district cut loose by the coastline clip, and 156 districts in **one** component | `bundle.test.ts` |
@@ -749,8 +752,8 @@ Numbered by the grilling question that settled each.
    question by accident. Both answers are expressible and both are tested.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 4. **`SCENARIOS-DRAFT.md` is temporary.** The typed data module now exists
-   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries L1, L4, L5, H1, H3
-   and H4; the markdown is deleted once the other eleven have migrated into it (#36) — L2, L3, L6
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries L1, L2, L3, L4,
+   L5, H1, H3 and H4; the markdown is deleted once the other nine have migrated into it (#36) — L6
    and L7, the five Administrative variants, H2, and D1. Until then the two coexist and
    the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
    rendered variant-card content, not documentation. Keeping both would be two sources of truth.

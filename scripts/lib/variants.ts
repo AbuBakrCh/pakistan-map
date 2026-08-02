@@ -7,9 +7,14 @@
  * rendered card content, not documentation: rationale, status, advocacy, opposition, footnotes
  * and per-unit district lists all appear on screen.
  *
- * Six variants are expressed so far — L1, L4 and L5 on the Language basis, H1, H3 and H4 on the
- * Historical one. The remaining eleven arrive under #24–#31, each as a diff against this file that
- * the partition validator has to accept before it can be committed.
+ * Eight variants are expressed so far — L1, L2, L3, L4 and L5 on the Language basis, H1, H3 and H4
+ * on the Historical one. The remaining nine arrive under #26–#31, each as a diff against this file
+ * that the partition validator has to accept before it can be committed.
+ *
+ * L1, L2 and L3 are one claim read three ways, and they are written to stay that way: each builds
+ * its district list out of the one before it rather than restating it. A reading that differed by
+ * a district nobody meant to move would otherwise be a valid partition, and the cards say "plus
+ * Mianwali and Bhakkar" and "plus Dera Ismail Khan, Tank and Paharpur" in so many words.
  *
  * The shape of a unit's district list is worth reading once: a unit claims districts **as its
  * advocates state them**, and `scenarios.ts` resolves that onto the 2023 set the map draws. Where
@@ -135,6 +140,16 @@ const L1: Variant = {
       // that the id names a variant that exists — so a rename cannot orphan either half.
       relatedVariants: ['h4'],
     },
+    {
+      label: 'Three readings of one claim',
+      text:
+        'This is the narrowest of the three southern-province readings in this app, and the only ' +
+        'one that follows an administrative boundary rather than a language one. The PPP reading ' +
+        'adds Mianwali and Bhakkar; the Saraikistan Qaumi Council’s adds Dera Ismail Khan and ' +
+        'Tank on top of those, leaving Punjab altogether. They differ in extent and in what they ' +
+        'are arguing from, and each is drawn as its own advocates state it.',
+      relatedVariants: ['l2', 'l3'],
+    },
   ],
   sources: [
     {
@@ -152,6 +167,318 @@ const L1: Variant = {
       label:
         'data/reference/post-census-district-folds.json — Taunsa and Kot Addu, created 2022 and ' +
         'folded into Dera Ghazi Khan and Muzaffargarh under ADR-0001',
+    },
+  ],
+};
+
+/**
+ * The same claim two districts wider: South Punjab plus Mianwali and Bhakkar.
+ *
+ * Built from L1's list rather than restated, because the whole content of this variant is *what it
+ * adds*. The two additions are in Sargodha Division, not in the three southern ones, so this
+ * reading leaves the administrative boundary L1 transcribes and lands on a language one — and the
+ * census agrees with it about both districts while their own politics does not.
+ */
+const SOUTH_PUNJAB_PPP: Unit = {
+  id: 'south-punjab',
+  name: 'South Punjab',
+  alsoKnownAs: ['Saraikistan', 'Saraiki Wasaib'],
+  kind: 'proposed',
+  claims: [...SOUTH_PUNJAB.claims, 'Mianwali', 'Bhakkar'],
+};
+
+/** L2 — the PPP's reading of the southern province. */
+const L2: Variant = {
+  id: 'l2',
+  basis: 'language',
+  name: 'South Punjab, the PPP reading',
+  tagline: 'the same claim, two districts wider',
+  rationale:
+    'The Pakistan Peoples Party states the southern province two districts wider than the ' +
+    'secretariat does: the three southern divisions together with Mianwali and Bhakkar. Those two ' +
+    'sit in Sargodha Division rather than in the south, so this line leaves the administrative ' +
+    'boundary the secretariat follows and lands on a language one — the census records Saraiki as ' +
+    'the mother tongue of 73.7% of Mianwali and 79.4% of Bhakkar. The evidence is drawn under the ' +
+    'outline, and so is the argument it does not settle: both districts have organised against ' +
+    'being included.',
+  status:
+    'A stated party position, unimplemented. The PPP argues for a southern province on this ' +
+    'extent, which it states as 13 districts — the eleven the south then had, plus Mianwali and ' +
+    'Bhakkar. No province has been created and no constitutional amendment to create one has ' +
+    'passed.',
+  advocacy: {
+    kind: 'advocated',
+    by: ['Pakistan Peoples Party (PPP), whose stated extent this is'],
+  },
+  opposedBy: [
+    'Central Punjab political interests',
+    'Opponents of dividing Punjab at all, for whom the province’s size is its weight',
+    'organised local opposition within Mianwali and Bhakkar themselves, which rejects inclusion ' +
+      'in a southern province',
+  ],
+  universe: 'drawn',
+  // The same reasoning as L1's, and for the same reason: the shading under this variant is census
+  // mother tongue and the basis badges it, but the *boundary* is a party's stated extent rather
+  // than census analysis. `documented`, not `census` — and not `official`, since nothing about
+  // this reading has been enacted.
+  badges: ['documented'],
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the PPP’s stated extent — the Multan, Bahawalpur and Dera Ghazi Khan divisions together ' +
+      'with Mianwali and Bhakkar',
+  },
+  units: [
+    SOUTH_PUNJAB_PPP,
+    intactProvince('Punjab', SOUTH_PUNJAB_PPP.claims),
+    intactProvince('Khyber Pakhtunkhwa'),
+    intactProvince('Sindh'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'district-count',
+      text:
+        'Sources state this claim as 13 districts: the eleven the south had before 2022, plus ' +
+        'Mianwali and Bhakkar. Taunsa was carved out of Dera Ghazi Khan and Kot Addu out of ' +
+        'Muzaffargarh that year, so the same territory is 15 districts today. This map is pinned ' +
+        'to the 2023 census, in which neither new district has a population row, so both are ' +
+        'drawn inside their parents and the unit reads as 13. Thirteen as claimed, fifteen now, ' +
+        'thirteen drawn — and the first and the last are the same thirteen districts.',
+    },
+    {
+      kind: 'contested-edge',
+      text:
+        'Mianwali and Bhakkar are inside this line and opinion in both districts has publicly ' +
+        'rejected it, on the grounds of a Punjabi rather than a Seraiki identity. The census ' +
+        'records Saraiki as the mother tongue of 73.7% of those counted in Mianwali and 79.4% in ' +
+        'Bhakkar, so the shading under this part of the unit is the reading’s own evidence. This ' +
+        'app reports both and adjudicates neither: a mother tongue is not a vote.',
+    },
+  ],
+  notes: [
+    {
+      label: 'Three readings of one claim',
+      text:
+        'This is the middle of the three southern-province readings in this app. The South Punjab ' +
+        'Secretariat draws the three southern divisions and stops at the provincial boundary; the ' +
+        'Saraikistan Qaumi Council’s reading adds Dera Ismail Khan and Tank on top of these ' +
+        'fifteen districts and crosses it. The app draws one at a time and never a compromise ' +
+        'between them (D8).',
+      relatedVariants: ['l1', 'l3'],
+    },
+    {
+      label: 'Collision with the Bahawalpur restoration',
+      text:
+        'Bahawalpur Division is the eastern third of this unit, and its restoration movement ' +
+        'rejects being folded into a single southern province at all. That is a variant of its ' +
+        'own on the Historical basis, and the two claims want the same ground on terms that ' +
+        'cannot both hold.',
+      relatedVariants: ['h4'],
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Pakistan Peoples Party — stated position on a southern province: the districts of the ' +
+        'Multan, Bahawalpur and Dera Ghazi Khan divisions as they then stood, together with ' +
+        'Mianwali and Bhakkar',
+    },
+    {
+      label:
+        'PBS 2023 Census Table 11 — mother tongue by district, which is where the Saraiki shares ' +
+        'quoted on this card for Mianwali and Bhakkar are read from',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in, and which places Mianwali and Bhakkar in ' +
+        'Sargodha Division',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+    {
+      label:
+        'data/reference/post-census-district-folds.json — Taunsa and Kot Addu, created 2022 and ' +
+        'folded into Dera Ghazi Khan and Muzaffargarh under ADR-0001',
+    },
+  ],
+};
+
+/**
+ * Saraikistan at its full stated extent — and the one unit in this app that leaves its province.
+ *
+ * Two things here are the reason the project is built out of districts rather than divisions. The
+ * claim reaches into Khyber Pakhtunkhwa for Dera Ismail Khan and Tank, so no division-level
+ * partition could express it at all; and it has never included the Waziristans, which sit in the
+ * same division as Dera Ismail Khan. At division resolution the map would have shaded South
+ * Waziristan Pushto and enclosed it inside a Seraiki province in the same frame — a contradiction
+ * on screen, and one that would have put a claim in these advocates' mouths that they do not make.
+ * So the exclusion is stated in the data, not left to be inferred from the claim.
+ */
+const SARAIKISTAN: Unit = {
+  id: 'saraikistan',
+  name: 'Saraikistan',
+  alsoKnownAs: ['Saraiki Wasaib'],
+  kind: 'proposed',
+  claims: [...SOUTH_PUNJAB_PPP.claims, 'Dera Ismail Khan', 'Tank', 'Paharpur'],
+  // Named as the two districts that exist today. Both were carved out of the South Waziristan the
+  // census counted, so both fold onto the one district this map draws and excluding the pair is
+  // excluding the one — which the footnote says, because "excludes: South Waziristan" beside a
+  // claim written in current names would look like half an answer.
+  excludes: ['Upper South Waziristan', 'Lower South Waziristan'],
+};
+
+/** L3 — the Saraikistan Qaumi Council's maximal reading. */
+const L3: Variant = {
+  id: 'l3',
+  basis: 'language',
+  name: 'Saraikistan',
+  tagline: 'the only line here that leaves its province',
+  rationale:
+    'The Saraikistan Qaumi Council states the claim at its full extent: the Seraiki-speaking ' +
+    'districts of southern Punjab, together with Dera Ismail Khan and Tank, which are districts ' +
+    'of Khyber Pakhtunkhwa. It is the only proposal in this app whose province is carved out of ' +
+    'two existing ones — without it the map would imply that a new province can only ever come ' +
+    'out of the inside of an old one. It is also the only one that has to say what it leaves ' +
+    'behind: the claim has never included the Waziristans, and this map draws that exclusion ' +
+    'rather than assuming it.',
+  status:
+    'A nationalist demand, unimplemented. The Saraikistan Qaumi Council argues for a Seraiki ' +
+    'province on this extent. No province has been created and no constitutional amendment to ' +
+    'create one has passed, and no government proposal — the South Punjab Secretariat included — ' +
+    'has ever reached across the provincial boundary for the two Khyber Pakhtunkhwa districts.',
+  advocacy: {
+    kind: 'advocated',
+    by: [
+      'Saraikistan Qaumi Council',
+      'Seraiki nationalist opinion, for which this is a language claim rather than an ' +
+        'administrative one',
+    ],
+  },
+  opposedBy: [
+    'Khyber Pakhtunkhwa parties across the spectrum, for whom the province’s territory is not ' +
+      'open to a claim made from Punjab',
+    'Pashtun nationalist opinion in Dera Ismail Khan',
+    'Central Punjab political interests, and opponents of dividing Punjab at all',
+    'Bahawalpur’s restoration movement, which rejects being folded into a single southern ' +
+      'province',
+  ],
+  universe: 'drawn',
+  // `documented` on the same reasoning as L1's and L2's: the shading is census mother tongue, the
+  // boundary is a movement's stated extent. Nothing here was computed by this build — the
+  // exclusion of the Waziristans least of all, which is the movement's own line and not a
+  // threshold we applied.
+  badges: ['documented'],
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the Saraikistan Qaumi Council’s stated extent — southern Punjab with Dera Ismail Khan, ' +
+      'Tank and Paharpur, and expressly without the Waziristans',
+  },
+  units: [
+    SARAIKISTAN,
+    intactProvince('Punjab', SARAIKISTAN.claims),
+    intactProvince('Khyber Pakhtunkhwa', SARAIKISTAN.claims),
+    intactProvince('Sindh'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'district-count',
+      text:
+        'This claim is stated here as 18 districts. Three of them were created after the census — ' +
+        'Taunsa out of Dera Ghazi Khan, Kot Addu out of Muzaffargarh and Paharpur out of Dera ' +
+        'Ismail Khan — and this map is pinned to the 2023 census, in which none of the three has ' +
+        'a population row. All three are drawn inside their parents, so the unit reads as 15 ' +
+        'districts of exactly the same ground.',
+    },
+    {
+      kind: 'note',
+      text:
+        'This is the only proposal in the app whose province crosses an existing provincial ' +
+        'boundary. Dera Ismail Khan and Tank are districts of Khyber Pakhtunkhwa and everything ' +
+        'else in the unit is Punjab’s, so the outline leaves one province and enters another. The ' +
+        'census records Saraiki as the mother tongue of 65.8% of those counted in Dera Ismail ' +
+        'Khan, which is the ground the claim is made on.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The claim has never included the Waziristans, and the map draws it that way. South ' +
+        'Waziristan — 888,675 people, of whom the census records 98.0% as speaking Pushto, in the ' +
+        'census’s own spelling — stays in Khyber Pakhtunkhwa, and the exclusion is carried in the ' +
+        'data rather than left to be read off the outline. It was split after the census into ' +
+        'Upper and Lower South Waziristan, so both halves fold into the one district drawn here ' +
+        'and excluding the two is excluding the one. This is why the app is built out of ' +
+        'districts: Dera Ismail Khan Division contains the Waziristans, so at division resolution ' +
+        'the map would have shaded them Pushto and enclosed them inside a Seraiki province in the ' +
+        'same frame.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Tank is inside the line and shades Pushto: the census records it as the mother tongue of ' +
+        '83.3% of those counted there. The claim includes it and this map draws the claim, so the ' +
+        'disagreement between the outline and the shading beneath it is left visible rather than ' +
+        'footnoted away — it is the most informative thing on this variant.',
+    },
+  ],
+  notes: [
+    {
+      label: 'Three readings of one claim',
+      text:
+        'This is the widest of the three southern-province readings in this app, and the only one ' +
+        'argued as a language claim first. The South Punjab Secretariat draws the three southern ' +
+        'divisions; the PPP’s reading adds Mianwali and Bhakkar; this one adds Dera Ismail Khan, ' +
+        'Tank and Paharpur to those and leaves Punjab. The app draws one at a time and never a ' +
+        'compromise between them (D8).',
+      relatedVariants: ['l1', 'l2'],
+    },
+    {
+      label: 'Collision with the Bahawalpur restoration',
+      text:
+        'Bahawalpur Division is inside this unit, and its restoration movement rejects being ' +
+        'folded into a single Seraiki province — it is named on this card’s opposition line for ' +
+        'that reason. That claim is a variant of its own on the Historical basis.',
+      relatedVariants: ['h4'],
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Saraikistan Qaumi Council — the maximal stated extent of the Seraiki province claim: ' +
+        'southern Punjab together with Dera Ismail Khan, Tank and Paharpur, and without the ' +
+        'Waziristans',
+    },
+    {
+      label:
+        'PBS 2023 Census Table 11 — mother tongue by district, which is where the Saraiki share ' +
+        'of Dera Ismail Khan and the Pushto shares of Tank and South Waziristan quoted on this ' +
+        'card are read from',
+    },
+    {
+      label:
+        'PBS 2023 Digital Census, district table — South Waziristan’s population of 888,675, the ' +
+        'figure quoted for the district this claim excludes',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in, and which places Dera Ismail Khan, Tank and ' +
+        'South Waziristan in one division',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+    {
+      label:
+        'data/reference/post-census-district-folds.json — Taunsa, Kot Addu and Paharpur, created ' +
+        'after the census and folded into their parents under ADR-0001, and Upper and Lower South ' +
+        'Waziristan, which fold into the South Waziristan this claim excludes',
     },
   ],
 };
@@ -769,15 +1096,17 @@ const H4: Variant = {
     {
       label: 'Collision with the Seraiki and South Punjab claims',
       text:
-        'These three districts are also the eastern third of South Punjab (L1) and of the Seraiki ' +
-        'claims behind it. Bahawalpur’s advocates explicitly reject being folded into a single ' +
-        'southern province: the two demands want the same ground on terms that cannot both hold, ' +
-        'and PML-N’s own position — two provinces rather than one — exists because of it. The app ' +
+        'These three districts are the eastern third of every southern-province reading in this ' +
+        'app — the South Punjab Secretariat, the PPP’s wider version of it, and the Saraikistan ' +
+        'claim behind both. Bahawalpur’s advocates explicitly reject being folded into a single ' +
+        'southern province: the demands want the same ground on terms that cannot both hold, and ' +
+        'PML-N’s own position — two provinces rather than one — exists because of it. The app ' +
         'draws one variant at a time and never a compromise between two claims (D8), so the ' +
         'disagreement is stated here rather than averaged on the map.',
-      // The other half of L1's note. Both directions are wired, and the validator checks that
-      // each id names a variant that exists.
-      relatedVariants: ['l1'],
+      // The other half of the southern readings' notes, wired to all three rather than to
+      // whichever was written first: a collision a card knows about in one direction reads as
+      // neutral from the other. The validator checks that each id names a variant that exists.
+      relatedVariants: ['l1', 'l2', 'l3'],
     },
   ],
   sources: [
@@ -816,4 +1145,4 @@ const H4: Variant = {
  * lands on its first variant (D13), so the first of each group is a deliberate choice and not an
  * accident of when it was written.
  */
-export const VARIANTS: readonly Variant[] = [L1, L4, L5, H1, H3, H4];
+export const VARIANTS: readonly Variant[] = [L1, L2, L3, L4, L5, H1, H3, H4];

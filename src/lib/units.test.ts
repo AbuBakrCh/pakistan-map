@@ -159,6 +159,8 @@ describe('unitBoundaries', () => {
     );
     expect(along).toEqual({
       l1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      l2: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      l3: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       l4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       l5: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
