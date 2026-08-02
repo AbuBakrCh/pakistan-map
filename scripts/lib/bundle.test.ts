@@ -44,6 +44,11 @@ import {
   isolatedDistricts,
   type AdjacencyGraph,
 } from './adjacency.ts';
+// The runtime's own card composer, imported here rather than reimplemented, so the unsourced-year
+// check (#47) asks its question of the fields a reader actually sees and picks up a new one by
+// construction. It is pure — no DOM, no fetch — and `panel.ts` renders it without adding a word.
+import { variantCard, type VariantCard } from '../../src/lib/card.ts';
+import type { ScenarioBundle, VariantRecord } from '../../src/bundle.ts';
 import {
   AREA_AGREEMENT,
   areaKm2,
@@ -879,25 +884,32 @@ describe('bundle scenarios', () => {
     expect(blankReason ? ['h2 withholds its figures and gives no reason'] : []).toEqual([]);
   });
 
-  it('names the variants whose prose asserts a year their sources do not reach', () => {
+  it('names the variants whose card asserts a year their sources do not reach', () => {
     /*
      * The Durand check (`context.ts`) generalised from one footnote to every variant card, which
      * is where #30's review pointed it: card copy asserting a dated fact is a sourced surface like
      * any other, and a year nothing in the source list accounts for is an unsourced claim.
      *
-     * Held as a **named list of known gaps** rather than as zero, because four of them predate #30
-     * and fixing them means editing content on five other variants — which is a ticket of its own
-     * and not this one's to take. The pattern is `UNNAMEABLE_AT_390`'s: an exact list fails the
-     * moment a new gap appears or an old one is closed without the list being updated, where a
-     * loosened check would let the next one through in silence.
+     * Held as a **named list of known gaps** rather than as zero, because every one of them is a
+     * content edit on somebody else's variant — a ticket of its own, and not this one's to take.
+     * The pattern is `UNNAMEABLE_AT_390`'s: an exact list fails the moment a new gap appears or an
+     * old one is closed without the list being updated, where a loosened check would let the next
+     * one through in silence. Each entry names the year it asserts, never a count.
      *
-     * A1 to A3 date the current provincial map from 1970 in their rationale; H1 mentions Karachi
-     * ceasing to be federal territory in 1961. Each is true and each wants a source line.
+     * Four predate #30, and each is true and each wants a source line: A1 to A3 date the current
+     * provincial map from 1970 in their rationale, and H1 mentions Karachi ceasing to be federal
+     * territory in 1961. The fifth surfaced when #47 widened the field set to every rendered one:
+     * A5's note is titled *Relationship to the 1970 restoration*, which is H3's own name, and A5
+     * cites nothing dated 1970 — the same class of gap as the other four, and closed the same way,
+     * by a source line rather than by loosening this list. The gap the widening was raised over —
+     * H3 asserting 2020 on its **Opposed by** line, the one line the working agreement is most
+     * insistent about — is *not* here: it is closed by citing the announcement A5 already names.
      */
     const KNOWN_GAPS: Readonly<Record<string, readonly string[]>> = {
       a1: ['1970'],
       a2: ['1970'],
       a3: ['1970'],
+      a5: ['1970'],
       h1: ['1961'],
     };
     const found = Object.fromEntries(
@@ -1417,29 +1429,74 @@ describe('bundle administrative variants', () => {
  * is true. Everything below is a consequence of that or of the fact that what it draws is older
  * than the districts it is drawn out of, so both are asserted rather than described.
  */
+const YEARS = /\b(?:1[89]|20)\d{2}\b/g;
+const yearsIn = (text: string): ReadonlySet<string> => new Set(text.match(YEARS) ?? []);
+
+/**
+ * Every string the card actually renders, gathered from the card itself rather than field by field.
+ *
+ * The point is that a prose field added to the schema later is covered *by construction*: the walk
+ * takes whatever `variantCard` put in the object, so a new `CardList`, footnote kind or unit line
+ * arrives here the day it arrives on screen. Hand-listing the fields is what let `opposedBy`,
+ * `tagline`, `advocacy` and a unit's `alsoKnownAs` go unchecked on every variant in the app (#47)
+ * while the test's own name said otherwise — the **Opposed by** line among them, which is the line
+ * the working agreement is most insistent about.
+ *
+ * Two branches are left out, and both are left out for the same reason: they are the *other* side
+ * of the question rather than prose the variant wrote. `sources` is what accounts for a year, and
+ * folding it in would make every source line self-sourcing. `basis` is the basis's own name and its
+ * own source line — "Documented past demarcations, 1947 onward" — which is the same string under
+ * every Historical variant, is sourced on the About panel (#21), and is not a dated claim H1 or H3
+ * is making. Neither is put on the *sourced* side either: a basis's source line is not a citation
+ * for a year a variant asserts in its own words.
+ */
+const cardProse = (card: VariantCard): string => {
+  const strings: string[] = [];
+  const walk = (value: unknown): void => {
+    if (typeof value === 'string') strings.push(value);
+    else if (Array.isArray(value)) value.forEach(walk);
+    else if (value !== null && typeof value === 'object') {
+      for (const [key, nested] of Object.entries(value)) {
+        if (key !== 'sources' && key !== 'basis') walk(nested);
+      }
+    }
+  };
+  walk(card);
+  return strings.join('\n');
+};
+
 /**
  * Every year a variant's card copy asserts, less every year its sources account for.
  *
  * Shared by H2's own check and the whole-set one below, so the two cannot drift into asking
- * slightly different questions of the same prose.
+ * slightly different questions of the same prose. Asked of the **rendered card** (#47), so the
+ * question is the one the test's name states — every year on the card — and not a list of fields
+ * somebody remembered to extend.
+ *
+ * Sentences `card.ts` composes for itself are held to the same rule as the variant's own, and no
+ * exemption is written for them: those quote the census's year — "across the N units the 2023 census
+ * covers", "PBS published no 2023 results for their districts" — and every variant's own source list
+ * already reaches 2023, since every one of them cites the PBS district list. That is a fact about
+ * the shipped content rather than an assumption, and it is asserted by there being no exemption to
+ * lean on: putting the bundle's own vintage on the sourced side was tried, changed nothing, and was
+ * taken out again rather than left standing as a hole a future variant could fall into.
+ *
+ * The one residual, stated rather than hidden: a prose field the card renders but does **not** put
+ * in this object would still be missed. There is none today — `panel.ts` composes no sentence of its
+ * own, which is the division this repo keeps between the two files — so that is the seam the card's
+ * own tests rest on rather than a gap this check can close.
  */
 const unsourcedYears = (variant: EmittedVariant): readonly string[] => {
-  const years = (text: string) => new Set(text.match(/\b(?:1[89]|20)\d{2}\b/g) ?? []);
-  const prose = [
-    variant.rationale,
-    variant.status,
-    ...variant.footnotes.map((note) => note.text),
-    ...variant.notes.map((note) => note.text),
-    ...variant.units.map((unit) => unit.note ?? ''),
-  ].join('\n');
-  const sourced = years(
+  const record = variant as unknown as VariantRecord;
+  const asserted = yearsIn(cardProse(variantCard(scenarios as ScenarioBundle, record)));
+  const sourced = yearsIn(
     [
       ...variant.sources.map((source) => source.label),
       variant.composition.from,
       variant.vintage ?? '',
     ].join('\n'),
   );
-  return [...years(prose)].filter((year) => !sourced.has(year)).sort();
+  return [...asserted].filter((year) => !sourced.has(year)).sort();
 };
 
 describe('bundle D1, the map service access draws (#31)', () => {
@@ -1932,7 +1989,7 @@ describe('bundle H2, the map with no figures on it', () => {
     expect(h2().opposedBy.join('\n')).toMatch(/Kalat/);
   });
 
-  it('accounts in its sources for every year its prose asserts', () => {
+  it('accounts in its sources for every year its card asserts', () => {
     /*
      * The working agreement's "no unsourced surface", applied to card copy rather than to badges.
      * A variant's prose asserts dated facts — a state acceded, a province was renamed, a district
@@ -1941,7 +1998,9 @@ describe('bundle H2, the map with no figures on it', () => {
      * this; H2 asserts more dates than any other variant in the app, so it is held to it here.
      *
      * The check extracts years from both sides rather than reading the sentence back at itself,
-     * which is the only version of it that can fail.
+     * which is the only version of it that can fail — and it asks the *rendered card* (#47), so
+     * H2's tagline, its opposition line, its unadvocated note and each state's alternative names
+     * are in it, not only the five fields somebody listed by hand.
      */
     expect(unsourcedYears(h2())).toEqual([]);
   });

@@ -481,10 +481,37 @@ against the partition rather than against themselves.
 **Every year H2's prose asserts is a year its sources reach**, which is the working agreement's
 "no unsourced surface" applied to card copy rather than to badges — the check `context.ts` has
 always made of the Durand footnote, generalised to variant cards. It is held over **every** variant
-with the four pre-existing gaps named one by one (A1 to A3 date the current map from 1970 and H1
-mentions 1961, each true and each wanting a source line), on the same principle as the 390px list:
+with the pre-existing gaps named one by one, on the same principle as the 390px list:
 an exact list of known gaps fails when a new one appears, where a loosened check lets it through in
-silence. Closing those four is a ticket of its own and not #30's.
+silence. Closing them is a ticket of its own and not #30's.
+
+**And it asks the whole card, because for a year it asked five fields and claimed to ask all of
+them** (#47). `unsourcedYears` read `rationale`, `status` and three kinds of note; `tagline`,
+`opposedBy`, `advocacy` and a unit's `alsoKnownAs` are rendered copy and were not read, so the
+test's own name and this file were both broader than the code. It now walks the **card
+`variantCard` composes**, which is what makes a prose field added to the schema later covered by
+construction rather than by somebody remembering this file: the walk takes whatever is in the
+object. Two branches are left out and both are the other side of the question — `sources`, which is
+what accounts for a year, and `basis`, whose gloss is the basis's own source line ("Documented past
+demarcations, 1947 onward") and is not a dated claim H1 or H3 makes. Neither is put on the sourced
+side either. Sentences `card.ts` composes for itself get no exemption: they quote the census's own
+2023, and every variant's source list already reaches it because every one cites the PBS district
+list — an exemption for the bundle's vintage was tried, changed nothing, and was taken out rather
+than left as a hole. The residual is stated where the code is: a field the card renders without
+putting it in the object would still be missed, and there is none, because `panel.ts` composes no
+sentence of its own.
+
+**What the widening found was on the line this app is least free to get wrong**, and it is closed by
+a citation rather than by a wider list. H3's second **Opposed by** entry says that restoring the name
+*Northern Areas* would undo "the provisional provincial status announced in 2020", and nothing in
+H3's sources reached 2020 — the one piece of card copy where a variant could assert any year with
+nothing checking it. A5 already carries the sourced form of that same fact, so H3 now cites **the
+same line**: the announcement by Prime Minister Imran Khan of 1 November 2020 and the drafted
+amendment prepared for it. Five gaps remain and each is named with the year it asserts: A1 to A3 and
+**A5** assert 1970, H1 asserts 1961. A5's is the one the widening added — its note is titled
+*Relationship to the 1970 restoration*, which is H3's own name, and A5 cites nothing dated 1970. It
+is the same class as the other four, a content edit on somebody else's variant, and is left named
+rather than tidied away by loosening the check.
 
 **The mother-tongue rule engine draws the two Language variants nobody published** (#26).
 `scripts/lib/mother-tongue-partition.ts` assigns each district to the region of its dominant
@@ -652,7 +679,7 @@ What it holds:
 | Three absences the tooltip words apart (#30) — a district the census never reached, one it reached and named no dominant tongue for, and one whose figures the variant declines; no two sharing a sentence, and the census's own coverage asked **first**, so Hunza under H2 says the census does not reach it rather than that H2 withheld it. The withholding drops the **mother tongue** with the population, since that note quotes a headcount of its own; every other variant's tooltips asserted unchanged | `tooltip.test.ts` |
 | One withholding rule, one answer (#48) — the card's sentence held against the **tooltip's own value** rather than against a literal of its own, both taken from `figuresWithheld`, so an edit to either surface's copy cannot leave the pair green; and exactly H2 withholding in the shipped set, since a predicate that never fires passes a test perfectly | `tooltip.test.ts` |
 | `unchanged` is a claim and not a default (#30) — H2's Sindh and Balochistan only *lose* ground and stay `unchanged`; its Punjab also **gains** the ground ICT now covers and is `proposed`, checked against the origins the bundle records rather than against the kind it was given. And `districtsMoved` shown to be independent of `kind` from both ends: Punjab's 33 districts still carry the province forward at `proposed`, exactly as A5's two promotions move nought | `bundle.test.ts` |
-| No unsourced year on a variant card (#30) — every year the prose asserts extracted and checked against every year the sources reach, the Durand check generalised from one footnote to all sixteen variants. Held with the four pre-existing gaps **named** — A1 to A3's 1970 and H1's 1961 — so a new one fails rather than joining a tolerated count | `bundle.test.ts` |
+| No unsourced year on a variant card (#30, #47) — every year the card asserts extracted and checked against every year the sources reach, the Durand check generalised from one footnote to every variant. Asked of the **card `variantCard` composes** rather than of a hand-listed five fields, so `tagline`, `opposedBy`, `advocacy` and a unit's `alsoKnownAs` are in it and a prose field added later is covered by construction; `sources` and the basis's own gloss are left out as the other side of the question, and the card's own sentences quoting 2023 get no exemption. Held with the five pre-existing gaps **named with the year each asserts** — A1 to A3's and A5's 1970 and H1's 1961 — so a new one fails rather than joining a tolerated count. What the widening surfaced is closed by a citation instead: H3's **Opposed by** line asserts 2020 and now cites the 1 November 2020 announcement A5 already names | `bundle.test.ts` |
 | A withheld figure and an absent one, worded apart on one card (#30) — H2's Punjab has a 2023 population and declines to print it; its Azad Jammu & Kashmir has none to print. Both carry `null`, so a card reading only that field would say the census does not reach Punjab — which is why the census-coverage sentence is asked *first* and the variant's own withholding second | `card.test.ts` |
 | What the mother-tongue rule does at its own seam — the cases the real map cannot show: a language dominant in two unconnected places, split and named apart rather than drawn as one province in two pieces; a district the census does not reach **refused** and a district it reaches without a dominant tongue returned **unassigned**, the two absences answered differently; the same regions from a shuffled scope, which is the determinism claim; and `soleRegionOf` refusing to pick when a claim stated as one province comes out as two | `mother-tongue-partition.test.ts` |
 | The three readings of the Seraiki claim — L1 ⊂ L2 ⊂ L3, held as containment rather than as three district lists, so a reading that quietly dropped a district from the middle one fails; the two each adds named (Mianwali and Bhakkar, then Dera Ismail Khan and Tank); and the three claim-against-drawing counts, 13-for-11, 15-for-13 and 18-for-15. **L3 is the only proposal that crosses a provincial boundary** — *crossing* meaning part of one province and part of another, which is why merging five whole ones (H1) is not it — and it holds the Waziristans out by name: both post-census halves fold onto the one South Waziristan the map draws, that district is drawn, and Khyber Pakhtunkhwa keeps it | `bundle.test.ts` |
