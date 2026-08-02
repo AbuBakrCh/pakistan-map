@@ -405,15 +405,6 @@ reading of the ticket: the dominant-mother-tongue line quotes a headcount inside
 screen under the sentence saying there are none — and "2023 census numbers do not describe 1947
 boundaries" is as true of Table 11 as of Table 1.
 
-**Whether a variant withholds, and what its reason is, is now asked once** (#48). `figuresWithheld`
-is exported from beside the tooltip and answers for both surfaces — the card prints it above its
-units, the tooltip prints it where the district's figures would be, and `main.ts` hands it over
-rather than deriving it, exactly as it composes no sentence of its own. It was three ternaries over
-one field, and the copy `main.ts` held was the one nothing asserted, since that file has no test
-seam by design. Held the way the regions list's standing words are held: the suite compares the
-card's sentence against the tooltip's *value* rather than each against its own literal, because
-pinned to literals both pass while two vocabularies are live.
-
 That makes **three absences the tooltip words apart**, and none may share a sentence with another:
 a district the census never reached (D25), a district it reached and named no dominant tongue for
 (Chitral), and a district it reached whose figures *this variant* declines. The census's own
@@ -421,6 +412,18 @@ coverage is asked **first**, in the tooltip and on the card alike — a district
 no figure for a variant to withhold, and answering the withholding first would describe the census
 as reaching ground it does not. So on H2 no unit carries a figure, and Punjab's is *declined* where
 Azad Jammu & Kashmir's *does not exist*.
+
+**Whether a variant withholds, and what its reason is, is asked once** (#48). `figuresWithheld` is
+exported from beside the tooltip and answers for both surfaces — the card prints it above its units,
+the tooltip prints it where the district's figures would be, and `main.ts` hands it over rather than
+deriving it, exactly as it composes no sentence of its own. It was three ternaries over one field,
+and the copy `main.ts` held was the one nothing asserted, since that file has no test seam by
+design. That copy is still answered **structurally rather than by assertion** — re-inlining the
+ternary there would leave the suite green, which is what having no seam costs — so what the one
+export buys is that there is no second derivation left for it to disagree with. What the suite does
+reach is held the way the regions list's standing words are: the card's sentence and the tooltip's
+are both taken from the value the predicate returns and compared against **each other**, never each
+against its own literal, because pinned to literals both pass while two vocabularies are live.
 
 **H2's Punjab is `proposed`, and the reason is worth reading rather than assuming.** `unchanged`
 prints one sentence — *Unchanged from the current map* — so it is a claim and not a default. The
