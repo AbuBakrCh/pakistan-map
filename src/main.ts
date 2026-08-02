@@ -1,10 +1,12 @@
 /**
  * Entry point: the selection, and everything that answers to it.
  *
- * Runtime state is one value — the active basis and variant, or the baseline (D20). Nothing here
- * is a framework's job: a selection changes, four surfaces redraw, and each of them is told the
- * whole answer rather than a patch. The decisions those surfaces render are all upstream in
- * `lib/`, under test; what is here is the wiring.
+ * Runtime state is one value — the active basis and variant, or the baseline (D20) — and it is
+ * written into the URL and read back out of it (#23), so the value the page holds and the value
+ * the address bar shows are the same value and cannot come apart. Nothing here is a framework's
+ * job: a selection changes, four surfaces redraw, and each of them is told the whole answer rather
+ * than a patch. The decisions those surfaces render are all upstream in `lib/`, under test; what
+ * is here is the wiring, and the three history calls, which have no seam to be tested at.
  *
  * Provenance travels with every one of them. A basis shades districts, a variant draws provinces
  * that do not exist, and both are on screen at once — so the legend says what the colours mean,
@@ -25,6 +27,7 @@ import {
   type VariantRecord,
 } from './bundle.ts';
 import { boundaryNote } from './lib/context.ts';
+import { hashFor, readRoute } from './lib/deep-link.ts';
 import { shortFormExpansions } from './lib/labels.ts';
 import { arcsOf, readLineOfControl } from './lib/line-of-control.ts';
 import {
@@ -33,13 +36,7 @@ import {
   type DistrictFill,
   type LegendEntry,
 } from './lib/mother-tongue.ts';
-import {
-  BASELINE,
-  basisChoices,
-  mapDescription,
-  variantOf,
-  type Selection,
-} from './lib/selection.ts';
+import { basisChoices, mapDescription, variantOf, type Selection } from './lib/selection.ts';
 import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { variantCard } from './lib/card.ts';
@@ -104,7 +101,16 @@ function viewFor(selection: Selection): MapView {
   };
 }
 
-let selection: Selection = BASELINE;
+/**
+ * The opening view is the URL's, and the map is built into it rather than switched into it (#23).
+ *
+ * Read before the first render, not after: entering a variant by cross-fading out of a baseline
+ * the reader never asked for would animate a change that did not happen, and would make a shared
+ * link visibly a redirect. A link is an address, so the page opens *at* it.
+ */
+const opening = readRoute(window.location.hash, scenarioBundle, choices);
+let selection: Selection = opening.selection;
+
 const map = renderMap(
   mount,
   geographyTopology,
@@ -112,11 +118,43 @@ const map = renderMap(
   censusStatistics,
   viewFor(selection),
 );
-const panel = renderControls(controlMount, scenarioBundle, choices, (next) => {
+const panel = renderControls(controlMount, scenarioBundle, choices, go);
+const card = renderVariantCard(cardMount);
+
+/**
+ * A view the reader chose, which is the only kind that takes a history entry.
+ *
+ * `pushState`, so back and forward walk the views rather than leaving the site: switching variants
+ * is the act this app is for, and a reader comparing three proposals expects the browser's own
+ * undo to walk them back through the three. The push is skipped where the hash would not change,
+ * or holding a chip down would stack entries that all draw the same map and make back look broken.
+ *
+ * Corrections are `replaceState` instead, and the distinction is the whole rule: a hash the reader
+ * *chose* is history, a hash this app *derived* is not. Following `#/language` and landing on
+ * `#/language/l1` (D13) leaves one entry, not two, because there is no earlier view to go back to
+ * — the intermediate state it would restore is the one state this app has decided cannot exist.
+ */
+function go(next: Selection): void {
   selection = next;
+  const hash = hashFor(next);
+  if (hash !== window.location.hash) window.history.pushState(null, '', hash);
+  render();
+}
+
+/**
+ * Back, forward, and a hash edited in the address bar — one listener, because they are one event.
+ *
+ * `hashchange` rather than `popstate`: `pushState` does not fire it, so the app's own writes
+ * cannot loop back through here, while every traversal between two of them does. What arrives is
+ * an untrusted string either way — a reader may have typed it — so it is read through the same
+ * parser as the opening one and canonicalised on the spot, without a further entry.
+ */
+window.addEventListener('hashchange', () => {
+  const route = readRoute(window.location.hash, scenarioBundle, choices);
+  selection = route.selection;
+  if (!route.asWritten) window.history.replaceState(null, '', hashFor(route.selection));
   render();
 });
-const card = renderVariantCard(cardMount);
 
 function render(): void {
   const variant = variantOf(scenarioBundle, selection);
@@ -305,3 +343,10 @@ function motherTongueProvenance(): string {
 }
 
 render();
+
+// The address bar is brought into line with what is actually drawn — a bare `#/language` expanded
+// to the variant it means, a dead variant id dropped for the baseline, and a first visit with no
+// hash at all given the baseline's own URL. `replaceState`, so the entry the reader arrived on is
+// corrected rather than buried: pressing back must still leave the site, not undo a rewrite they
+// never made.
+if (!opening.asWritten) window.history.replaceState(null, '', hashFor(selection));
