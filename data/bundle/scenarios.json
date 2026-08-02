@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T10:25:38.650Z",
+    "generated": "2026-08-02T10:51:10.252Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -3342,6 +3342,7 @@
       "badges": [
         "documented"
       ],
+      "vintage": "14 October 1955 to 30 June 1970 — the fifteen years the One Unit demarcation was in force",
       "rationale": "Every province and princely state west of India was merged into a single province of West Pakistan on 14 October 1955, to stand as one half of a two-province federation against East Bengal. It lasted fifteen years and was dissolved on 1 July 1970. It is the most dramatic map in this app, and one of the few here that were once the law rather than a proposal — the nearest of the others being the 1970 restoration that undid it.",
       "status": "Historical, and reversed. West Pakistan was constituted by the Establishment of West Pakistan Act, 1955, with effect from 14 October 1955, and dissolved with effect from 1 July 1970, which restored the four provinces that had been merged into it. No party advocates its restoration.",
       "advocacy": {
@@ -3883,6 +3884,7 @@
       "badges": [
         "documented"
       ],
+      "vintage": "1 July 1970 — the four provinces as restored when One Unit was dissolved, before the 2009 renaming of the Northern Areas and the 2018 merger of FATA superseded the arrangement",
       "rationale": "The four provinces as they were restored when One Unit was dissolved on 1 July 1970, with the Federally Administered Tribal Areas and the Northern Areas outside all four. It proposes nothing: every boundary on it was Pakistan’s own within living memory. What it shows is how much of the map has been redrawn already — a whole tier of federally administered territory merged into a province in 2018, and a territory renamed in 2009 — without a single new province having been created.",
       "status": "Historical, and superseded in two separate steps. The 25th Amendment merged FATA into Khyber Pakhtunkhwa in 2018; the Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 gave the Northern Areas the name they carry now. The province of North-West Frontier Province was renamed Khyber Pakhtunkhwa by the 18th Amendment in April 2010.",
       "advocacy": {
@@ -4524,6 +4526,7 @@
       "badges": [
         "documented"
       ],
+      "vintage": "2023 census (as on 01-03-2023) — the boundary drawn is Bahawalpur Division as it stands today; the 1947–1955 province is the claim’s history, not its geometry",
       "rationale": "Bahawalpur Division leaves Punjab and becomes a province in its own right again. It is the only claim in this app whose advocates are asking for something they held and lost: Bahawalpur was a province from 1947 until 1955, when One Unit absorbed it, and it was never restored when One Unit was dissolved. The restoration movement dates from 1970 and has been winning seats on it ever since.",
       "status": "Live and unimplemented. A province in its own right 1947–1955, before absorption into One Unit. The restoration movement dates from 1970: Bahawalpur Muttahida Mahaz won 4 National Assembly and 9 provincial seats on it in the 1970 election, and the restoration has been a fixture of the region’s electoral politics since. PML-N’s stated position is two provinces — Bahawalpur separate, and a South Punjab of Multan and Dera Ghazi Khan.",
       "advocacy": {
