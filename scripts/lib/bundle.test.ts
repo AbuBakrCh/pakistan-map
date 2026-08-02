@@ -16,6 +16,14 @@ import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import {
+  adjacencyProblems,
+  buildAdjacency,
+  contiguityOf,
+  edgeCount,
+  isolatedDistricts,
+  type AdjacencyGraph,
+} from './adjacency.ts';
+import {
   AREA_AGREEMENT,
   areaKm2,
   arcsOf,
@@ -34,6 +42,7 @@ const bundle = JSON.parse(
 );
 const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.json'), 'utf8'));
 const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
+const adjacency = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/adjacency.json'), 'utf8'));
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -485,6 +494,11 @@ interface EmittedUnit {
   readonly folded: readonly { readonly from: string; readonly into: string }[];
   readonly excludes: readonly string[];
   readonly alsoKnownAs: readonly string[];
+  readonly contiguity: {
+    readonly contiguous: boolean;
+    readonly pieces: number;
+    readonly detached: readonly (readonly string[])[];
+  };
 }
 interface EmittedVariant {
   readonly id: string;
@@ -852,5 +866,179 @@ describe('bundle unit outlines', () => {
   it('states the floating-point allowance its own check was made to', () => {
     expect(outlines.provenance.validation.areaAgreement).toBe(AREA_AGREEMENT);
     expect(outlines.provenance.counts.units).toBe(dissolved.length);
+  });
+});
+
+/**
+ * The district adjacency graph (#16), checked against the geometry it was derived from.
+ *
+ * `adjacency.test.ts` holds the derivation on three squares, and holds the case this file cannot
+ * show: a unit in two pieces. Nothing in the committed set is one. So what is held here is that
+ * the shipped graph *is* the shipped geometry's — re-derived rather than read back — and that the
+ * flags on the units agree with it.
+ *
+ * Like `unit-outlines.json`, the file carries no geometry of its own: it is district names, so a
+ * stale copy is not detectable from its own contents. Every name would still resolve, against a
+ * topology whose borders had moved.
+ */
+const districtsByName: readonly { readonly name: string; readonly geometry: PolygonalGeometry }[] = [
+  ...districtGeometries,
+].map(([name, geometry]) => ({ name, geometry }));
+
+/** The graph as the artifact ships it, in the shape the module works in. */
+const shipped: AdjacencyGraph = new Map(
+  Object.entries(adjacency.neighbours as Record<string, string[]>),
+);
+/** The graph the committed geometry actually implies, derived here from its arcs. */
+const derived = buildAdjacency(districtsByName);
+
+describe('bundle adjacency', () => {
+  it('cuts its graph against the geometry that ships beside it, not some other build', () => {
+    expect(adjacency.provenance.arcsFrom).toBe('data/bundle/geography.topojson.json');
+    expect(adjacency.provenance.geography.generated).toBe(bundle.provenance.generated);
+    expect(adjacency.provenance.geography.arcs).toBe(bundle.arcs.length);
+    expect(adjacency.provenance.geography.bbox).toEqual(bundle.bbox);
+  });
+
+  it('is exactly the graph the committed arcs imply, district by district', () => {
+    // The acceptance criterion, over the whole shipped set. Re-derived from the geography rather
+    // than read off the artifact, so an adjacency.json left behind by an earlier geometry fails
+    // here naming the districts whose neighbours moved — not merely as a count of differences.
+    const disagreements = [...derived].flatMap(([name, expected]) => {
+      const found = shipped.get(name);
+      if (found === undefined) return [`${name} is drawn but has no entry in adjacency.json`];
+      const gained = found.filter((n) => !expected.includes(n));
+      const lost = expected.filter((n) => !found.includes(n));
+      return [
+        ...gained.map((n) => `${name} is listed beside ${n}, which it shares no arc with`),
+        ...lost.map((n) => `${name} shares an arc with ${n} and is not listed beside it`),
+      ];
+    });
+    expect(disagreements).toEqual([]);
+    expect([...shipped.keys()].sort()).toEqual([...derived.keys()].sort());
+  });
+
+  it('holds every drawn district, symmetric, with nobody its own neighbour', () => {
+    expect(shipped.size).toBe(ROSTER_DISTRICT_COUNT);
+    expect(adjacencyProblems(shipped, districtsByName)).toEqual([]);
+    expect(adjacency.provenance.counts).toMatchObject({
+      districts: ROSTER_DISTRICT_COUNT,
+      edges: edgeCount(shipped),
+    });
+  });
+
+  it('names real neighbours, and the border it draws for each is checkable on any atlas', () => {
+    // An independent anchor. Everything above re-derives the graph with the same code that built
+    // it, so a wrong derivation would agree with itself; these are borders a reader can check
+    // without this repo. Chaman is the one to keep: it was carved out of Killa Abdullah and every
+    // other side of it is Afghanistan, so a graph that had quietly started joining districts
+    // across the Durand Line would show up here as a second neighbour.
+    const neighbours = (name: string) => shipped.get(name) ?? [];
+    expect(neighbours('Islamabad')).toEqual(['Haripur', 'Rawalpindi']);
+    expect(neighbours('Chaman')).toEqual(['Killa Abdullah']);
+    expect(neighbours('Lahore')).toEqual(['Kasur', 'Nankana Sahib', 'Sheikhupura']);
+    expect(neighbours('Lower Chitral')).toEqual(['Upper Chitral', 'Upper Dir']);
+    // Across the Working Boundary, which is a boundary and not the ceasefire line: Punjab's
+    // Sialkot does border AJK's Bhimber, and the graph says so.
+    expect(neighbours('Sialkot')).toContain('Bhimber');
+    // Two districts that could not be further apart share nothing, which is what makes the
+    // non-contiguous case below a real one rather than an artefact of a loose tolerance.
+    expect(neighbours('Karachi South')).not.toContain('Lower Chitral');
+  });
+
+  it('leaves no district cut loose by the coastline clip, and joins the map into one piece', () => {
+    // The clip replaced the seaward part of a coastal ring and nothing else, so a coastal
+    // district's inland arcs — the ones its neighbours use — came through it untouched. Asserted
+    // rather than assumed, on the districts the clip moved most: Gwadar lost half its area to it.
+    expect(isolatedDistricts(shipped)).toEqual([]);
+    expect(shipped.get('Gwadar')).toEqual(['Awaran', 'Kech', 'Lasbela']);
+    expect(shipped.get('Sujawal')).toEqual(['Badin', 'Tando Mohammad Khan', 'Thatta']);
+    // Offshore islands share no arc with anything, and none of them is a district of its own, so
+    // every drawn district reaches every other: 156 districts, one component.
+    const whole = contiguityOf(shipped, [...shipped.keys()]);
+    expect(whole.pieces).toBe(1);
+    expect(adjacency.provenance.counts.components).toBe(1);
+    expect(adjacency.provenance.counts.isolated).toBe(0);
+    expect(adjacency.provenance.isolated).toEqual([]);
+  });
+});
+
+describe('bundle contiguity flags', () => {
+  it('flags every unit of every variant, and agrees with the graph on each', () => {
+    // The flags are written by the build and could drift from the graph they were read off — a
+    // reordered pipeline, a variant edited after the fact. Recomputed here from the shipped graph
+    // and compared unit by unit, so a disagreement names the proposal.
+    for (const variant of variants) {
+      for (const unit of variant.units) {
+        const label = `${variant.id} "${unit.name}"`;
+        const contiguity = contiguityOf(shipped, unit.districts);
+        expect(unit.contiguity.contiguous, label).toBe(contiguity.contiguous);
+        expect(unit.contiguity.pieces, label).toBe(contiguity.pieces);
+        expect(unit.contiguity.detached, label).toEqual(contiguity.detached);
+      }
+      expect(variant.counts['nonContiguousUnits'], variant.id).toBe(
+        variant.units.filter((u) => !u.contiguity.contiguous).length,
+      );
+    }
+    expect(scenarios.provenance.contiguity.nonContiguousUnits).toBe(
+      variants.reduce((n, v) => n + v.units.filter((u) => !u.contiguity.contiguous).length, 0),
+    );
+  });
+
+  it('names the stranded districts on a broken unit rather than only the body of it', () => {
+    // `detached` is every group but the largest, so a contiguous unit carries an empty list and a
+    // card can render it without asking. That is the whole reason it is not simply `components`.
+    for (const variant of variants) {
+      for (const unit of variant.units) {
+        const label = `${variant.id} "${unit.name}"`;
+        if (unit.contiguity.contiguous) {
+          expect(unit.contiguity.detached, label).toEqual([]);
+          expect(unit.contiguity.pieces, label).toBe(1);
+        } else {
+          expect(unit.contiguity.detached.length, label).toBe(unit.contiguity.pieces - 1);
+          for (const group of unit.contiguity.detached) {
+            for (const district of group) expect(unit.districts, label).toContain(district);
+          }
+        }
+      }
+    }
+  });
+
+  it('keeps contiguity and polygons apart, on the unit where they visibly disagree', () => {
+    // The distinction this ticket exists to make. South Punjab draws as three pieces — Rahim Yar
+    // Khan is three polygons in OSM, two of them under 200 km² — and is one contiguous region:
+    // every one of its eleven districts is reachable from every other through shared borders. Read
+    // `polygons` as contiguity and this proposal is reported as broken in three, which is a claim
+    // about a real movement's territory that is simply untrue.
+    const southPunjab = variants
+      .flatMap((v) => v.units)
+      .find((u) => u.name === 'South Punjab') as EmittedUnit;
+    expect(southPunjab.contiguity).toEqual({ contiguous: true, pieces: 1, detached: [] });
+    expect(southPunjab.districts).toContain('Rahim Yar Khan');
+
+    const outline = dissolved.find((d) => d.unit.name === 'South Punjab');
+    expect(outline!.outline!.properties.polygons).toBe(3);
+    expect(polygonsOf(outline!.outline as never)).not.toBe(
+      contiguityOf(shipped, southPunjab.districts).pieces,
+    );
+  });
+
+  it('flags a non-contiguous unit and refuses nothing, over the real map', () => {
+    // No variant proposes one yet, and contiguity is flagged and never blocked (D7), so the
+    // property is held over the shipped graph with two districts that share nothing: Lower Chitral
+    // on the Afghan border and Karachi South on the sea. There is no error path to exercise —
+    // that is the point. A `Contiguity` has no failure state; it reports two pieces and names the
+    // stranded one, and `outlineProblems` on the same pair is silent.
+    const apart = ['Lower Chitral', 'Karachi South'];
+    const contiguity = contiguityOf(shipped, apart);
+
+    expect(contiguity.contiguous).toBe(false);
+    expect(contiguity.pieces).toBe(2);
+    expect(contiguity.detached).toEqual([['Lower Chitral']]);
+
+    const members = apart.map((name) => districtGeometries.get(name) as PolygonalGeometry);
+    expect(outlineProblems('two districts apart', bundle, members, dissolve(bundle, members))).toEqual(
+      [],
+    );
   });
 });

@@ -3,12 +3,21 @@
  *
  *   npm run build:data:scenarios
  *
- * Emits two artifacts. `data/bundle/scenarios.json` is the variants **resolved** — claims stated
+ * Emits three artifacts. `data/bundle/scenarios.json` is the variants **resolved** — claims stated
  * as their advocates state them, next to the 2023 districts this map actually draws them as, with
  * every fold recorded — keyed on the same district names the geography bundle draws and the
- * census join reports, so the three artifacts join on a string and nothing has to be matched at
+ * census join reports, so the artifacts join on a string and nothing has to be matched at
  * runtime. `data/bundle/unit-outlines.json` is one outline per unit, dissolved out of those
- * districts' arcs (#15).
+ * districts' arcs (#15). `data/bundle/adjacency.json` is which districts share a border, derived
+ * from the same arcs in the same pass (#16).
+ *
+ * The graph is a fact about the geometry rather than about the scenarios, and it is built here
+ * anyway, for two reasons. It is cut from the same arc set as the outlines and by the same
+ * reasoning, so the two derivations belong in one place; and its only consumer is the contiguity
+ * flag on the units below, which is written into `scenarios.json` in this same run. Building it in
+ * `normalize-geometry.ts` instead would mean rewriting a 2.2 MB boundary artifact whose boundaries
+ * had not changed — and the whole value of committing that file is that a diff in it means a
+ * border moved.
  *
  * Kept apart from the other two builds by the same rule as they are kept apart from each other:
  * failure mode. The geometry build fails on torn rings, the census join on names and arithmetic,
@@ -37,6 +46,16 @@ import {
   type PolygonalGeometry,
 } from './lib/unit-outlines.ts';
 import {
+  adjacencyProblems,
+  buildAdjacency,
+  contiguityOf,
+  describeContiguity,
+  edgeCount,
+  isolatedDistricts,
+  type AdjacencyGraph,
+  type Contiguity,
+} from './lib/adjacency.ts';
+import {
   BASES,
   TERRITORY_CLAIM_POLICY,
   universeDistricts,
@@ -51,6 +70,7 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
 const GEOGRAPHY_FILE = resolve(ROOT, 'data/bundle/geography.topojson.json');
 const OUTLINES_FILE = resolve(ROOT, 'data/bundle/unit-outlines.json');
+const ADJACENCY_FILE = resolve(ROOT, 'data/bundle/adjacency.json');
 
 /** How `unit-outlines.json` names the geometry its arc indices are into. */
 const GEOGRAPHY_BUNDLE = 'data/bundle/geography.topojson.json';
@@ -69,8 +89,11 @@ function fail(message: string): never {
 }
 
 /** The card's own view of a variant, with the partition resolved onto drawn districts. */
-function emit(variant: Variant, partition: ResolvedPartition) {
+function emit(variant: Variant, partition: ResolvedPartition, graph: AdjacencyGraph) {
   const proposed = partition.units.filter((u) => u.kind === 'proposed');
+  const contiguity = new Map<string, Contiguity>(
+    partition.units.map((unit) => [unit.id, contiguityOf(graph, unit.districts)]),
+  );
   return {
     id: variant.id,
     basis: variant.basis,
@@ -100,6 +123,13 @@ function emit(variant: Variant, partition: ResolvedPartition) {
       /** The claim's own count, and what this map draws it as. L1: 13 stated, 11 drawn. */
       claimedDistricts: proposed.reduce((n, u) => n + u.claimed.length, 0),
       drawnDistricts: proposed.reduce((n, u) => n + u.districts.length, 0),
+      /**
+       * The scorecard's contiguity line (#20), counted over **every** unit and not only the
+       * proposed ones: a variant that leaves a province in two pieces has done that to a real
+       * province, and hiding it behind "unchanged" would be the app choosing what counts as its
+       * own doing.
+       */
+      nonContiguousUnits: partition.units.filter((u) => !contiguity.get(u.id)?.contiguous).length,
     },
     units: partition.units.map((unit) => {
       const source = variant.units.find((u) => u.id === unit.id);
@@ -113,6 +143,17 @@ function emit(variant: Variant, partition: ResolvedPartition) {
         districts: unit.districts,
         folded: unit.folded,
         excludes: unit.excludes,
+        /**
+         * Flagged, never blocked (D7). `detached` is every group but the largest, named — the
+         * districts stranded away from the body of the unit are what a reader wants said, and the
+         * body itself is already listed above. It is empty for a contiguous unit, so a card can
+         * render it without asking first.
+         */
+        contiguity: {
+          contiguous: contiguity.get(unit.id)?.contiguous ?? false,
+          pieces: contiguity.get(unit.id)?.pieces ?? 0,
+          detached: contiguity.get(unit.id)?.detached ?? [],
+        },
       };
     }),
   };
@@ -233,6 +274,27 @@ function main(): void {
   }
   if (variants.length !== VARIANTS.length) fail('a variant was validated away without a problem');
 
+  // ---- The adjacency graph (#16) -------------------------------------------------------------
+  // Read first, because the contiguity flag is written into `scenarios.json` below. The graph is
+  // derived from the arcs the geometry build wrote, so a variant cannot be flagged against a
+  // border it does not actually have.
+  const geography = JSON.parse(readFileSync(GEOGRAPHY_FILE, 'utf8')) as Topology & {
+    readonly provenance?: { readonly generated?: string; readonly vintage?: string };
+  };
+  const districtGeometries = drawnDistricts(geography);
+  const named = [...districtGeometries].map(([name, geometry]) => ({ name, geometry }));
+  const graph = buildAdjacency(named);
+
+  const graphProblems = adjacencyProblems(graph, named);
+  if (graphProblems.length > 0) {
+    fail(
+      `${graphProblems.length} problem(s) in the district adjacency graph. Every unit's ` +
+        `contiguity is read off it, so a graph that is wrong reports proposals as broken that ` +
+        `are not, and whole ones that are:\n` +
+        graphProblems.map((p) => `    ${p}`).join('\n'),
+    );
+  }
+
   const scenarios = {
     provenance: {
       generated: new Date().toISOString(),
@@ -266,6 +328,21 @@ function main(): void {
           `unknowable amount. Under "forbid" the build stops and names the district rather than ` +
           `publishing a province drawn across a ceasefire line.`,
       },
+      contiguity: {
+        from: 'data/bundle/adjacency.json',
+        nonContiguousUnits: variants.reduce(
+          (n, { partition }) =>
+            n + partition.units.filter((u) => !contiguityOf(graph, u.districts).contiguous).length,
+          0,
+        ),
+        note:
+          'Every unit carries a `contiguity` block, read off the district adjacency graph rather ' +
+          'than off the shape it draws as. Contiguity is flagged, never blocked (D7): a unit in ' +
+          'two pieces is a legitimate proposal — several real ones are — and refusing to draw a ' +
+          'claim is a stronger editorial act than drawing it with a note. It is not the same ' +
+          'number as the outline’s `polygons`, which counts shapes on paper and so counts islands: ' +
+          'South Punjab is one piece and three polygons.',
+      },
       claimVsDrawing:
         'A unit lists the districts its advocates name. Districts created after the census date ' +
         'have no population row and are not drawn, so each is folded into its 2023 parent and ' +
@@ -273,7 +350,7 @@ function main(): void {
         'before 2022, and draws as 11 — one piece of ground, three true counts.',
     },
     bases: BASES,
-    variants: variants.map(({ variant, partition }) => emit(variant, partition)),
+    variants: variants.map(({ variant, partition }) => emit(variant, partition, graph)),
   };
 
   mkdirSync(resolve(OUT_FILE, '..'), { recursive: true });
@@ -295,12 +372,72 @@ function main(): void {
       `${(bytes / 1024).toFixed(0)} KiB`,
   );
 
+  // ---- The adjacency artifact (#16) ----------------------------------------------------------
+  const isolated = isolatedDistricts(graph);
+  const adjacency = {
+    provenance: {
+      generated: new Date().toISOString(),
+      vintage: '2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001',
+      sources: SOURCE_URLS,
+      unit: 'district',
+      method:
+        'Two districts are neighbours iff they share an arc. The geography bundle draws all ' +
+        'three administrative tiers out of one shared arc set, so where two districts touch the ' +
+        'edge between them is one arc, used once from each side — adjacency is a set question ' +
+        'about integers with an exact answer. Testing polygons for intersection would ask the ' +
+        'same question of coordinates and answer it to whatever tolerance a clipper worked to, ' +
+        'and two districts left a millimetre apart by simplification would come out strangers. ' +
+        'An arc index and its reverse (`~i`) are the one border they are.',
+      arcsFrom: GEOGRAPHY_BUNDLE,
+      geography: {
+        // The same stamp `unit-outlines.json` carries, for the same reason: this file is district
+        // *names*, so a stale one is not detectable from its own contents — the names would all
+        // still resolve, against a topology in which the borders had moved.
+        generated: geography.provenance?.generated ?? null,
+        arcs: geography.arcs.length,
+        bbox: geography.bbox ?? null,
+      },
+      counts: {
+        districts: graph.size,
+        /** Shared borders, each counted once. */
+        edges: edgeCount(graph),
+        components: contiguityOf(graph, [...graph.keys()]).pieces,
+        isolated: isolated.length,
+      },
+      isolated,
+      coastline:
+        'The coastline clip replaced only the seaward part of a coastal district’s ring, so the ' +
+        'inland arcs its neighbours use survive it untouched and no district was cut loose. All ' +
+        `${graph.size} drawn districts form a single connected component and none is isolated. ` +
+        'Offshore islands are the mirror of that: they share no arc with anything, which is why ' +
+        'the polygons a unit draws as and the pieces it consists of are two different numbers.',
+    },
+    /** District -> its neighbours, each named once, ascending. Symmetric. */
+    neighbours: Object.fromEntries(
+      [...graph]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, found]) => [name, found]),
+    ),
+  };
+
+  writeFileSync(ADJACENCY_FILE, `${JSON.stringify(adjacency, null, 2)}\n`);
+  console.log(
+    `\n✓ ${ADJACENCY_FILE.replace(`${ROOT}/`, '')} — ${adjacency.provenance.counts.districts} ` +
+      `districts, ${adjacency.provenance.counts.edges} shared borders, ` +
+      `${adjacency.provenance.counts.components} connected component(s)`,
+  );
+  for (const { variant, partition } of variants) {
+    for (const unit of partition.units) {
+      const contiguity = contiguityOf(graph, unit.districts);
+      if (!contiguity.contiguous) {
+        console.log(`  ${describeContiguity(`${variant.id} unit "${unit.name}"`, contiguity)}`);
+      }
+    }
+  }
+
   // ---- The dissolve (#15) --------------------------------------------------------------------
   console.log('\nDissolving each unit out of its districts’ arcs');
 
-  const geography = JSON.parse(readFileSync(GEOGRAPHY_FILE, 'utf8')) as Topology & {
-    readonly provenance?: { readonly generated?: string; readonly vintage?: string };
-  };
   const objects = dissolveUnits(geography, variants);
 
   const outlines = {

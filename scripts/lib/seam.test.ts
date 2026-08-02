@@ -109,6 +109,7 @@ describe('test seam isolation', () => {
       'data/bundle/statistics.json',
       'data/bundle/scenarios.json',
       'data/bundle/unit-outlines.json',
+      'data/bundle/adjacency.json',
       'data/reference/post-census-district-folds.json',
     ]) {
       expect(tracked, input).toContain(input);
@@ -128,6 +129,7 @@ describe('test seam isolation', () => {
         'data/bundle/statistics.json',
         'data/bundle/scenarios.json',
         'data/bundle/unit-outlines.json',
+        'data/bundle/adjacency.json',
       ])
         expect(Object.keys(JSON.parse(read(artifact))).length).toBeGreaterThan(0);
     } finally {

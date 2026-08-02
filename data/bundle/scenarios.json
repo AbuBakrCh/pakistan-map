@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-01T19:19:41.087Z",
+    "generated": "2026-08-02T02:38:19.196Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -23,6 +23,11 @@
     "territoryClaims": {
       "policy": "forbid",
       "note": "Whether a unit that is not itself a territory may take an AJK or Gilgit-Baltistan district is an open product decision (CLAUDE.md open item 2b), and the build's current answer is \"forbid\". Those districts are drawn but carry no PBS statistic of any kind, so a unit containing one has a population short by an unknowable amount. Under \"forbid\" the build stops and names the district rather than publishing a province drawn across a ceasefire line."
+    },
+    "contiguity": {
+      "from": "data/bundle/adjacency.json",
+      "nonContiguousUnits": 0,
+      "note": "Every unit carries a `contiguity` block, read off the district adjacency graph rather than off the shape it draws as. Contiguity is flagged, never blocked (D7): a unit in two pieces is a legitimate proposal — several real ones are — and refusing to draw a claim is a stronger editorial act than drawing it with a note. It is not the same number as the outline’s `polygons`, which counts shapes on paper and so counts islands: South Punjab is one piece and three polygons."
     },
     "claimVsDrawing": "A unit lists the districts its advocates name. Districts created after the census date have no population row and are not drawn, so each is folded into its 2023 parent and recorded in the unit's `folded` list. South Punjab is stated as 13 districts, was 11 before 2022, and draws as 11 — one piece of ground, three true counts."
   },
@@ -128,7 +133,8 @@
         "units": 8,
         "proposedUnits": 1,
         "claimedDistricts": 13,
-        "drawnDistricts": 11
+        "drawnDistricts": 11,
+        "nonContiguousUnits": 0
       },
       "units": [
         {
@@ -178,7 +184,12 @@
               "into": "Muzaffargarh"
             }
           ],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "punjab",
@@ -241,7 +252,12 @@
             "Pakpattan"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "khyber-pakhtunkhwa",
@@ -324,7 +340,12 @@
             "South Waziristan"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "sindh",
@@ -397,7 +418,12 @@
             "Keamari"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "balochistan",
@@ -478,7 +504,12 @@
             "Panjgur"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "islamabad-capital-territory",
@@ -493,7 +524,12 @@
             "Islamabad"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "azad-jammu-kashmir",
@@ -526,7 +562,12 @@
             "Kotli"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         },
         {
           "id": "gilgit-baltistan",
@@ -559,7 +600,12 @@
             "Diamir"
           ],
           "folded": [],
-          "excludes": []
+          "excludes": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
         }
       ]
     }
