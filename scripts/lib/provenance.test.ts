@@ -227,13 +227,20 @@ describe('every variant carries a badge, a source and a vintage', () => {
 
   it('holds the constant against the vintage every committed artifact actually stamps', () => {
     // Anchored outside itself. `DATA_VINTAGE` is a string in a module and would agree with a test
-    // that read it back; these are the five files that ship, each stamped by its own build.
+    // that read it back; these are the six files that ship, each stamped by its own build.
+    //
+    // The development composite (#31) joined the list as the sixth. It is the one artifact whose
+    // stamp is *not* a date it read off anything — it is a mean of figures in `statistics.json`,
+    // and `build-development.ts` types the vintage out by hand like every other build script does.
+    // A sixth artifact left off this loop is a sixth chance for a hand-typed string to drift from
+    // the one vintage D24 allows, on the only figure in the app this project computes itself.
     for (const [name, stamped] of [
       ['geography', geography.provenance.vintage],
       ['statistics', statistics.provenance.vintage],
       ['scenarios', scenarios.provenance.vintage],
       ['unit-outlines', outlines.provenance.vintage],
       ['adjacency', adjacency.provenance.vintage],
+      ['development-index', developmentIndex.provenance.vintage],
     ] as const) {
       expect(stamped, name).toBe(DATA_VINTAGE);
     }

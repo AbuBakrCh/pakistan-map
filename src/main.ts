@@ -43,7 +43,7 @@ import { hashFor, readRoute } from './lib/deep-link.ts';
 import { shortFormExpansions } from './lib/labels.ts';
 import { arcsOf, readLineOfControl } from './lib/line-of-control.ts';
 import type { DistrictFill, LegendEntry } from './lib/fill.ts';
-import { developmentFills, developmentLegend } from './lib/development.ts';
+import { bandPaint, developmentFills, developmentLegend } from './lib/development.ts';
 import { motherTongueFills, motherTongueLegend } from './lib/mother-tongue.ts';
 import {
   BASELINE,
@@ -97,11 +97,14 @@ const SHADEABLE = new Set(Object.keys(FILLS) as BasisId[]);
 const developmentShading = (district: string): DistrictShading | null => {
   const record = developmentIndexBundle.districts[district];
   if (record === undefined) return null;
-  const band = developmentIndexBundle.provenance.bands.find((entry) => entry.id === record.band);
   return {
     basis: 'development',
     score: record.score,
-    bandLabel: band?.label ?? record.band,
+    // Through the same lookup the fill and the legend use, which refuses a band the artifact does
+    // not name rather than falling back to its id: `80-plus` set in a sentence is the legend's
+    // words replaced by a slug, and a reader has no way to tell that from a band actually called
+    // that. The map, the key and the tooltip now fail together or agree.
+    bandLabel: bandPaint(developmentIndexBundle, record.band, district).label,
     formula: developmentIndexBundle.provenance.formula,
     badge: developmentIndexBundle.provenance.badge,
     components: developmentIndexBundle.provenance.components as DistrictShading['components'],

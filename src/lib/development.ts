@@ -71,24 +71,44 @@ export interface DevelopmentIndexBundle {
  * fallback is how a district comes to be shaded as "not reached" when the census reached it — the
  * display-side twin of the build refusing a score that falls in no band.
  */
+/**
+ * What one band is painted and called — resolved in one place, and refusing in one place.
+ *
+ * Every surface that renders a band needs both halves: the district fill needs the colour and the
+ * words, the legend needs the colour beside the words, and the tooltip needs the words alone. Each
+ * of them had its own lookup, and only the first of them refused an unknown band — so the same
+ * missing colour threw a paragraph naming the district on the map and rendered an **empty swatch**
+ * in the legend and in the exported PNG beside it, which is the quiet wrongness this module's own
+ * header is about. `saidOf` is what the failure names, so the message says which surface asked.
+ */
+export function bandPaint(
+  index: DevelopmentIndexBundle,
+  band: string,
+  saidOf: string,
+): { readonly colour: string; readonly label: string } {
+  const colour = DEVELOPMENT_BAND_FILL[band];
+  const label = index.provenance.bands.find((entry) => entry.id === band)?.label;
+  if (colour === undefined || label === undefined) {
+    throw new Error(
+      `${saidOf} falls in the development band "${band}", which ` +
+        `${colour === undefined ? 'the palette has no colour for' : 'the artifact does not name'}. ` +
+        `The artifact declares ${index.provenance.bands.length} bands; the ramp must cover every ` +
+        `one of them, because a band with no colour would render as an absence — the map saying ` +
+        `"not measured" about a district the census published in full — and a band with no label ` +
+        `would key the legend with an id.`,
+    );
+  }
+  return { colour, label };
+}
+
 export function developmentFills(
   index: DevelopmentIndexBundle,
   statistics: CensusStatistics,
 ): Map<string, DistrictFill> {
   const fills = new Map<string, DistrictFill>();
-  const labels = new Map(index.provenance.bands.map((band) => [band.id, band.label]));
 
   for (const [name, record] of Object.entries(index.districts)) {
-    const colour = DEVELOPMENT_BAND_FILL[record.band];
-    const label = labels.get(record.band);
-    if (colour === undefined || label === undefined) {
-      throw new Error(
-        `${name} falls in the development band "${record.band}", which the palette has no colour ` +
-          `for. The artifact declares ${index.provenance.bands.length} bands; the ramp must cover ` +
-          `every one of them, because a band with no colour would render as an absence — the map ` +
-          `saying "not measured" about a district the census published in full.`,
-      );
-    }
+    const { colour, label } = bandPaint(index, record.band, name);
     fills.set(name, { kind: 'band', band: record.band, label, colour });
   }
 
@@ -134,7 +154,9 @@ export function developmentLegend(index: DevelopmentIndexBundle): DevelopmentLeg
         band.districts === 0
           ? `${band.label} — no district falls in this band`
           : `${band.label} (${band.districts})`,
-      swatch: { kind: 'colour', colour: DEVELOPMENT_BAND_FILL[band.id] ?? '' },
+      // Through the same lookup the fill uses, so a band the ramp cannot paint fails here as
+      // loudly as it does on the map. A blank swatch keys nothing and says so to nobody.
+      swatch: { kind: 'colour', colour: bandPaint(index, band.id, `the legend's ${band.label}`).colour },
     })),
     absences: [
       {

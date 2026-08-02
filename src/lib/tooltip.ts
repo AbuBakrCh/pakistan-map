@@ -255,7 +255,20 @@ function developmentFigures(
       source: `Composite defined by this project — ${shading.badge}, no published figure states it`,
     },
     ...shading.components.map((component): TooltipFigure => {
-      const found = rates[component.key];
+      // The components arrive off a committed artifact, so their keys are `string` until something
+      // narrows them, and the caller narrows them by assertion. An unrecognised one would otherwise
+      // reach `percent(undefined.share)` and surface as a bare TypeError — a figure missing from
+      // the one tooltip whose whole job is to show the composite's evidence, reported as a crash
+      // that names nothing. Failures name what they are about.
+      const found = rates[component.key] as (typeof rates)[keyof typeof rates] | undefined;
+      if (found === undefined) {
+        throw new Error(
+          `the development composite lists a component "${component.key}" (${component.label}), ` +
+            `which the census record has no rate for. The tooltip prints all three components ` +
+            `beside the mean of them, because a composite this project defines must never be the ` +
+            `only figure on screen; a component it cannot print would leave the mean unexplained.`,
+        );
+      }
       return {
         label: component.label,
         value: percent(found.share),

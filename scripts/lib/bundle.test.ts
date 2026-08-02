@@ -1572,6 +1572,44 @@ describe('bundle D1, the map service access draws (#31)', () => {
     expect(note?.text).toContain('Khanewal and Multan');
     expect(note?.text).toContain('not the interior against Karachi');
     expect(note?.relatedVariants).toEqual(['l1', 'l2', 'l3']);
+
+    /*
+     * And the half of that sentence about Sindh and Balochistan, checked against the partition
+     * rather than against itself — which is the discipline H2's four figures are already held to.
+     * `toContain('not the interior against Karachi')` only asserts that the card says what the
+     * card says: the clause is a static literal over two computed unit lists, so a census that
+     * moved either break would leave the sentence sitting there, true of nothing.
+     *
+     * What the prose claims is a *negative* in each province, and each is the reading a reader
+     * would otherwise assume the rule had found.
+     */
+    const unitHolding = (district: string): readonly string[] =>
+      d1().units.find((u) => u.districts.includes(district))?.districts ?? [];
+
+    // Sindh separates the south-east, not the interior against Karachi: Karachi's six districts
+    // are in the same unit as Larkana, Sukkur and Khairpur, which is exactly what "the interior
+    // against Karachi" would have split apart.
+    const withKarachi = new Set(unitHolding('Karachi South'));
+    for (const interior of ['Larkana', 'Sukkur', 'Khairpur', 'Dadu']) {
+      expect([...withKarachi], `Sindh: ${interior} sits with Karachi`).toContain(interior);
+    }
+    const southEast = new Set(unitHolding('Tharparkar'));
+    for (const district of ['Badin', 'Thatta', 'Umerkot', 'Sanghar', 'Mirpur Khas']) {
+      expect([...southEast], `Sindh: ${district} is in the south-eastern half`).toContain(district);
+    }
+    expect(southEast.has('Karachi South')).toBe(false);
+
+    // Balochistan separates the eastern belt, not everything outside Quetta: Quetta's half is the
+    // large one and holds the west and the coast, so the cut is not the capital against the rest.
+    const withQuetta = new Set(unitHolding('Quetta'));
+    for (const far of ['Gwadar', 'Kech', 'Khuzdar', 'Chagai', 'Panjgur']) {
+      expect([...withQuetta], `Balochistan: ${far} sits with Quetta`).toContain(far);
+    }
+    const easternBelt = new Set(unitHolding('Kohlu'));
+    for (const district of ['Barkhan', 'Dera Bugti', 'Musa Khel', 'Sherani', 'Jaffarabad']) {
+      expect([...easternBelt], `Balochistan: ${district} is in the eastern belt`).toContain(district);
+    }
+    expect(easternBelt.has('Quetta')).toBe(false);
   });
 
   it('is unadvocated, opposed anyway, and says both in the schema’s own shapes', () => {

@@ -222,14 +222,19 @@ export function bandLegend(
     // band that answered every shadeable basis with the mother-tongue key would print the wrong
     // key under the right badge — a legend that keys data the map is not drawing is worse than no
     // legend, because it is checkable and wrong. The third and fourth still fail by name here.
+    // Each legend is built once and then read twice. Building it per half would derive the same
+    // key twice from the same bundle to concatenate the two halves of it, which is work for
+    // nothing and, worse, two chances for one basis to answer a question differently.
+    const language = shadedBy === 'language' ? motherTongueLegend(statistics) : null;
+    // The bands and the one absence, in the order the scale is read. The lead sentence — that no
+    // published source states this figure — is not a key entry: it is the badge's gloss, and the
+    // band already prints that under `Provenance`.
+    const composite = shadedBy === 'development' ? developmentLegend(development) : null;
     const shaded =
-      shadedBy === 'language'
-        ? [...motherTongueLegend(statistics).onTheMap, ...motherTongueLegend(statistics).absences]
-        : shadedBy === 'development'
-          ? // The bands and the one absence, in the order the scale is read. The lead sentence —
-            // that no published source states this figure — is not a key entry: it is the badge's
-            // gloss, and the band already prints that under `Provenance`.
-            [...developmentLegend(development).bands, ...developmentLegend(development).absences]
+      language !== null
+        ? [...language.onTheMap, ...language.absences]
+        : composite !== null
+          ? [...composite.bands, ...composite.absences]
           : null;
     if (shaded === null) {
       throw new Error(
