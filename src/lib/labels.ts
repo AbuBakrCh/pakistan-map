@@ -79,6 +79,18 @@ export function labelAnchor(shape: Shape): [number, number] {
  */
 const SHORT_FORMS: Readonly<Record<string, string>> = {
   'Azad Jammu & Kashmir': 'AJK',
+  /*
+   * Gilgit-Baltistan, at the form its own legislature uses for it — the GBLA, whose 2020 resolution
+   * this app's own copy cites. Not a coinage of ours, which is the whole condition for shortening a
+   * name at all.
+   *
+   * Added for the 390px bar (#34), where it is not a nicety. "Gilgit-Baltistan" is fifteen
+   * characters set at province size, far wider than the ground it names on a phone, so the layout
+   * dropped it — and a territory drawn but *anonymous* is precisely the failure the politically
+   * sensitive rendering section exists to prevent. AJK, whose name is longer still, kept its own
+   * because it had an abbreviation to fall back to; GB had none, so it fell off the map instead.
+   */
+  'Gilgit-Baltistan': 'GB',
   'Islamabad Capital Territory': 'ICT',
   'Khyber Pakhtunkhwa': 'KP',
 };

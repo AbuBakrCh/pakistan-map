@@ -360,6 +360,8 @@ What it holds:
 | What the seat resolver does when the cache is wrong — the unit named rather than six dots drawn quietly, a `label` node refused where an `admin_centre` is wanted, and the area query's strays ignored without being reported. A seat the cache **lacks** and a seat it holds under an Urdu **name** are reported apart, with the node id on the second: one is a query to change and the other an alias to add, and one message for both sends a maintainer to the wrong file | `scripts/lib/seats.test.ts` |
 | The simplification threshold — the fraction is of *points* and counted across every arc, the weights sorted however they arrive, both ends of the range meaning what they say, and unweighted ring endpoints ignored rather than counted as zero. Shared by both geometry builds instead of copied into each, which is what makes it reachable from here at all | `scripts/lib/simplify.test.ts` |
 | City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat **qualified** (`Lahore Division` beside `Lahore`) rather than dropped — the other 31 left unqualified, the dot winning the frame too tight for both, and both names plus Mardan returning at 3× | `src/lib/labels.test.ts` |
+| **The 390px bar** (#34), held over a second viewport rather than a second assertion: every province and *both territories* named — **Gilgit-Baltistan included**, which is what this ticket exists for, since the layout dropped it and a territory drawn but anonymous is the one failure the politically sensitive section is written to prevent; `GB` set only because the ground is too small for the name, checked against the same layout at 1200px still setting it in full, so the abbreviation is a fit and not a rename; the expansion present in the table the colophon prints from, so a short form added without a gloss fails here rather than appearing unexplained; no two names overlapping at the size where they least fit; and which divisions and which seats give way — **named, not counted**, Peshawar among them, whose division name goes too, so at this size the word is nowhere on the map and only the dot marks the place | `src/lib/labels.test.ts` |
+| Unit labels persist at 390px (#34) — every unit of a variant named at the bar, because stratum 3 is what a variant view is *for* and a reader who cannot see what the proposed provinces are called is looking at coloured shapes | `src/lib/labels.test.ts` |
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along — asked of **every variant**, because those two units are not always called the same thing: H3 calls Gilgit-Baltistan the *Northern Areas*, so a renderer recognising the line by unit name would stroke it solid the moment a variant renamed a territory. Every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names; every unit's name anchored inside its own shape across all six variants, which is where a crescent (North-West Frontier Province around the tribal districts) and a 261-polygon province (West Pakistan) would put a name on someone else's ground; and the legend keying only the kinds a variant contains, over H1, which genuinely has no `unchanged` unit rather than an edited one | `src/lib/units.test.ts` |
@@ -564,6 +566,24 @@ Auto-repeat is swallowed but not acted on: every repeat would scroll the page if
 let through, and none of them may restart a cross-fade mid-fade. The full accessibility pass is
 #35's; this is the narrower obligation not to leave it a conflict to find.
 
+**The 390px bar (#34)** is met by the tiers already ranked to meet it, plus one addition. Every
+province and both territories are named, **Gilgit-Baltistan included** — it was being dropped, and
+the cause was that it had no abbreviation to fall back on where AJK, ICT and KP did: fifteen
+characters at province size is far wider than the ground it names on a phone. So `GB` joins the
+short forms, at the style its own legislature uses (the GBLA, which this app's copy already cites),
+fired **only** where the full name will not fit its ground and expanded in the colophon like the
+other three. Units are named at this size too, since a proposal nobody can read the names of is a
+set of coloured shapes. What gives way is the division tier and two of the seven seats, which is
+the ranking working as written — and the price is stated rather than counted: **Peshawar** loses
+its division name *and* its seat name, so at 390px the word is nowhere on the map and only the dot
+marks the place. It returns on the first zoom step.
+
+**District names are never set as labels, at any size** — there is no district label tier and there
+is not meant to be one. 156 names over a 369px frame is not a map, and the district is the building
+block rather than a tier the base map draws (D23). A reader gets a district by **tapping** it, which
+is #33's gesture and gives them the name, the division, the province, the population, the dominant
+mother tongue and the unit — rather than a name alone.
+
 **On a phone (#33)** — the card is a **bottom sheet**, hover is a **tap**, and Compare moves to the
 corner a thumb reaches — as one row with the PNG export (#32), because the two are the same kind of
 control and #32 says so itself: neither chooses what the map shows, and both act on whatever is
@@ -572,7 +592,9 @@ card, whole, because a card that hid its opposition line on a phone would read a
 a phone; and the Compare button is the gesture it already was (#22), holding the comparison until it
 is pressed again, moved rather than redefined.
 
-The sheet rests at **three detents** — `peek`, the ticket's ~40% `half`, and `full`, which stops
+The sheet **takes up no room at all when there is no card**: `panel.ts` hides the container at the
+baseline, and a reserved height left standing behind it strands the compare and export buttons a
+third of the way up a map with no sheet under them. The sheet rests at **three detents** — `peek`, the ticket's ~40% `half`, and `full`, which stops
 short of the top so a strip of map stays visible and the reader is still on a map rather than on a
 page they navigated to. `peek` is the **floor**: the card arrives and leaves with the outlines (#19),
 so while a proposal is drawn there is no state in which nothing on screen says whose boundaries
