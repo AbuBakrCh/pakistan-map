@@ -49,9 +49,14 @@
    * column would set a height on a box that is not positioned to have one.
    */
   --sheet: 0;
-  /* Set by `sheet.ts` while the sheet is live. The fallback is `PEEK_PX`, so the furniture that
-   * sits above the sheet is in the right place on the first frame, before any script has run. */
-  --sheet-h: 56px;
+  /*
+   * `PEEK_PX` from `lib/sheet.ts`. The collapsed sheet is exactly the grip, and the page reserves
+   * exactly this much room for it — never `--sheet-h`, for the reason given at `.card-well` below.
+   */
+  --sheet-peek: 3.5rem;
+  /* Set by `sheet.ts` while the sheet is live. Starts at the peek height so the furniture that
+   * rides above the sheet is in the right place on the first frame, before any script has run. */
+  --sheet-h: var(--sheet-peek);
 }
 
 * {
@@ -1179,16 +1184,22 @@ body {
     --sheet: 1;
   }
 
+  /*
+   * The room kept for the sheet is the room the sheet takes when it is *down* — `--sheet-peek`,
+   * never `--sheet-h`.
+   *
+   * This is the whole reason the sheet overlays the map rather than displacing it. `map.ts` redraws
+   * on a `ResizeObserver`, and a redraw refits the projection and relays out every label: a frame
+   * tied to `--sheet-h` would re-project the country on every frame of the drag, so the map would
+   * zoom and shift under the very finger opening the card. The country does not move under a
+   * gesture — the same rule compare is held to, for the same reason.
+   *
+   * What a reader gets instead is what a bottom sheet gives them everywhere else: the lower part of
+   * the map covered while the card is up, and the whole of it back the moment the card comes down.
+   */
   #app {
     gap: 0.5rem;
-    /*
-     * The page scrolls rather than fitting, and the sheet floats over the end of it. `height:
-     * 100%` here would trap the colophon and the audit panel behind a fixed sheet with no way to
-     * reach them — and the audit panel is the one surface whose whole purpose is being reachable.
-     */
-    height: auto;
-    min-height: 100%;
-    padding: 0.75rem 0.6rem calc(var(--sheet-h) + 1rem);
+    padding: 0.75rem 0.6rem calc(var(--sheet-peek) + 0.6rem);
   }
 
   .dek {
@@ -1198,24 +1209,82 @@ body {
   .legend {
     font-size: 0.72rem;
     gap: 0.35rem 0.9rem;
-    max-height: 8rem;
+    /* Fifteen categories will not fit beside a map on a phone whatever is done to them, so the
+     * key is capped low and scrolled — the map is what the page is for. */
+    max-height: 6rem;
     padding: 0.45rem 0.6rem;
   }
 
   /*
-   * A fixed share of the screen rather than a floor and a fight. Pakistan is very nearly square,
-   * so at 390px wide this is a frame the whole country fits in with room to spare — and it stays
-   * that frame whether the sheet is peeking or open, so expanding the card never resizes the map
-   * under the reader's own finger.
+   * The map takes what is left, and what is left is measured against the sheet at rest. Both
+   * floors are lowered from the desktop's: a 26rem frame on an 844px screen would push the legend
+   * off the bottom, and the whole point of the floors is that the boxes overflow in order rather
+   * than collapsing into one another.
+   */
+  /*
+   * The frame is its contents on a phone, not a share of what is left.
+   *
+   * `flex: 1 1 auto` lets the column squeeze it below the map's own floor when the colophon and
+   * the audit panel are long — and a flex item squeezed under its content does not clip, it
+   * *overflows*: the map spilled over the small print underneath it and the two drew on top of
+   * each other. Sized to its contents it cannot be squeezed, and the page scrolls instead, which
+   * is the behaviour the rest of the column already has.
    */
   .frame {
     flex: 0 0 auto;
-    height: 52dvh;
-    min-height: 20rem;
+    min-height: 0;
   }
 
+  /*
+   * The map's floor, and on a phone it is the map that has one rather than the frame around it.
+   *
+   * The colophon and the audit panel are long prose and are flex items of the same column, so a
+   * frame left to `flex: 1 1 auto` is squeezed to its minimum by the small print underneath it —
+   * which on an 844px screen left the country 176px tall. Pakistan is very nearly square, so a
+   * floor here in the map's own box is what makes the frame square too; the page scrolls to reach
+   * the prose, which is what a page does.
+   */
   .map-well {
-    min-height: 0;
+    min-height: 21rem;
+  }
+
+  /*
+   * The chips scroll along one line rather than wrapping into three.
+   *
+   * Wrapped, the five bases and three variants cost 330px of an 844px screen at the 44px touch
+   * target below — which is the map's height, spent on a menu. The refusal lines are deliberately
+   * left out of the strip and wrap underneath it: they are the app saying out loud why a basis is
+   * dimmed, and a sentence a reader has to scroll sideways to find is not said out loud.
+   */
+  /*
+   * Each control gets a line of its own, and both it and the strip inside it are allowed to be
+   * narrower than their contents. Without `min-width: 0` a flex item refuses to shrink below its
+   * intrinsic width, so the strip does not scroll — it pushes the page wider than the screen, and
+   * a phone answers *that* by scaling the whole layout down until it fits.
+   */
+  .control {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .control-options {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    /* The strip is scrolled by the same finger that taps it; a bar would eat the target. */
+    scrollbar-width: none;
+    /* Chips are flush with the frame's edge, so a half-visible one says there is more to come. */
+    padding-inline-end: 0.6rem;
+  }
+
+  .control-options::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex: 0 0 auto;
   }
 
   .card-parties {
@@ -1323,6 +1392,69 @@ body {
 
   .chip-compare {
     box-shadow: 0 1px 6px rgb(51 41 29 / 22%);
+  }
+
+  /*
+   * The tooltip docks to the top of the map rather than following the pointer (#33).
+   *
+   * The pointer is a finger and it is standing on the district the box is about, so a box beside
+   * it is a box over the answer. Docked, it is also the one place on the map the sheet cannot
+   * reach — a box clamped honestly inside the map's own frame can still come out under the card,
+   * because the card overlays the frame rather than shortening it.
+   *
+   * Full width and squared off against the frame's edges, so it reads as a bar the map is
+   * reporting through rather than as a callout that has drifted into the corner. `map.ts` removes
+   * its inline placement here, which is what lets these rules apply at all.
+   */
+  .tooltip {
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    font-size: 0.74rem;
+    left: 0;
+    max-width: none;
+    padding: 0.45rem 0.6rem;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+
+  /*
+   * The figures fold onto their own lines instead of stacking four deep.
+   *
+   * Nothing is dropped and nothing is abbreviated — every figure keeps its label, its value, its
+   * note and the release it came from, because a tooltip that shed its sources on a phone would
+   * shed them for most of this app's readers. What changes is only that a label sits beside its
+   * value rather than above it: on a wide screen the box has height to spend on that and here it
+   * does not, and a bar taller than the country it reports on tells a reader nothing about the
+   * country.
+   */
+  .tooltip-figure {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+  }
+
+  .tooltip-label {
+    display: inline;
+    margin-right: 0.3rem;
+  }
+
+  .tooltip-value {
+    display: inline;
+    font-size: 1rem;
+    /* The figure and the note that qualifies it are separate elements with no whitespace between
+     * them in the markup, so inline they would set as "Balochi44.2%". */
+    margin-right: 0.35rem;
+  }
+
+  .tooltip-note,
+  .tooltip-source {
+    display: inline;
+  }
+
+  /* The source follows its own note on the same line, so the two read as one attribution. */
+  .tooltip-source::before {
+    content: ' · ';
   }
 }
 

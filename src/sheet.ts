@@ -27,6 +27,17 @@ import {
   type SheetDrag,
 } from './lib/sheet.ts';
 
+/**
+ * Is the page narrow enough that the card is a sheet?
+ *
+ * Asked of the stylesheet, which owns the breakpoint, and exported because `map.ts` needs the same
+ * answer: where the sheet exists the tooltip has to dock rather than follow the finger, and a
+ * second copy of `560px` in the renderer is the disagreement this arrangement exists to prevent.
+ */
+export function isSheetLayout(): boolean {
+  return getComputedStyle(document.documentElement).getPropertyValue('--sheet').trim() === '1';
+}
+
 export interface SheetHandle {
   /**
    * A card arrived or left. The sheet arrives and leaves with it, because the card does: at the
@@ -72,12 +83,8 @@ export function attachSheet(container: HTMLElement): SheetHandle {
    */
   let dragged = false;
 
-  /** Is the page narrow enough to be a sheet? Asked of the stylesheet, which owns the answer. */
-  const isSheet = (): boolean =>
-    getComputedStyle(document.documentElement).getPropertyValue('--sheet').trim() === '1';
-
   function paint(): void {
-    if (!isSheet()) {
+    if (!isSheetLayout()) {
       // On a wide screen the card is a column in the flow and must be left alone entirely: a
       // height set here would survive the breakpoint and pin the desktop card to 40% of a screen
       // it is not anchored to.
@@ -106,7 +113,7 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   }
 
   handle.addEventListener('pointerdown', (event) => {
-    if (!isSheet()) return;
+    if (!isSheetLayout()) return;
     dragging = { from: detent, y: event.clientY, at: event.timeStamp };
     offset = 0;
     dragged = false;
@@ -149,7 +156,7 @@ export function attachSheet(container: HTMLElement): SheetHandle {
    * carries no drag with it, so it is let through whatever the last finger did.
    */
   handle.addEventListener('click', (event) => {
-    if (!isSheet()) return;
+    if (!isSheetLayout()) return;
     if (event.detail !== 0 && dragged) return;
     dragged = false;
     detent = nextDetent(detent);

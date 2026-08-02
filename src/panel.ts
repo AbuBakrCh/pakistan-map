@@ -76,8 +76,13 @@ export function renderControls(
     .attr('role', 'radiogroup')
     .attr('aria-label', 'Basis — the ground a proposal is argued from');
   bases.append('span').attr('class', 'control-label').text('Basis');
+  // The chips in a strip of their own, as the variants already are. It costs nothing on a wide
+  // screen and is what lets a phone scroll the five bases along one line instead of wrapping them
+  // into three rows of the map's height — the refusal lines still wrap underneath, where they can
+  // be read rather than scrolled to.
+  const basisList = bases.append('div').attr('class', 'control-options');
 
-  const basisButtons = bases
+  const basisButtons = basisList
     .selectAll<HTMLButtonElement, BasisOption>('button')
     .data(options, (option) => option.id ?? 'baseline')
     .join('button')

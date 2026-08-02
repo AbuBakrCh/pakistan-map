@@ -59,6 +59,7 @@ import {
 } from './lib/line-of-control.ts';
 import { fitProjection } from './lib/projection.ts';
 import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
+import { isSheetLayout } from './sheet.ts';
 
 /** Must match `--font-serif` in styles.css: the canvas measures what the browser will draw. */
 const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif';
@@ -645,6 +646,21 @@ export function renderMap(
    */
   function place(at: [number, number]): void {
     const node = tooltip.node() as HTMLElement;
+    /*
+     * On a phone the box docks to the top of the map instead of following the pointer (#33), and
+     * the stylesheet puts it there — so the inline placement is *removed* rather than recomputed.
+     *
+     * Two reasons, and the first is not cosmetic. The pointer is a finger, and it is standing on
+     * the district whose figures the box is about: a tooltip beside the finger is a tooltip over
+     * the answer. The second is that the sheet overlays the lower part of the map, so a box placed
+     * against the map's own frame can be clamped perfectly inside it and still come out underneath
+     * the card — clipped at whichever line the sheet happens to reach.
+     */
+    if (isSheetLayout()) {
+      node.style.removeProperty('left');
+      node.style.removeProperty('top');
+      return;
+    }
     const placed = placeTooltip(at, tooltipSize, size, { gap: 14, margin: 8 });
     node.style.left = `${placed.x}px`;
     node.style.top = `${placed.y}px`;

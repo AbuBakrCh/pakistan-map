@@ -561,6 +561,25 @@ belongs to the platform, and the map has its own answer to all three. Moves are 
 on touch — every pan across the country is a `pointermove`, and answering those would drag a tooltip
 along behind the thumb.
 
+**The tooltip docks rather than follows**, and for two reasons that are not cosmetic. The pointer is
+a finger and it is standing on the district the box is about, so a box beside the pointer is a box
+over the answer. And the sheet *overlays* the map rather than shortening it, so a box clamped
+honestly inside the map's own frame can still come out underneath the card, clipped at whichever
+line the sheet happens to reach. Docked to the top of the frame it is the one place the sheet cannot
+reach. Nothing is dropped and nothing is abbreviated to make it fit — every figure keeps its label,
+its value, its note and the release it came from, because a tooltip that shed its sources on a phone
+would shed them for most of this app's readers; what changes is only that a label sits beside its
+value instead of above it.
+
+**The sheet overlays the map; it never resizes it.** The room the page keeps for it is the room it
+takes when it is *down* (`--sheet-peek`), never its current height. `map.ts` redraws on a
+`ResizeObserver`, and a redraw refits the projection and relays out every label — so a frame tied to
+the live height would re-project the country on every frame of the drag, and the map would zoom and
+shift under the very finger opening the card. The country does not move under a gesture, which is
+the rule compare is already held to. The accepted cost, stated rather than hidden: at `half` the
+sheet covers the lower part of the map **and the legend**, and both come back the moment the card
+comes down.
+
 **Variant card (#19)** — name and tagline, the **basis** badge beside the **provenance** badges,
 unit count, the 2–3 sentence rationale, the proposal's real-world status, where the boundary came
 from, **Advocated by** *and* **Opposed by**, the units, the footnotes and the sources. It arrives
