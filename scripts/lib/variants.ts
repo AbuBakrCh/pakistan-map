@@ -5,7 +5,11 @@
  * review copy and is deleted (#36, CLAUDE.md open item 4) now that every variant has been migrated
  * here; keeping both would have been two sources that drift within a week — and the draft had
  * already drifted, describing the third development indicator as "improved sanitation", a column
- * PBS does not publish. Everything in a variant is rendered card content, not documentation:
+ * PBS does not publish. The migration is reconciled field by field in
+ * `docs/research/scenario-migration.md`, which names every drift and every deliberate omission, and
+ * the draft itself is recoverable at `git show 20c2f67:SCENARIOS-DRAFT.md` — so "nothing was lost"
+ * is checkable by somebody who was not here rather than asserted. Everything in a variant is
+ * rendered card content, not documentation:
  * rationale, status, advocacy, opposition, footnotes and per-unit district lists all appear on
  * screen.
  *

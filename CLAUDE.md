@@ -207,7 +207,10 @@ rests on no conversion of ours.
 
 **Scenario content is data, and it is baked like the rest.** The typed schema lives in
 `scripts/lib/scenarios.ts` and the variants themselves in `scripts/lib/variants.ts` — the source
-of truth that retires `SCENARIOS-DRAFT.md` (#36). The module is the reviewable form; the
+of truth that retired `SCENARIOS-DRAFT.md` (#36) — the draft is deleted, recoverable at
+`git show 20c2f67:SCENARIOS-DRAFT.md`, and reconciled against the module field by field and variant
+by variant in `docs/research/scenario-migration.md`, which names every drift, every deliberate
+omission and the six footnotes the draft marked required. The module is the reviewable form; the
 committed `data/bundle/scenarios.json` is the *resolved* form, and the difference is the point:
 it carries the claim as its advocates state it next to the 2023 districts the map draws it as,
 with every fold recorded. A change to a proposal's territory is therefore a dated diff rather
@@ -618,6 +621,7 @@ What it holds:
 | Development — every census district carrying all three indicators with both halves of each rate; shares proportions in 0–1 and equal to their own halves; toilet categories partitioning their own households; districts summing to the counts PBS printed per province and nationally; the 6,374-household improved-water difference asserted exactly rather than tolerated; folded districts inheriting their parent's indicators | `statistics.test.ts` |
 | Partition integrity — every variant covering the district set it declares exactly once, every unit's districts drawn by the geography bundle, no district in two units, no fold landing off the map, no unit both claiming and excluding a district | `bundle.test.ts` |
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids; both district counts wherever a claim and the drawing disagree, each with a `district-count` footnote saying why — South Punjab's 13-for-11 and Hazara's 9-for-8, with Allai named as the fold; and every card cross-reference pointing at a variant that exists, the L1↔H4 collision wired **both** ways so neither proposal reads as the uncontested one | `bundle.test.ts` |
+| The retired draft's own requirements (#36) — the seventeen variants it approved held as a **set**, since a proposal dropped from `variants.ts` takes its opposition line and its sources with it and breaks nothing else; and the five places it marked `⚠ Footnote required` keyed on the footnote **kind and on a phrase it demanded be said**, because a footnote of the right kind saying something else passes a kind check perfectly. The sixth requirement is not a footnote and could not be — H2's *attach no modern population figures* is the withholding itself, with the reason the scorecard prints where the population lines would be. The reconciliation is `docs/research/scenario-migration.md`; this is what re-checks it every run, rather than the claim resting on a document nobody reads twice | `bundle.test.ts` |
 | The two Language variants nobody published (#26) — the rule **re-run** from the committed census and the committed graph and compared region by region against what shipped, since a derived line nothing re-derives is an editorial opinion wearing a `derived` badge; L6's twelve districts with Mastung outside and Quetta inside, and one Pushto region rather than two; every `derived` variant carrying both the badge and the sentence that says the line was computed, held over the kind rather than over the two by name; L6 naming **both** readings of its claim; and L7 unadvocated, opposed anyway, and pointing at the four attributed claims its output resembles | `bundle.test.ts` |
 | The Administrative basis (#28) — all four rule-drawn maps **re-run** from the committed census, the committed graph and the committed geometry and compared unit by unit against what shipped, the card's rule statement held to be the engine's own words rather than a paraphrase that can drift from the arithmetic; the count stated as a *finding* where it is one and as an instruction where it is not; A4's 300 km re-measured district by district and the 635 km its card quotes for Gwadar–Quetta checked against the geometry it is quoted from. And the trade-off asserted rather than described: **zero** non-contiguous units under every rule, because contiguity is the method, with the spread moving from 2.3:1 to 65.3:1 across the four — a ceiling more even than a count, and fourteen units less even than twelve | `bundle.test.ts` |
 | The Development composite (#31) — the whole artifact **re-derived** from the three published rates in the committed census, district by district and naming any that moved, so the one figure in the app nobody published is the one figure most re-computed; its 136 districts exactly the census's and the twenty named as absent with the reason; the band cuts partitioning 0–1 with no gap and no seam, both ends of the range in a band, and a score outside it refused rather than shaded as the lowest; and the composite stamped with the census join it was taken over, so a boundary cut at stale scores fails rather than adding up | `development-index.test.ts`, `src/lib/development.test.ts` |
@@ -1468,16 +1472,27 @@ Numbered by the grilling question that settled each.
    as before.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 4. ~~**`SCENARIOS-DRAFT.md` is temporary.**~~ — **resolved (#36).** The typed data module
-   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) now carries all seventeen
-   variants, D1 last (#31), and the markdown is **deleted**. Keeping both would have been two
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) carries all seventeen variants,
+   D1 last (#31), and the markdown is **deleted** — recoverable at
+   `git show 20c2f67:SCENARIOS-DRAFT.md`, deleted in `728faf0`. Keeping both would have been two
    sources of truth, and the draft had already drifted from the build in the one place it mattered
    most: it named the third development indicator "improved sanitation", which is a column PBS does
-   not publish, and the shipped basis shades by the flush-toilet share and says so. Two of the
-   draft's own estimates are worth recording as it goes, because both were made at division
-   resolution and both came out differently at district resolution: A1's "~9 units" is 16, and D1's
-   claim that the gradient split "independently reproduces South Punjab, interior Sindh and interior
-   Balochistan" is right about Punjab and wrong about the other two — see the Data section. Both are
-   findings the cards state.
+   not publish, and the shipped basis shades by the flush-toilet share and says so.
+
+   **The deletion was made before the audit that should have gated it, so the audit was done
+   afterwards and written down**: `docs/research/scenario-migration.md` reconciles all seventeen
+   variants field by field — rationale, status, boundary provenance, advocates, opposition,
+   alternative names, units, footnotes and sources — and separates the three outcomes by name.
+   *Carried*, which is nearly all of it. *Drift*, nine places where the two disagree and the module
+   is right, each recorded rather than "restored", since restoring a falsehood is not migration:
+   the sanitation column above, A1's "~9 units" against the 16 the ceiling actually costs, D1's
+   claim to reproduce three regions when it reproduces one, H1's and H3's unit counts, L7's badge,
+   L3's Waziristan percentage, A5's "26th Amendment" — a number since taken by a different
+   instrument — and two political assertions narrowed to what a source carries. And *not migrated*,
+   the draft-process material that is not variant content, each with its reason, the largest being
+   two anchoring figures that would have had to be asserted without a source. **Nothing in the draft
+   was found to be content the module lacks**, so nothing was restored into `variants.ts`; what the
+   audit added is the record, and a suite check so the claim does not depend on it being re-read.
 
 5. **`GB` as Gilgit-Baltistan's short form is unconfirmed.** Added for #34, where the alternative
    was leaving the territory drawn and anonymous at 390px — the one thing the politically sensitive
@@ -1503,7 +1518,8 @@ Numbered by the grilling question that settled each.
 
 **Scenario content: 17 variants approved, 17 built** — Language 7, Administrative 5, Historical 4,
 Development 1. Nothing is outstanding, and `SCENARIOS-DRAFT.md` is deleted (#36): the typed module
-is the only source of scenario content. H2 omits Amb and Phulra (sub-district, cannot be drawn
+is the only source of scenario content, and `docs/research/scenario-migration.md` is the
+variant-by-variant record of what the draft said and where it went. H2 omits Amb and Phulra (sub-district, cannot be drawn
 without inventing a boundary) and names both on the card. Karachi and Pashtun Balochistan are
 attributed variants, not algorithmic by-products.
 
@@ -1511,9 +1527,13 @@ attributed variants, not algorithmic by-products.
 
 ## Working agreement
 
-- Scenario content is reviewed as **markdown, before code**. The variants are the product; the
-  machinery is not. Political judgments get reviewed in a diffable table, not through the
-  distraction of a running UI.
+- Scenario content is reviewed **as content, before code, and in a diffable form**. The variants
+  are the product; the machinery is not, and a political judgment gets reviewed in a diff rather
+  than through the distraction of a running UI. The diffable form was `SCENARIOS-DRAFT.md` and is
+  now `scripts/lib/variants.ts` (#36) — which is prose and district lists with a type around it,
+  reads in a pull request exactly as the markdown did, and unlike the markdown cannot fall out of
+  step with what the cards say, because it *is* what the cards say. A variant is still written and
+  reviewed before anything renders it.
 - No unsourced surface anywhere. Every fill, every number, every boundary traces to a published
   figure or a published boundary, and carries a badge saying which — and a **vintage**, because a
   badge without a date is half a provenance. The claim is no longer only ours to check: the

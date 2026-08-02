@@ -807,6 +807,61 @@ describe('bundle scenarios', () => {
     expect(unexplained).toEqual([]);
   });
 
+  it('carries every variant the retired draft approved, and every footnote it required', () => {
+    /*
+     * `SCENARIOS-DRAFT.md` was the review copy all seventeen variants were approved from, and it is
+     * deleted (#36) — recoverable at `git show 20c2f67:SCENARIOS-DRAFT.md`, and reconciled field by
+     * field in `docs/research/scenario-migration.md`. That reconciliation is a document, and a
+     * document is a claim somebody made once; this is what re-checks it on every run.
+     *
+     * Two things are held, because the draft asserted two kinds of thing. The **set** of variants,
+     * since a proposal quietly dropped from `variants.ts` would take its opposition line and its
+     * sources with it and break nothing else. And the six places the draft marked
+     * `⚠ Footnote required` — each one a card that reads as a miscount, an invention or an
+     * unattributed line without it.
+     *
+     * The footnotes are keyed on the **kind and on a phrase the draft demanded be said**, not on
+     * the kind alone: a `district-count` footnote about something else would pass a kind check
+     * perfectly, which is the failure mode a migration actually has.
+     */
+    const APPROVED_BY_THE_DRAFT = [
+      'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7',
+      'a1', 'a2', 'a3', 'a4', 'a5',
+      'h1', 'h2', 'h3', 'h4',
+      'd1',
+    ];
+    expect([...variants.map((v) => v.id)].sort()).toEqual([...APPROVED_BY_THE_DRAFT].sort());
+
+    const REQUIRED_BY_THE_DRAFT: readonly (readonly [string, string, RegExp])[] = [
+      // "sources say 11 districts — that was the pre-2022 count … the card must say so or it looks
+      // like we miscounted."
+      ['l1', 'district-count', /\b11 districts\b/],
+      // "the movement names six districts … the same territory is 9 districts today."
+      ['l4', 'district-count', /\bsix districts\b/],
+      // "MQM-P's urban Sindh framing extends beyond Karachi Division … no published district list
+      // exists for that wider claim."
+      ['l5', 'omission', /Hyderabad, Sukkur and Mirpur Khas/],
+      // "the card must say the line was drawn from census data rather than copied from a proposal."
+      ['l6', 'derived-boundary', /drawn from census data, not copied from a proposal/],
+      // "Amb and Phulra are omitted, with a footnote on the card naming them and stating why."
+      ['h2', 'omission', /Amb and Phulra are omitted/],
+    ];
+    const missing = REQUIRED_BY_THE_DRAFT.filter(([id, kind, says]) => {
+      const variant = variants.find((v) => v.id === id) as EmittedVariant;
+      return !variant.footnotes.some((note) => note.kind === kind && says.test(note.text));
+    }).map(([id, kind, says]) => `${id} has no ${kind} footnote matching ${says}`);
+    expect(missing).toEqual([]);
+
+    // The sixth is not a footnote and could not be: "attach no modern population figures" is a
+    // rule about every figure on the variant, so it is the withholding itself — and the reason,
+    // which is what the scorecard prints where the population lines would be. A withholding with a
+    // blank reason would buy H2 its open-item-2b carve-out for nothing.
+    const h2 = variants.find((v) => v.id === 'h2') as EmittedVariant;
+    const withholding = h2.statistics;
+    expect(withholding.modernFigures).toBe(false);
+    expect(withholding.modernFigures === false && withholding.reason.trim() !== '').toBe(true);
+  });
+
   it('names the variants whose prose asserts a year their sources do not reach', () => {
     /*
      * The Durand check (`context.ts`) generalised from one footnote to every variant card, which
