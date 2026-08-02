@@ -616,7 +616,7 @@ What it holds:
 | Property | Where |
 |---|---|
 | Referential integrity — every district under a real division and a real province, the two agreeing; no empty division; every fold landing on a drawn district | `bundle.test.ts` |
-| Official name for display, OSM name for the join (#46) — held in **both** directions, since inverting the pair leaves every join test green while the map prints a headquarters town where a district should be: Jhelum Valley displayed and Hattian Bala not, the OSM name still resolving by name *and* by pinned relation id, Punjab's own Jhelum kept apart from it, and — the guard that generalises it — **no alias key may normalize to a name the roster displays**, with the offending pair named. Both of Neelum's outside spellings asserted separately from its canonical name, because a canonical name being right is no evidence that its aliases exist | `reconcile.test.ts` |
+| Official name for display, OSM name for the join (#46) — held in **both** directions, since inverting the pair leaves every join test green while the map prints a headquarters town where a district should be: Jhelum Valley displayed and Hattian Bala not, the OSM name still resolving by name *and* by pinned relation id, Punjab's own Jhelum kept apart from it. Two checks, catching different things and **not** interchangeable: the pair is named explicitly, and the general rule — **no alias key may normalize to a name the roster displays**, with the offending pair named — catches a *half* inversion, where the roster moves and the alias is left behind. A clean inversion of both sides at once is a well-formed table saying the wrong thing, and only the named pair catches it, since no structural rule knows which of two spellings a government uses. Both of Neelum's outside spellings asserted separately from its canonical name, because a canonical name being right is no evidence that its aliases exist | `reconcile.test.ts` |
 | Vintage rule — every one of the 136 census districts present exactly once, none null or zero, 2023 fields only, AJK/GB listed as absent rather than as zero | `statistics.test.ts` |
 | Statistical integrity — districts summing to all 31 division totals, to the 5 province totals and to the 241,499,431 national total, against figures typed from PBS Table 1 rather than read back off the artifact | `statistics.test.ts` |
 | Mother tongue — every census district carrying all fifteen categories, summing to the district figure and to the language totals PBS printed per province; a dominant language only where the census names one, Chitral named as the two it does not; the districts PBS counts above their own population listed rather than smoothed | `statistics.test.ts` |
@@ -1432,11 +1432,15 @@ Numbered by the grilling question that settled each.
    town and the tehsil, and aliased the AJK government's own name onto it. So the app displayed
    the wrong name for the district on precisely the ground it is least free to get wrong. The
    fix costs nothing but a rebake, because the join was never on the name: every AJK district is
-   pinned by relation id, so inverting the pair left the geometry byte-identical and moved 64
-   strings in `scenarios.json`, the key in `adjacency.json` and every rendered surface behind
-   them. What is new is the **guard**: `reconcile.test.ts` now asserts the rule in both
+   pinned by relation id, so inverting the pair left the geometry byte-identical and moved 68
+   strings in `scenarios.json`, four in `adjacency.json` — a key and three neighbour entries,
+   since that graph is keyed on names — and every rendered surface behind them. What is new is
+   the **guard**: `reconcile.test.ts` now asserts the rule in both
    directions — the alias's *value* is what is displayed, its *key* is only how somebody else
-   spells it, and no alias key may normalize to a name the roster displays. **Neelum was checked
+   spells it, and no alias key may normalize to a name the roster displays. That general rule
+   catches the *half* inversion and **not** a clean one of both sides at once, which is a
+   well-formed table saying the wrong thing; the named pair is what catches that, and the two
+   are kept apart here rather than the guard being described as more than it is. **Neelum was checked
    with it and was half missing**: the canonical name was right, OSM's *Neelam Valley* was
    aliased, and the AJK Election Commission's *District Neelum Valley* was not. A canonical name
    being correct is no evidence that its aliases exist, which is why the two are asserted apart.

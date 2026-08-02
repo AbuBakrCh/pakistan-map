@@ -257,6 +257,15 @@ export const RELATION_OVERRIDES: Readonly<Record<number, string>> = {
  * somebody else uses to find it. Inverting a pair leaves every join passing while the map
  * displays the wrong name, which is what happened to Jhelum Valley until #46.
  *
+ * Two checks guard it and they catch different things, which is worth knowing before trusting
+ * either. The **general** one — no alias key may normalize to a name the roster displays —
+ * catches a *half* inversion, where the roster is edited and the alias left behind, and names
+ * the offending pair. It does **not** catch a clean full inversion of both sides at once: that
+ * is a well-formed table saying the wrong thing, and no structural rule can tell which of two
+ * names a government uses. What catches that is the **pair-specific** assertion naming Jhelum
+ * Valley as displayed and Hattian Bala as not, which is why the named pair is asserted rather
+ * than left to the general rule.
+ *
  * The three AJK entries are ruled on in `docs/research/ajk-district-set.md` — official name for
  * display, OSM name for the geometry join:
  *   - **Jhelum Valley** is the AJ&K Bureau of Statistics' name; `Hattian Bala` is the
