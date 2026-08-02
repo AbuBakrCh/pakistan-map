@@ -333,6 +333,18 @@ export interface LayoutOptions {
    * shifting a name sideways slides it toward a neighbouring shape, up or down usually does not.
    */
   readonly nudges?: readonly (readonly [number, number])[];
+  /**
+   * Ground already spoken for by something that is not a label, in the same screen px.
+   *
+   * One caller today: the tooltip, which on a phone docks to the top of the frame rather than
+   * following a finger that is standing on the district it describes (#33). Docked, it is an
+   * opaque bar across northern Pakistan — over Gilgit-Baltistan, Azad Kashmir and the ceasefire
+   * line's own name — and the layout cannot see it, so without this the four-step yielding order
+   * would be bypassed by an element outside its scoring and a reader would lose both the box and
+   * the name underneath it. Seeded into `taken`, the bar simply joins the contest: names nudge out
+   * from under it, or give way, exactly as they do for each other.
+   */
+  readonly occupied?: readonly Rect[];
 }
 
 const DEFAULT_NUDGES: readonly (readonly [number, number])[] = [
@@ -366,13 +378,15 @@ const overlaps = (a: Rect, b: Rect, gap: number): boolean =>
  */
 export function layoutLabels(
   labels: readonly LabelBox[],
-  { bounds, gap, nudges = DEFAULT_NUDGES }: LayoutOptions,
+  { bounds, gap, nudges = DEFAULT_NUDGES, occupied = [] }: LayoutOptions,
 ): PlacedLabel[] {
   const order = [...labels].sort(
     (a, b) => b.priority - a.priority || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
   );
 
-  const taken: Rect[] = [];
+  // Seeded, not empty: whatever is already on the frame outranks every name, because it is not
+  // competing for the ground — it is on it.
+  const taken: Rect[] = [...occupied];
   const placed: PlacedLabel[] = [];
 
   for (const label of order) {

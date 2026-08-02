@@ -11,18 +11,29 @@ import { describe, expect, it } from 'vitest';
 import {
   DETENTS,
   DRAG_THRESHOLD_PX,
+  draggedRatherThanPressed,
   FLICK_PX_PER_S,
   handleState,
+  heightDuring,
   heightOf,
   nextDetent,
-  PEEK_PX,
+  PRESS_SLOP_PX,
   settle,
+  velocityFrom,
   type Detent,
   type SheetDrag,
+  type SheetFrame,
 } from './sheet.ts';
 
 /** A phone held upright — the screen this ticket is about. */
 const PHONE = 844;
+
+/**
+ * The grip height comes from the stylesheet, so the tests supply one rather than importing a
+ * constant that no longer exists. 56px is what `--sheet-peek` declares at a 16px root.
+ */
+const PEEK_PX = 56;
+const frame = (viewportPx: number, peekPx = PEEK_PX): SheetFrame => ({ viewportPx, peekPx });
 
 const drag = (over: Partial<SheetDrag> = {}): SheetDrag => ({
   from: 'half',
@@ -33,17 +44,17 @@ const drag = (over: Partial<SheetDrag> = {}): SheetDrag => ({
 
 describe('heightOf', () => {
   it('peeks at the handle and the name, and halves at roughly the ticket´s 40%', () => {
-    expect(heightOf('peek', PHONE)).toBe(PEEK_PX);
+    expect(heightOf('peek', frame(PHONE))).toBe(PEEK_PX);
     // "Roughly 40%" is the acceptance criterion, so it is asserted as a share of the screen
     // rather than as the px it happens to come to.
-    expect(heightOf('half', PHONE) / PHONE).toBeCloseTo(0.4, 2);
+    expect(heightOf('half', frame(PHONE)) / PHONE).toBeCloseTo(0.4, 2);
   });
 
   it('stops short of the top, so the reader is still on a map', () => {
     // A sheet that covers the screen is a page the reader has navigated to, and this one has not
     // navigated anywhere: the outlines it is arguing for are still drawn behind it.
-    expect(heightOf('full', PHONE)).toBeLessThan(PHONE);
-    expect(heightOf('full', PHONE) / PHONE).toBeGreaterThan(0.85);
+    expect(heightOf('full', frame(PHONE))).toBeLessThan(PHONE);
+    expect(heightOf('full', frame(PHONE)) / PHONE).toBeGreaterThan(0.85);
   });
 
   it('never gets shorter as it is opened, on any viewport including absurd ones', () => {
@@ -51,7 +62,7 @@ describe('heightOf', () => {
     // peek height, and without them the sheet would shrink when the reader expanded it — which
     // is the one thing a drag upward must never do.
     for (const viewport of [0, 1, 40, 60, 120, 320, 500, PHONE, 1600]) {
-      const heights = DETENTS.map((detent) => heightOf(detent, viewport));
+      const heights = DETENTS.map((detent) => heightOf(detent, frame(viewport)));
       expect(heights, `viewport ${viewport}`).toEqual([...heights].sort((a, b) => a - b));
       for (const height of heights) {
         expect(height, `viewport ${viewport}`).toBeLessThanOrEqual(Math.max(viewport, PEEK_PX));
@@ -63,7 +74,7 @@ describe('heightOf', () => {
   it('never asks for more room than the viewport has', () => {
     for (const viewport of [0, 30, 55, 200]) {
       for (const detent of DETENTS) {
-        expect(heightOf(detent, viewport), `${detent} at ${viewport}`).toBeLessThanOrEqual(
+        expect(heightOf(detent, frame(viewport)), `${detent} at ${viewport}`).toBeLessThanOrEqual(
           Math.max(viewport, 0) === 0 ? 0 : Math.max(viewport, PEEK_PX),
         );
       }
@@ -113,6 +124,82 @@ describe('settle', () => {
     // proposal is drawn there is no view in which nothing says whose boundaries those are.
     expect(settle(drag({ from: 'peek', by: 900, velocity: 4000 }))).toBe('peek');
     expect(settle(drag({ from: 'full', by: -900, velocity: -4000 }))).toBe('full');
+  });
+});
+
+describe('heightDuring', () => {
+  it('follows the finger between the two positions the release could reach', () => {
+    const at = heightOf('half', frame(PHONE));
+    // Dragged 60px up, the sheet stands 60px taller — the gesture is something the reader is
+    // doing, not something they ask for and are then shown.
+    expect(heightDuring('half', -60, frame(PHONE))).toBe(at + 60);
+    expect(heightDuring('half', 60, frame(PHONE))).toBe(at - 60);
+  });
+
+  it('refuses to stretch anywhere a release could not leave it', () => {
+    // `settle` reaches neither past `full` nor below `peek`, so a sheet allowed to travel there
+    // would have to snap back from ground the reader was allowed to drag it onto.
+    expect(heightDuring('full', -5000, frame(PHONE))).toBe(heightOf('full', frame(PHONE)));
+    expect(heightDuring('peek', 5000, frame(PHONE))).toBe(heightOf('peek', frame(PHONE)));
+  });
+});
+
+describe('velocityFrom', () => {
+  it('reports nothing for a drag that has no two positions to compare', () => {
+    // Never a division by zero: an infinity here reads to `settle` as a flick, and would move the
+    // sheet on a gesture that never happened.
+    expect(velocityFrom([])).toBe(0);
+    expect(velocityFrom([{ y: 10, t: 0 }])).toBe(0);
+    expect(velocityFrom([{ y: 10, t: 5 }, { y: 90, t: 5 }])).toBe(0);
+  });
+
+  it('measures px per second in the direction the finger went', () => {
+    expect(velocityFrom([{ y: 0, t: 0 }, { y: 50, t: 50 }])).toBeCloseTo(1000, 5);
+    expect(velocityFrom([{ y: 50, t: 0 }, { y: 0, t: 50 }])).toBeCloseTo(-1000, 5);
+  });
+
+  it('reads the END of the drag, which is the whole reason it is not an average', () => {
+    /*
+     * The gesture `settle`'s flick rule is written for: dragged a long way down over 500ms, then
+     * flicked back up in the last 60ms. Averaged over the whole drag this has a net displacement
+     * near zero and so no velocity at all — `settle` would see no flick, no distance, and leave
+     * the sheet where it started, which is precisely the outcome the rule exists to prevent.
+     */
+    const samples = [
+      { y: 0, t: 0 },
+      { y: 200, t: 500 },
+      { y: 140, t: 540 },
+      { y: 40, t: 560 },
+    ];
+    const average = ((40 - 0) / 560) * 1000;
+    expect(Math.abs(average)).toBeLessThan(FLICK_PX_PER_S);
+    const measured = velocityFrom(samples);
+    expect(measured).toBeLessThan(-FLICK_PX_PER_S);
+    // And it therefore reaches the branch the flick rule is written for.
+    expect(settle({ from: 'half', by: 40, velocity: measured })).toBe('full');
+  });
+
+  it('measures a drag whose samples arrive further apart than the window', () => {
+    // A slow or throttled pointer can deliver nothing inside the window at all; reported as still,
+    // every such drag would lose its flick.
+    expect(velocityFrom([{ y: 0, t: 0 }, { y: 300, t: 300 }], 100)).toBeCloseTo(1000, 5);
+  });
+});
+
+describe('draggedRatherThanPressed', () => {
+  it('lets a press through the tremor that every press has', () => {
+    // Its own figure, not `DRAG_THRESHOLD_PX`: that asks whether a finished drag moved the sheet,
+    // this asks whether there was a drag at all. Answer a 2px wobble as a drag and the grip
+    // swallows the press that a reader who cannot drag depends on — the button would read as dead.
+    expect(draggedRatherThanPressed(0)).toBe(false);
+    expect(draggedRatherThanPressed(PRESS_SLOP_PX)).toBe(false);
+    expect(draggedRatherThanPressed(-PRESS_SLOP_PX)).toBe(false);
+    expect(draggedRatherThanPressed(PRESS_SLOP_PX + 1)).toBe(true);
+    expect(draggedRatherThanPressed(-(PRESS_SLOP_PX + 1))).toBe(true);
+  });
+
+  it('is far below the distance that actually moves the sheet', () => {
+    expect(PRESS_SLOP_PX).toBeLessThan(DRAG_THRESHOLD_PX);
   });
 });
 

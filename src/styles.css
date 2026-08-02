@@ -50,10 +50,16 @@
    */
   --sheet: 0;
   /*
-   * `PEEK_PX` from `lib/sheet.ts`. The collapsed sheet is exactly the grip, and the page reserves
-   * exactly this much room for it — never `--sheet-h`, for the reason given at `.card-well` below.
+   * How tall the collapsed sheet is: the grip, and nothing else. **Stated here and nowhere else** —
+   * `sheet.ts` reads it rather than restating it, and the page reserves exactly this much room for
+   * the sheet, never `--sheet-h`, for the reason given at `.card-well` below.
+   *
+   * In `px` rather than `rem` deliberately. The grip is drawn from this value and the sheet's
+   * geometry is computed from it, and the two have to be the same number: as `3.5rem` against a
+   * `56` in the script they agreed at a 16px root and were 14px apart at a 20px one, so a reader
+   * with larger type got a collapsed sheet that clipped the very line `peek` exists to show whole.
    */
-  --sheet-peek: 3.5rem;
+  --sheet-peek: 56px;
   /* Set by `sheet.ts` while the sheet is live. Starts at the peek height so the furniture that
    * rides above the sheet is in the right place on the first frame, before any script has run. */
   --sheet-h: var(--sheet-peek);
@@ -1273,10 +1279,10 @@ body {
     max-width: 100%;
     min-width: 0;
     overflow-x: auto;
-    /* The strip is scrolled by the same finger that taps it; a bar would eat the target. */
-    scrollbar-width: none;
     /* Chips are flush with the frame's edge, so a half-visible one says there is more to come. */
     padding-inline-end: 0.6rem;
+    /* The strip is scrolled by the same finger that taps it; a bar would eat the target. */
+    scrollbar-width: none;
   }
 
   .control-options::-webkit-scrollbar {
@@ -1332,10 +1338,11 @@ body {
   }
 
   /*
-   * The grip. `min-height` is `PEEK_PX` from `lib/sheet.ts`, so the collapsed sheet is exactly the
-   * handle and shows no clipped half-line of the card beneath it. `touch-action: none` because the
-   * vertical drag is this control's own — without it the browser takes the gesture for a scroll
-   * and the sheet never moves.
+   * The grip. `min-height` is `--sheet-peek` itself, so the collapsed sheet is exactly the handle
+   * and shows no clipped half-line of the card beneath it — and so the drawn height and the
+   * computed one are the same number rather than two that agree at one root font-size.
+   * `touch-action: none` because the vertical drag is this control's own; without it the browser
+   * takes the gesture for a scroll and the sheet never moves.
    */
   .sheet-handle {
     align-items: center;
@@ -1351,7 +1358,7 @@ body {
     gap: 0.3rem;
     justify-content: center;
     letter-spacing: 0.09em;
-    min-height: 3.5rem;
+    min-height: var(--sheet-peek);
     padding: 0.5rem 0.75rem;
     text-transform: uppercase;
     touch-action: none;

@@ -19,12 +19,15 @@
  */
 
 import {
+  draggedRatherThanPressed,
   handleState,
-  heightOf,
+  heightDuring,
   nextDetent,
   settle,
+  velocityFrom,
   type Detent,
-  type SheetDrag,
+  type DragSample,
+  type SheetFrame,
 } from './lib/sheet.ts';
 
 /**
@@ -34,16 +37,54 @@ import {
  * answer: where the sheet exists the tooltip has to dock rather than follow the finger, and a
  * second copy of `560px` in the renderer is the disagreement this arrangement exists to prevent.
  */
+let layoutCache: boolean | null = null;
+
 export function isSheetLayout(): boolean {
-  return getComputedStyle(document.documentElement).getPropertyValue('--sheet').trim() === '1';
+  if (layoutCache === null) {
+    layoutCache = readRootVar('--sheet') === '1';
+  }
+  return layoutCache;
+}
+
+/*
+ * The answer only changes when the viewport crosses the breakpoint, and it is asked on every
+ * `pointermove` — `map.ts` puts the question once per frame of a hover to decide whether the
+ * tooltip follows the pointer. `getComputedStyle` forces a style resolution, so uncached that is a
+ * layout read per pointer event for a value that moves twice a session.
+ */
+window.addEventListener('resize', () => {
+  layoutCache = null;
+});
+
+function readRootVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/**
+ * The frame the sheet stands in: the viewport, and the grip height the **stylesheet** states.
+ *
+ * `--sheet-peek` is read rather than restated, so the height `heightOf` computes and the height the
+ * grip is actually drawn at cannot drift — they did, as a `56` here against a `3.5rem` there, which
+ * agree at a 16px root and are 14px apart at a 20px one.
+ */
+function frame(): SheetFrame {
+  const peek = Number.parseFloat(readRootVar('--sheet-peek'));
+  return {
+    viewportPx: window.innerHeight,
+    peekPx: Number.isFinite(peek) ? peek : 0,
+  };
 }
 
 export interface SheetHandle {
   /**
-   * A card arrived or left. The sheet arrives and leaves with it, because the card does: at the
-   * baseline there is no proposal on screen and there is nothing for a sheet to hold.
+   * Put the sheet back to the height a proposal presents itself at.
+   *
+   * Called when the card goes away, not when one arrives. Whether the sheet is *visible* is not
+   * this module's business at all — `panel.ts` hides the whole container at the baseline — so this
+   * says only what it does: forget where the last reader dragged it. A sheet left at `full` from
+   * two proposals ago would open the next one over the map they chose it to look at.
    */
-  show(hasCard: boolean): void;
+  reset(): void;
 }
 
 /** Where a proposal first presents itself: the ticket's own 40%. */
@@ -71,7 +112,15 @@ export function attachSheet(container: HTMLElement): SheetHandle {
 
   let detent: Detent = OPENS_AT;
   /** Null except between a pointer going down on the grip and coming back up. */
-  let dragging: { readonly from: Detent; readonly y: number; readonly at: number } | null = null;
+  let dragging: { readonly from: Detent; readonly y: number } | null = null;
+  /**
+   * Where the finger has been during this drag.
+   *
+   * Kept so the release can be judged on the *end* of the gesture rather than on its average. A
+   * drag down that finishes with a flick back up has a net displacement near zero, and averaged it
+   * would read as no gesture at all.
+   */
+  let samples: DragSample[] = [];
   /** How far the sheet has been pulled mid-drag, so releasing can be told from resting. */
   let offset = 0;
   /**
@@ -99,14 +148,9 @@ export function attachSheet(container: HTMLElement): SheetHandle {
     handle.setAttribute('aria-expanded', state.expanded ? 'true' : 'false');
     handle.setAttribute('aria-controls', container.id);
 
-    const resting = heightOf(detent, window.innerHeight);
-    // Mid-drag the sheet follows the finger between the detents it could settle at, so the gesture
-    // is something the reader is doing rather than something they ask for and are then shown. The
-    // travel is clamped to the outer two, since `settle` can reach neither past them.
-    const height = Math.min(
-      heightOf('full', window.innerHeight),
-      Math.max(heightOf('peek', window.innerHeight), resting - offset),
-    );
+    // Mid-drag the sheet follows the finger, so the gesture is something the reader is doing rather
+    // than something they ask for and are then shown. Where it may follow it to is `lib/sheet.ts`'s.
+    const height = heightDuring(detent, offset, frame());
     container.setAttribute('data-detent', detent);
     container.toggleAttribute('data-dragging', dragging !== null);
     document.documentElement.style.setProperty('--sheet-h', `${Math.round(height)}px`);
@@ -114,7 +158,8 @@ export function attachSheet(container: HTMLElement): SheetHandle {
 
   handle.addEventListener('pointerdown', (event) => {
     if (!isSheetLayout()) return;
-    dragging = { from: detent, y: event.clientY, at: event.timeStamp };
+    dragging = { from: detent, y: event.clientY };
+    samples = [{ y: event.clientY, t: event.timeStamp }];
     offset = 0;
     dragged = false;
     handle.setPointerCapture(event.pointerId);
@@ -123,20 +168,21 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   handle.addEventListener('pointermove', (event) => {
     if (dragging === null) return;
     offset = event.clientY - dragging.y;
-    // A press is never perfectly still, so a pixel or two of tremor is not a drag — otherwise a
-    // reader who taps the grip firmly gets nothing at all.
-    if (Math.abs(offset) > 2) dragged = true;
+    samples.push({ y: event.clientY, t: event.timeStamp });
+    if (draggedRatherThanPressed(offset)) dragged = true;
     paint();
   });
 
   function endDrag(event: PointerEvent): void {
     if (dragging === null) return;
+    samples.push({ y: event.clientY, t: event.timeStamp });
+    const from = dragging.from;
     const by = event.clientY - dragging.y;
-    const elapsed = Math.max(1, event.timeStamp - dragging.at);
-    const drag: SheetDrag = { from: dragging.from, by, velocity: (by / elapsed) * 1000 };
+    const velocity = velocityFrom(samples);
     dragging = null;
+    samples = [];
     offset = 0;
-    detent = settle(drag);
+    detent = settle({ from, by, velocity });
     paint();
   }
 
@@ -167,16 +213,11 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   // fractions of it either way.
   window.addEventListener('resize', paint);
 
-  function show(hasCard: boolean): void {
-    if (!hasCard) {
-      // Reset rather than remember. The next proposal is a different argument and presents itself
-      // the same way the first one did; a sheet left at `full` from two variants ago would open
-      // the next one over the map the reader chose it to look at.
-      detent = OPENS_AT;
-    }
+  function reset(): void {
+    detent = OPENS_AT;
     paint();
   }
 
   paint();
-  return { show };
+  return { reset };
 }

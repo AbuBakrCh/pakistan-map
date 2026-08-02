@@ -509,6 +509,32 @@ export function renderMap(
     };
   }
 
+  /**
+   * The ground the docked tooltip is standing on, for the label layout to keep off (#33).
+   *
+   * Empty on every wide screen and empty whenever no district is showing, so on a desktop this
+   * costs the layout nothing at all. On a phone the box is an opaque bar across the top of the
+   * frame — which is northern Pakistan, where Gilgit-Baltistan, Azad Kashmir and the ceasefire
+   * line's own name sit — and the four-step yielding order has to see it, or a reader loses both
+   * the box and the name it landed on. Measured from the element rather than assumed, because its
+   * height is whatever the district's own figures came to.
+   */
+  function dockedTooltip(): readonly { x0: number; y0: number; x1: number; y1: number }[] {
+    const node = tooltip.node() as HTMLElement | null;
+    if (node === null || hovered === null || !isSheetLayout()) return [];
+    const well = container.getBoundingClientRect();
+    const box = node.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) return [];
+    return [
+      {
+        x0: box.left - well.left,
+        y0: box.top - well.top,
+        x1: box.right - well.left,
+        y1: box.bottom - well.top,
+      },
+    ];
+  }
+
   function drawLabels(transform: ZoomTransform): void {
     // The dots are drawn unconditionally; only their names take part in the layout below. That is
     // the yielding rule the ceasefire line's name already follows, applied to a point: the datum
@@ -541,7 +567,7 @@ export function renderMap(
       return [box];
     });
 
-    const placed = layoutLabels(boxes, { bounds: size, gap: 3 });
+    const placed = layoutLabels(boxes, { bounds: size, gap: 3, occupied: dockedTooltip() });
     labelLayer
       .selectAll<SVGTextElement, { key: string; x: number; y: number }>('text')
       .data(placed, (label) => label.key)
@@ -571,7 +597,16 @@ export function renderMap(
           ];
     });
 
-    const line = locLabel(transform, taken);
+    /*
+     * The docked box is put to the ceasefire line's name as well, and not only to the tier names.
+     *
+     * It is a separate placement path with its own `taken` list, and leaving it out was worse than
+     * doing nothing: the tier names yielded from under the bar, which freed the north, and the
+     * line's name then walked into exactly that space and set itself — at full length — underneath
+     * an opaque box. The four-step order ends in "no name at all" rather than in a name a reader
+     * cannot see (D12).
+     */
+    const line = locLabel(transform, [...dockedTooltip(), ...taken]);
     locLabelLayer
       .selectAll<SVGTextElement, PlacedLineLabel>('text')
       .data(line === null ? [] : [line])
@@ -635,6 +670,28 @@ export function renderMap(
         .attr('d', (d) => d.d);
     }
     place(at);
+    relayoutUnderDock();
+  }
+
+  /**
+   * True only while `draw()` is rebuilding, so the two paths do not lay the names out twice.
+   *
+   * `draw()` clears the hover on its way through and lays the labels out itself at the end, against
+   * a projection it has not refitted yet at the moment it clears. Without this the clear would run
+   * a layout against the *old* cone and have it immediately thrown away.
+   */
+  let redrawing = false;
+
+  /**
+   * The docked box appeared or went away, so the names get another go at the frame.
+   *
+   * Only on a phone, and only a label pass — no re-projection and no re-fit, which is the whole
+   * reason this is cheap enough to run on a tap. On a desktop the tooltip follows the pointer and
+   * takes part in no layout, so this does nothing at all.
+   */
+  function relayoutUnderDock(): void {
+    if (redrawing || !isSheetLayout()) return;
+    drawLabels(zoomTransformOf());
   }
 
   /**
@@ -667,10 +724,13 @@ export function renderMap(
   }
 
   function clearHover(): void {
+    const wasShowing = hovered !== null;
     hovered = null;
     tooltip.classed('is-shown', false).text('');
     readout.text('');
     hoverLayer.selectAll('path').remove();
+    // The names that gave way to the docked box get their ground back.
+    if (wasShowing) relayoutUnderDock();
   }
 
   /**
@@ -724,6 +784,15 @@ export function renderMap(
   function draw(): void {
     const { width, height } = container.getBoundingClientRect();
     if (width < 1 || height < 1) return;
+    redrawing = true;
+    try {
+      redraw(width, height);
+    } finally {
+      redrawing = false;
+    }
+  }
+
+  function redraw(width: number, height: number): void {
     size = { width, height };
     // The washes were drawn against the old projection, and the tooltip was placed against the
     // old frame. Both are about a pointer that is no longer where it was.

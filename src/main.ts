@@ -237,9 +237,9 @@ function render(): void {
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
   card.show(variant === null ? null : variantCard(scenarioBundle, variant));
-  // The sheet arrives and leaves with the card it holds, and resets to the height a proposal
-  // presents itself at when there is no longer one to hold.
-  sheet.show(variant !== null);
+  // Leaving a proposal forgets how far the last reader pulled the card open (#33). Arriving at one
+  // does not need saying: `panel.ts` hides the container at the baseline, so the sheet goes with it.
+  if (variant === null) sheet.reset();
   // The card, the legend and the colophon are given the *selection*, and are not told about the
   // comparison. Compare is a gesture over the map — the reader is looking at the map and has one
   // key down — and rewriting three blocks of prose underneath it would be the page changing

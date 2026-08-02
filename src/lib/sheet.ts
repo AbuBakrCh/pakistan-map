@@ -25,13 +25,18 @@ export const DETENTS = ['peek', 'half', 'full'] as const;
 export type Detent = (typeof DETENTS)[number];
 
 /**
- * How tall `peek` is, in CSS px: the drag handle and the proposal's name, and nothing else.
+ * How tall `peek` is is **not** stated here.
  *
- * A fixed height rather than a fraction, because what it has to hold is a fixed thing — one line
- * of type and something to grab. A fraction would make it two lines on a tablet and half a line on
- * a small phone.
+ * It is the height of the grip, which is a thing the stylesheet draws — one line of type and
+ * something to grab — so the stylesheet states it, as `--sheet-peek`, and it is passed in. The
+ * alternative was a number here and a length in the CSS, and those two drifted the moment the root
+ * font-size moved: `56` against `3.5rem` agree at a 16px root and are 14px apart at a 20px one, so
+ * the collapsed sheet clipped the very line `peek` exists to show whole. Same arrangement as
+ * `--switch` and `--sheet`, and for the same reason.
+ *
+ * A fixed length rather than a fraction, whatever its value: what `peek` holds is a fixed thing, and
+ * a fraction would make it two lines on a tablet and half a line on a small phone.
  */
-export const PEEK_PX = 56;
 
 /** What `half` and `full` are, as fractions of the viewport. */
 const FRACTION: Readonly<Record<Exclude<Detent, 'peek'>, number>> = {
@@ -43,20 +48,102 @@ const FRACTION: Readonly<Record<Exclude<Detent, 'peek'>, number>> = {
   full: 0.92,
 };
 
+/** The viewport the sheet stands in, and the grip height the stylesheet gave it. Both CSS px. */
+export interface SheetFrame {
+  readonly viewportPx: number;
+  readonly peekPx: number;
+}
+
 /**
- * How tall the sheet stands at a detent, given the viewport it stands in.
+ * How tall the sheet stands at a detent, in the frame it stands in.
  *
  * Clamped in both directions and in this order, so the invariant survives a viewport small enough
  * to break it: `peek` never exceeds the viewport, `half` is never shorter than `peek`, and `full`
- * is never shorter than `half`. On a landscape phone 40% of the height is under 56px, and without
- * the clamp the sheet would get *shorter* as the reader expanded it.
+ * is never shorter than `half`. On a landscape phone 40% of the height is under the grip's own
+ * height, and without the clamp the sheet would get *shorter* as the reader expanded it.
  */
-export function heightOf(detent: Detent, viewportPx: number): number {
-  const peek = Math.min(PEEK_PX, Math.max(0, viewportPx));
+export function heightOf(detent: Detent, frame: SheetFrame): number {
+  const peek = Math.min(Math.max(0, frame.peekPx), Math.max(0, frame.viewportPx));
   if (detent === 'peek') return peek;
-  const full = Math.max(peek, Math.round(viewportPx * FRACTION.full));
+  const full = Math.max(peek, Math.round(frame.viewportPx * FRACTION.full));
   if (detent === 'full') return full;
-  return Math.min(full, Math.max(peek, Math.round(viewportPx * FRACTION.half)));
+  return Math.min(full, Math.max(peek, Math.round(frame.viewportPx * FRACTION.half)));
+}
+
+/**
+ * How far the sheet stands *mid-drag*, while the finger is still down.
+ *
+ * Here rather than in the renderer because it is a decision and not plumbing: the sheet follows the
+ * finger between the two positions a release could reach, and travel past either end is refused —
+ * `settle` cannot reach beyond them, so a sheet that stretched there would have to snap back from
+ * somewhere the reader was allowed to drag it to. The renderer had its own copy of this clamp,
+ * which made it the one bound in the gesture that nothing tested.
+ */
+export function heightDuring(from: Detent, offsetPx: number, frame: SheetFrame): number {
+  const resting = heightOf(from, frame);
+  return Math.min(
+    heightOf('full', frame),
+    Math.max(heightOf('peek', frame), resting - offsetPx),
+  );
+}
+
+/** One position of the finger on the grip, in the same space and clock the drag is measured in. */
+export interface DragSample {
+  /** Vertical position in CSS px. Downward is positive, as screen space is. */
+  readonly y: number;
+  /** Milliseconds, from any clock, so long as it is the same one throughout a drag. */
+  readonly t: number;
+}
+
+/**
+ * How long a window at the end of a drag counts as "how fast it was going", in ms.
+ *
+ * Short enough to be the last flick of the wrist and long enough not to be one stray sample.
+ */
+export const VELOCITY_WINDOW_MS = 100;
+
+/**
+ * How fast the finger was moving when it left, in px/s — measured over the **end** of the drag.
+ *
+ * Averaging displacement over the whole gesture is the obvious implementation and it is wrong, in a
+ * way that quietly deletes the rule `settle` exists to apply. The case that rule is written for is a
+ * reader who drags the sheet down and then flicks it back up; over the whole drag that gesture has a
+ * net displacement near zero and so an average velocity near zero, and `settle` would see no flick,
+ * no distance, and leave the sheet where it started — the exact outcome the rule was written to
+ * avoid. Only the tail of the gesture says what the hand was doing when it let go.
+ *
+ * Zero from fewer than two samples, and zero across a window with no elapsed time: a drag nobody
+ * moved has no velocity, and neither reading may divide by zero and hand `settle` an infinity that
+ * would flick the sheet on a gesture that never happened.
+ */
+export function velocityFrom(
+  samples: readonly DragSample[],
+  windowMs: number = VELOCITY_WINDOW_MS,
+): number {
+  const last = samples[samples.length - 1];
+  if (last === undefined || samples.length < 2) return 0;
+  // The earliest sample still inside the window — falling back to the one before last, so a drag
+  // whose samples arrive further apart than the window is measured rather than reported as still.
+  const within = samples.filter((sample) => last.t - sample.t <= windowMs);
+  const first = (within.length >= 2 ? within[0] : samples[samples.length - 2]) as DragSample;
+  const elapsed = last.t - first.t;
+  if (elapsed <= 0) return 0;
+  return ((last.y - first.y) / elapsed) * 1000;
+}
+
+/**
+ * How far a finger may wander on the grip and still be pressing it rather than dragging it.
+ *
+ * Its own figure and not `DRAG_THRESHOLD_PX`: that one asks whether a finished drag moved the
+ * sheet, this one asks whether there was a drag at all. A press is never perfectly still, and a
+ * grip that answered a two-pixel tremor as a drag would swallow the press that a reader who cannot
+ * drag depends on — the `<button>` half of the handle would read as dead.
+ */
+export const PRESS_SLOP_PX = 2;
+
+/** Did the finger drag the grip, or merely press it? */
+export function draggedRatherThanPressed(offsetPx: number): boolean {
+  return Math.abs(offsetPx) > PRESS_SLOP_PX;
 }
 
 /** How far a drag must travel to move the sheet a detent, in CSS px. */
