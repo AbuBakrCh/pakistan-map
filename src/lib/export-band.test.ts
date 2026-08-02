@@ -166,32 +166,57 @@ describe('the vintage, and whether there is one to print at all', () => {
   });
 
   /*
-   * The state that would otherwise have shipped, and the reason this block is three cases and not
-   * two. No variant in the committed bundle dates its own boundary, and the Historical basis's
-   * "vintage" is not a date — it is the rule for finding one, "stated per variant, not shared". A
-   * band that inherited it verbatim would print, on an image that travels with no page behind it,
-   * a sentence saying the date is stated per variant, against a variant that states none.
+   * The three Historical variants now date their own boundaries, which is the right fix and not
+   * this module's: a proposal's date is scenario content, and the band was only ever the surface
+   * that made the gap visible. What is asserted here is that each carries a *real* date and none
+   * of them carries the basis's deferral — "the date of each demarcation, 1947 onward, stated per
+   * variant, not shared", which is the rule for finding a date and not a date.
    */
-  it('refuses to print a basis’s deferral as though it were a date — H1, H3 and H4', () => {
-    const historical = bundle.bases['historical'];
-    expect(historical.vintage).not.toBe(projectVintage);
+  it('prints each Historical variant’s own demarcation date — H1, H3 and H4', () => {
+    const deferral = bundle.bases['historical'].vintage;
+    expect(deferral).not.toBe(projectVintage);
 
-    for (const id of ['h1', 'h3', 'h4']) {
+    for (const [id, year] of [
+      ['h1', '1955'],
+      ['h3', '1970'],
+      ['h4', '2023'],
+    ] as const) {
       const exported = band(variantNamed(id));
-      expect(exported.vintage, id).not.toContain(historical.vintage);
-      expect(exported.vintage, id).toContain("this proposal's own source");
-      // And the line it points at is on the same image, carrying the dates themselves.
-      expect(exported.sources.join(' · '), id).toMatch(/\b(1947|1955|1970)\b/);
+      expect(exported.vintage, id).toContain(year);
+      expect(exported.vintage, id).not.toContain(deferral);
+      expect(exported.vintage, id).not.toContain('states none of its own');
     }
   });
 
+  it('dates H4 by the district set, because H4’s boundary is not the historical one', () => {
+    // The one Historical variant whose *boundary* is present-day: what is drawn is Bahawalpur
+    // Division as PBS publishes it today, and the 1947–1955 province is the claim's history. A
+    // vintage of 1947 here would say the app had drawn the 1947 state, which it has not — so the
+    // date is the district set's, and the band says which of the two it is.
+    const exported = band(variantNamed('h4'));
+    expect(exported.vintage).toContain('2023');
+    expect(exported.vintage).toContain('as it stands today');
+    expect(exported.vintage).toContain('not its geometry');
+  });
+
+  it('still refuses a deferral for a Historical variant that states no date of its own', () => {
+    // The state the shipped set can no longer demonstrate, and the one H2 will arrive in if it
+    // lands undated. Written as an override of a real variant so a schema change breaks this case
+    // rather than being quietly worked around by it.
+    const undated = { ...variantNamed('h1') };
+    delete (undated as { vintage?: string }).vintage;
+    const exported = band(undated);
+    expect(exported.vintage).not.toContain(bundle.bases['historical'].vintage);
+    expect(exported.vintage).toContain("this proposal's own source");
+  });
+
   it('never prints the census’s year against a boundary the census did not draw', () => {
-    // Held over every variant, since the failure is silent: a plausible date in the right place.
+    // Held over every Historical variant, since the failure is silent: a plausible date in the
+    // right place. H4 is the stated exception and says why in its own words — it is dated by the
+    // district set because that is where its line actually comes from.
     for (const variant of bundle.variants) {
-      const exported = band(variant);
-      if (variant.basis === 'historical') {
-        expect(exported.vintage, variant.id).not.toContain('2023 census');
-      }
+      if (variant.basis !== 'historical' || variant.id === 'h4') continue;
+      expect(band(variant).vintage, variant.id).not.toContain('2023 census');
     }
   });
 

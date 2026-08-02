@@ -73,6 +73,24 @@ its own for the same reason — H2 draws 1947 — and where it does not, it is r
 the resolution says so, so that no surface prints the census's year against a boundary the census
 had nothing to do with.
 
+**Every Historical variant must date itself, and the build now says so.** Its basis declares a rule
+for finding a date rather than a date, so a Historical variant that states none resolves to a
+sentence where a date should be — *"stated per variant, not shared"*, printed against a variant that
+states nothing. H1 is dated **14 October 1955 to 30 June 1970**, the fifteen years One Unit was in
+force, and H3 **1 July 1970**, the four provinces as restored when it was dissolved. H4 is dated
+differently on purpose: it is the one Historical variant whose *boundary* is not historical, since
+what is drawn is Bahawalpur Division as PBS publishes it **today** — so its vintage is the district
+set's, and the 1947–1955 province is the claim's history rather than its geometry. Dating it 1947
+would say the app had drawn the 1947 state, which it has not.
+
+The field also has to **survive the bake**, which it did not until #32 went looking for one. The
+schema has carried an optional `vintage` since it was written and the validator has always checked
+it, so the module was right and every content review passed; `build-scenarios.ts` simply never
+emitted it, so every variant reached the runtime dated at its basis and nothing went red — because
+until the PNG band, no surface printed a variant's date. It is written **only where the variant
+states one**, since an absent field is the signal to read the basis's, and the suite compares the
+two sides of the bake rather than asking the artifact whether it agrees with itself.
+
 **Deliberately cut:**
 
 | Cut | Reason |
@@ -352,6 +370,7 @@ What it holds:
 | The scorecard on the card — five figures in a fixed order; census populations in full and never rounded to a headline; the total qualified by which units it is over and which are outside it; a missing ratio said rather than printed as 1; the stranded districts of a broken unit named; and population voided in the words of whatever is missing it — a variant's own reason and a census gap worded apart | `card.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
+| The vintage through the bake — each variant's own date compared against `VARIANTS` rather than read back off the artifact, naming the variant and both strings where they differ; and every Historical variant dated by itself, named rather than counted, since its basis declares a rule for finding a date and not a date | `scripts/lib/bundle.test.ts` |
 | Provenance (#21) — every basis and every variant carrying a badge, a source **and a vintage**, held over `BASES` and `VARIANTS` where a content diff is actually made rather than only over the artifact; badges from the closed vocabulary at both tiers, naming the basis or variant *and* the word; both the **Advocated by** and the **Opposed by** line, with *unadvocated* held as the stated state it is; the one vintage (D24) anchored against the string all five committed artifacts stamp, and a `census` badge at any other vintage failing by name; and a boundary this build **derived** refused unless it says so — in both directions, since an unbadged derived line passes our arithmetic off as somebody's proposal and a `derived` badge over a transcribed one credits their document to us | `provenance.test.ts` |
 | The About panel (#21) — every source row and every basis carrying all three, none blank and each named; a boundary dated by **OpenStreetMap's own edit date** and a figure by the census, and neither by the date the build ran; every drawn surface reached, named rather than counted, so a row lost to a renamed bundle key is a failure and not a silence; the discrepancies present **with their figures** — 1,041,342 people, 6,374 households, the flush-toilet share and the 48,010-household denominator — and the geometry's own disagreements with PBS quoted whole rather than summarised; what the panel leaves off said on the panel; and a date set by hand rather than by the browser's locale, for the reason `groupDigits` exists | `src/lib/about.test.ts` |
 | The export band (#32) — the six things D22 requires, held one at a time on every variant rather than counted: the scenario name, *Proposed — not official* in those words, the badge with its gloss, the basis, a vintage, the sources and the licence line. The baseline's own band, which names the current map and never calls it a proposal, keys the three tiers it actually draws, and does not spend the accent on a map with nothing proposed on it; the key derived from the same two functions the screen's is, with the six nowhere-dominant categories left off by name and the ceasefire line keyed under every basis; the accent reserved for `proposed` and the two absences painted apart; and a layout whose height is a result — wrapping rather than running off a 390px band, growing taller as it narrows, losing no row it was given, and setting the standing line above the key and the small print. Above all **the date this build would otherwise have got wrong**: H1, H3 and H4 inherit a basis whose "vintage" is a deferral, and the band is held to printing the proposal's own source instead of quoting it — asserted per variant, since a plausible date in the right place is a silent failure | `src/lib/export-band.test.ts` |
