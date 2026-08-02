@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T10:53:23.789Z",
+    "generated": "2026-08-02T11:19:00.633Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -3344,7 +3344,7 @@
         "proxy",
         "derived"
       ],
-      "rationale": "The Pashto-plurality districts of northern Balochistan leave the province. It is the oldest live grievance on this map and the only Language variant whose boundary is not transcribed from anything: no one has published a district list for it, so the line here follows the census — every Balochistan district the 2023 census records as Pashto-plurality, and no others. That is why Mastung, Kalat, Khuzdar, Nushki and Surab are outside it and Quetta is inside it at a plurality of 60.0% rather than a majority.",
+      "rationale": "The Pashto-plurality districts of northern Balochistan leave the province. It is the oldest live grievance on this map and the only Language variant whose boundary is not transcribed from anything: no one has published a district list for it, so the line here follows the census — every Balochistan district the 2023 census records as Pashto-plurality, and no others. That is why Mastung, Kalat, Khuzdar, Nushki and Surab are outside it: all four are Brahvi-plurality, and the rule has no way to want them.",
       "status": "Live since 1970, when the Quetta and Kalat divisions were merged to constitute Balochistan and Khan Abdul Samad Khan Achakzai left the National Awami Party over the Pashtun belt being placed inside a province named for another people. No province has been created and no constitutional amendment to create one has passed.",
       "advocacy": {
         "kind": "advocated",
@@ -3354,8 +3354,7 @@
         ]
       },
       "opposedBy": [
-        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational",
-        "opinion in Quetta that rejects the province being divided around its own capital"
+        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational"
       ],
       "composition": {
         "kind": "derived",
@@ -3365,7 +3364,7 @@
       "footnotes": [
         {
           "kind": "derived-boundary",
-          "text": "This boundary was drawn from census data, not copied from a proposal. Its advocates have never published a district list, so the rule stands in for one: every Balochistan district the 2023 census records as Pashto-plurality, and nothing else. Change the census and this line moves; nobody whose claim it is chose where it runs. The districts it produces are the Quetta, Zhob and Loralai division areas together with Harnai and Ziarat from Sibi division."
+          "text": "This boundary was drawn from census data, not copied from a proposal. Its advocates have never published a district list, so the rule stands in for one: every Balochistan district the 2023 census records as Pashto-plurality, and nothing else. Change the census and this line moves; nobody whose claim it is chose where it runs. What it produces is the whole of Quetta division and the whole of Zhob division, three of Loralai division’s four districts — Barkhan is Balochi-plurality and stays where it is — and Harnai and Ziarat out of Sibi division’s five."
         },
         {
           "kind": "note",
@@ -3373,7 +3372,7 @@
         },
         {
           "kind": "contested-edge",
-          "text": "Quetta is inside the line at a plurality and not a majority: the census records Pushto as the mother tongue of 60.0% of those counted there, and the city is the capital of the province this variant divides. A rule stated in pluralities places it here; that is what the rule says, and it is not what everyone in Quetta says."
+          "text": "Quetta is inside the line, and it is the capital of the province this variant divides. The census records Pushto as the mother tongue of 60.0% of those counted there, so the rule does not have to strain to place it — but a boundary that takes a province’s own capital out of it is the part of this claim that is argued hardest, and a language figure is not what that argument is about."
         }
       ],
       "notes": [
@@ -3996,8 +3995,8 @@
       },
       "opposedBy": [
         "those who reject mother tongue as a basis for provincial boundaries at all, for whom the argument is administrative rather than ethnic",
-        "Sindhi nationalist opinion, which rejects any division of Sindh — and this map divides it",
-        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational and which this map cuts into four"
+        "the Pakistan Peoples Party, the Grand Democratic Alliance and Awami Tehreek alike, and Sindhi nationalist opinion broadly, which rejects any division of Sindh — and this map divides it in four",
+        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational and which this map cuts into four as well"
       ],
       "composition": {
         "kind": "derived",

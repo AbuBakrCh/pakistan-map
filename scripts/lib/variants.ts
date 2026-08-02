@@ -27,9 +27,9 @@ import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-parti
 import { CENSUS_DISTRICTS, ROSTER } from './roster.ts';
 import {
   intactProvince,
+  nonEmpty,
   remainderOf,
   slug,
-  type NonEmpty,
   type Unit,
   type Variant,
 } from './scenarios.ts';
@@ -1198,6 +1198,29 @@ export interface DerivationContext {
   readonly populations: ReadonlyMap<string, number>;
 }
 
+/**
+ * `dominant`, read off a committed `statistics.json`.
+ *
+ * Shared rather than spelled out at each call site, because the distinction it encodes is the
+ * whole of what the engine's first refusal is about and it is one careless `?? 'Others'` away from
+ * being lost: a district **absent** from the result is one the census did not reach, and a
+ * district **present with `null`** is one it reached and could not name a dominant tongue for. The
+ * graph is deliberately *not* built here — the build derives it from the topology it is about to
+ * write, and the suite reads the copy that shipped, and those are two different questions.
+ */
+export function dominantTongues(statistics: {
+  readonly districts: Readonly<
+    Record<string, { readonly motherTongue?: { readonly dominant?: unknown } }>
+  >;
+}): ReadonlyMap<string, string | null> {
+  return new Map(
+    Object.entries(statistics.districts).map(([district, record]) => [
+      district,
+      typeof record.motherTongue?.dominant === 'string' ? record.motherTongue.dominant : null,
+    ]),
+  );
+}
+
 /** Balochistan's 34 census districts, which is the scope L6's rule is applied to. */
 const balochistanDistricts = (): readonly string[] => {
   const found = ROSTER.find((province) => province.name === 'Balochistan');
@@ -1240,7 +1263,7 @@ function pashtunBalochistan(context: DerivationContext): Variant {
     // Both names are in use for the same ground, and the app reports what people call things.
     alsoKnownAs: ['Pashtun Balochistan'],
     kind: 'proposed',
-    claims: region.districts as NonEmpty<string>,
+    claims: nonEmpty(region.districts, 'the Pashto-plurality districts of Balochistan'),
   };
 
   return {
@@ -1254,7 +1277,7 @@ function pashtunBalochistan(context: DerivationContext): Variant {
       'transcribed from anything: no one has published a district list for it, so the line here ' +
       'follows the census — every Balochistan district the 2023 census records as ' +
       'Pashto-plurality, and no others. That is why Mastung, Kalat, Khuzdar, Nushki and Surab are ' +
-      'outside it and Quetta is inside it at a plurality of 60.0% rather than a majority.',
+      'outside it: all four are Brahvi-plurality, and the rule has no way to want them.',
     status:
       'Live since 1970, when the Quetta and Kalat divisions were merged to constitute Balochistan ' +
       'and Khan Abdul Samad Khan Achakzai left the National Awami Party over the Pashtun belt ' +
@@ -1269,7 +1292,6 @@ function pashtunBalochistan(context: DerivationContext): Variant {
     },
     opposedBy: [
       'Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational',
-      'opinion in Quetta that rejects the province being divided around its own capital',
     ],
     universe: 'drawn',
     // Not the basis's `census · proxy` and not `documented` either: this boundary was computed
@@ -1303,8 +1325,9 @@ function pashtunBalochistan(context: DerivationContext): Variant {
           'have never published a district list, so the rule stands in for one: every ' +
           'Balochistan district the 2023 census records as Pashto-plurality, and nothing else. ' +
           'Change the census and this line moves; nobody whose claim it is chose where it runs. ' +
-          'The districts it produces are the Quetta, Zhob and Loralai division areas together ' +
-          'with Harnai and Ziarat from Sibi division.',
+          'What it produces is the whole of Quetta division and the whole of Zhob division, ' +
+          'three of Loralai division’s four districts — Barkhan is Balochi-plurality and stays ' +
+          'where it is — and Harnai and Ziarat out of Sibi division’s five.',
       },
       {
         kind: 'note',
@@ -1319,10 +1342,11 @@ function pashtunBalochistan(context: DerivationContext): Variant {
       {
         kind: 'contested-edge',
         text:
-          'Quetta is inside the line at a plurality and not a majority: the census records Pushto ' +
-          'as the mother tongue of 60.0% of those counted there, and the city is the capital of ' +
-          'the province this variant divides. A rule stated in pluralities places it here; that ' +
-          'is what the rule says, and it is not what everyone in Quetta says.',
+          'Quetta is inside the line, and it is the capital of the province this variant divides. ' +
+          'The census records Pushto as the mother tongue of 60.0% of those counted there, so the ' +
+          'rule does not have to strain to place it — but a boundary that takes a province’s own ' +
+          'capital out of it is the part of this claim that is argued hardest, and a language ' +
+          'figure is not what that argument is about.',
       },
     ],
     sources: [
@@ -1390,14 +1414,17 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
     id: slug(region.name),
     name: region.name,
     kind: 'proposed',
-    claims: region.districts as NonEmpty<string>,
+    claims: nonEmpty(region.districts, `the districts of the ${region.name} region`),
   }));
 
   const chitral: Unit = {
     id: 'chitral',
     name: 'Chitral',
     kind: 'proposed',
-    claims: [...WITHOUT_A_DOMINANT_TONGUE] as unknown as NonEmpty<string>,
+    claims: nonEmpty(
+      WITHOUT_A_DOMINANT_TONGUE,
+      'the districts the census names no dominant tongue for',
+    ),
     note:
       'The rule does not reach these two districts. Khowar has no column in census Table 11, so ' +
       'neither has a dominant mother tongue to be assigned by — an answer the census could not ' +
@@ -1430,20 +1457,24 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
         'argued by people, on grounds this rule cannot see, and are drawn as variants of their ' +
         'own.',
     },
-    // Not "nobody, because nobody proposes it" — the objection to language as the basis of ' +
-    // provinces is a real position with a long history, and it is the objection this whole map
-    // runs into.
+    // Not "nobody, because nobody proposes it". The objection to language as the basis of
+    // provincial boundaries is a real position with a long history, and it is the objection this
+    // whole map runs into.
     opposedBy: [
       'those who reject mother tongue as a basis for provincial boundaries at all, for whom the ' +
         'argument is administrative rather than ethnic',
-      'Sindhi nationalist opinion, which rejects any division of Sindh — and this map divides it',
+      'the Pakistan Peoples Party, the Grand Democratic Alliance and Awami Tehreek alike, and ' +
+        'Sindhi nationalist opinion broadly, which rejects any division of Sindh — and this map ' +
+        'divides it in four',
       'Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational ' +
-        'and which this map cuts into four',
+        'and which this map cuts into four as well',
     ],
     universe: 'drawn',
-    // The draft's own badges, and the distinction between them is real: `derived` is a line
-    // computed from data, which L6 is; `synthesized` is a whole map assembled by a rule that no
-    // document stands behind, which is this.
+    // The reviewed draft says `census · synthesized`; `proxy` is added deliberately, because the
+    // Language basis carries it and this is the variant that leans on it hardest — every boundary
+    // here is mother tongue standing in for the identity the argument is actually about. The
+    // distinction from L6's `derived` is the real one: `derived` is a line computed from data,
+    // and `synthesized` is a whole map assembled by a rule no document stands behind.
     badges: ['census', 'proxy', 'synthesized'],
     composition: {
       kind: 'derived',
@@ -1454,14 +1485,17 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
         'together as themselves',
       from: 'PBS 2023 Census Table 11, and the district adjacency graph in data/bundle/adjacency.json',
     },
-    units: [
-      ...regions,
-      chitral,
-      // Outside the rule because they are outside the census: PBS published no mother tongue for
-      // any of their twenty districts (D25), so there is nothing here to sort them by.
-      intactProvince('Azad Jammu & Kashmir'),
-      intactProvince('Gilgit-Baltistan'),
-    ] as unknown as NonEmpty<Unit>,
+    units: nonEmpty(
+      [
+        ...regions,
+        chitral,
+        // Outside the rule because they are outside the census: PBS published no mother tongue for
+        // any of their twenty districts (D25), so there is nothing here to sort them by.
+        intactProvince('Azad Jammu & Kashmir'),
+        intactProvince('Gilgit-Baltistan'),
+      ],
+      'the regions of the mother-tongue map',
+    ),
     footnotes: [
       {
         kind: 'derived-boundary',

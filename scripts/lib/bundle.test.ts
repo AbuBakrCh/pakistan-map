@@ -16,6 +16,7 @@ import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
+import { dominantTongues } from './variants.ts';
 import {
   districtsMoved,
   scorecardOf,
@@ -795,12 +796,8 @@ describe('bundle scenarios', () => {
     // the rule is re-run here, from the committed census and the committed graph, and compared
     // district by district against what shipped. A derived line nothing re-derives is an editorial
     // opinion wearing a `derived` badge.
-    const dominant = new Map<string, string | null>(
-      Object.entries(statistics.districts as Record<string, { motherTongue?: { dominant?: string } }>)
-        .map(([district, record]) => [
-          district,
-          typeof record.motherTongue?.dominant === 'string' ? record.motherTongue.dominant : null,
-        ]),
+    const dominant = dominantTongues(
+      statistics as { districts: Record<string, { motherTongue?: { dominant?: unknown } }> },
     );
     const populations = new Map<string, number>(
       Object.entries(statistics.districts as Record<string, { population: number }>).map(

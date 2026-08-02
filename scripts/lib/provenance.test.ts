@@ -43,7 +43,7 @@ import {
   type Variant,
 } from './scenarios.ts';
 import { ROSTER } from './roster.ts';
-import { variantsFrom } from './variants.ts';
+import { dominantTongues, variantsFrom } from './variants.ts';
 
 /**
  * The variants, derived the same way the build derives them (#26).
@@ -59,12 +59,7 @@ const districtStatistics = (
 
 const VARIANTS = variantsFrom({
   graph: new Map(Object.entries((adjacency as { neighbours: Record<string, string[]> }).neighbours)),
-  dominant: new Map(
-    Object.entries(districtStatistics).map(([district, record]) => [
-      district,
-      typeof record.motherTongue?.dominant === 'string' ? record.motherTongue.dominant : null,
-    ]),
-  ),
+  dominant: dominantTongues({ districts: districtStatistics }),
   populations: new Map(
     Object.entries(districtStatistics).map(([district, record]) => [district, record.population]),
   ),

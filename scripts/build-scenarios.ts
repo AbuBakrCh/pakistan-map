@@ -70,7 +70,7 @@ import {
   type DistrictOrigins,
 } from './lib/scorecard.ts';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
-import { variantsFrom } from './lib/variants.ts';
+import { dominantTongues, variantsFrom } from './lib/variants.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
@@ -344,19 +344,11 @@ function main(): void {
     >;
   };
   const populations = new Map<string, number>();
-  /**
-   * District -> the census's dominant mother tongue, or `null` where it names none (#26).
-   *
-   * Only the 136 the census reaches are in here at all, and that is the whole point of the shape:
-   * a district *absent* from this map is one PBS published nothing for, and a district present
-   * with `null` is one PBS counted and could not name a dominant tongue for — Chitral, where
-   * Khowar has no column in Table 11. Stratum 1 already draws those two absences differently
-   * (#17), and the rule engine has to answer them differently too.
-   */
-  const dominant = new Map<string, string | null>();
+  // District -> the census's dominant mother tongue, or `null` where it names none (#26). Only the
+  // 136 the census reaches are in it at all, which is the distinction the rule engine's first
+  // refusal turns on.
+  const dominant = dominantTongues({ districts: statistics.districts ?? {} });
   for (const [district, record] of Object.entries(statistics.districts ?? {})) {
-    const named = record.motherTongue?.dominant;
-    dominant.set(district, typeof named === 'string' ? named : null);
     if (typeof record.population !== 'number') {
       fail(
         `${STATISTICS_BUNDLE} carries ${district} with no population. Every scorecard figure is a ` +

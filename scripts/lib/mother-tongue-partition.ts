@@ -45,6 +45,7 @@
  */
 
 import { contiguityOf, type AdjacencyGraph } from './adjacency.ts';
+import { groupDigits } from './digits.ts';
 
 /**
  * What the rule is applied to.
@@ -90,9 +91,6 @@ export interface LanguagePartitionResult {
   readonly partition: LanguagePartition | null;
   readonly problems: readonly string[];
 }
-
-/** Group digits the way every other figure in this project is printed. */
-const group = (value: number): string => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /**
  * Apply the rule to a scope.
@@ -221,7 +219,7 @@ export function soleRegionOf(
       problems: [
         `${language} is dominant in ${regions.length} separate groups of districts here — ` +
           regions
-            .map((r) => `${r.principal} (${r.districts.length}, ${group(r.population)} people)`)
+            .map((r) => `${r.principal} (${r.districts.length}, ${groupDigits(r.population)} people)`)
             .join(' and ') +
           `. A claim stated as one province cannot be drawn as two, and picking one would be this ` +
           `app choosing which of them its advocates meant.`,

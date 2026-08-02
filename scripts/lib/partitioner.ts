@@ -84,6 +84,7 @@
  */
 
 import { type AdjacencyGraph, contiguityOf } from './adjacency.ts';
+import { groupDigits as group } from './digits.ts';
 import { provinceOf } from './roster.ts';
 import { slug, type NonEmpty, type Unit } from './scenarios.ts';
 
@@ -140,9 +141,6 @@ export interface Generation {
   /** Every problem found, each naming the district or the unit rather than counting them. */
   readonly problems: readonly string[];
 }
-
-/** Digits grouped, the way the card sets a census figure — never rounded to a headline. */
-const group = (value: number): string => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /** A district named the way every failure in this repo names one: with where it is. */
 const named = (district: string): string => {

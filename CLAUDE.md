@@ -292,8 +292,9 @@ mother tongue in Table 11, then splits each language into the **connected groups
 actually form** across #16's shared borders — so contiguity is the method rather than a filter,
 and Balochi comes out as two regions (the Makran coast and the Nasirabad plains, with the Brahvi
 belt between) instead of one province in two pieces. L6 is that rule run over Balochistan's 34
-districts, taking the Pushto region: twelve districts, one connected group, 6,163,599 people, with
-Mastung and the rest of the Brahvi belt outside it and Quetta inside it at a plurality of 60.0%.
+districts, taking the Pushto region: twelve districts, one connected group, 6,163,599 people — the
+whole of Quetta and Zhob divisions, three of Loralai's four (Barkhan is Balochi-plurality), and
+Harnai and Ziarat out of Sibi's five, with the Brahvi belt outside it entire.
 L7 is the same rule run over all 136, and it is the only variant in the app **nobody advocates** —
 so it says so in the advocacy's own words and points at the attributed claims its output resembles
 rather than taking credit for their politics.
