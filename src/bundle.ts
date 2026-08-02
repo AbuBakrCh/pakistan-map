@@ -20,6 +20,24 @@ export interface Provenance {
   readonly vintage: string;
   readonly sources: Readonly<Record<string, string>>;
   readonly counts: Readonly<Record<string, number>>;
+  /**
+   * When OSM itself was last edited under each query, per tier — the vintage of the *boundaries*,
+   * which is not the vintage of the census they are pinned to and must not be printed as though
+   * it were (#21). Read by the About panel and by nothing else.
+   */
+  readonly osmBaseTimestamp: Readonly<Record<string, string>>;
+  /** How the coastline was chained and which districts it cut. Surfaced as a source, not a method. */
+  readonly coastline: {
+    readonly ways: number;
+    readonly districtsConsidered: number;
+    readonly districtsClipped: number;
+  };
+  /**
+   * Where this bundle's geometry knowingly disagrees with PBS's published areas, in the build's
+   * own words. On the About panel because a source list that hid them would be the tidier half of
+   * the truth.
+   */
+  readonly knownLimitations: readonly string[];
   /** How the ceasefire line was derived, so the page can say it rather than assert it (#7). */
   readonly lineOfControl: {
     readonly ways: number;
@@ -66,6 +84,13 @@ export interface DistrictRecord {
 }
 
 export interface CensusStatistics {
+  /** The census join's own header: when it ran, at which vintage, and off which published tables. */
+  readonly provenance: {
+    readonly generated: string;
+    readonly vintage: string;
+    readonly sources: Readonly<Record<string, string>>;
+    readonly counts: Readonly<Record<string, number>>;
+  };
   readonly districts: Readonly<Record<string, DistrictRecord>>;
   readonly withoutCensusData: { readonly reason: string; readonly districts: readonly string[] };
   readonly motherTongue: {
@@ -74,7 +99,40 @@ export interface CensusStatistics {
     readonly residualCategory: string;
     readonly dominance: string;
     readonly districtsWithoutNamedDominant: readonly { district: string; residualShare: number }[];
-    readonly universe: { readonly counted: number; readonly population: number };
+    readonly universe: {
+      readonly counted: number;
+      readonly population: number;
+      /** Table 11's universe less Table 1's — negative, and PBS does not explain it. */
+      readonly difference: number;
+      readonly note: string;
+    };
+  };
+  /**
+   * The three published development rates and the one place PBS's own two releases disagree.
+   *
+   * Carried in full rather than narrowed to what shades a district, because the disagreement is
+   * the part a reader auditing this app most needs: a source list that printed the tables and hid
+   * the 6,374 households would be worse than no list at all (#21).
+   */
+  readonly development: {
+    readonly source: string;
+    readonly indicators: Readonly<
+      Record<
+        string,
+        { readonly table: string; readonly numerator: string; readonly denominator: string; readonly note: string }
+      >
+    >;
+    readonly improvedWaterDifference: {
+      readonly summed: number;
+      readonly published: number;
+      readonly difference: number;
+      readonly note: string;
+    };
+  };
+  /** How the district sums were checked upward, and against which source at each tier. */
+  readonly reconciliation: {
+    readonly method: string;
+    readonly national: { readonly summed: number; readonly published: number; readonly source: string };
   };
 }
 
@@ -105,6 +163,15 @@ export interface BasisRecord {
   readonly id: BasisId;
   readonly name: string;
   readonly source: string;
+  /**
+   * When the data this basis shades from was collected (#21).
+   *
+   * Optional here and required in the build's schema, and the asymmetry is deliberate: the field
+   * was added after the committed bundle was baked, and a runtime that threw on a bundle built
+   * one commit earlier would turn a provenance improvement into a blank page. The About panel
+   * falls back to the bundle's own header, which carries the same string.
+   */
+  readonly vintage?: string;
   readonly badges: readonly ProvenanceBadge[];
 }
 
@@ -202,6 +269,8 @@ export interface VariantRecord {
   readonly name: string;
   readonly tagline: string | null;
   readonly badges: readonly ProvenanceBadge[];
+  /** The date of this boundary's own source, where the variant has one (H2 draws 1947). */
+  readonly vintage?: string;
   readonly rationale: string;
   readonly status: string;
   readonly advocacy:
@@ -276,6 +345,8 @@ export interface UnitOutlineBundle {
     readonly generated: string;
     readonly method: string;
     readonly arcsFrom: string;
+    readonly sources: Readonly<Record<string, string>>;
+    readonly counts: Readonly<Record<string, number>>;
     /** The geometry build these outlines were cut against, so a stale pairing is detectable. */
     readonly geography: { readonly generated: string; readonly arcs: number };
   };
