@@ -87,8 +87,13 @@ export function renderControls(
     .attr('role', 'radiogroup')
     .attr('aria-label', 'Basis — the ground a proposal is argued from');
   bases.append('span').attr('class', 'control-label').text('Basis');
+  // The chips in a strip of their own, as the variants already are. It costs nothing on a wide
+  // screen and is what lets a phone scroll the five bases along one line instead of wrapping them
+  // into three rows of the map's height — the refusal lines still wrap underneath, where they can
+  // be read rather than scrolled to.
+  const basisList = bases.append('div').attr('class', 'control-options');
 
-  const basisButtons = bases
+  const basisButtons = basisList
     .selectAll<HTMLButtonElement, BasisOption>('button')
     .data(options, (option) => option.id ?? 'baseline')
     .join('button')
@@ -133,7 +138,15 @@ export function renderControls(
    * rather than removed, so entering a basis does not move the controls under the pointer — the
    * same treatment the variant row already gets.
    */
-  const compare = root.append('div').attr('class', 'control control-compare');
+  /*
+   * Compare and the export share a row, because they are the same kind of control — neither
+   * chooses what the map shows, and both act on whatever is already on it. On a wide screen the
+   * grouping costs nothing and reads as what it is; on a phone it is what lets the pair sit in the
+   * corner a thumb reaches as one 44px row rather than as a stack tall enough to cover the
+   * tooltip's own third line.
+   */
+  const actions = root.append('div').attr('class', 'control control-actions');
+  const compare = actions.append('div').attr('class', 'control-action control-compare');
   const compareButton = compare
     .append('button')
     .attr('type', 'button')
@@ -155,7 +168,7 @@ export function renderControls(
    * A plain button and no menu — one format, one resolution. The whole argument for this feature is
    * that it must be the path of least resistance compared with pressing the screenshot key.
    */
-  const download = root.append('div').attr('class', 'control control-export');
+  const download = actions.append('div').attr('class', 'control-action control-export');
   const exportButton = download
     .append('button')
     .attr('type', 'button')

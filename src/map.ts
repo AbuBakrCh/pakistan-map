@@ -58,6 +58,8 @@ import {
   type PlacedLineLabel,
 } from './lib/line-of-control.ts';
 import { fitProjection } from './lib/projection.ts';
+import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
+import { isSheetLayout } from './sheet.ts';
 
 /**
  * Must match `--font-serif` in styles.css: the canvas measures what the browser will draw.
@@ -405,16 +407,63 @@ export function renderMap(
    * stratum 1 is drawn or not, and the district paths keep `pointer-events: none`. Bound to the
    * SVG rather than to 156 paths: one listener, and the sea answers as clearly as the land.
    */
+  /** What is under a point on the SVG, asked in lon/lat rather than of the DOM. */
+  function districtAt(at: [number, number]): DistrictFeature | null {
+    const ground = project.invert?.(zoomTransformOf().invert(at));
+    return ground === undefined || ground === null ? null : locate.at(ground as [number, number]);
+  }
+
+  /*
+   * A finger is not a pointer that hovers (#33), so it is given the other gesture.
+   *
+   * Down and up are tracked rather than moves: on a touchscreen every pan across the country is a
+   * `pointermove`, and answering those would drag a tooltip along behind the thumb over the ground
+   * it covers. `pointerleave` arrives on the lift rather than on leaving anything, so it is left to
+   * the pointers that mean it — a finger's tooltip stays until another tap moves or dismisses it,
+   * which is the only way to put one away on a device with nowhere to move the pointer *to*.
+   *
+   * Both decisions — which pointer taps, and what a tap does — are `lib/touch.ts`'s and under test.
+   */
+  let touch: { readonly at: [number, number]; readonly began: number } | null = null;
+  /** The most fingers down at any moment of the gesture, so a pinch is never read as a tap. */
+  let fingers = 0;
+
   svg
     .on('pointermove', (event: PointerEvent) => {
+      if (selectsByTap(event.pointerType)) return;
       const at = pointer(event, svg.node()) as [number, number];
-      const ground = project.invert?.(zoomTransformOf().invert(at));
-      const found =
-        ground === undefined || ground === null ? null : locate.at(ground as [number, number]);
+      const found = districtAt(at);
       if (found === null) clearHover();
       else showDistrict(found, at);
     })
-    .on('pointerleave', clearHover);
+    .on('pointerleave', (event: PointerEvent) => {
+      if (selectsByTap(event.pointerType)) return;
+      clearHover();
+    })
+    .on('pointerdown', (event: PointerEvent) => {
+      if (!selectsByTap(event.pointerType)) return;
+      fingers = touch === null ? 1 : fingers + 1;
+      if (touch !== null) return;
+      touch = { at: pointer(event, svg.node()) as [number, number], began: event.timeStamp };
+    })
+    .on('pointerup pointercancel', (event: PointerEvent) => {
+      if (!selectsByTap(event.pointerType) || touch === null) return;
+      const at = pointer(event, svg.node()) as [number, number];
+      const candidate = {
+        downAt: touch.at,
+        upAt: at,
+        heldMs: event.timeStamp - touch.began,
+        pointers: fingers,
+      };
+      touch = null;
+      fingers = 0;
+      // A pan and a pinch are the map being moved, and the map has already answered them. Only a
+      // still, brief, single finger means "this one".
+      if (event.type === 'pointercancel' || !isTap(candidate)) return;
+      const found = districtAt(at);
+      if (tapResolves(found?.properties.name ?? null, hovered) === 'dismiss') clearHover();
+      else if (found !== null) showDistrict(found, at);
+    });
 
   let project = fitProjection(geography.provinces, { width: 1, height: 1, padding: 0 });
   let size = { width: 0, height: 0 };
@@ -498,6 +547,32 @@ export function renderMap(
     };
   }
 
+  /**
+   * The ground the docked tooltip is standing on, for the label layout to keep off (#33).
+   *
+   * Empty on every wide screen and empty whenever no district is showing, so on a desktop this
+   * costs the layout nothing at all. On a phone the box is an opaque bar across the top of the
+   * frame — which is northern Pakistan, where Gilgit-Baltistan, Azad Kashmir and the ceasefire
+   * line's own name sit — and the four-step yielding order has to see it, or a reader loses both
+   * the box and the name it landed on. Measured from the element rather than assumed, because its
+   * height is whatever the district's own figures came to.
+   */
+  function dockedTooltip(): readonly { x0: number; y0: number; x1: number; y1: number }[] {
+    const node = tooltip.node() as HTMLElement | null;
+    if (node === null || hovered === null || !isSheetLayout()) return [];
+    const well = container.getBoundingClientRect();
+    const box = node.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) return [];
+    return [
+      {
+        x0: box.left - well.left,
+        y0: box.top - well.top,
+        x1: box.right - well.left,
+        y1: box.bottom - well.top,
+      },
+    ];
+  }
+
   function drawLabels(transform: ZoomTransform): void {
     // The dots are drawn unconditionally; only their names take part in the layout below. That is
     // the yielding rule the ceasefire line's name already follows, applied to a point: the datum
@@ -530,7 +605,7 @@ export function renderMap(
       return [box];
     });
 
-    const placed = layoutLabels(boxes, { bounds: size, gap: 3 });
+    const placed = layoutLabels(boxes, { bounds: size, gap: 3, occupied: dockedTooltip() });
     labelLayer
       .selectAll<SVGTextElement, { key: string; x: number; y: number }>('text')
       .data(placed, (label) => label.key)
@@ -560,7 +635,16 @@ export function renderMap(
           ];
     });
 
-    const line = locLabel(transform, taken);
+    /*
+     * The docked box is put to the ceasefire line's name as well, and not only to the tier names.
+     *
+     * It is a separate placement path with its own `taken` list, and leaving it out was worse than
+     * doing nothing: the tier names yielded from under the bar, which freed the north, and the
+     * line's name then walked into exactly that space and set itself — at full length — underneath
+     * an opaque box. The four-step order ends in "no name at all" rather than in a name a reader
+     * cannot see (D12).
+     */
+    const line = locLabel(transform, [...dockedTooltip(), ...taken]);
     locLabelLayer
       .selectAll<SVGTextElement, PlacedLineLabel>('text')
       .data(line === null ? [] : [line])
@@ -624,6 +708,28 @@ export function renderMap(
         .attr('d', (d) => d.d);
     }
     place(at);
+    relayoutUnderDock();
+  }
+
+  /**
+   * True only while `draw()` is rebuilding, so the two paths do not lay the names out twice.
+   *
+   * `draw()` clears the hover on its way through and lays the labels out itself at the end, against
+   * a projection it has not refitted yet at the moment it clears. Without this the clear would run
+   * a layout against the *old* cone and have it immediately thrown away.
+   */
+  let redrawing = false;
+
+  /**
+   * The docked box appeared or went away, so the names get another go at the frame.
+   *
+   * Only on a phone, and only a label pass — no re-projection and no re-fit, which is the whole
+   * reason this is cheap enough to run on a tap. On a desktop the tooltip follows the pointer and
+   * takes part in no layout, so this does nothing at all.
+   */
+  function relayoutUnderDock(): void {
+    if (redrawing || !isSheetLayout()) return;
+    drawLabels(zoomTransformOf());
   }
 
   /**
@@ -635,16 +741,34 @@ export function renderMap(
    */
   function place(at: [number, number]): void {
     const node = tooltip.node() as HTMLElement;
+    /*
+     * On a phone the box docks to the top of the map instead of following the pointer (#33), and
+     * the stylesheet puts it there — so the inline placement is *removed* rather than recomputed.
+     *
+     * Two reasons, and the first is not cosmetic. The pointer is a finger, and it is standing on
+     * the district whose figures the box is about: a tooltip beside the finger is a tooltip over
+     * the answer. The second is that the sheet overlays the lower part of the map, so a box placed
+     * against the map's own frame can be clamped perfectly inside it and still come out underneath
+     * the card — clipped at whichever line the sheet happens to reach.
+     */
+    if (isSheetLayout()) {
+      node.style.removeProperty('left');
+      node.style.removeProperty('top');
+      return;
+    }
     const placed = placeTooltip(at, tooltipSize, size, { gap: 14, margin: 8 });
     node.style.left = `${placed.x}px`;
     node.style.top = `${placed.y}px`;
   }
 
   function clearHover(): void {
+    const wasShowing = hovered !== null;
     hovered = null;
     tooltip.classed('is-shown', false).text('');
     readout.text('');
     hoverLayer.selectAll('path').remove();
+    // The names that gave way to the docked box get their ground back.
+    if (wasShowing) relayoutUnderDock();
   }
 
   /**
@@ -698,6 +822,15 @@ export function renderMap(
   function draw(): void {
     const { width, height } = container.getBoundingClientRect();
     if (width < 1 || height < 1) return;
+    redrawing = true;
+    try {
+      redraw(width, height);
+    } finally {
+      redrawing = false;
+    }
+  }
+
+  function redraw(width: number, height: number): void {
     size = { width, height };
     // The washes were drawn against the old projection, and the tooltip was placed against the
     // old frame. Both are about a pointer that is no longer where it was.

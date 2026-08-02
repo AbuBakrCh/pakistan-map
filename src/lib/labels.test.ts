@@ -390,6 +390,33 @@ describe('layoutLabels', () => {
     ]);
   });
 
+  it('keeps names out from under ground something else is already standing on', () => {
+    /*
+     * The docked tooltip (#33). On a phone the box does not follow the pointer — it is a bar
+     * across the top of the frame, which is northern Pakistan: Gilgit-Baltistan, Azad Kashmir and
+     * the ceasefire line's own name. The layout cannot see a `<div>`, so without seeding it the
+     * four-step yielding order would be bypassed by an element outside its scoring and a reader
+     * would lose the box *and* the name underneath it — which is the defect that order calls out.
+     */
+    const bar = { x0: 0, y0: 0, x1: 400, y1: 120 };
+    const under = layoutLabels([box('north', 200, 60, 9)], { ...frame, occupied: [bar] });
+    // Either moved clear of the bar or given up entirely; never left underneath it.
+    const placed = under.find((label) => label.key === 'north');
+    if (placed !== undefined) expect(placed.y).toBeGreaterThan(bar.y1 - 20);
+
+    // And with nothing docked it keeps its own anchor, so this costs a desktop nothing.
+    expect(layoutLabels([box('north', 200, 60, 9)], frame)).toEqual([
+      { key: 'north', x: 200, y: 60 },
+    ]);
+  });
+
+  it('lets a name keep ground the docked bar does not reach', () => {
+    const bar = { x0: 0, y0: 0, x1: 400, y1: 40 };
+    expect(layoutLabels([box('south', 200, 260, 9)], { ...frame, occupied: [bar] })).toEqual([
+      { key: 'south', x: 200, y: 260 },
+    ]);
+  });
+
   it('keeps the higher-priority label on its anchor and moves the other off it', () => {
     const result = layoutLabels([box('small', 100, 100, 1), box('big', 104, 102, 9)], frame);
     expect(result).toContainEqual({ key: 'big', x: 104, y: 102 });
