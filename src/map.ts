@@ -60,6 +60,7 @@ import {
   type PlacedLineLabel,
 } from './lib/line-of-control.ts';
 import { fitProjection, frameInset } from './lib/projection.ts';
+import { regionRoster } from './lib/regions.ts';
 import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
 import { isSheetLayout } from './sheet.ts';
 
@@ -395,6 +396,21 @@ export function renderMap(
     .attr('class', 'readout')
     .attr('role', 'status')
     .attr('aria-live', 'polite');
+
+  /*
+   * The map's regions, in words (#35).
+   *
+   * `role="img"` means assistive technology reaches no path inside the SVG, which is right — 156
+   * unlabelled shapes announced one at a time is noise, not a map — but it leaves the graphic with
+   * one name for a whole country. So the regions are named here instead: an equivalent beside the
+   * graphic rather than a pantomime of one, and a better answer than making 156 paths focusable,
+   * which would hand a keyboard reader 156 stops and no way past them.
+   *
+   * Not `aria-live`. It is a description of what is on screen, read when a reader goes looking for
+   * it; announcing eight units every time a variant changed would talk over the readout that is
+   * actually answering them.
+   */
+  const roster = select(container).append('nav').attr('class', 'regions');
 
   const zoomBehaviour = zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, 24])
@@ -837,6 +853,34 @@ export function renderMap(
     tooltipSize = { width, height };
   }
 
+  /** The regions, renamed whenever the selection changes what is drawn. */
+  function drawRoster(): void {
+    const listed = regionRoster(
+      geography.provinces.features.map((f) => ({
+        name: f.properties.name,
+        kind: f.properties.kind,
+      })),
+      view.units === null
+        ? null
+        : view.units.features.map((f) => ({
+            name: f.properties.name,
+            kind: f.properties.kind,
+          })),
+    );
+    const node = roster.node() as HTMLElement;
+    node.replaceChildren();
+    node.setAttribute('aria-label', listed.heading);
+    const heading = node.appendChild(document.createElement('h2'));
+    heading.textContent = listed.heading;
+    const list = node.appendChild(document.createElement('ul'));
+    for (const region of listed.items) {
+      const row = list.appendChild(document.createElement('li'));
+      // Name and standing in one item rather than two, so a reader stepping the list by item is
+      // never handed a name whose constitutional standing arrives separately.
+      row.textContent = `${region.name} — ${region.standing}`;
+    }
+  }
+
   /** d3-zoom keeps the current transform on the node itself; a resize must not reset it. */
   const zoomTransformOf = (): ZoomTransform =>
     (svg.node() as SVGSVGElement & { __zoom?: ZoomTransform }).__zoom ?? zoomIdentity;
@@ -1072,6 +1116,7 @@ export function renderMap(
         `${view.description}, with the Line of Control drawn dashed. ${lineOfControl.properties.note}`,
       );
 
+    drawRoster();
     paintDistricts();
     measureShapes(geoPath(project));
     drawUnits(geoPath(project), true);

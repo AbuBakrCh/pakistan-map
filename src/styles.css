@@ -186,6 +186,33 @@ body {
   padding: 0.22rem 0.6rem;
 }
 
+/*
+ * Focus, made visible against a warm off-white canvas (#35).
+ *
+ * Stated once for every control on the page — the chips, the two action buttons, the sheet's grip,
+ * the audit panel's summary and the map itself — because a focus ring that exists on some controls
+ * and not others is worse than none: it teaches a reader to trust it, and then loses them.
+ *
+ * **Not the accent.** The accent means *a proposed province* and nothing else (D14, and the palette
+ * note above), and spending it on a focus ring would put the loudest colour on this page under a
+ * reader's cursor rather than on the one thing that does not exist yet. The map's own ink at two
+ * pixels clears 3:1 against both the paper and the sunk paper the chips sit on.
+ *
+ * `:focus-visible` rather than `:focus`, so a pointer user who clicks a chip does not get a ring
+ * they did not ask for — the ring is for the reader who cannot see where they are.
+ *
+ * The offset is outward on a chip and inward on the map, because the map is flush to its frame and
+ * an outward ring there would be clipped by the well it sits in.
+ */
+.chip:focus-visible,
+.sheet-handle:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  /* Above its neighbours, or a wrapped row of chips clips the ring against the one after it. */
+  position: relative;
+  z-index: 1;
+}
+
 /* Never the checked chip: its ink is the paper, and hovering it would set paper on paper. */
 .chip:hover:not(:disabled):not([aria-checked='true']):not([aria-pressed='true']) {
   border-color: var(--rule-province);
@@ -297,8 +324,11 @@ body {
 }
 
 .map:focus-visible {
-  outline: 1px solid var(--rule-province);
-  outline-offset: -1px;
+  /* Inward, and at the same weight as every other control: the map is flush to its frame, so an
+   * outward ring is clipped by the well. It carries `tabindex="0"` and is where a reader stands
+   * to hold Space (#22), so it is a stop that has to look like one. */
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
 }
 
 /*
@@ -744,6 +774,24 @@ body {
  * paths, so this live region is the only way a hover says anything at all; it is not drawn
  * because the tooltip is already saying it on screen.
  */
+/*
+ * The map's regions in words (#35) — available to a screen reader, never painted.
+ *
+ * The standard clip technique rather than `display: none` or `visibility: hidden`, both of which
+ * take the content out of the accessibility tree as well as off the page and would leave the
+ * regions unnamed for exactly the reader they are named for.
+ */
+.regions {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .readout {
   clip-path: inset(50%);
   height: 1px;
@@ -1644,8 +1692,13 @@ body {
 }
 
 .about-summary:hover,
+/* The audit panel's own stop on the ring. Colour alone is not a focus state — a reader who cannot
+ * tell the two inks apart is exactly the reader this ring is for — so it gets the same rule as
+ * every other control, with the colour change kept as a second signal rather than the only one. */
 .about-summary:focus-visible {
   color: var(--ink);
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .about-body {

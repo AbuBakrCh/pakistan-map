@@ -18,6 +18,7 @@ import type { AboutBadge, AboutTheData } from './lib/about.ts';
 import type { CardList, CardScorecard, CardUnit, VariantCard } from './lib/card.ts';
 import { COMPARE_HINT, COMPARE_LABEL, COMPARE_TITLE } from './lib/compare.ts';
 import { EXPORT_LABEL, EXPORT_TITLE, EXPORT_WORKING } from './lib/export-band.ts';
+import { rovingTarget, tabStop } from './lib/radio-group.ts';
 import {
   BASELINE,
   refusalLines,
@@ -62,6 +63,9 @@ export function renderControls(
   /** Download the current view as a PNG with its provenance baked in (#32, D22). */
   onExport: () => void,
 ): PanelHandle {
+  /** The basis whose variants the second group is currently offering, for the arrow keys. */
+  let active: BasisChoice | undefined;
+
   const options: BasisOption[] = [
     {
       id: null,
@@ -108,6 +112,63 @@ export function renderControls(
       onSelect(option.id === null ? BASELINE : selectBasis(choices, option.id));
     });
 
+  /*
+   * The keyboard half of `role="radiogroup"` (#35).
+   *
+   * Declaring the role is a promise about the arrow keys as much as about the accessible name, and
+   * until this it was a promise the markup made and the behaviour did not keep. Selecting on move
+   * is the radio pattern rather than a shortcut: for a radio group, focus and selection travel
+   * together, and this app has no state in which a basis is focused but not chosen anyway (D13).
+   *
+   * Where a key lands is `lib/radio-group.ts`'s, under test. What is here is the plumbing, and one
+   * rule with teeth: only keys the group actually claims have their default suppressed, so `Tab`
+   * still leaves, `Enter` still activates, and **`Space` is never touched** — it belongs to the
+   * compare gesture (#22) and to the button's own click, and taking it here would undo the care
+   * `holdsCompare` takes to leave it alone.
+   */
+  /**
+   * The roving tabindex: one stop per group, on whatever is checked (#35).
+   *
+   * A `disabled` button is already out of the ring, so the stop is computed over the ones that can
+   * take focus — otherwise a group whose checked option is unavailable would have a tab stop the
+   * browser refuses to enter, and the whole group would become unreachable.
+   */
+  function rove(buttons: readonly HTMLButtonElement[], checked: number): void {
+    const skip = buttons.flatMap((button, index) => (button.disabled ? [index] : []));
+    const stop = tabStop({
+      from: 0,
+      count: buttons.length,
+      skip,
+      checked: checked === -1 ? null : checked,
+    });
+    buttons.forEach((button, index) => {
+      button.tabIndex = index === stop ? 0 : -1;
+    });
+  }
+
+  function steerGroup(
+    group: d3.Selection<HTMLDivElement, unknown, null, undefined>,
+    activate: (index: number) => void,
+  ): void {
+    group.on('keydown', (event: KeyboardEvent) => {
+      const buttons = [...group.selectAll<HTMLButtonElement, unknown>('button').nodes()];
+      const from = buttons.findIndex((button) => button === event.target);
+      if (from === -1) return;
+      const skip = buttons.flatMap((button, index) => (button.disabled ? [index] : []));
+      const to = rovingTarget(event.key, { from, count: buttons.length, skip });
+      if (to === null) return;
+      event.preventDefault();
+      buttons[to]?.focus();
+      activate(to);
+    });
+  }
+
+  steerGroup(basisList, (index) => {
+    const option = options[index];
+    if (option === undefined || !option.available) return;
+    onSelect(option.id === null ? BASELINE : selectBasis(choices, option.id));
+  });
+
   // Why the dimmed chips are dimmed, printed rather than left in their `title`. A `title` is
   // reachable by a hovering mouse and by nothing else, and a disabled control takes no tap — so
   // on the 390px bar this line is the whole of "offered and refused out loud".
@@ -127,6 +188,11 @@ export function renderControls(
   // says one thing while its own accessible name says another gives a reader two terms for it.
   variants.append('span').attr('class', 'control-label').text('Variant');
   const variantList = variants.append('div').attr('class', 'control-options');
+  steerGroup(variantList, (index) => {
+    const list = active?.variants ?? [];
+    const variant = list[index];
+    if (variant !== undefined) onSelect(selectVariant(scenarios, variant.id));
+  });
 
   /*
    * Compare (#22). Not a radio and not a member of either group: it does not choose what the map
@@ -192,12 +258,15 @@ export function renderControls(
     basisButtons.attr('aria-checked', (option) =>
       option.id === (selection?.basis ?? null) ? 'true' : 'false',
     );
+    // One stop on the tab ring per group, at whatever is currently true (#35). Tabbing through
+    // five bases and then eight variants to reach the map is a journey nobody finishes.
+    rove(basisButtons.nodes(), options.findIndex((o) => o.id === (selection?.basis ?? null)));
 
     // The button shows the state the key can put it in as well, or a reader who held Space would
     // watch an unpressed button while the map beside it was plainly comparing.
     compareButton.attr('aria-pressed', comparing ? 'true' : 'false');
 
-    const active = choices.find((choice) => choice.basis.id === selection?.basis);
+    active = choices.find((choice) => choice.basis.id === selection?.basis);
     // Empty at the baseline: an empty proposal row is not hidden but collapsed, so the controls
     // do not change height as a basis is chosen and the map below them does not jump.
     root.attr('data-variants', active === undefined ? 'none' : 'some');
@@ -224,6 +293,11 @@ export function renderControls(
           tagline.textContent = variant.tagline;
         }
       });
+
+    rove(
+      [...variantList.selectAll<HTMLButtonElement, unknown>('button').nodes()],
+      (active?.variants ?? []).findIndex((variant) => variant.id === selection?.variant),
+    );
   }
 
   show(BASELINE, false);
