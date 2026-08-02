@@ -44,6 +44,7 @@ import type {
   VariantRecord,
 } from '../bundle.ts';
 import { groupDigits } from './figures.ts';
+import { figuresWithheld } from './tooltip.ts';
 
 /**
  * What each provenance word means, in the reader's terms rather than the pipeline's.
@@ -339,8 +340,9 @@ function unitDistricts(unit: VariantRecord['units'][number]): string {
  */
 function unitsOf(variant: VariantRecord): readonly CardUnit[] {
   const rank: Readonly<Record<UnitKind, number>> = { proposed: 0, unchanged: 1, territory: 2 };
-  // A property of the variant, read once: whether *this card* prints a population anywhere.
-  const withholding = !variant.statistics.modernFigures;
+  // A property of the variant, asked once and asked of the one predicate that answers it (#48):
+  // whether *this card* prints a population anywhere.
+  const withholding = figuresWithheld(variant) !== null;
   return [...variant.units]
     .map((unit, index) => ({ unit, index }))
     .sort((a, b) => rank[a.unit.kind] - rank[b.unit.kind] || a.index - b.index)
@@ -584,7 +586,7 @@ export function variantCard(scenarios: ScenarioBundle, variant: VariantRecord): 
     opposition: oppositionOf(variant),
     units: unitsOf(variant),
     scorecard: scorecardOf(variant),
-    figuresWithheld: variant.statistics.modernFigures ? null : variant.statistics.reason,
+    figuresWithheld: figuresWithheld(variant),
     footnotes: footnotesOf(variant),
     notes: variant.notes.map((note) => ({ label: note.label, text: note.text })),
     sources: variant.sources.map((source) => ({ label: source.label, url: source.url ?? null })),

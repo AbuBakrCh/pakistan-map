@@ -21,7 +21,7 @@
  * by whether the artifact has a row for it, which is the question actually being asked.
  */
 
-import type { CensusStatistics, UnitKind } from '../bundle.ts';
+import type { CensusStatistics, UnitKind, VariantRecord } from '../bundle.ts';
 import { groupDigits } from './figures.ts';
 import { describeKind, type DistrictProperties, type ProvinceKind } from './geography.ts';
 
@@ -97,6 +97,24 @@ export interface UnitMembership {
    * which is exactly how H2 came to print a 2023 population beside a princely state of 1947.
    */
   readonly withholds?: string | null;
+}
+
+/**
+ * Whether this variant attaches 2023 figures to its boundaries, and if not, why — the reason in the
+ * variant's own words, or `null` where it attaches them (#48).
+ *
+ * One derivation, exported, because the question has two surfaces and they must give one answer.
+ * The card prints the reason above its units and the tooltip prints it where the district's figures
+ * would be, and both used to read the field for themselves — as did `main.ts`, which has no test
+ * seam, so the copy nothing asserted was the one most able to drift. It lives beside the tooltip for
+ * the reason `UNIT_STANDING` does: the standing words are imported rather than retyped so a reader
+ * who hovers a district and then reads the card is never given two sentences for one absence.
+ *
+ * Narrower than a whole `VariantRecord` on purpose — the withholding is a property of that one
+ * field, and a predicate that asked for the rest would be asserting more than it reads.
+ */
+export function figuresWithheld(variant: Pick<VariantRecord, 'statistics'>): string | null {
+  return variant.statistics.modernFigures ? null : variant.statistics.reason;
 }
 
 /**

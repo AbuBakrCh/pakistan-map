@@ -52,7 +52,7 @@ import {
   variantOf,
   type Selection,
 } from './lib/selection.ts';
-import type { DistrictShading, UnitMembership } from './lib/tooltip.ts';
+import { figuresWithheld, type DistrictShading, type UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
@@ -155,9 +155,9 @@ function viewFor(selection: Selection): MapView {
         universe: variant.partition.universe,
         unit: unit === undefined ? null : { name: unit.name, kind: unit.kind },
         // A variant that attaches no 2023 figures says so on every district it covers (H2, #30).
-        // Read off the bundle rather than decided here, so the tooltip and the card give one
-        // reason and not two.
-        withholds: variant.statistics.modernFigures ? null : variant.statistics.reason,
+        // Asked of the one predicate the card asks (#48), so the tooltip and the card give one
+        // reason and not two — this file decides it no more than it composes a sentence.
+        withholds: figuresWithheld(variant),
       };
     },
     description,

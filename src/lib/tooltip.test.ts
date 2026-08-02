@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
 import statistics from '../../data/bundle/statistics.json';
 import developmentIndex from '../../data/bundle/development-index.json';
-import type { CensusStatistics, UnitKind } from '../bundle.ts';
+import scenarios from '../../data/bundle/scenarios.json';
+import type { CensusStatistics, ScenarioBundle, UnitKind } from '../bundle.ts';
+import { variantCard } from './card.ts';
 import { readDistricts, type ProvinceKind } from './geography.ts';
 import {
   districtTooltip,
+  figuresWithheld,
   placeTooltip,
   spokenTooltip,
   type DistrictShading,
@@ -26,6 +29,7 @@ const kinds = new Map<string, ProvinceKind>(
 );
 
 const index = developmentIndex as unknown as DevelopmentIndexBundle;
+const scenarioBundle = scenarios as unknown as ScenarioBundle;
 
 /**
  * The Development basis's answer for one district, as `main.ts` assembles it from the committed
@@ -246,6 +250,58 @@ describe('districtTooltip — a district under a variant that attaches no 2023 f
     expect(underL1.coverage).toBe('counted');
     expect(figure(underL1, 'Population')?.value).toBeTruthy();
     expect(figure(underL1, 'Dominant mother tongue')?.value).toBeTruthy();
+  });
+});
+
+describe('figuresWithheld — one answer to the withholding question, not three (#48)', () => {
+  /*
+   * The rule "is this variant withholding its modern figures, and what is its reason?" was derived
+   * three times — twice in `card.ts` and once in `main.ts`, which has no test seam by design, so
+   * the tooltip's copy was the one nothing asserted. What is held here is not that each surface
+   * matches a literal: pinned to literals both pass while two vocabularies are live, which is the
+   * exact failure the regions list's standing words are imported rather than retyped to prevent.
+   * It is that the card's sentence and the tooltip's are the *same value*, and that the value is
+   * the predicate's — the one `main.ts` now hands over rather than deriving.
+   */
+  const h2 = scenarioBundle.variants.find((variant) => variant.id === 'h2');
+  if (h2 === undefined) throw new Error('h2 is not a variant in the committed bundle');
+
+  it('is what the card prints and what the tooltip prints, from one derivation', () => {
+    const withholds = figuresWithheld(h2);
+    expect(withholds).not.toBeNull();
+
+    // The membership `main.ts` assembles, with the reason taken from the predicate rather than
+    // from a ternary of its own.
+    const bahawalpur = tooltipFor('Bahawalpur', {
+      variant: h2.name,
+      universe: h2.partition.universe,
+      unit: { name: 'Bahawalpur', kind: 'proposed' },
+      withholds,
+    });
+    const card = variantCard(scenarioBundle, h2);
+
+    expect(card.figuresWithheld).toBe(withholds);
+    expect(bahawalpur.absence).toBe(withholds);
+    // The two surfaces, held against each other rather than each against its own string. An edit
+    // to one — sentence-cased, trimmed, given a fallback — cannot leave this green.
+    expect(bahawalpur.absence).toBe(card.figuresWithheld);
+  });
+
+  it('is null for the sixteen variants that attach their figures, and says so on both surfaces', () => {
+    const l1 = scenarioBundle.variants.find((variant) => variant.id === 'l1');
+    if (l1 === undefined) throw new Error('l1 is not a variant in the committed bundle');
+    expect(figuresWithheld(l1)).toBeNull();
+    expect(variantCard(scenarioBundle, l1).figuresWithheld).toBeNull();
+    const underL1 = tooltipFor('Bahawalpur', {
+      ...inUnit('South Punjab', 'proposed'),
+      withholds: figuresWithheld(l1),
+    });
+    expect(underL1.coverage).toBe('counted');
+
+    // And exactly one variant in the shipped set withholds, so the predicate is not an exclusion
+    // that never excludes anything.
+    const withholding = scenarioBundle.variants.filter((v) => figuresWithheld(v) !== null);
+    expect(withholding.map((v) => v.id)).toEqual(['h2']);
   });
 });
 
