@@ -3,8 +3,10 @@
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
 **Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
-module), pipeline and bundle built, and the map built through its **three strata with the basis
-and variant selectors** (#18), over its **neighbour silhouettes and city dots** (#8).
+module), pipeline and bundle built, the map built through its **three strata with the basis
+and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
+**variant card** rendering beside it (#19), and the **adjacency graph** flagging each unit's
+contiguity (#16).
 
 ---
 
@@ -278,6 +280,7 @@ What it holds:
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
 | The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
+| The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
@@ -376,9 +379,39 @@ over.
 **Compare** — hold `Space` (or tap Compare) to drop strata 1 and 3 and restore the real map
 at full strength. The *only* map comparison; no side-by-side, no cross-variant table.
 
-**Variant card** — name, basis badge, provenance badge, unit count, 2–3 sentence rationale,
-**Advocated by** *and* **Opposed by**, and a scorecard (population spread, largest:smallest
-ratio, districts moved, non-contiguous units).
+**Variant card (#19)** — name and tagline, the **basis** badge beside the **provenance** badges,
+unit count, the 2–3 sentence rationale, the proposal's real-world status, where the boundary came
+from, **Advocated by** *and* **Opposed by**, the units, the footnotes and the sources. It arrives
+and leaves with the outlines: at the baseline there is no proposal on screen and no card either.
+
+Four things it refuses to do quietly. **A missing opposition line prints as missing data**, not as
+silence — the build refuses an empty `opposedBy`, so a card in that state came from a bundle this
+build did not write, and dropping the line would turn a gap in our data into the finding that the
+proposal is uncontested. An **unadvocated** variant says so in the advocacy's own words (L7 and D1
+apply a rule nobody proposes the output of) rather than showing an empty list. A **badge outside
+the closed vocabulary throws**, naming the variant and the word, and every badge is glossed *on the
+card* rather than in a `title`, because the hard bar is a 390px phone and a `title` is reachable
+there by nothing. And **both district counts are printed wherever a claim and the map disagree** —
+South Punjab as 13 claimed and 11 drawn, with the folds named — with the footnote that explains the
+difference set above the asides, since a reader counting districts on screen has found the most
+alarming-looking thing on the card and is owed the answer before the context.
+
+Units are listed **proposed first**, not in partition order, which is remainders after the claims
+they are the remainder of; alternative names sit beside the advocates' own name and never instead
+of it. Where the variant's own provenance disagrees with its basis's — L1 is a Language variant
+whose boundary is `documented`, not `census · proxy` — the card says why, or the disagreement reads
+as a mistake. Nothing on it calls Islamabad a province: the unit vocabulary has no word for a
+capital territory, so an `unchanged` unit is said to be *unchanged from the current map*.
+
+Two columns where there is room, stacked in the same order where there is not, and **not animated**
+— the map cross-fades because a shape moves and the eye follows it; prose faded in over a third of
+a second is prose the reader waits for. The words are decided in `src/lib/card.ts`, under test;
+`src/panel.ts` composes no sentence of its own.
+
+The **scorecard** (population spread, largest:smallest ratio, districts moved, non-contiguous
+units) is **#20's**, and waits on #16's adjacency graph and per-variant derived statistics. Its
+seam is `VariantCard.scorecard` — declared, null, and rendered between the units it summarises and
+the footnotes that qualify them.
 
 Contiguity is **flagged, never blocked** — computed at build time off the district adjacency graph
 (#16) and carried on the unit, so the card names the stranded districts rather than reporting a
