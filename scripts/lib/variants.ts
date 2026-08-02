@@ -1713,6 +1713,22 @@ function ruleFootnotes(partition: GeneratedPartition): readonly Footnote[] {
   ];
 }
 
+/**
+ * Where a rule-drawn boundary came from, which for three of the four is the same two inputs.
+ *
+ * A `composition.from` is a provenance line and is printed on the card; four copies of one string
+ * is four places for a fifth input to be added to three of them.
+ */
+const RULE_INPUTS =
+  'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
+  'data/bundle/adjacency.json';
+
+/** A4 measures a distance as well, so its boundary is a function of the drawn geometry too. */
+const RULE_INPUTS_WITH_CENTROIDS =
+  'PBS 2023 Digital Census district populations, the district adjacency graph in ' +
+  'data/bundle/adjacency.json, and district centroids taken from the geometry in ' +
+  'data/bundle/geography.topojson.json';
+
 /** What every rule-drawn card cites, since all four read the same three files. */
 const RULE_SOURCES: NonEmpty<Source> = [
   {
@@ -1787,9 +1803,7 @@ function populationCeiling(context: DerivationContext): Variant {
     composition: {
       kind: 'derived',
       rule: partition.statement,
-      from:
-        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
-        'data/bundle/adjacency.json',
+      from: RULE_INPUTS,
     },
     units: withTerritories(partition),
     footnotes: [
@@ -1855,9 +1869,7 @@ function twelveUnits(context: DerivationContext): Variant {
     composition: {
       kind: 'derived',
       rule: partition.statement,
-      from:
-        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
-        'data/bundle/adjacency.json',
+      from: RULE_INPUTS,
     },
     units: withTerritories(partition),
     footnotes: ruleFootnotes(partition),
@@ -1916,9 +1928,7 @@ function fourteenUnits(context: DerivationContext): Variant {
     composition: {
       kind: 'derived',
       rule: partition.statement,
-      from:
-        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
-        'data/bundle/adjacency.json',
+      from: RULE_INPUTS,
     },
     units: withTerritories(partition),
     footnotes: [
@@ -1993,10 +2003,7 @@ function distanceToCapital(context: DerivationContext): Variant {
     composition: {
       kind: 'derived',
       rule: partition.statement,
-      from:
-        'PBS 2023 Digital Census district populations, the district adjacency graph in ' +
-        'data/bundle/adjacency.json, and district centroids taken from the geometry in ' +
-        'data/bundle/geography.topojson.json',
+      from: RULE_INPUTS_WITH_CENTROIDS,
     },
     units: withTerritories(partition),
     footnotes: [

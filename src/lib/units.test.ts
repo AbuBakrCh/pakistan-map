@@ -277,6 +277,7 @@ describe('the units on the ground', () => {
     // because a unit name set outside its own shape is the one label error a reader reads as a
     // fact. The rule-drawn administrative units (#28) are the awkward ones now — a unit grown
     // outward from a capital takes whatever shape the arithmetic leaves it, and several are long
-    // and bent in ways no proposal would draw on purpose.
-  }, 120_000);
+    // and bent in ways no proposal would draw on purpose. 60s against a ~13s run: headroom for a
+    // slower machine, not four times the budget the work actually needs.
+  }, 60_000);
 });

@@ -1100,7 +1100,9 @@ describe('bundle administrative variants', () => {
       populations,
       centroids,
     });
-    expect(problems).toEqual([]);
+    // Labelled with the rule, because four maps are re-drawn here and a bare empty-array failure
+    // would say a partition refused something without saying which one.
+    expect({ rule: rule.kind, problems }).toEqual({ rule: rule.kind, problems: [] });
     if (partition === null) throw new Error(`${rule.kind} drew nothing`);
     return partition;
   };

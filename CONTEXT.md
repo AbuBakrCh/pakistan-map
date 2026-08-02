@@ -24,8 +24,9 @@ _Avoid_: state, region
 
 **Territory**:
 A first-level entity that is not constitutionally a province — Azad Kashmir, Gilgit-Baltistan,
-Islamabad Capital Territory. Styled distinctly from provinces because calling them provinces
-is factually wrong.
+Islamabad Capital Territory. Styled distinctly from provinces on the base map because calling
+them provinces is factually wrong. A variant may nonetheless propose that one become a province;
+what it carries is a proposal, and the constitutional fact is unchanged by it.
 _Avoid_: province, region, area
 
 **Line of Control**:
@@ -58,6 +59,13 @@ _Avoid_: default, current map, home, reset state
 The invariant that a variant assigns every district to exactly one unit. No gaps, no overlaps,
 no unassigned territory.
 _Avoid_: coverage, assignment, allocation
+
+**Promotion**:
+A unit that is one territory's whole district set, under that territory's exact name, proposed
+as a province. A change of standing and not of ground: nothing is taken, no boundary moves, and
+nought districts are counted as moved. The one shape the territory-claim rule admits, and the
+only sense in which this app draws a territory as a province.
+_Avoid_: claim, annexation, upgrade, merge
 
 **Compare**:
 The transient gesture (hold `Space`, or the button) that hides the data shading and unit

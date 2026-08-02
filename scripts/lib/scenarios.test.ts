@@ -345,6 +345,29 @@ describe('a territory promoted, which is a change of standing and not a claim (#
     expect(problems.join('\n')).toMatch(/Northern Province/);
     expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
   });
+
+  it('refuses a whole territory renamed by a suffix, which `normalizeName` would have let past', () => {
+    // The same condition as above, at the one spelling that nearly slips through it. Every other
+    // name join in this repo goes through `normalizeName`, which strips `District`/`Division` as
+    // noise; here the suffix is the rename. "Gilgit-Baltistan Division" is not the territory's own
+    // name — it is a first-level entity restyled as a second-level one — and the scorecard would
+    // report ten districts moved. So the comparison is exact, and this is the test that says so.
+    const suffixed = promotion({ id: 'gb-division', name: 'Gilgit-Baltistan Division' });
+    const { problems } = validateVariant(variantOf(around(suffixed)));
+    expect(problems.join('\n')).toMatch(/Gilgit-Baltistan Division/);
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+  });
+
+  it('refuses a whole territory held as `unchanged`, since a promotion is a proposal', () => {
+    // The carve-out is for the variant that argues the standing should change; a unit holding the
+    // same ground under the same name while claiming nothing about it is the current map, and
+    // `intactProvince` already writes that unit as a `territory` so nothing calls it a province by
+    // accident. Admitting `unchanged` here would let a variant take the ground and say nothing.
+    const unchanged = promotion({ kind: 'unchanged' });
+    const { problems } = validateVariant(variantOf(around(unchanged)));
+    expect(problems.join('\n')).toMatch(/Gilgit-Baltistan/);
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+  });
 });
 
 describe('the fields a variant card renders', () => {

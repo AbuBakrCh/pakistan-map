@@ -542,23 +542,35 @@ const TERRITORY_DISTRICT_SETS: readonly { readonly name: string; readonly distri
  *  - **Exactly one territory, whole.** A unit taking nine of Gilgit-Baltistan's ten is reaching
  *    in; a unit taking ten of them and Muzaffargarh besides has a population that is short. Both
  *    are refused, naming the district, as before.
- *  - **Under that territory's own name.** "Districts moved" is decided on the unit's name
+ *  - **Under that territory's own name, exactly.** "Districts moved" is decided on the unit's name
  *    (`scorecard.ts`), so a whole territory renamed reads as ten districts changing hands when
  *    none has. Requiring the name is what keeps the scorecard's answer true rather than
- *    coincidental. The cost is stated: H3's *Northern Areas* would not qualify as a promotion —
+ *    coincidental. The comparison is string equality and deliberately **not** `normalizeName`,
+ *    which strips a `District`/`Division` suffix: "Gilgit-Baltistan Division" is a rename, and a
+ *    comparator that reads it as the territory's own name would admit the very thing this
+ *    condition is written to catch. `scorecard.ts` keeps `normalizeName`, which is the looser of
+ *    the two on purpose — it matches a unit against the province names the roster carries, where
+ *    a suffix is noise. The two cannot disagree about a promotion: exact equality is strictly
+ *    narrower, so anything admitted here also carries its province forward there and counts nought
+ *    districts moved. The cost is stated: H3's *Northern Areas* would not qualify as a promotion —
  *    it does not need to, being a `territory`, but a variant that promoted the territory *and*
  *    renamed it would be refused and would have to say which of the two it meant.
+ *  - **`proposed`, and nothing else.** A unit holding a whole territory under its own name as
+ *    `unchanged` is the current map, not a promotion, and nothing about it needs a carve-out;
+ *    `intactProvince` already writes that unit as a `territory` so that nothing calls the two by
+ *    accident. Admitting other kinds here would let a variant hold the ground while saying
+ *    nothing about its standing, which is the whole content A5 has.
  *  - **`forbid` is unchanged.** The policy is still the answer to 2b and both settings are still
  *    tested; this narrows what counts as a *claim*, and says so out loud, rather than answering a
  *    constitutional question by widening a switch.
  */
 function promotedTerritoryOf(unit: Unit, districts: readonly string[]): string | null {
-  if (unit.kind === 'territory') return null;
+  if (unit.kind !== 'proposed') return null;
   const held = new Set(districts);
   for (const territory of TERRITORY_DISTRICT_SETS) {
     if (held.size !== territory.districts.size) continue;
     if (![...held].every((district) => territory.districts.has(district))) continue;
-    if (normalizeName(unit.name) !== normalizeName(territory.name)) continue;
+    if (unit.name !== territory.name) continue;
     return territory.name;
   }
   return null;

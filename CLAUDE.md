@@ -221,7 +221,7 @@ Two things a partition has to state out loud, because both have two defensible a
 | Question | How it is expressed | Current answer |
 |---|---|---|
 | **Which district set must a partition cover?** | `universe` on the variant — `drawn` (all 156, nothing left uncoloured) or `census` (the 136 with statistics; AJK and GB outside the partition, drawn and named and in no unit) | Per variant; all ten written so far declare `drawn` |
-| **May a variant claim AJK or GB territory?** (open item 2b) | `TERRITORY_CLAIM_POLICY` in `scenarios.ts`, both settings tested | **`forbid`** — a `proposed` unit taking a territory district fails the build, naming it. Those districts carry no PBS statistic, so the unit's population would be short by an unknowable amount. A product decision, not a technical one: settling it is a one-line change |
+| **May a variant claim AJK or GB territory?** (open item 2b) | `TERRITORY_CLAIM_POLICY` in `scenarios.ts`, both settings tested | **`forbid`** — a non-`territory` unit taking a territory district fails the build, naming it. Those districts carry no PBS statistic, so the unit's population would be short by an unknowable amount. One narrow exception, and only one: a **promotion** — a `proposed` unit that is *exactly* one territory's whole district set under that territory's exact name (`promotedTerritoryOf`), where nothing is taken, no boundary moves and the population is not short but absent. Nine of ten, ten plus a Punjab district, the same ten renamed, and the same ten held as `unchanged` are all still refused by name. The policy itself is a product decision, not a technical one: settling it is a one-line change |
 
 **A unit is drawn by dissolving its districts, and the dissolve is baked** (#15). An outline is
 the merge of its districts' *arcs*, never a union of their polygons: the geography bundle draws
@@ -342,9 +342,21 @@ of them stays inside a unit carrying the name of the province it is in today.
 **A5 is the variant that redraws nothing, and the one that settles open item 2b's near miss**
 (#28). Gilgit-Baltistan and Azad Jammu & Kashmir become provinces; every boundary stays where it
 is, the ceasefire line included, and the scorecard reads **nought districts moved** — the only
-variant in the app of which that is true. They are drawn as `proposed` rather than as `territory`,
-because a card arguing for provincial status over a map still hatching the ground as a territory
-would be arguing with itself. That is admitted with `TERRITORY_CLAIM_POLICY` still at **`forbid`**:
+variant in the app of which that is true. Their **units** are `proposed` rather than `territory`, so
+each takes the accent on its outline and on its name and is said to be a proposed province in the
+card, the tooltip and the legend — which is the whole of what A5 argues, and the reason the
+variant's scorecard counts nought districts moved rather than twenty.
+
+**The hatched ground beneath them does not follow the unit kind, and this is a stated cost rather
+than a claim.** The hatch is stratum 1 and the territory stroke stratum 2, and both are keyed on the
+*geography bundle's* province kind — `land-${kind}` in `map.ts` against `.land-territory`, and the
+`province-territory` rule beneath it — which is a fact about what Pakistan administers today and is
+the same under every variant, exactly as the faded current boundaries are. So under A5 the two
+territories are outlined and named as proposed provinces over ground still textured as territory.
+The alternative is not obviously better: making the base map's texture answer to the active variant
+would make stratum 1 a function of the selection, which is what D14 exists to prevent, and it would
+mean the one variant that redraws nothing changed the drawing. It is left as it is, said here rather
+than in the prose of a card. That is admitted with `TERRITORY_CLAIM_POLICY` still at **`forbid`**:
 see open item 2b for why a promotion is not a claim. The two halves are **not equally sourced** and
 the card says so at length — GB has a dated announcement, a drafted amendment and a resolution of
 its own assembly; AJK has none of the three and provincial status for it is not government policy —

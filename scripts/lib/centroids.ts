@@ -14,6 +14,7 @@
  */
 
 import { geoCentroid } from 'd3';
+import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import { feature } from 'topojson-client';
 import type { Topology } from 'topojson-specification';
 import type { Centroid } from './partitioner.ts';
@@ -32,14 +33,29 @@ export function districtCentroids(topology: Topology): ReadonlyMap<string, Centr
         'of. A distance rule measured against nothing would place every district at the capital.',
     );
   }
-  const collection = feature(topology, object) as unknown as {
-    readonly features: readonly { readonly properties: Record<string, unknown> }[];
-  };
+  // `topojson-client` types `feature` as returning a feature *or* a collection depending on the
+  // object it is handed, and it cannot know which from a `GeometryObject` typed this widely; the
+  // districts object is a `GeometryCollection`, so the answer is a `FeatureCollection`.
+  const collection = feature(topology, object) as FeatureCollection<Geometry, GeoJsonProperties>;
   const found = new Map<string, Centroid>();
   for (const shape of collection.features) {
-    const name = shape.properties['name'];
-    if (typeof name !== 'string') continue;
-    found.set(name, geoCentroid(shape as never) as unknown as Centroid);
+    const name = shape.properties?.['name'];
+    if (typeof name !== 'string') {
+      throw new Error(
+        `the geography bundle draws a district with no \`name\` property (${describe(shape)}), so ` +
+          'there is nothing to key its centroid on. Skipping it would drop a district out of ' +
+          'every distance rule silently, which is how the district set drifts.',
+      );
+    }
+    // `geoCentroid` takes d3-geo's own `ExtendedFeature`, whose `geometry` excludes
+    // `GeometryCollection`; a GeoJSON `Feature<Geometry>` does not narrow to it.
+    found.set(name, geoCentroid(shape as never) as Centroid);
   }
   return found;
+}
+
+/** Enough of a nameless feature to find it in the artifact, since its name is what is missing. */
+function describe(shape: Feature<Geometry, GeoJsonProperties>): string {
+  const id = shape.id === undefined ? 'no id' : `id ${String(shape.id)}`;
+  return `${id}, ${shape.geometry?.type ?? 'no geometry'}`;
 }
