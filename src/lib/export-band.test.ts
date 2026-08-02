@@ -30,6 +30,7 @@ import {
   EXPORT_WORKING,
   NOT_OFFICIAL,
   exportFileName,
+  bandAttribution,
   bandLegend,
   bandVintage,
   exportBand,
@@ -42,6 +43,7 @@ import {
 import developmentIndex from '../../data/bundle/development-index.json';
 import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
+import { figuresWithheld } from './tooltip.ts';
 import { unitLegend } from './units.ts';
 
 const bundle = scenarios as unknown as ScenarioBundle;
@@ -156,6 +158,67 @@ describe('the six things D22 requires of the image', () => {
       expect(each.sources.length, variant.id).toBeGreaterThan(0);
       expect(each.legend.length, variant.id).toBeGreaterThan(0);
     }
+  });
+});
+
+/*
+ * The licence line is a provenance claim, and #49 found it making one for H2 that H2 disclaims:
+ * every band credited its figures to the 2023 census and stamped the image "pinned to" that
+ * vintage, on the one variant that publishes no figure at all because 2023 numbers do not describe
+ * 1947 boundaries. Held per variant rather than once, for the reason the vintage block already
+ * gives: a plausible line in the right place is a silent failure.
+ */
+describe('the attribution names no figure source the variant does not use (#49)', () => {
+  it('credits the boundaries and the district set on every band, because every picture uses both', () => {
+    // Not conditional, either half of it. The licence the boundaries come under requires the
+    // attribution, so the answer to a withheld figure is never to drop the line; and the drawn
+    // district set *is* the census's 2023 set under ADR-0001 whatever a boundary is dated, which is
+    // why even H4 dates itself by the district set rather than by the province it argues for.
+    for (const variant of [null, ...bundle.variants]) {
+      const where = variant?.id ?? 'the baseline';
+      const { attribution } = band(variant);
+      expect(attribution, where).toContain('OpenStreetMap');
+      expect(attribution, where).toContain('ODbL');
+      expect(attribution, where).toContain('Pakistan Bureau of Statistics');
+      expect(attribution, where).toContain('2023 Digital Census');
+    }
+  });
+
+  it('credits no figures and no census vintage where the variant publishes none — per variant', () => {
+    // Keyed on `figuresWithheld` (#48) rather than on H2 by name, so this holds for whatever
+    // variant next declines its figures and the suite is asking the same predicate the card and the
+    // tooltip ask. The vintage is asserted absent as the bundle's own string, since "pinned to" is
+    // only half the claim — the date beside it is the other half.
+    for (const variant of bundle.variants) {
+      const { attribution } = band(variant);
+      if (figuresWithheld(variant) !== null) {
+        expect(attribution, variant.id).not.toContain('pinned to');
+        expect(attribution, variant.id).not.toContain(census.provenance.vintage);
+        expect(attribution, variant.id).not.toContain('figures: Pakistan Bureau of Statistics');
+        expect(attribution, variant.id).toContain('district set');
+        expect(attribution, variant.id).toContain('no census figures');
+      } else {
+        expect(attribution, variant.id).toContain('figures: Pakistan Bureau of Statistics');
+        expect(attribution, variant.id).toContain(`pinned to ${census.provenance.vintage}`);
+      }
+    }
+  });
+
+  it('is exactly H2 that gets the withholding form in the shipped set', () => {
+    // A form that never fires passes a test perfectly, and one that fires everywhere would strip
+    // the census credit off sixteen bands that have earned it.
+    const withholding = bundle.variants
+      .filter((variant) => band(variant).attribution.includes('no census figures'))
+      .map((variant) => variant.id);
+    expect(withholding).toEqual(['h2']);
+  });
+
+  it('gives the baseline the ordinary form, which is what a held comparison gets too', () => {
+    // The band describes the picture and never the selection: while compare is held the map has
+    // been given the baseline whole, so the band built for it is the baseline's — and the baseline
+    // is the census's own map, with nothing withheld from it.
+    expect(band(null, null).attribution).toContain(`pinned to ${census.provenance.vintage}`);
+    expect(bandAttribution(null, census.provenance.vintage)).toBe(band(null, null).attribution);
   });
 });
 
