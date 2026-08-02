@@ -175,8 +175,18 @@ export interface MapImage {
 export interface MapHandle {
   /** Draw a view. The transition between two views is a cross-fade, never a cut. */
   show(view: MapView): void;
-  /** What an export should photograph, and the node to photograph it from. */
-  image(): MapImage;
+  /**
+   * Hold the map still and hand it to `take`, which photographs it (#32).
+   *
+   * A callback rather than a getter returning the node, because *stilling the map* and *reading the
+   * map* have to be one operation. Both of this map's animations have to be settled for the length
+   * of the read — the strata fade in CSS and the outlines fade in the renderer — and a getter would
+   * either leave the caller to suspend them (reaching into the map's own element and its own
+   * stylesheet from outside) or return a node whose styles were still moving. Owning both ends here
+   * keeps the knowledge of what animates in the one file that animates it, and guarantees the map is
+   * restored afterwards whatever `take` does.
+   */
+  photograph<T>(take: (image: MapImage) => T): T;
 }
 
 export function renderMap(
@@ -914,6 +924,31 @@ export function renderMap(
   }
 
   /**
+   * Photograph the map: still it, hand the crop and the node to `take`, and let it go again.
+   *
+   * Two animations have to be settled and neither settles the other's way. The strata fade in CSS,
+   * so the stylesheet's transitions are suspended for the length of the read and every property
+   * computes to the value it was already travelling to; stratum 3 fades in this file, so the units
+   * are simply drawn again with `animate` false, which interrupts the transition and puts each edge
+   * where it was going. Without both, pressing Download inside `--switch` of a variant change bakes
+   * one proposal half dissolved into another, with nothing in the picture to say so.
+   *
+   * The map is left exactly as it was found. Nothing here changes what is drawn — it only finishes
+   * arriving at it — and the class comes off in a `finally`, so a throw inside `take` cannot strand
+   * the live map with its transitions disabled.
+   */
+  function photograph<T>(take: (image: MapImage) => T): T {
+    const node = svg.node() as SVGSVGElement;
+    drawUnits(geoPath(project), false);
+    node.classList.add('is-exporting');
+    try {
+      return take({ svg: node, crop: cropToCountry() });
+    } finally {
+      node.classList.remove('is-exporting');
+    }
+  }
+
+  /**
    * The rectangle an export should photograph: the country, and everything named over it.
    *
    * Taken against the *current* transform rather than against the projection alone, so the picture
@@ -921,20 +956,13 @@ export function renderMap(
    * empty paper either side of it; zoomed in, the frame is already inside the country and the crop
    * is the frame. Clamped to the frame in both cases, because ground scrolled off the edge was
    * never drawn and cannot be photographed.
+   *
+   * The names are in the union and not just the land, which is the whole reason this is not one
+   * line of arithmetic: the ceasefire line's name is deliberately placed on *clear paper* beside the
+   * line, and a crop taken to the coastline would slice it off the one image that travels without a
+   * page to explain the dash.
    */
-  function image(): MapImage {
-    /*
-     * Finish the switch before photographing it.
-     *
-     * Stratum 3 fades in the renderer rather than in CSS, so suspending the stylesheet's
-     * transitions — which is what the export does — does not reach it: a unit outline caught
-     * mid-dissolve would be baked into the file at whatever opacity the frame it landed on. Drawing
-     * the units again with `animate` false interrupts the transition and puts every edge at the
-     * value it was travelling to, which is the view the reader has already chosen. Idempotent, and
-     * invisible: it completes a movement rather than changing one.
-     */
-    drawUnits(geoPath(project), false);
-
+  function cropToCountry(): MapImage['crop'] {
     const transform = zoomTransformOf();
     const [[west, north], [east, south]] = geoPath(project).bounds(geography.provinces as never);
     const [left, top] = transform.apply([west, north]);
@@ -966,13 +994,10 @@ export function renderMap(
     const x = Math.max(0, box.x0 - margin);
     const y = Math.max(0, box.y0 - margin);
     return {
-      svg: svg.node() as SVGSVGElement,
-      crop: {
-        x,
-        y,
-        width: Math.max(1, Math.min(size.width, box.x1 + margin) - x),
-        height: Math.max(1, Math.min(size.height, box.y1 + margin) - y),
-      },
+      x,
+      y,
+      width: Math.max(1, Math.min(size.width, box.x1 + margin) - x),
+      height: Math.max(1, Math.min(size.height, box.y1 + margin) - y),
     };
   }
 
@@ -980,5 +1005,5 @@ export function renderMap(
   draw();
   new ResizeObserver(draw).observe(container);
   show(initial);
-  return { show, image };
+  return { show, photograph };
 }

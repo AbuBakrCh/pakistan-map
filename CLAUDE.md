@@ -699,6 +699,16 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   line of their own. And **the badges are glossed in the image**, because a PNG has no hover and a
   provenance word a reader cannot check is a claim.
 
+  **The band describes the picture, never the selection**, which is the one place this could have
+  gone badly wrong. While compare is held the map has been given the baseline whole (#22), so a band
+  built from the selection would caption the real provinces with a proposal's name, badge it and
+  stamp it *Proposed — not official* — the single most damaging image this app could emit, and
+  exactly the thing the ticket exists to prevent. So the export asks what the *map* is showing and
+  gets the baseline's own band while the comparison is held; `shadedBy` is the renderer's answer for
+  the same reason, since three of the four bases can be selected and shade nothing, and the band
+  **refuses by name** to key a basis it has no fill for rather than printing one basis's colours
+  under another's title.
+
   Two things had to be got right about the picture rather than the words, and both are stated
   because both were wrong first. The crop is the union of the drawn land **and every name and dot
   over it**, clipped to the frame — the ceasefire line's name is deliberately placed on clear paper
@@ -706,7 +716,12 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   nothing to explain the dash. And the export **photographs a settled map, never a cross-fade**:
   the strata fade in CSS and the outlines in the renderer, so both are stilled for the length of one
   read — otherwise pressing Download within `--switch` of a variant change bakes one proposal half
-  dissolved into another, with nothing in the picture to say so.
+  dissolved into another, with nothing in the picture to say so. Stilling is `map.photograph`'s, a
+  callback rather than a getter, because stilling the map and reading it have to be one operation
+  and the knowledge of what animates belongs in the file that animates it. The band also defines its
+  **own** hatch and stipple: the map's are counter-scaled by 1/k so their texture survives a 24×
+  zoom, which is right inside the zoomed group and wrong in a legend, where it would collapse the
+  pitch to a fraction of a pixel and leave a swatch keying nothing.
 
   The words and the arithmetic are decided in `src/lib/export-band.ts`, under test; the crop is
   `map.image()`'s; `src/export-image.ts` rasterises and composes no sentence of its own, exactly as
@@ -722,7 +737,10 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
 ## Stack
 
 - **Vanilla TypeScript + Vite + D3.** No framework — runtime state is four values (active
-  basis, active variant, hovered district, compare-held); no async, no forms. Routing is the
+  basis, active variant, hovered district, compare-held); no async, no forms. The export button's
+  busy state (#32) is not a fifth: it belongs to the control, which disables itself for the length
+  of one encode, and the app is not told about it — a download in flight changes nothing about what
+  the map shows. Routing is the
   URL hash and nothing else (#23): one parser, one `hashchange` listener, no router.
 - **Inline SVG, custom projection, no basemap.** Showing only Pakistan deletes the reason to
   use a mapping library. D3 owns the SVG *and* renders the panel lists.

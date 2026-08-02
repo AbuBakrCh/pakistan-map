@@ -30,18 +30,27 @@
  *   and across the band, which is the one part of the image that must stay legible.
  */
 
-import type { Provenance, ScenarioBundle, CensusStatistics, VariantRecord } from './bundle.ts';
+import type {
+  BasisId,
+  CensusStatistics,
+  Provenance,
+  ScenarioBundle,
+  VariantRecord,
+} from './bundle.ts';
 import {
+  BAND_HATCH,
   BAND_METRICS,
+  BAND_STIPPLE,
   BAND_TYPE,
   exportBand,
+  exportFileName,
   layoutBand,
   swatchInk,
   type BandMeasurer,
   type BandPalette,
   type BandStyle,
 } from './lib/export-band.ts';
-import { SERIF, type MapHandle } from './map.ts';
+import { SERIF, type MapHandle, type MapImage } from './map.ts';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -80,23 +89,39 @@ const PAINTED = [
   'visibility',
 ] as const;
 
-const cssVariable = (name: string, fallback: string): string => {
+/**
+ * One colour, read from the stylesheet that painted the map.
+ *
+ * No hex fallback. A default here would be a second copy of the palette that could drift from
+ * `styles.css` without anything going red — and the colour it defended against is only missing if
+ * the stylesheet did not load at all, in which case the export would be wrong in every other way
+ * too. Better to fail naming the custom property than to ship an image in colours the page is not
+ * using.
+ */
+const cssVariable = (name: string): string => {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value === '' ? fallback : value;
+  if (value === '') {
+    throw new Error(
+      `The stylesheet defines no ${name}, so this image cannot be painted in the map's own ` +
+        `colours. The export matches the page or it does not go out.`,
+    );
+  }
+  return value;
 };
 
 /** The map's own colours, read from the stylesheet that painted it rather than typed again here. */
 function readPalette(): BandPalette {
   return {
-    paper: cssVariable('--paper', '#faf7f1'),
-    ink: cssVariable('--ink', '#33291d'),
-    inkSoft: cssVariable('--ink-soft', '#6d604d'),
-    inkFaint: cssVariable('--ink-faint', '#948773'),
-    land: cssVariable('--land', '#ece4d5'),
-    accent: cssVariable('--accent', '#9c3b2b'),
-    ruleUnit: cssVariable('--rule-unit', '#4a3d2c'),
-    ruleProvince: cssVariable('--rule-province', '#8a7c65'),
-    ruleDivision: cssVariable('--rule-division', '#bfb29b'),
+    paper: cssVariable('--paper'),
+    ink: cssVariable('--ink'),
+    inkSoft: cssVariable('--ink-soft'),
+    inkFaint: cssVariable('--ink-faint'),
+    land: cssVariable('--land'),
+    landHatch: cssVariable('--land-hatch'),
+    accent: cssVariable('--accent'),
+    ruleUnit: cssVariable('--rule-unit'),
+    ruleProvince: cssVariable('--rule-province'),
+    ruleDivision: cssVariable('--rule-division'),
   };
 }
 
@@ -139,6 +164,40 @@ function inlineStyles(live: Element, clone: Element): void {
   }
 }
 
+/** The territory texture, at the pitch the map draws it at 1× and at no other. */
+function bandHatch(palette: BandPalette): SVGPatternElement {
+  const pattern = element('pattern', {
+    id: BAND_HATCH,
+    patternUnits: 'userSpaceOnUse',
+    width: 5,
+    height: 5,
+    patternTransform: 'rotate(45)',
+  });
+  pattern.append(element('rect', { width: 5, height: 5, fill: palette.land }));
+  pattern.append(
+    element('line', { y2: 5, stroke: palette.landHatch, 'stroke-width': 1.6 }),
+  );
+  return pattern;
+}
+
+/** The census counted the district and named no dominant tongue. Dots, never a flat grey. */
+function bandStipple(palette: BandPalette): SVGPatternElement {
+  const pattern = element('pattern', {
+    id: BAND_STIPPLE,
+    patternUnits: 'userSpaceOnUse',
+    width: 4,
+    height: 4,
+  });
+  pattern.append(element('rect', { width: 4, height: 4, fill: palette.paper }));
+  for (const [cx, cy] of [
+    [1, 1],
+    [3, 3],
+  ] as const) {
+    pattern.append(element('circle', { cx, cy, r: 0.7, fill: palette.inkFaint }));
+  }
+  return pattern;
+}
+
 const element = <K extends keyof SVGElementTagNameMap>(
   tag: K,
   attributes: Record<string, string | number>,
@@ -155,24 +214,33 @@ export interface ExportInput {
   readonly geography: Provenance;
   /** The proposal on screen, or `null` at the baseline — which is a view and gets its own band. */
   readonly variant: VariantRecord | null;
-  readonly shaded: boolean;
+  /** Which basis's fill is on the map, or `null`. The renderer's answer, not the selection's. */
+  readonly shadedBy: BasisId | null;
 }
 
 /**
  * The whole image as one SVG document: the cropped map, a hairline, and the band beneath it.
  *
- * Assembled rather than mutated in place — the live map is never touched, so an export cannot
- * leave the reader's own view altered behind it.
+ * Assembled into a document of its own: nothing is drawn into the page, so the reader's view is the
+ * same view afterwards. The map is held still for the length of the read by `photograph`, which owns
+ * both halves of that — see `map.ts`.
  */
 function composeDocument(input: ExportInput): { svg: SVGSVGElement; width: number; height: number } {
-  const { svg: live, crop } = input.map.image();
+  return input.map.photograph(({ svg: live, crop }) => compose(input, live, crop));
+}
+
+function compose(
+  input: ExportInput,
+  live: SVGSVGElement,
+  crop: MapImage['crop'],
+): { svg: SVGSVGElement; width: number; height: number } {
   const palette = readPalette();
   const band = exportBand({
     scenarios: input.scenarios,
     statistics: input.statistics,
     geography: input.geography,
     variant: input.variant,
-    shaded: input.shaded,
+    shadedBy: input.shadedBy,
   });
   const laid = layoutBand(band, { width: crop.width, measure: bandMeasurer() });
 
@@ -189,23 +257,19 @@ function composeDocument(input: ExportInput): { svg: SVGSVGElement; width: numbe
   // PNG comes out with a transparent ground, which reads as black in most messaging apps.
   root.append(element('rect', { x: 0, y: 0, width, height, fill: palette.paper }));
 
-  /*
-   * Photograph a settled map, never a cross-fade.
-   *
-   * The strata fade in CSS over `--switch`, so a reader who presses Download inside a third of a
-   * second of switching variant would otherwise get the computed opacity *at that instant* frozen
-   * into the file — an image of a proposal half-dissolved into the one before it, with no clue in
-   * the picture that it is mid-anything. The class suspends the transitions for the length of one
-   * read, which makes every property compute to the value it was heading for; `getComputedStyle`
-   * flushes style itself, so no reflow needs forcing. Removed immediately, and the reader sees
-   * nothing: the map was already going where this makes it arrive.
-   */
-  live.classList.add('is-exporting');
   const clone = live.cloneNode(true) as SVGSVGElement;
   inlineStyles(live, clone);
-  live.classList.remove('is-exporting');
 
   const defs = element('defs', {});
+  /*
+   * The band's own hatch and stipple, at a fixed pitch.
+   *
+   * The map's patterns are counter-scaled against the zoom (see `map.ts`), which is right inside the
+   * zoomed group and wrong in a legend: exporting at 24× would collapse the territory swatch to
+   * near-flat colour and stop it keying anything. Painted from the same palette as the map's, so
+   * they look like what they explain.
+   */
+  defs.append(bandHatch(palette), bandStipple(palette));
   const clip = element('clipPath', { id: 'export-crop' });
   clip.append(element('rect', { x: 0, y: 0, width: crop.width, height: crop.height }));
   defs.append(clip);
@@ -324,16 +388,6 @@ function drawBand(
   return group;
 }
 
-/** What the file is called. The proposal's own name, so a folder of these is readable. */
-function fileName(variant: VariantRecord | null): string {
-  const stem = variant === null ? 'pakistan-current-provinces' : `pakistan-${variant.id}`;
-  const slug = (variant?.name ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return `${stem}${slug === '' ? '' : `-${slug}`}.png`;
-}
-
 /**
  * The finished image, before anything has decided what to do with it.
  *
@@ -345,9 +399,7 @@ function fileName(variant: VariantRecord | null): string {
  * off this machine. Rejects rather than half-succeeding, so the caller can say so out loud — a
  * button that silently does nothing is worse than one that reports a failure.
  */
-export async function renderExportImage(
-  input: ExportInput,
-): Promise<{ blob: Blob; width: number; height: number }> {
+async function renderExportImage(input: ExportInput): Promise<{ blob: Blob }> {
   const { svg, width, height } = composeDocument(input);
   const serialised = new XMLSerializer().serializeToString(svg);
   const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialised)}`;
@@ -370,7 +422,7 @@ export async function renderExportImage(
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (blob === null) throw new Error('The exported image could not be encoded as a PNG.');
-  return { blob, width: canvas.width, height: canvas.height };
+  return { blob };
 }
 
 /** Make the image and hand it to the browser's own download. */
@@ -379,7 +431,7 @@ export async function exportPng(input: ExportInput): Promise<void> {
   const href = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = href;
-  anchor.download = fileName(input.variant);
+  anchor.download = exportFileName(input.variant);
   anchor.click();
   // Released on the next turn of the loop: revoking it synchronously races the click in Safari.
   setTimeout(() => URL.revokeObjectURL(href), 0);

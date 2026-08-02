@@ -20,9 +20,16 @@ import type {
   VariantRecord,
 } from '../bundle.ts';
 import {
+  BAND_HATCH,
   BAND_METRICS,
+  BAND_STIPPLE,
   BAND_TYPE,
+  EXPORT_FAILED,
+  EXPORT_LABEL,
+  EXPORT_TITLE,
+  EXPORT_WORKING,
   NOT_OFFICIAL,
+  exportFileName,
   bandLegend,
   bandVintage,
   exportBand,
@@ -45,8 +52,10 @@ const variantNamed = (id: string): VariantRecord => {
   return found;
 };
 
-const band = (variant: VariantRecord | null, shaded = variant?.basis === 'language') =>
-  exportBand({ scenarios: bundle, statistics: census, geography: provenance, variant, shaded });
+const band = (
+  variant: VariantRecord | null,
+  shadedBy: 'language' | null = variant?.basis === 'language' ? 'language' : null,
+) => exportBand({ scenarios: bundle, statistics: census, geography: provenance, variant, shadedBy });
 
 /**
  * A measurer that is arithmetic rather than a browser. The layout's job is to wrap and stack; what
@@ -61,6 +70,7 @@ const palette: BandPalette = {
   inkSoft: '#6d604d',
   inkFaint: '#948773',
   land: '#ece4d5',
+  landHatch: '#d8ccb6',
   accent: '#9c3b2b',
   ruleUnit: '#4a3d2c',
   ruleProvince: '#8a7c65',
@@ -109,7 +119,7 @@ describe('the six things D22 requires of the image', () => {
   });
 
   it('names the boundaries’ own source at the baseline, which cites no documents of its own', () => {
-    const current = band(null, false);
+    const current = band(null, null);
     expect(current.sources.join(' · ')).toContain('OpenStreetMap');
   });
 
@@ -193,7 +203,7 @@ describe('the vintage, and whether there is one to print at all', () => {
 });
 
 describe('the baseline is a view, not the absence of one', () => {
-  const exported = band(null, false);
+  const exported = band(null, null);
 
   it('names the current map and never calls it a proposal', () => {
     // An export of the real provinces stamped "not official" would be this app disclaiming the
@@ -228,14 +238,14 @@ describe('the baseline is a view, not the absence of one', () => {
 describe('the legend is derived from the map, never transcribed beside it', () => {
   it('keys every unit kind the variant contains, in the page’s own words', () => {
     for (const variant of bundle.variants) {
-      const keyed = bandLegend(census, variant, false).map((entry) => entry.label);
+      const keyed = bandLegend(census, variant, null).map((entry) => entry.label);
       for (const entry of unitLegend(variant)) expect(keyed, variant.id).toContain(entry.label);
     }
   });
 
   it('keys every category the shading actually draws, and both absences', () => {
     const { onTheMap, absences } = motherTongueLegend(census);
-    const keyed = bandLegend(census, variantNamed('l1'), true).map((entry) => entry.label);
+    const keyed = bandLegend(census, variantNamed('l1'), 'language').map((entry) => entry.label);
     for (const entry of [...onTheMap, ...absences]) expect(keyed).toContain(entry.label);
   });
 
@@ -244,18 +254,28 @@ describe('the legend is derived from the map, never transcribed beside it', () =
     // swatches a reader never has to match against the picture, pushing the nine that matter onto
     // a line of their own. Named here so the omission is a decision and not a slip.
     const { namedButNowhereDominant } = motherTongueLegend(census);
-    const keyed = bandLegend(census, variantNamed('l1'), true).map((entry) => entry.label);
+    const keyed = bandLegend(census, variantNamed('l1'), 'language').map((entry) => entry.label);
     expect(namedButNowhereDominant.length).toBeGreaterThan(0);
     for (const entry of namedButNowhereDominant) expect(keyed).not.toContain(entry.label);
+  });
+
+  it('refuses to key a basis it has no fill for, rather than printing the wrong key', () => {
+    // Only Language has a fill in the renderer today. The day the Development basis lands, a band
+    // that answered every shadeable basis with the mother-tongue key would print the wrong legend
+    // under the right badge — checkable, and wrong, on the copy that travels with no page.
+    expect(() => bandLegend(census, variantNamed('l1'), 'development')).toThrow(/development/);
+    expect(() => bandLegend(census, variantNamed('l1'), 'administrative')).toThrow(
+      /has no key for it/,
+    );
   });
 
   it('keys the ceasefire line under every basis and at the baseline', () => {
     // The dash means ceasefire line and the export is the copy that travels furthest from the
     // page that says so. An unkeyed dash is a line a reader is entitled to read as a border.
-    const dashed = (variant: VariantRecord | null, shaded: boolean) =>
-      bandLegend(census, variant, shaded).filter((e) => e.swatch.kind === 'rule' && e.swatch.rule === 'dashed');
-    expect(dashed(null, false)).toHaveLength(1);
-    for (const variant of bundle.variants) expect(dashed(variant, true), variant.id).toHaveLength(1);
+    const dashed = (variant: VariantRecord | null, shadedBy: 'language' | null) =>
+      bandLegend(census, variant, shadedBy).filter((e) => e.swatch.kind === 'rule' && e.swatch.rule === 'dashed');
+    expect(dashed(null, null)).toHaveLength(1);
+    for (const variant of bundle.variants) expect(dashed(variant, 'language'), variant.id).toHaveLength(1);
   });
 });
 
@@ -279,14 +299,27 @@ describe('the swatches are the map’s own ink', () => {
     // single fill for both would say the image knows less than it does.
     const stipple = swatchInk({ kind: 'stipple' }, palette);
     const hatch = swatchInk({ kind: 'hatch' }, palette);
-    expect(stipple).toMatchObject({ shape: 'block', fill: 'url(#no-dominant-stipple)' });
-    expect(hatch).toMatchObject({ shape: 'block', fill: 'url(#territory-hatch)' });
+    expect(stipple).toMatchObject({ shape: 'block', fill: `url(#${BAND_STIPPLE})` });
+    expect(hatch).toMatchObject({ shape: 'block', fill: `url(#${BAND_HATCH})` });
     expect(stipple).not.toEqual(hatch);
+  });
+
+  it('keys them with the band’s own patterns, not the map’s zoom-counter-scaled ones', () => {
+    // The map's hatch is counter-scaled by 1/k so its texture survives a 24× zoom, which is right
+    // inside the zoomed group and wrong in a legend: exporting from a deep zoom would collapse the
+    // pitch to a fraction of a pixel and leave a swatch that keys nothing. The band defines its own
+    // at a fixed pitch, so the ids must differ — sharing them is the bug.
+    for (const id of [BAND_HATCH, BAND_STIPPLE]) {
+      expect(id).not.toBe('territory-hatch');
+      expect(id).not.toBe('no-dominant-stipple');
+    }
+    const territory = swatchInk({ kind: 'rule', rule: 'territory' }, palette);
+    expect(territory).toMatchObject({ fill: `url(#${BAND_HATCH})` });
   });
 
   it('gives every swatch the band can carry an ink, on every variant', () => {
     for (const variant of [null, ...bundle.variants]) {
-      for (const entry of bandLegend(census, variant, true)) {
+      for (const entry of bandLegend(census, variant, 'language')) {
         expect(swatchInk(entry.swatch, palette), entry.label).toBeTruthy();
       }
     }
@@ -363,7 +396,36 @@ describe('the layout, whose height is a result and never a setting', () => {
   it('survives a band with nothing to wrap and a style scale with no gaps in it', () => {
     const styles: BandStyle[] = ['title', 'tagline', 'standing', 'meta', 'legend', 'fine'];
     for (const style of styles) expect(BAND_TYPE[style].leading).toBeGreaterThanOrEqual(BAND_TYPE[style].size);
-    const empty = layoutBand({ ...band(null, false), tagline: null, legend: [] }, { width: 900, measure });
+    const empty = layoutBand({ ...band(null, null), tagline: null, legend: [] }, { width: 900, measure });
     expect(empty.height).toBeGreaterThan(0);
+  });
+});
+
+describe('what the reader meets before the image opens', () => {
+  it('says what lands on the machine, since the screenshot key is what this competes with', () => {
+    // "Download PNG" rather than "Share" or "Export": a reader who knows they are getting an image
+    // file will use this instead of the screenshot key, which is the whole argument for the feature.
+    expect(EXPORT_LABEL).toContain('PNG');
+    expect(EXPORT_WORKING).not.toBe(EXPORT_LABEL);
+    // The title names what is baked in, so the promise is on the control and not only in the file.
+    for (const promised of ['name', 'key', 'sources', 'vintage']) {
+      expect(EXPORT_TITLE, promised).toContain(promised);
+    }
+    // Never silence: a button that does nothing reads as a broken page rather than a failed export.
+    expect(EXPORT_FAILED.trim()).not.toBe('');
+    expect(EXPORT_FAILED).toContain('map itself is unaffected');
+  });
+
+  it('names the file after the proposal, and the baseline after what it is', () => {
+    expect(exportFileName(variantNamed('l1'))).toBe('pakistan-l1-south-punjab-secretariat.png');
+    expect(exportFileName(null)).toBe('pakistan-current-provinces.png');
+  });
+
+  it('gives every variant a distinct, safe file name', () => {
+    // A folder of these is the point — two proposals sharing a name would silently overwrite, and a
+    // slug carrying a slash or a space is a download that fails on someone else's operating system.
+    const names = bundle.variants.map(exportFileName);
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) expect(name, name).toMatch(/^[a-z0-9-]+\.png$/);
   });
 });

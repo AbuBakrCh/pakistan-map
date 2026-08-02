@@ -28,6 +28,7 @@
  */
 
 import type {
+  BasisId,
   BasisRecord,
   CensusStatistics,
   Provenance,
@@ -37,7 +38,7 @@ import type {
 } from '../bundle.ts';
 import { provenanceBadge, type CardBadge } from './card.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
-import { unitLegend } from './units.ts';
+import { unitLegend, type UnitSwatch } from './units.ts';
 
 /**
  * What a legend swatch is, in the terms the export can actually paint.
@@ -191,7 +192,8 @@ function vintageLine(dated: BandVintage): string {
 export function bandLegend(
   statistics: CensusStatistics,
   variant: VariantRecord | null,
-  shaded: boolean,
+  /** The basis whose shading is on the map, or `null` where nothing is shaded. */
+  shadedBy: BasisId | null,
 ): readonly BandLegendEntry[] {
   const entries: BandLegendEntry[] = [];
 
@@ -208,12 +210,22 @@ export function bandLegend(
     // Stratum 3 first and stratum 1 second, in the order a reader meets them on the map: the
     // outlines are what the picture is about, the fills are the evidence they are drawn against.
     for (const entry of unitLegend(variant)) {
-      const unit = entry.swatch.slice('unit-'.length) as UnitKind;
-      entries.push({ label: entry.label, swatch: { kind: 'unit', unit } });
+      entries.push({ label: entry.label, swatch: { kind: 'unit', unit: UNIT_SWATCH[entry.swatch] } });
     }
   }
 
-  if (shaded) {
+  if (shadedBy !== null) {
+    // Named rather than assumed. Only the Language basis has a fill in the renderer today, and a
+    // band that answered every shadeable basis with the mother-tongue key would, the day the
+    // Development basis lands, print the wrong key under the right badge — a legend that keys data
+    // the map is not drawing is worse than no legend, because it is checkable and wrong.
+    if (shadedBy !== 'language') {
+      throw new Error(
+        `The map is shaded by the ${shadedBy} basis and this band has no key for it. A key is ` +
+          `derived from the fill it explains; keying one basis's colours under another's name ` +
+          `would put a legend on the image that the picture does not match.`,
+      );
+    }
     const legend = motherTongueLegend(statistics);
     for (const entry of [...legend.onTheMap, ...legend.absences]) {
       entries.push({
@@ -235,23 +247,65 @@ export function bandLegend(
   return entries;
 }
 
+/**
+ * The screen legend's swatch class for a unit, and the kind it stands for.
+ *
+ * A table rather than `swatch.slice('unit-'.length)`: parsing a domain word back out of a CSS class
+ * gives an unrecognised class a plausible-looking kind and no failure at all, and `swatchInk` would
+ * then fall out of its own switch and paint nothing. Exhaustive over `UnitKind`, so a fourth kind is
+ * a compile error here rather than a blank swatch in a picture that travels.
+ */
+const UNIT_SWATCH: Readonly<Record<UnitSwatch, UnitKind>> = {
+  'unit-proposed': 'proposed',
+  'unit-unchanged': 'unchanged',
+  'unit-territory': 'territory',
+};
+
 export interface BandInput {
   readonly scenarios: ScenarioBundle;
   readonly statistics: CensusStatistics;
   readonly geography: Provenance;
   /** The proposal on screen, or `null` for the baseline — which is a view, not the absence of one. */
   readonly variant: VariantRecord | null;
-  /** Whether stratum 1 is drawn. The baseline shades nothing, and neither do three of the bases. */
-  readonly shaded: boolean;
+  /**
+   * Which basis's shading is on the map, or `null` where none is.
+   *
+   * The *renderer's* answer and not the selection's: three of the four bases can be selected and
+   * shade nothing, and a band that keyed a fill the map never drew would be a legend for a picture
+   * that does not exist.
+   */
+  readonly shadedBy: BasisId | null;
+}
+
+/**
+ * A source string, or a failure naming the key.
+ *
+ * No `??` fallback. A renamed bundle key would otherwise substitute a vaguer label of our own
+ * invention onto the one surface that travels with no page behind it — which is exactly the silence
+ * the About panel's tests exist to prevent ("a row lost to a renamed bundle key is a failure and not
+ * a silence"). An export with an unsourced source line is worse than no export.
+ */
+function sourceOf(sources: Readonly<Record<string, string>>, key: string): string {
+  const found = sources[key];
+  if (found === undefined || found.trim() === '') {
+    throw new Error(
+      `The geography bundle carries no "${key}" source, so this image would name its own ` +
+        `provenance from nothing. Every surface here traces to a published source; a picture that ` +
+        `travels alone least of all may invent one.`,
+    );
+  }
+  return found;
 }
 
 /** Everything the band says, from the committed bundle. Pure: no DOM, no measurement, no markup. */
 export function exportBand(input: BandInput): ExportBand {
-  const { scenarios, statistics, geography, variant, shaded } = input;
-  const legend = bandLegend(statistics, variant, shaded);
+  const { scenarios, statistics, geography, variant, shadedBy } = input;
+  const legend = bandLegend(statistics, variant, shadedBy);
+  // The attributor names and the licence are the wording those licences *require*, not a figure
+  // read from the data — so they are typed here, and the vintage beside them is the bundle's own.
   const attribution =
     `Boundaries © OpenStreetMap contributors, ODbL · figures: Pakistan Bureau of Statistics, ` +
-    `2023 Digital Census · pinned to ${geography.vintage}`;
+    `2023 Digital Census · pinned to ${statistics.provenance.vintage}`;
 
   if (variant === null) {
     return {
@@ -262,7 +316,7 @@ export function exportBand(input: BandInput): ExportBand {
       basis: null,
       provenance: [provenanceBadge('the baseline map', 'official')],
       vintage: geography.vintage,
-      sources: [geography.sources['boundaries'] ?? 'OpenStreetMap', 'District roster: PBS'],
+      sources: [sourceOf(geography.sources, 'boundaries'), sourceOf(geography.sources, 'roster')],
       legend,
       attribution,
     };
@@ -288,6 +342,23 @@ export function exportBand(input: BandInput): ExportBand {
     legend,
     attribution,
   };
+}
+
+/**
+ * What the downloaded file is called.
+ *
+ * A decision and not plumbing, so it lives here under test rather than in the renderer: the name is
+ * the only part of the export a reader sees before they open it, and a folder of `map (3).png` is
+ * exactly the friction this feature exists to remove. The proposal's own name, slugged; the
+ * baseline says what it is rather than borrowing a variant's shape.
+ */
+export function exportFileName(variant: VariantRecord | null): string {
+  if (variant === null) return 'pakistan-current-provinces.png';
+  const slug = variant.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `pakistan-${variant.id}${slug === '' ? '' : `-${slug}`}.png`;
 }
 
 /* ------------------------------------------------------------------------------------------- *
@@ -465,11 +536,16 @@ export interface BandPalette {
   readonly inkSoft: string;
   readonly inkFaint: string;
   readonly land: string;
+  readonly landHatch: string;
   readonly accent: string;
   readonly ruleUnit: string;
   readonly ruleProvince: string;
   readonly ruleDivision: string;
 }
+
+/** Pattern ids the band defines for itself, at a pitch no zoom transform reaches. */
+export const BAND_HATCH = 'band-territory-hatch';
+export const BAND_STIPPLE = 'band-no-dominant-stipple';
 
 export type SwatchInk =
   | { readonly shape: 'block'; readonly fill: string; readonly stroke: string }
@@ -484,10 +560,20 @@ export function swatchInk(swatch: BandSwatch, palette: BandPalette): SwatchInk {
   switch (swatch.kind) {
     case 'colour':
       return { shape: 'block', fill: swatch.colour, stroke: palette.ruleProvince };
+    /*
+     * The band's own patterns, not the map's.
+     *
+     * The map's `#territory-hatch` lives in the zoomed group and carries a `patternTransform` that
+     * counter-scales its pitch by 1/k, so that the texture stays the same texture at 24×. A swatch
+     * in the band is in image space, where that counter-scale is simply wrong: at a deep zoom the
+     * pitch collapses to a fraction of a pixel and the key renders as near-flat colour, keying
+     * nothing. So the band defines its own at a fixed pitch, and the two absences stay two
+     * absences at every zoom the reader might export from.
+     */
     case 'stipple':
-      return { shape: 'block', fill: 'url(#no-dominant-stipple)', stroke: palette.inkFaint };
+      return { shape: 'block', fill: `url(#${BAND_STIPPLE})`, stroke: palette.inkFaint };
     case 'hatch':
-      return { shape: 'block', fill: 'url(#territory-hatch)', stroke: palette.inkFaint };
+      return { shape: 'block', fill: `url(#${BAND_HATCH})`, stroke: palette.inkFaint };
     case 'unit':
       // The accent belongs to `proposed` units and to nothing else. A unit carried through
       // unchanged is drawn at unit weight in the map's own ink, and so is its swatch.
@@ -499,7 +585,7 @@ export function swatchInk(swatch: BandSwatch, palette: BandPalette): SwatchInk {
         case 'province':
           return { shape: 'block', fill: palette.land, stroke: palette.ruleProvince };
         case 'territory':
-          return { shape: 'block', fill: 'url(#territory-hatch)', stroke: palette.inkFaint };
+          return { shape: 'block', fill: `url(#${BAND_HATCH})`, stroke: palette.inkFaint };
         case 'division':
           return { shape: 'rule', stroke: palette.ruleDivision, width: 1, dash: null };
         case 'dashed':
