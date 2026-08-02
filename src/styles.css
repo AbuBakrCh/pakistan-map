@@ -1020,6 +1020,7 @@ body {
 
 .card-unit-standing,
 .card-unit-districts,
+.card-unit-population,
 .card-unit-note {
   color: var(--ink-soft);
   font-size: 0.75rem;
@@ -1028,6 +1029,52 @@ body {
 
 .card-unit-standing {
   color: var(--ink-faint);
+}
+
+/*
+ * The scorecard (#20). The one block on the card that is arithmetic rather than argument, so it is
+ * set as a table of figures rather than as prose — a reader comparing two proposals reads down this
+ * column and nothing else. The qualification travels with its own figure and not as a footnote
+ * below the block: a population total described as the country's while two territories are missing
+ * from it is a wrong number, and the note is what makes it a right one.
+ */
+.card-scorecard-figures {
+  display: grid;
+  gap: 0.25rem 0.9rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.card-scorecard-label {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  padding-top: 0.15rem;
+  text-transform: uppercase;
+}
+
+.card-scorecard-value {
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.card-scorecard-note {
+  color: var(--ink-soft);
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* No population figures, and why. Set above the lines it is missing from, never as a blank row. */
+.card-scorecard-withheld {
+  border-left: 2px solid var(--rule-province);
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
 }
 
 .card-footnotes {

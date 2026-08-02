@@ -24,22 +24,23 @@
  *   and drawn as 11 (ADR-0001); either number by itself reads as a miscount, so the card sets
  *   both and the footnote says why.
  *
- * The scorecard — population spread, largest:smallest ratio, districts moved, non-contiguous
- * units — is **#20's, not this module's**. Its seam is `VariantCard.scorecard`, declared here as
- * `null` and rendered by `panel.ts` between the units and the footnotes.
- *
- * One of its five figures has since arrived: #16 landed the adjacency graph, so `contiguity` is
- * on every unit record and `counts.nonContiguousUnits` on every variant. The card still shows
- * none of it, deliberately — a lone contiguity line above an empty space is not a scorecard, and
- * the four population figures it belongs beside are #20's to compute. What is *not* true any
- * more is that the data is missing, so the null is now waiting on one ticket rather than two.
+ * The scorecard (#20) is now among them — the five figures a proposal can be judged on rather than
+ * argued over, set between the units they summarise and the footnotes that qualify them. It obeys
+ * the same rules as everything else here, and one more of its own: **a figure that cannot be given
+ * is said to be missing, in the words of whatever is missing it.** A unit made of AJK's or
+ * Gilgit-Baltistan's districts has no population because PBS published none (D25), and a card that
+ * printed a zero, a dash, or nothing at all would each say something untrue about ground Pakistan
+ * administers. Not one figure on the card is computed here: they are read off the bundle, where the
+ * build summed them from the census, and this module decides only what they are called.
  */
 
 import type {
   BasisRecord,
   ProvenanceBadge,
   ScenarioBundle,
+  ScorecardRecord,
   UnitKind,
+  UnitRecord,
   VariantRecord,
 } from '../bundle.ts';
 
@@ -82,7 +83,25 @@ export interface CardUnit {
   readonly standing: string;
   /** The claim's own district count and this map's, said together wherever they differ. */
   readonly districts: string;
+  /** Its people, or the sentence saying the census does not reach them. Never a zero, never blank. */
+  readonly population: string;
   readonly note: string | null;
+}
+
+/** One figure, what it is called, and the qualification it cannot honestly be read without. */
+export interface CardScorecardLine {
+  readonly label: string;
+  readonly value: string;
+  readonly note: string | null;
+}
+
+export interface CardScorecard {
+  readonly lines: readonly CardScorecardLine[];
+  /**
+   * Said in place of the population lines where there are none, never instead of the scorecard.
+   * The other figures are arithmetic on districts and survive a census that does not reach them.
+   */
+  readonly withheld: string | null;
 }
 
 export type CardFootnoteKind =
@@ -129,12 +148,12 @@ export interface VariantCard {
   readonly opposition: CardList;
   readonly units: readonly CardUnit[];
   /**
-   * #20's seam. Null until the scorecard exists — population spread, largest:smallest ratio,
-   * districts moved and non-contiguous units all wait on the adjacency graph (#16) and on
-   * per-variant derived statistics, and a card that invented any of them would be sourcing a
-   * figure to itself.
+   * The five figures a proposal is judged on rather than argued over (#20): how many units, how the
+   * population falls between them, how far apart the largest and the smallest are, how much ground
+   * changes hands, and whether every unit hangs together. Set between the units it summarises and
+   * the footnotes that qualify them.
    */
-  readonly scorecard: null;
+  readonly scorecard: CardScorecard;
   /** Why there are no modern figures, where a variant suppresses them (H2 draws 1947). */
   readonly figuresWithheld: string | null;
   readonly footnotes: readonly CardFootnote[];
@@ -262,6 +281,33 @@ function unitStanding(kind: UnitKind): string {
   }
 }
 
+/**
+ * Digits grouped in threes — 87,311,346.
+ *
+ * Written out rather than left to `toLocaleString`, which answers to whatever locale the browser
+ * happens to be in: a census figure that renders as 8,73,11,346 in one place and 87.311.346 in
+ * another is one number wearing three faces, and the tests would be asserting the test runner's
+ * locale rather than the card's words. Never abbreviated to "87.3 m" — the census counted people
+ * one at a time and publishes the count, and rounding it is this app interpolating.
+ */
+function groupDigits(value: number): string {
+  const digits = String(Math.trunc(Math.abs(value)));
+  const grouped = digits.replace(/\B(?=(\d{3})+$)/g, ',');
+  return value < 0 ? `-${grouped}` : grouped;
+}
+
+/** What a unit's population line says, including when there is none to say. */
+function unitPopulation(unit: UnitRecord): string {
+  if (unit.population !== null) return `${groupDigits(unit.population)} people`;
+  // The twenty AJK and Gilgit-Baltistan districts (D25). Said as coverage — the census did not ask
+  // here — rather than as a failure, and never as a zero, which would be a claim about who lives
+  // on ground Pakistan administers.
+  return unit.uncounted.length === unit.districts.length
+    ? 'The 2023 census does not cover its districts, so it carries no population figure'
+    : `${plural(unit.uncounted.length, 'district')} of it lie outside the 2023 census, so its ` +
+        `population would be short by an unknown amount and is not given`;
+}
+
 function unitDistricts(unit: VariantRecord['units'][number]): string {
   return unit.claimed.length === unit.districts.length
     ? plural(unit.districts.length, 'district')
@@ -288,8 +334,133 @@ function unitsOf(variant: VariantRecord): readonly CardUnit[] {
       kind: unit.kind,
       standing: unitStanding(unit.kind),
       districts: unitDistricts(unit),
+      population: unitPopulation(unit),
       note: unit.note,
     }));
+}
+
+/**
+ * The scorecard's five lines (#20).
+ *
+ * Contiguity is read off the units and off `counts.nonContiguousUnits`, which #16 already wrote —
+ * never recounted here, because two derivations of one fact are two answers to it and a card is the
+ * last place to discover they disagree. The other four are read off `scorecard`, which the build
+ * summed from the census. Nothing on this card is arithmetic of its own.
+ */
+function scorecardOf(variant: VariantRecord): CardScorecard {
+  const scorecard: ScorecardRecord = variant.scorecard;
+  const lines: CardScorecardLine[] = [
+    {
+      label: 'Units',
+      value: `${plural(scorecard.units, 'unit')} — ${scorecard.proposedUnits} proposed`,
+      note: null,
+    },
+  ];
+
+  const { population, outsideTheCensus } = scorecard;
+  if (population !== null) {
+    // The units the census does not reach are named on the line the figures are on, not in a
+    // footnote below it: a total described as the country's when two territories are missing from
+    // it is a wrong number, and the qualification is what makes it a right one.
+    const setAside =
+      outsideTheCensus.length === 0
+        ? `${groupDigits(population.total)} people in all.`
+        : `${groupDigits(population.total)} people across the ${population.units} units the 2023 ` +
+          `census covers. ${sentenceList(outsideTheCensus.map((unit) => unit.name))} ` +
+          `${outsideTheCensus.length === 1 ? 'is' : 'are'} outside the figures: PBS published no ` +
+          `2023 results for their districts.`;
+    lines.push({
+      label: 'Population spread',
+      value:
+        `${population.largest.name} ${groupDigits(population.largest.population)} at the largest, ` +
+        `${population.smallest.name} ${groupDigits(population.smallest.population)} at the smallest`,
+      note: setAside,
+    });
+    lines.push(
+      population.ratio === null
+        ? {
+            label: 'Largest to smallest',
+            // Not "1 : 1", which is a number and would read as a perfectly even partition.
+            value: 'Not given',
+            note:
+              'Only one unit of this variant lies inside the 2023 census, so there is nothing to ' +
+              'compare it against.',
+          }
+        : {
+            label: 'Largest to smallest',
+            value: `${population.ratio.toFixed(1)} : 1`,
+            note: null,
+          },
+    );
+  }
+
+  const { districtsMoved } = scorecard;
+  lines.push({
+    label: 'Districts moved',
+    value:
+      districtsMoved.count === 0
+        ? `None of ${districtsMoved.of}`
+        : `${districtsMoved.count} of ${districtsMoved.of}`,
+    note:
+      districtsMoved.count === 0
+        ? 'Every district stays in the province it is in today.'
+        : `${sentenceList(
+            districtsMoved.byProvince.map((from) => `${from.districts} out of ${from.province}`),
+          )}.`,
+  });
+
+  const broken = variant.units.filter((unit) => !unit.contiguity.contiguous);
+  lines.push({
+    label: 'Contiguity',
+    value:
+      variant.counts.nonContiguousUnits === 0
+        ? `All ${plural(variant.counts.units, 'unit')} in one piece`
+        : `${variant.counts.nonContiguousUnits} of ${variant.counts.units} in more than one piece`,
+    // Named, never counted: which districts are stranded away from the body of a proposal is the
+    // whole of what a reader wants from this line. Flagged, never blocked (D7).
+    note:
+      broken.length === 0
+        ? null
+        : `${sentenceList(
+            broken.map(
+              (unit) =>
+                `${unit.name} is in ${plural(unit.contiguity.pieces, 'piece')}, with ` +
+                `${sentenceList(unit.contiguity.detached.flatMap((group) => group))} touching ` +
+                `none of the rest of it`,
+            ),
+          )}. Flagged, not refused.`,
+  });
+
+  return { lines, withheld: withheldOf(scorecard) };
+}
+
+/** Why there are no population figures — in the words of whatever is missing them. */
+function withheldOf(scorecard: ScorecardRecord): string | null {
+  const withheld = scorecard.populationWithheld;
+  if (withheld === null) return null;
+  switch (withheld.kind) {
+    case 'variant':
+      // The variant's own reason, verbatim: H2 draws 1947's map, and why 2023 figures do not
+      // belong on it is an editorial judgement this module has no standing to paraphrase.
+      return `No population figures. ${withheld.reason}`;
+    case 'incomplete':
+      return (
+        `No population figures. ` +
+        `${sentenceList(
+          withheld.units.map(
+            (unit) =>
+              `${unit.name} takes in ${sentenceList([...unit.uncounted])}, which PBS published no ` +
+              `2023 results for`,
+          ),
+        )}, so its population would be short by an unknown amount — and a largest compared ` +
+        `against a smallest that is missing people is worse than no comparison at all.`
+      );
+    default:
+      return (
+        'No population figures: no unit of this variant lies inside the 136 districts PBS ' +
+        'published 2023 results for.'
+      );
+  }
 }
 
 function footnotesOf(variant: VariantRecord): readonly CardFootnote[] {
@@ -381,7 +552,7 @@ export function variantCard(scenarios: ScenarioBundle, variant: VariantRecord): 
     advocacy: advocacyOf(variant),
     opposition: oppositionOf(variant),
     units: unitsOf(variant),
-    scorecard: null,
+    scorecard: scorecardOf(variant),
     figuresWithheld: variant.statistics.modernFigures ? null : variant.statistics.reason,
     footnotes: footnotesOf(variant),
     notes: variant.notes.map((note) => ({ label: note.label, text: note.text })),

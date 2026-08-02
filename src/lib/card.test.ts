@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import scenarios from '../../data/bundle/scenarios.json';
 import type { ScenarioBundle, VariantRecord } from '../bundle.ts';
-import { PROVENANCE_GLOSS, variantCard } from './card.ts';
+import { PROVENANCE_GLOSS, variantCard, type VariantCard } from './card.ts';
 
 const bundle = scenarios as unknown as ScenarioBundle;
 
@@ -320,11 +320,166 @@ describe('variantCard — provenance of the boundary itself', () => {
     expect(variantCard(bundle, historical).figuresWithheld).toContain('1947');
   });
 
-  it('leaves the scorecard empty, because #20 has not built it', () => {
-    // Declared and null rather than absent: the seam is where the population spread, the
-    // largest:smallest ratio, the districts moved and the non-contiguous units go, and all four
-    // wait on the adjacency graph (#16) and on per-variant derived statistics.
-    expect(variantCard(bundle, variantNamed('l1')).scorecard).toBeNull();
+});
+
+describe('variantCard — the scorecard (#20)', () => {
+  const card = variantCard(bundle, variantNamed('l1'));
+  const line = (built: VariantCard, label: string) =>
+    built.scorecard.lines.find((found) => found.label === label);
+
+  it('gives the five figures a proposal is judged on, in a fixed order', () => {
+    // Fixed because a reader comparing two proposals reads down this column: a card that ordered
+    // its figures by which of them happened to exist would be a different card per variant.
+    expect(card.scorecard.lines.map((found) => found.label)).toEqual([
+      'Units',
+      'Population spread',
+      'Largest to smallest',
+      'Districts moved',
+      'Contiguity',
+    ]);
+  });
+
+  it('prints census populations in full, grouped, and never rounded to a headline', () => {
+    // The census counted people one at a time and publishes the count. "87.3 m" is this app
+    // interpolating a figure it was given exactly.
+    const spread = line(card, 'Population spread');
+    expect(spread?.value).toContain('Punjab 87,311,346 at the largest');
+    expect(spread?.value).toContain('Islamabad Capital Territory 2,363,863 at the smallest');
+    expect(spread?.value).not.toMatch(/million|\bm\b/);
+  });
+
+  it('says which units the total is over, and names the ones outside it', () => {
+    // 241,499,431 described as the country's while two territories are missing from it is a wrong
+    // number. The qualification travels with the figure rather than sitting in a footnote.
+    const spread = line(card, 'Population spread');
+    expect(spread?.note).toContain('241,499,431 people across the 6 units');
+    expect(spread?.note).toContain('Azad Jammu & Kashmir and Gilgit-Baltistan are outside');
+    expect(spread?.note).toContain('PBS published no 2023 results for their districts');
+  });
+
+  it('gives the ratio between the ends, at the precision it states', () => {
+    expect(line(card, 'Largest to smallest')?.value).toBe('36.9 : 1');
+  });
+
+  it('refuses a ratio where one unit carries figures, rather than printing 1', () => {
+    // 1 is a number, and a partition of one counted unit would read as perfectly even.
+    const alone = variantCard(
+      bundle,
+      like('alone', {
+        scorecard: {
+          ...variantNamed('l1').scorecard,
+          population: {
+            units: 1,
+            total: 2_363_863,
+            largest: { unit: 'islamabad', name: 'Islamabad', population: 2_363_863 },
+            smallest: { unit: 'islamabad', name: 'Islamabad', population: 2_363_863 },
+            ratio: null,
+          },
+        },
+      }),
+    );
+    expect(line(alone, 'Largest to smallest')?.value).toBe('Not given');
+    expect(line(alone, 'Largest to smallest')?.note).toContain('nothing to compare it against');
+  });
+
+  it('says how much ground changes hands, and out of where', () => {
+    // Keyed on the districts the map draws, not the thirteen the claim names: eleven of Punjab's.
+    expect(line(card, 'Districts moved')?.value).toBe('11 of 156');
+    expect(line(card, 'Districts moved')?.note).toBe('11 out of Punjab.');
+  });
+
+  it('reads contiguity off #16 rather than answering it a second way', () => {
+    // All eight of L1's units hang together, and the line says so — a scorecard that printed
+    // nothing where a proposal is whole would leave the reader unable to tell "checked and fine"
+    // from "not checked".
+    expect(line(card, 'Contiguity')?.value).toBe('All 8 units in one piece');
+    expect(line(card, 'Contiguity')?.note).toBeNull();
+  });
+
+  it('names the stranded districts of a broken unit rather than counting them', () => {
+    // Flagged, never blocked (D7). The districts cut off from the body of a proposal are the whole
+    // of what the line is for; "1 of 8 units" alone tells a reader nothing they can check.
+    const l1 = variantNamed('l1');
+    const broken = variantCard(
+      bundle,
+      like('broken', {
+        counts: { ...l1.counts, nonContiguousUnits: 1 },
+        units: l1.units.map((unit) =>
+          unit.id === 'south-punjab'
+            ? { ...unit, contiguity: { contiguous: false, pieces: 2, detached: [['Layyah']] } }
+            : unit,
+        ),
+      }),
+    );
+    expect(line(broken, 'Contiguity')?.value).toBe('1 of 8 in more than one piece');
+    expect(line(broken, 'Contiguity')?.note).toContain('South Punjab is in 2 pieces');
+    expect(line(broken, 'Contiguity')?.note).toContain('Layyah touching none of the rest of it');
+    expect(line(broken, 'Contiguity')?.note).toContain('Flagged, not refused');
+  });
+
+  it('says nothing is withheld where nothing is', () => {
+    expect(card.scorecard.withheld).toBeNull();
+  });
+
+  it('voids the population lines in the variant’s own words where it withholds figures', () => {
+    // H2 draws 1947's map (#30). The reason is the variant's judgement, quoted rather than
+    // paraphrased, and the lines that do not depend on the census survive it.
+    const l1 = variantNamed('l1');
+    const historical = variantCard(
+      bundle,
+      like('historical', {
+        scorecard: {
+          ...l1.scorecard,
+          population: null,
+          populationWithheld: {
+            kind: 'variant',
+            reason: 'These are 1947’s boundaries; nobody was counted inside them in 2023.',
+          },
+        },
+      }),
+    );
+    expect(historical.scorecard.withheld).toContain('No population figures');
+    expect(historical.scorecard.withheld).toContain('nobody was counted inside them in 2023');
+    expect(historical.scorecard.lines.map((found) => found.label)).toEqual([
+      'Units',
+      'Districts moved',
+      'Contiguity',
+    ]);
+  });
+
+  it('names the unit and the districts where a census gap voids the comparison', () => {
+    // The other way figures go missing, and it is not the same claim: this one is a proposal
+    // reaching into ground PBS did not publish, not an editorial decision about vintage.
+    const l1 = variantNamed('l1');
+    const reaching = variantCard(
+      bundle,
+      like('reaching', {
+        scorecard: {
+          ...l1.scorecard,
+          population: null,
+          populationWithheld: {
+            kind: 'incomplete',
+            units: [{ unit: 'greater-punjab', name: 'Greater Punjab', uncounted: ['Mirpur'] }],
+          },
+        },
+      }),
+    );
+    expect(reaching.scorecard.withheld).toContain('Greater Punjab takes in Mirpur');
+    expect(reaching.scorecard.withheld).toContain('short by an unknown amount');
+  });
+
+  it('says a unit’s population, or says why it has none — never a zero and never a blank', () => {
+    expect(card.units.find((unit) => unit.id === 'south-punjab')?.population).toBe(
+      '40,377,576 people',
+    );
+    // The twenty AJK and Gilgit-Baltistan districts (D25). Said as coverage, not as a failure.
+    expect(card.units.find((unit) => unit.id === 'gilgit-baltistan')?.population).toBe(
+      'The 2023 census does not cover its districts, so it carries no population figure',
+    );
+    for (const unit of card.units) {
+      expect(unit.population, unit.name).toBeTruthy();
+      expect(unit.population, unit.name).not.toMatch(/\b0 people\b/);
+    }
   });
 });
 

@@ -63,17 +63,26 @@ import {
   type ResolvedPartition,
   type Variant,
 } from './lib/scenarios.ts';
-import { CENSUS_DISTRICT_COUNT, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
+import {
+  scorecardOf,
+  unitPopulations,
+  type DistrictPopulations,
+  type DistrictProvinces,
+} from './lib/scorecard.ts';
+import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
 import { VARIANTS } from './lib/variants.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
 const GEOGRAPHY_FILE = resolve(ROOT, 'data/bundle/geography.topojson.json');
+const STATISTICS_FILE = resolve(ROOT, 'data/bundle/statistics.json');
 const OUTLINES_FILE = resolve(ROOT, 'data/bundle/unit-outlines.json');
 const ADJACENCY_FILE = resolve(ROOT, 'data/bundle/adjacency.json');
 
 /** How `unit-outlines.json` names the geometry its arc indices are into. */
 const GEOGRAPHY_BUNDLE = 'data/bundle/geography.topojson.json';
+/** Where every population on the scorecard comes from, district by district (#20). */
+const STATISTICS_BUNDLE = 'data/bundle/statistics.json';
 
 const SOURCE_URLS = {
   content: 'scripts/lib/variants.ts — the typed scenario module, reviewed as a diff',
@@ -81,6 +90,7 @@ const SOURCE_URLS = {
     'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
   folds: 'data/reference/post-census-district-folds.json',
   geometry: `${GEOGRAPHY_BUNDLE} — the districts the outlines are dissolved from`,
+  statistics: `${STATISTICS_BUNDLE} — the 2023 census populations every scorecard figure sums`,
 } as const;
 
 function fail(message: string): never {
@@ -88,11 +98,26 @@ function fail(message: string): never {
   process.exit(1);
 }
 
+/** What the scorecard is computed against: the census, and today's map. */
+interface Census {
+  readonly populations: DistrictPopulations;
+  readonly provinces: DistrictProvinces;
+}
+
 /** The card's own view of a variant, with the partition resolved onto drawn districts. */
-function emit(variant: Variant, partition: ResolvedPartition, graph: AdjacencyGraph) {
+function emit(
+  variant: Variant,
+  partition: ResolvedPartition,
+  graph: AdjacencyGraph,
+  census: Census,
+) {
   const proposed = partition.units.filter((u) => u.kind === 'proposed');
   const contiguity = new Map<string, Contiguity>(
     partition.units.map((unit) => [unit.id, contiguityOf(graph, unit.districts)]),
+  );
+  const statistics = variant.statistics ?? { modernFigures: true };
+  const populations = new Map(
+    unitPopulations(partition.units, census.populations).map((found) => [found.unit, found]),
   );
   return {
     id: variant.id,
@@ -111,7 +136,7 @@ function emit(variant: Variant, partition: ResolvedPartition, graph: AdjacencyGr
     footnotes: variant.footnotes,
     notes: variant.notes ?? [],
     sources: variant.sources,
-    statistics: variant.statistics ?? { modernFigures: true },
+    statistics,
     partition: {
       universe: partition.universe,
       districts: partition.districts,
@@ -131,6 +156,18 @@ function emit(variant: Variant, partition: ResolvedPartition, graph: AdjacencyGr
        */
       nonContiguousUnits: partition.units.filter((u) => !contiguity.get(u.id)?.contiguous).length,
     },
+    /**
+     * The scorecard (#20) — unit count, population spread, largest:smallest, districts moved.
+     *
+     * The fifth line is not here on purpose: contiguity is answered once, off the adjacency graph,
+     * and lives on the units and in `counts.nonContiguousUnits` above. A second derivation would be
+     * a second answer, and the interesting failure is the one where the two disagree.
+     */
+    scorecard: scorecardOf(partition.units, {
+      populations: census.populations,
+      provinces: census.provinces,
+      modernFigures: statistics,
+    }),
     units: partition.units.map((unit) => {
       const source = variant.units.find((u) => u.id === unit.id);
       return {
@@ -143,6 +180,14 @@ function emit(variant: Variant, partition: ResolvedPartition, graph: AdjacencyGr
         districts: unit.districts,
         folded: unit.folded,
         excludes: unit.excludes,
+        /**
+         * The sum of its districts' 2023 census populations, and `null` where the census does not
+         * reach all of them — the twenty AJK and Gilgit-Baltistan districts PBS published no
+         * results for (D25). Never a partial sum wearing the look of a whole one, and the districts
+         * that are missing are named rather than counted.
+         */
+        population: populations.get(unit.id)?.population ?? null,
+        uncounted: populations.get(unit.id)?.uncounted ?? [],
         /**
          * Flagged, never blocked (D7). `detached` is every group but the largest, named — the
          * districts stranded away from the body of the unit are what a reader wants said, and the
@@ -295,6 +340,39 @@ function main(): void {
     );
   }
 
+  // ---- The census the scorecard sums (#20) ---------------------------------------------------
+  // Read from the committed statistics artifact rather than from the census package, so a unit's
+  // population is the same number the tooltip prints for the districts under it and the same one
+  // `statistics.test.ts` reconciles against PBS Table 1. Two paths to one figure is two figures.
+  const statistics = JSON.parse(readFileSync(STATISTICS_FILE, 'utf8')) as {
+    readonly provenance?: { readonly generated?: string; readonly vintage?: string };
+    readonly districts?: Record<string, { readonly population?: unknown }>;
+  };
+  const populations = new Map<string, number>();
+  for (const [district, record] of Object.entries(statistics.districts ?? {})) {
+    if (typeof record.population !== 'number') {
+      fail(
+        `${STATISTICS_BUNDLE} carries ${district} with no population. Every scorecard figure is a ` +
+          `sum of district populations; a district present without one would be added as nothing ` +
+          `and read as a figure. Run npm run build:data:census first.`,
+      );
+    }
+    populations.set(district, record.population);
+  }
+  if (populations.size !== CENSUS_DISTRICT_COUNT) {
+    fail(
+      `${STATISTICS_BUNDLE} holds ${populations.size} districts with a population, and the 2023 ` +
+        `census covers ${CENSUS_DISTRICT_COUNT}. A short census leaves units silently outside the ` +
+        `figures rather than counted.`,
+    );
+  }
+  // Today's map, which "districts moved" is measured against, from the roster the geometry is
+  // drawn from — so every drawn district has a province, AJK's and GB's twenty included.
+  const provinces = new Map<string, string>(
+    ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
+  );
+  const census = { populations, provinces };
+
   const scenarios = {
     provenance: {
       generated: new Date().toISOString(),
@@ -343,6 +421,33 @@ function main(): void {
           'number as the outline’s `polygons`, which counts shapes on paper and so counts islands: ' +
           'South Punjab is one piece and three polygons.',
       },
+      scorecard: {
+        from: STATISTICS_BUNDLE,
+        // The stamp of the census join these sums were taken from, on exactly the reasoning the
+        // outlines and the adjacency graph carry the geometry's: a scorecard is *numbers*, and a
+        // stale one is undetectable from its own contents — every figure would still add up, to a
+        // census that had since been rebuilt.
+        statistics: {
+          generated: statistics.provenance?.generated ?? null,
+          districts: populations.size,
+        },
+        method:
+          'A unit’s population is the sum of its districts’ 2023 census populations and nothing ' +
+          'else: the census publishes by district, every unit is composed of districts, and ' +
+          'nothing between the two is interpolated or apportioned. Districts moved are those ' +
+          'whose unit is not the one carrying their current province forward — the unit named ' +
+          'Punjab is Punjab whatever it has lost, and South Punjab is not, however much of Punjab ' +
+          'it is made of. Contiguity is not recomputed here; it is read off the adjacency graph ' +
+          'and carried on each unit, because two derivations of one fact are two answers to it.',
+        withheld:
+          'PBS published the 2023 census for the four provinces and Islamabad — no district of ' +
+          'Azad Jammu & Kashmir or Gilgit-Baltistan has a population figure (D25). A unit made ' +
+          'entirely of those districts carries no population and is set aside from the spread by ' +
+          'name; a unit that takes in some of them voids the variant’s population figures ' +
+          'altogether, because a largest compared against a smallest that is missing people is ' +
+          'worse than no comparison. A variant may also withhold modern figures itself, in its ' +
+          'own words. Absence is never a zero.',
+      },
       claimVsDrawing:
         'A unit lists the districts its advocates name. Districts created after the census date ' +
         'have no population row and are not drawn, so each is folded into its 2023 parent and ' +
@@ -350,7 +455,7 @@ function main(): void {
         'before 2022, and draws as 11 — one piece of ground, three true counts.',
     },
     bases: BASES,
-    variants: variants.map(({ variant, partition }) => emit(variant, partition, graph)),
+    variants: variants.map(({ variant, partition }) => emit(variant, partition, graph, census)),
   };
 
   mkdirSync(resolve(OUT_FILE, '..'), { recursive: true });
@@ -363,6 +468,20 @@ function main(): void {
         partition.units.length,
       ).padStart(2)} units, ${String(partition.districts).padStart(3)} districts ` +
         `(${proposed.length} proposed: ${proposed.map((u) => u.name).join(', ')})`,
+    );
+    const scorecard = scorecardOf(partition.units, {
+      populations,
+      provinces,
+      modernFigures: variant.statistics ?? { modernFigures: true },
+    });
+    const spread =
+      scorecard.population === null
+        ? `no population figures (${scorecard.populationWithheld?.kind})`
+        : `${scorecard.population.largest.name} largest, ${scorecard.population.smallest.name} ` +
+          `smallest, ${scorecard.population.ratio ?? '—'}:1`;
+    console.log(
+      `       scorecard: ${scorecard.districtsMoved.count} of ${scorecard.districtsMoved.of} ` +
+        `districts change province; ${spread}`,
     );
   }
 
