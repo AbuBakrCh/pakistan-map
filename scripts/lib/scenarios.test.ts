@@ -149,6 +149,37 @@ describe('partition validation', () => {
     expect(problems.join('\n')).toMatch(/excludes/);
   });
 
+  it('resolves two halves of one district to a single exclusion, and still catches a paste', () => {
+    // L3's real case: the claim excludes Upper and Lower South Waziristan, which is how the two
+    // districts are named today, and both fold onto the one district the census counted. The
+    // resolved list says South Waziristan once — twice would read as two exclusions.
+    const halves: Unit = {
+      id: 'excluding-both-halves',
+      name: 'Excluding province',
+      kind: 'proposed',
+      claims: ['Dera Ismail Khan'],
+      excludes: ['Upper South Waziristan', 'Lower South Waziristan'],
+    };
+    const { partition, problems } = validateVariant(
+      variantOf([halves, ...everythingElse(['Dera Ismail Khan'])]),
+    );
+    expect(problems).toEqual([]);
+    expect(partition?.units.find((u) => u.id === 'excluding-both-halves')?.excludes).toEqual([
+      'South Waziristan',
+    ]);
+
+    // Deduplicating a fold is not the same as tolerating a repeat. The same name twice is a
+    // paste, and it is reported — otherwise the dedup above would hide it.
+    const pasted: Unit = {
+      ...halves,
+      id: 'pasted',
+      excludes: ['Upper South Waziristan', 'Upper South Waziristan'],
+    };
+    const repeated = validateVariant(variantOf([pasted, ...everythingElse(['Dera Ismail Khan'])]));
+    expect(repeated.problems.join('\n')).toMatch(/Upper South Waziristan/);
+    expect(repeated.problems.join('\n')).toMatch(/twice/);
+  });
+
   it('names an exclusion that is not a district, so a typo cannot look deliberate', () => {
     const unit: Unit = {
       id: 'excluding',

@@ -701,6 +701,102 @@ describe('bundle scenarios', () => {
     expect(contradictions).toEqual([]);
   });
 
+  it('nests the three readings of the Seraiki claim, each strictly inside the next', () => {
+    // L1, L2 and L3 are one claim read three ways, and the whole editorial point is that they
+    // differ only by what each adds. Asserted as containment rather than as three district lists,
+    // because a list would pass while quietly dropping a district from the middle reading — and
+    // the three cards say "L1 plus two" and "L2 plus three" in so many words.
+    const drawnBy = (variant: string, unit: string) =>
+      new Set(
+        (variants.find((v) => v.id === variant) as EmittedVariant).units.find((u) => u.id === unit)!
+          .districts,
+      );
+    const l1 = drawnBy('l1', 'south-punjab');
+    const l2 = drawnBy('l2', 'south-punjab');
+    const l3 = drawnBy('l3', 'saraikistan');
+
+    expect([...l1].filter((d) => !l2.has(d)), 'L1 districts L2 drops').toEqual([]);
+    expect([...l2].filter((d) => !l3.has(d)), 'L2 districts L3 drops').toEqual([]);
+    expect([...l2].filter((d) => !l1.has(d)).sort()).toEqual(['Bhakkar', 'Mianwali']);
+    expect([...l3].filter((d) => !l2.has(d)).sort()).toEqual(['Dera Ismail Khan', 'Tank']);
+
+    // And the counts each card prints, claim against drawing. Paharpur is L3's own fold, on top
+    // of the Taunsa and Kot Addu the other two already carry.
+    const counts = (id: string) => {
+      const v = variants.find((x) => x.id === id) as EmittedVariant;
+      return [v.counts['claimedDistricts'], v.counts['drawnDistricts']];
+    };
+    expect(counts('l1')).toEqual([13, 11]);
+    expect(counts('l2')).toEqual([15, 13]);
+    expect(counts('l3')).toEqual([18, 15]);
+  });
+
+  it('draws L3 across a provincial boundary, and holds the Waziristans out of it by name', () => {
+    // The one proposal in the bundle whose unit is not carved from inside a single province — and
+    // the reason the project moved to district resolution. At division resolution Saraikistan
+    // would have enclosed South Waziristan, which the census shades Pushto at 98%, inside a
+    // Seraiki province the movement has never drawn that way.
+    const l3 = variants.find((v) => v.id === 'l3') as EmittedVariant;
+    const saraikistan = l3.units.find((u) => u.id === 'saraikistan') as EmittedUnit;
+    const home = new Map<string, string>(
+      ROSTER.flatMap((p) => p.districts.map((d) => [d, p.name] as const)),
+    );
+
+    expect(new Set(saraikistan.districts.map((d) => home.get(d)))).toEqual(
+      new Set(['Punjab', 'Khyber Pakhtunkhwa']),
+    );
+
+    // The exclusion is not decoration: both post-census halves of South Waziristan resolve onto
+    // the one district the map draws, that district is drawn, and it is drawn by somebody else.
+    expect(saraikistan.excludes).toEqual(['South Waziristan']);
+    expect(drawnDistricts).toContain('South Waziristan');
+    const holder = l3.units.find((u) => u.districts.includes('South Waziristan'));
+    expect(holder?.id).toBe('khyber-pakhtunkhwa');
+
+    // Only L3 crosses, and *crossing* means taking part of one province and part of another.
+    // Merging provinces whole is a different act and H1 does it to five of them: West Pakistan
+    // spans the country and cuts through nothing. Held over every proposed unit in the bundle, so
+    // that a later variant reaching into a second province is a failure here rather than a
+    // surprise on the map.
+    const size = new Map(ROSTER.map((p) => [p.name, p.districts.length]));
+    const partiallyTaken = (unit: EmittedUnit) => {
+      const byProvince = new Map<string, number>();
+      for (const district of unit.districts) {
+        const province = home.get(district) as string;
+        byProvince.set(province, (byProvince.get(province) ?? 0) + 1);
+      }
+      return [...byProvince].filter(([province, taken]) => taken < (size.get(province) as number));
+    };
+    const crossing = variants.flatMap((variant) =>
+      variant.units
+        .filter((unit) => unit.kind === 'proposed')
+        .filter((unit) => partiallyTaken(unit).length > 1)
+        .map((unit) => `${variant.id} ${unit.id}`),
+    );
+    expect(crossing).toEqual(['l3 saraikistan']);
+  });
+
+  it('says on the card what is contested about the two wider Seraiki readings', () => {
+    // Both are things a reader can see on the map and would otherwise have to guess the meaning
+    // of: two districts inside the line whose own politics reject it, and a line that leaves one
+    // province and enters another. Asserted on the footnote text because that is the sentence
+    // that ships, not on a flag that stands in for it.
+    const footnote = (id: string, kind: string) =>
+      (variants.find((v) => v.id === id) as EmittedVariant).footnotes.find((f) => f.kind === kind)
+        ?.text ?? '';
+
+    const contested = footnote('l2', 'contested-edge');
+    expect(contested).toMatch(/Mianwali/);
+    expect(contested).toMatch(/Bhakkar/);
+
+    const crosses = variants
+      .find((v) => v.id === 'l3')!
+      .footnotes.map((f) => f.text)
+      .join('\n');
+    expect(crosses).toMatch(/Khyber Pakhtunkhwa/);
+    expect(crosses).toMatch(/South Waziristan/);
+  });
+
   it('carries every field the variant card renders, on every variant', () => {
     for (const variant of variants) {
       expect(variant.name, variant.id).toBeTruthy();
