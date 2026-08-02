@@ -132,6 +132,68 @@ export interface UnitRecord {
     readonly pieces: number;
     readonly detached: readonly (readonly string[])[];
   };
+  /**
+   * The sum of its districts' 2023 census populations (#20), and `null` where the census does not
+   * reach all of them — the twenty AJK and Gilgit-Baltistan districts PBS published no results for
+   * (D25). Never a partial sum: `uncounted` names the districts that are missing, so a unit with no
+   * figure says which ground the census did not cover rather than reading as a zero.
+   */
+  readonly population: number | null;
+  readonly uncounted: readonly string[];
+}
+
+/** A unit at one end of the population spread. */
+export interface PopulationExtreme {
+  readonly unit: string;
+  readonly name: string;
+  readonly population: number;
+}
+
+/**
+ * Why a variant has no population figures. Three states, kept apart, because a census that does not
+ * cover ground and an editorial decision to withhold figures are not the same claim.
+ */
+export type PopulationWithholding =
+  | { readonly kind: 'variant'; readonly reason: string }
+  | {
+      readonly kind: 'incomplete';
+      readonly units: readonly {
+        readonly unit: string;
+        readonly name: string;
+        readonly uncounted: readonly string[];
+      }[];
+    }
+  | { readonly kind: 'uncounted' };
+
+/**
+ * The scorecard (#20) as the build computed it: the figures a proposal can be judged on rather than
+ * argued over. Contiguity is not among them — it is answered once, off the adjacency graph, and
+ * lives on the units and in `counts.nonContiguousUnits`.
+ */
+export interface ScorecardRecord {
+  readonly units: number;
+  readonly proposedUnits: number;
+  /** `null` exactly when `populationWithheld` is set. Never both, and never neither. */
+  readonly population: {
+    readonly units: number;
+    readonly total: number;
+    readonly largest: PopulationExtreme;
+    readonly smallest: PopulationExtreme;
+    /** Largest over smallest. `null` where one unit carries figures and nothing compares to it. */
+    readonly ratio: number | null;
+  } | null;
+  readonly populationWithheld: PopulationWithholding | null;
+  /** Units wholly outside the census, set aside from the spread by name rather than as zeroes. */
+  readonly outsideTheCensus: readonly {
+    readonly unit: string;
+    readonly name: string;
+    readonly districts: readonly string[];
+  }[];
+  readonly districtsMoved: {
+    readonly count: number;
+    readonly of: number;
+    readonly byProvince: readonly { readonly province: string; readonly districts: number }[];
+  };
 }
 
 export interface VariantRecord {
@@ -173,6 +235,7 @@ export interface VariantRecord {
     /** The scorecard's contiguity line (#20), over every unit and not only the proposed ones. */
     readonly nonContiguousUnits: number;
   };
+  readonly scorecard: ScorecardRecord;
   readonly units: readonly UnitRecord[];
 }
 

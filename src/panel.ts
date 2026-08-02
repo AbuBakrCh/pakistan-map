@@ -14,7 +14,7 @@
 
 import { select } from 'd3';
 import type { BasisId, ScenarioBundle } from './bundle.ts';
-import type { CardList, CardUnit, VariantCard } from './lib/card.ts';
+import type { CardList, CardScorecard, CardUnit, VariantCard } from './lib/card.ts';
 import {
   BASELINE,
   refusalLines,
@@ -150,7 +150,7 @@ export function renderControls(
  * argument, read top to bottom:
  *
  *   what it is → what it covers → why → where it stands → where the boundary came from →
- *   who is for it → **who is against it** → the units → [#20's scorecard] → footnotes → sources
+ *   who is for it → **who is against it** → the units → the scorecard → footnotes → sources
  *
  * The opposition sits immediately under the advocacy and above everything else, rather than at
  * the foot with the small print. A reader who stops halfway down a card has still read both.
@@ -203,7 +203,27 @@ function renderUnit(parent: HTMLElement, unit: CardUnit): void {
   }
   el(row, 'span', 'card-unit-standing', unit.standing);
   el(row, 'span', 'card-unit-districts', unit.districts);
+  el(row, 'span', 'card-unit-population', unit.population);
   if (unit.note !== null) el(row, 'span', 'card-unit-note', unit.note);
+}
+
+/** The scorecard (#20): a figure, its name, and the qualification it cannot be read without. */
+function renderScorecard(parent: HTMLElement, scorecard: CardScorecard): void {
+  const section = el(parent, 'section', 'card-section card-scorecard');
+  el(section, 'h3', 'card-section-label', 'Scorecard');
+  // Said above the figures, not below them: a reader who has been told there are no population
+  // figures reads the remaining lines as the whole of the scorecard rather than as what is left
+  // of it. Never rendered as a gap — the words are `card.ts`'s, in the voice of whatever is
+  // missing them.
+  if (scorecard.withheld !== null) {
+    el(section, 'p', 'card-scorecard-withheld', scorecard.withheld);
+  }
+  const figures = el(section, 'dl', 'card-scorecard-figures');
+  for (const line of scorecard.lines) {
+    el(figures, 'dt', 'card-scorecard-label', line.label);
+    const value = el(figures, 'dd', 'card-scorecard-value', line.value);
+    if (line.note !== null) el(value, 'span', 'card-scorecard-note', line.note);
+  }
 }
 
 export function renderVariantCard(container: HTMLElement): CardHandle {
@@ -273,10 +293,8 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
     const list = el(units, 'ul', 'card-units');
     for (const unit of card.units) renderUnit(list, unit);
 
-    // #20's scorecard slots in here — population spread, largest:smallest ratio, districts moved
-    // and non-contiguous units, between the units it summarises and the footnotes that qualify
-    // them. `card.scorecard` is its seam. #16 has since supplied the contiguity figure; the other
-    // four are #20's, which is what the null is now waiting on.
+    // Between the units it summarises and the footnotes that qualify them (#20).
+    renderScorecard(detail, card.scorecard);
 
     if (card.footnotes.length > 0) {
       const footnotes = el(detail, 'section', 'card-section');

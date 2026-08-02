@@ -5,8 +5,8 @@ Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 **Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
 module), pipeline and bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
-**variant card** rendering beside it (#19), and the **adjacency graph** flagging each unit's
-contiguity (#16).
+**variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
+contiguity (#16), and the **scorecard** (#20) carrying the figures a proposal is judged on.
 
 ---
 
@@ -128,7 +128,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6, the coastline, the four neighbour countries and the first-level `admin_centre` nodes → `data/raw/`, retrying across four Overpass mirrors. Level 4 sources ICT and, now, each unit's seat |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
-| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant |
 | `scripts/build-context.ts` | `build:data:context` | Stitches each neighbour relation into closed polygons with the districts' own stitcher → intersects them with `CONTEXT_EXTENT` → pairs each first-level unit with its `admin_centre` node → simplifies to 4% and quantizes → `data/bundle/context.topojson.json`. Fails on a country whose ISO code is not in the cache, a ring that will not stitch shut, a silhouette that clips to nothing, a shape that does not contain its own capital, or a unit with no seat — each named. **A separate artifact from the geography bundle, deliberately:** nothing here shares an edge with anything in there, and merging them would renumber every arc in the country to add a background and imply the two sides of a border are one line. Quantization comes *after* simplification, the opposite order from the geometry build, because `presimplify` restores absolute coordinates for arcs and not for **points** — quantized first, every city dot lands in the Bay of Bengal |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
@@ -205,16 +205,45 @@ and drawn** (D7); there is no error path, because refusing to draw a claim is a 
 act than drawing it with a note. Every variant also carries `counts.nonContiguousUnits`, over
 **every** unit and not only the proposed ones — a variant that leaves a current province in two
 pieces has done that to a real province, and filing it under "unchanged" would be the app choosing
-what counts as its own doing. The count is #20's scorecard line.
+what counts as its own doing. That count *is* the scorecard's contiguity line (#20), read off there
+rather than derived a second time.
 
 The graph is a fact about the geometry and is nonetheless built by the *scenario* script, because
 its only consumer is the flag written in the same run and because building it in
 `normalize-geometry.ts` would mean rewriting a 2.2 MB boundary artifact whose boundaries had not
 changed — the whole value of committing that file is that a diff in it means a border moved.
 
-Still to come: per-variant derived stats (#20) and the composite development index (#31, badged
-`synthesized` — the census publishes no such figure). Shared pure logic lives in `scripts/lib/`
-with tests beside it.
+**The scorecard is arithmetic, and it is baked with the rest** (#20). Every variant carries unit
+count, population spread, largest:smallest ratio and districts moved, computed at build time in
+`scripts/lib/scorecard.ts` and written into `scenarios.json` — a figure the runtime derived would be
+a figure nobody reviewed. A unit's population is **the sum of its districts' census rows and nothing
+else**: the census publishes by district, every unit is composed of districts, and nothing between
+the two is interpolated. The fifth line, contiguity, is *not* computed there — #16 already answered
+it off the adjacency graph and wrote it onto the units, and a second derivation would be a second
+answer to one fact.
+
+Two absences the scorecard has to keep apart, because printing a zero for either would be a claim
+about Pakistan this app cannot make. A unit **wholly** outside the census — AJK and GB, whose twenty
+districts PBS published nothing for (D25) — is not a gap in the data but the census's own coverage,
+so it is set aside from the spread **by name** and the total says how many units it is over. A unit
+**partly** outside it is a hole, and it voids the variant's population figures altogether, naming the
+unit and the districts: a largest compared against a smallest that is missing people is worse than no
+comparison. A variant may also withhold modern figures itself (H2 draws 1947's map), in its own
+words. The scorecard carries a spread or a reason for having none, never both and never neither.
+
+**"Districts moved" is measured against the district's current province**, keyed on the 2023 district
+the map draws rather than the one a claim names — South Punjab moves 11, not the 13 it states. A
+district has moved iff the unit holding it is not the one carrying its province forward, and
+*carrying forward* is decided on the unit's **name**: the unit called Punjab is Punjab whatever it has
+lost, and South Punjab is not, however much of Punjab it is made of. Both structural alternatives say
+something false — counting every `proposed` unit's districts calls Gilgit-Baltistan's ten "moved" in a
+variant that only changes its standing, and requiring a unit to be exactly its province calls the
+twenty-five districts still in Punjab "moved" when it is the province that shrank. The cost is stated
+rather than hidden: a variant that renamed a province it otherwise left alone would read as moving all
+of it, which is a thing to catch in the content review the variants already get.
+
+Still to come: the composite development index (#31, badged `synthesized` — the census publishes no
+such figure). Shared pure logic lives in `scripts/lib/` with tests beside it.
 
 Every relation must be classified. A relation matching no 2023 district and no fold rule
 **fails the build** rather than being skipped — a silent discard is how the district set drifts
@@ -282,6 +311,9 @@ What it holds:
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
 | The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
+| The scorecard — every figure recomputed from the committed census and the committed partition rather than read back, naming the unit whose numbers moved; each unit's population equal to its own districts' rows; the census join stamped, so a scorecard summed from a rebuilt census fails rather than adding up to the wrong vintage. Anchored outside our own derivation on the province totals typed from PBS Table 1 — Sindh, KP and Balochistan to the person, and South Punjab plus the Punjab it leaves behind equal to Punjab; the twenty uncounted districts set aside by name against `withoutCensusData`; a spread or a reason for having none, never both; contiguity absent from the block, because #16 answers it | `bundle.test.ts` |
+| What a *voided* scorecard looks like — the states the shipped set cannot show, on five districts: a unit reaching into ground the census does not cover, a variant withholding its own figures, one counted unit and no ratio to give, nothing counted at all. And the "moved" rule against the two readings it refuses — a shrinking province keeping its districts, a territory promoted keeping its ground | `scorecard.test.ts` |
+| The scorecard on the card — five figures in a fixed order; census populations in full and never rounded to a headline; the total qualified by which units it is over and which are outside it; a missing ratio said rather than printed as 1; the stranded districts of a broken unit named; and population voided in the words of whatever is missing it — a variant's own reason and a census gap worded apart | `card.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
@@ -426,10 +458,21 @@ Two columns where there is room, stacked in the same order where there is not, a
 a second is prose the reader waits for. The words are decided in `src/lib/card.ts`, under test;
 `src/panel.ts` composes no sentence of its own.
 
-The **scorecard** (population spread, largest:smallest ratio, districts moved, non-contiguous
-units) is **#20's**, and waits on #16's adjacency graph and per-variant derived statistics. Its
-seam is `VariantCard.scorecard` — declared, null, and rendered between the units it summarises and
-the footnotes that qualify them.
+The **scorecard (#20)** — unit count, population spread, largest:smallest ratio, districts moved,
+non-contiguous units — sits between the units it summarises and the footnotes that qualify them, set
+as a table of figures rather than as prose, because a reader comparing two proposals reads down that
+column and nothing else. The order is fixed across variants for the same reason. Not one of its
+figures is computed on the page: they are read off the bundle, which summed them from the census, and
+`card.ts` decides only what they are called.
+
+Populations are printed **in full and grouped** — 87,311,346, never "87.3 m": the census counted
+people one at a time and publishes the count, and rounding it is this app interpolating. The
+qualification travels with its own figure rather than sitting below the block, because 241,499,431
+described as the country's while two territories are missing from it is a wrong number and the note is
+what makes it a right one. Where population is withheld, the sentence saying so is set **above** the
+remaining lines and the population lines are gone rather than blank — so what is left reads as the
+whole of the scorecard rather than as what survived of it. Each unit also carries its own population,
+or the sentence saying the census does not reach it. Never a zero, never a dash, never nothing.
 
 Contiguity is **flagged, never blocked** — computed at build time off the district adjacency graph
 (#16) and carried on the unit, so the card names the stranded districts rather than reporting a

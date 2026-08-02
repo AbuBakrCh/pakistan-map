@@ -16,6 +16,11 @@ import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import {
+  districtsMoved,
+  scorecardOf,
+  type Scorecard,
+} from './scorecard.ts';
+import {
   adjacencyProblems,
   buildAdjacency,
   contiguityOf,
@@ -43,6 +48,7 @@ const bundle = JSON.parse(
 const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.json'), 'utf8'));
 const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
 const adjacency = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/adjacency.json'), 'utf8'));
+const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -499,6 +505,8 @@ interface EmittedUnit {
     readonly pieces: number;
     readonly detached: readonly (readonly string[])[];
   };
+  readonly population: number | null;
+  readonly uncounted: readonly string[];
 }
 interface EmittedVariant {
   readonly id: string;
@@ -514,6 +522,10 @@ interface EmittedVariant {
   readonly sources: readonly { readonly label: string }[];
   readonly partition: { readonly universe: 'drawn' | 'census'; readonly districts: number };
   readonly counts: Readonly<Record<string, number>>;
+  readonly statistics:
+    | { readonly modernFigures: true }
+    | { readonly modernFigures: false; readonly reason: string };
+  readonly scorecard: Scorecard;
   readonly units: readonly EmittedUnit[];
 }
 
@@ -1040,5 +1052,194 @@ describe('bundle contiguity flags', () => {
     expect(outlineProblems('two districts apart', bundle, members, dissolve(bundle, members))).toEqual(
       [],
     );
+  });
+});
+
+/**
+ * The scorecard (#20), re-derived from the census and the partition that ship beside it.
+ *
+ * `scorecard.test.ts` holds the arithmetic on five districts, and holds every state the committed
+ * set cannot show: a unit that reaches into ground the census does not cover, a variant that
+ * withholds modern figures, a partition with one counted unit. What is held here is that the
+ * figures in the artifact *are* the ones its own inputs imply — recomputed, never read back — and,
+ * on the lines where an outside anchor exists, that they agree with PBS rather than only with this
+ * repo. A unit's population is a published claim about how many Pakistanis live somewhere; if it is
+ * wrong, the app is wrong about the thing it exists to say.
+ */
+const censusPopulations = new Map<string, number>(
+  Object.entries(statistics.districts as Record<string, { population: number }>).map(
+    ([district, record]) => [district, record.population],
+  ),
+);
+/** Today's map, which "moved" is measured against — every drawn district, AJK's and GB's included. */
+const currentProvinces = new Map<string, string>(
+  ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
+);
+const provinceTotals = statistics.totals.provinces as Record<string, number>;
+
+describe('bundle scorecard', () => {
+  it('sums its figures from the census join that ships beside it, not from some other build', () => {
+    // The same stamp the outlines and the graph carry, and for a sharper reason: a scorecard is
+    // numbers, so a stale one is undetectable from its own contents. Every figure would still add
+    // up — to a census that had since been rebuilt underneath it.
+    expect(scenarios.provenance.scorecard.from).toBe('data/bundle/statistics.json');
+    expect(scenarios.provenance.scorecard.statistics.generated).toBe(
+      statistics.provenance.generated,
+    );
+    expect(scenarios.provenance.scorecard.statistics.districts).toBe(CENSUS_DISTRICT_COUNT);
+  });
+
+  it('gives every unit the sum of its own districts’ census populations, and nothing else', () => {
+    // Named per unit rather than per variant: a variant whose total is out by a million leaves the
+    // reader to find which of its units the million is in.
+    const wrong = variants.flatMap((variant) =>
+      variant.units.flatMap((unit) => {
+        const uncounted = unit.districts.filter((d) => !censusPopulations.has(d));
+        if (uncounted.length > 0) {
+          return unit.population === null
+            ? []
+            : [
+                `${variant.id} "${unit.name}" carries a population of ${unit.population} while ` +
+                  `PBS published none for ${uncounted.join(', ')}`,
+              ];
+        }
+        const sum = unit.districts.reduce((n, d) => n + (censusPopulations.get(d) ?? 0), 0);
+        return unit.population === sum
+          ? []
+          : [
+              `${variant.id} "${unit.name}" reads ${unit.population}, and its districts sum to ` +
+                `${sum}`,
+            ];
+      }),
+    );
+    expect(wrong).toEqual([]);
+  });
+
+  it('is exactly the scorecard its own census and partition imply, variant by variant', () => {
+    // The acceptance criterion, over the artifact that ships. Recomputed from the committed inputs
+    // rather than read off the file, so a scenarios.json left behind by an earlier census fails
+    // here on the variant whose figures moved.
+    for (const variant of variants) {
+      expect(variant.scorecard, variant.id).toEqual(
+        scorecardOf(variant.units, {
+          populations: censusPopulations,
+          provinces: currentProvinces,
+          modernFigures: variant.statistics,
+        }),
+      );
+    }
+  });
+
+  it('never carries a spread and a reason for having none, or neither', () => {
+    // Absence is stated, never defaulted. A variant carrying both would put a comparison on the
+    // card and, under it, the sentence saying there is none.
+    for (const variant of variants) {
+      expect(variant.scorecard.population === null, variant.id).toBe(
+        variant.scorecard.populationWithheld !== null,
+      );
+    }
+  });
+
+  it('agrees with PBS on the provinces a variant leaves alone, and on the one it carves', () => {
+    // An outside anchor. Everything above recomputes with the same code that built the artifact,
+    // so a wrong sum would agree with itself. These are the province totals typed from PBS Table 1
+    // and reconciled in `statistics.test.ts`: L1 leaves four provinces and the capital exactly as
+    // they are, so each unit equals its province to the person — and South Punjab plus the Punjab
+    // it leaves behind equal Punjab, because between them they are Punjab.
+    const l1 = variants.find((v) => v.id === 'l1') as EmittedVariant;
+    const population = (unitId: string) =>
+      (l1.units.find((u) => u.id === unitId) as EmittedUnit).population;
+    for (const province of ['Sindh', 'Khyber Pakhtunkhwa', 'Balochistan']) {
+      expect((l1.units.find((u) => u.name === province) as EmittedUnit).population, province).toBe(
+        provinceTotals[province],
+      );
+    }
+    expect(population('islamabad-capital-territory')).toBe(
+      provinceTotals['Islamabad Capital Territory'],
+    );
+    expect((population('south-punjab') as number) + (population('punjab') as number)).toBe(
+      provinceTotals['Punjab'],
+    );
+    // And the whole of a `drawn`-universe partition is the whole of the census: 241,499,431.
+    expect(l1.scorecard.population?.total).toBe(statistics.totals.pakistan);
+  });
+
+  it('sets the twenty uncounted districts aside by name rather than counting them as nobody', () => {
+    // D25. AJK and Gilgit-Baltistan are drawn, named, and in no PBS table, so their units carry no
+    // population at all — never a zero, which would be a claim about who lives on ground Pakistan
+    // administers, and never a partial sum wearing the look of a whole one.
+    const l1 = variants.find((v) => v.id === 'l1') as EmittedVariant;
+    const outside = l1.scorecard.outsideTheCensus;
+    expect(outside.map((found) => found.name)).toEqual([
+      'Azad Jammu & Kashmir',
+      'Gilgit-Baltistan',
+    ]);
+    expect([...outside.flatMap((found) => found.districts)].sort()).toEqual(
+      [...(statistics.withoutCensusData.districts as string[])].sort(),
+    );
+    for (const found of outside) {
+      const unit = l1.units.find((u) => u.id === found.unit) as EmittedUnit;
+      expect(unit.population, found.name).toBeNull();
+      expect(unit.uncounted, found.name).toEqual(unit.districts);
+    }
+    // The spread is over the units the census reaches, and says how many that was.
+    expect(l1.scorecard.population?.units).toBe(l1.units.length - outside.length);
+  });
+
+  it('names the ground that actually changes hands, and where it comes from', () => {
+    // L1's eleven: the districts of South Punjab, every one of them Punjab's today. Keyed on the
+    // 2023 districts the map draws and not on the thirteen the claim names — Taunsa and Kot Addu
+    // did not exist when anyone was counted, and counting them here would move ground twice.
+    const l1 = variants.find((v) => v.id === 'l1') as EmittedVariant;
+    const south = l1.units.find((u) => u.id === 'south-punjab') as EmittedUnit;
+    expect(l1.scorecard.districtsMoved).toEqual({
+      count: 11,
+      of: ROSTER_DISTRICT_COUNT,
+      byProvince: [{ province: 'Punjab', districts: 11 }],
+    });
+    expect(south.districts).toHaveLength(11);
+    expect(south.claimed).toHaveLength(13);
+    expect(south.districts.every((d) => currentProvinces.get(d) === 'Punjab')).toBe(true);
+    // Every other unit of L1 keeps its own province's name and moves nothing, which is what makes
+    // eleven the whole answer rather than the part of it the proposal admits to.
+    expect(
+      districtsMoved(
+        l1.units.filter((u) => u.id !== 'south-punjab'),
+        currentProvinces,
+      ).count,
+    ).toBe(0);
+  });
+
+  it('reads its contiguity line off #16 rather than answering the question twice', () => {
+    // Deliberately not a field of the scorecard. Contiguity is derived from the adjacency graph and
+    // carried on the units; a second derivation here would be a second answer, and the failure
+    // worth avoiding is the one where the two disagree and nobody can tell which is on screen.
+    for (const variant of variants) {
+      expect(Object.keys(variant.scorecard), variant.id).not.toContain('contiguity');
+      expect(Object.keys(variant.scorecard), variant.id).not.toContain('nonContiguousUnits');
+      expect(variant.counts['nonContiguousUnits'], variant.id).toBe(
+        variant.units.filter((u) => !u.contiguity.contiguous).length,
+      );
+      expect(variant.scorecard.units, variant.id).toBe(variant.counts['units']);
+      expect(variant.scorecard.proposedUnits, variant.id).toBe(variant.counts['proposedUnits']);
+    }
+  });
+
+  it('states the ratio it prints, to the precision it prints it at', () => {
+    for (const variant of variants) {
+      const spread = variant.scorecard.population;
+      if (spread === null) continue;
+      const ratio = spread.largest.population / spread.smallest.population;
+      expect(spread.ratio, variant.id).toBe(Math.round(ratio * 100) / 100);
+      expect(spread.largest.population, variant.id).toBeGreaterThanOrEqual(
+        spread.smallest.population,
+      );
+      // Both ends are units of this variant, not of another and not of the roster.
+      for (const end of [spread.largest, spread.smallest]) {
+        const unit = variant.units.find((u) => u.id === end.unit);
+        expect(unit?.name, `${variant.id} ${end.unit}`).toBe(end.name);
+        expect(unit?.population, `${variant.id} ${end.unit}`).toBe(end.population);
+      }
+    }
   });
 });
