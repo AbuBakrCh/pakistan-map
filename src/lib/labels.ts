@@ -228,14 +228,69 @@ export function baselineLabelSites(
  * Units outrank everything for the same reason provinces outrank divisions: they are what the
  * screen is about. The floors keep the tiers apart outright — `geoArea` is a fraction of the
  * sphere, well under 1, so no division climbs past a province and no province past a unit.
+ *
+ * Within the tier there are two floors rather than one, so that the two territories are not ranked
+ * last by the very thing that makes them hard to name. See `TERRITORY_FLOOR`.
  */
 export function variantLabelSites(
   geography: { divisions: { features: readonly Shape[] } },
   units: readonly Shape[],
   cities: readonly CitySite[] = [],
 ): LabelSite[] {
-  return [...sitesOf(units, 'unit', 20), ...citySites(cities), ...divisionSites(geography, cities)];
+  return [...unitSites(units), ...citySites(cities), ...divisionSites(geography, cities)];
 }
+
+/**
+ * The unit tier's two floors, and why it needs two where every other tier needs one.
+ *
+ * Ranking inside a tier is by ground covered, for the reason the divisions are ranked that way:
+ * where two names want the same few pixels, the larger shape has more of the map to be confusing
+ * about. Applied to the units without exception, that rule is backwards for exactly the units it
+ * can least afford to be backwards for. Azad Jammu & Kashmir and Gilgit-Baltistan are the smallest
+ * first-level ground on this map after ICT, so ranking on area puts the two names this app is
+ * least free to drop at the bottom of the tier — and the politically sensitive rendering section
+ * requires both drawn **and named**, because a territory drawn and anonymous says something about
+ * Pakistan-administered ground that nobody here decided to say. A division that gives way is a
+ * degraded base map and comes back on the first zoom step; a territory that gives way is a claim.
+ *
+ * At the baseline the tiers already did this work — a territory is a province-tier name and the
+ * provinces outrank the cities and the divisions outright — so the failure appeared only under a
+ * variant, and only under one crowded enough for the units to start evicting each other. #28's
+ * rule-drawn partitions are the first that are: A2 and A3 draw fourteen and sixteen units, and at
+ * 390px Rawalpindi's name — 103px of type over 42px of ground — took the corner AJK's own 31px
+ * name fits in.
+ *
+ * A territory is recognised by **the kind the bundle records**, never by its name. H3 calls
+ * Gilgit-Baltistan the *Northern Areas*, and a rule that read names would stop protecting the
+ * territory the moment a variant renamed one — which is the exact failure #34's review found in
+ * the criterion it was asserting.
+ *
+ * Two things this does not buy, both stated because both are real. It cannot rescue a name **wider
+ * than the paper left beside it**: H3's *Northern Areas* is 145px set at an anchor 71px from the
+ * right edge, so it runs off the frame at any priority, and it is unnameable at the bar for a
+ * reason no ranking touches. And it is not free — A1 already named AJK by nudging it clear, and
+ * giving it the corner outright is what puts *Rawalpindi* off that variant's map. That price is
+ * named in the suite rather than absorbed into a count.
+ *
+ * A5 is the deliberate exception. Its two units are AJK and GB **promoted** — argued as provinces,
+ * recorded as `proposed`, and ranked as the proposals they are, which is what a promotion is. It
+ * draws seven units and names all seven, and that it does is asserted per variant rather than
+ * assumed here.
+ */
+const UNIT_FLOOR = 20;
+const TERRITORY_FLOOR = 21;
+
+const unitSites = (units: readonly Shape[]): LabelSite[] =>
+  units.map((f) => {
+    const { name, kind } = f.properties as { name: string; kind?: string };
+    return {
+      key: labelKey('unit', name),
+      text: name,
+      tier: 'unit' as const,
+      anchor: labelAnchor(f),
+      priority: (kind === 'territory' ? TERRITORY_FLOOR : UNIT_FLOOR) + geoArea(f as never),
+    };
+  });
 
 const sitesOf = (features: readonly Shape[], tier: LabelTier, floor: number): LabelSite[] =>
   features.map((f) => ({

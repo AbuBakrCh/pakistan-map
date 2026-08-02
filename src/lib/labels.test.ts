@@ -270,8 +270,24 @@ const framed = (frame: { width: number; height: number }) => ({
   padding: frameInset(frame.width),
 });
 
-/** The variant layout at one frame: which unit names the page would actually set. */
-function variantAt(id: string, frame: { width: number; height: number }) {
+/**
+ * The variant layout at one frame: which unit names the page would actually set.
+ *
+ * Memoised, because the pipeline is asked for the same variant at the same frame by several cases
+ * and the interior search behind `labelAnchor` is the expensive part of it. The cache is keyed on
+ * exactly the two arguments, so nothing is shared between two questions that differ.
+ */
+const variantLayouts = new Map<string, ReturnType<typeof layOutVariantAt>>();
+const variantAt = (id: string, frame: { width: number; height: number }) => {
+  const key = `${id}@${frame.width}x${frame.height}`;
+  const cached = variantLayouts.get(key);
+  if (cached !== undefined) return cached;
+  const computed = layOutVariantAt(id, frame);
+  variantLayouts.set(key, computed);
+  return computed;
+};
+
+function layOutVariantAt(id: string, frame: { width: number; height: number }) {
   const viewport = framed(frame);
   const project = fitProjection(provinces, viewport);
   const path = geoPath(project);
@@ -284,13 +300,21 @@ function variantAt(id: string, frame: { width: number; height: number }) {
     ...units.features.map((f) => [labelKey('unit', f.properties.name), width(f)] as const),
     ...divisions.features.map((f) => [labelKey('division', f.properties.name), width(f)] as const),
   ]);
-  const measured = variantLabelSites({ divisions }, units.features, cities).flatMap((site) => {
+  const sites = variantLabelSites({ divisions }, units.features, cities);
+  const measured = sites.flatMap((site) => {
     const point = project(site.anchor);
     if (point === null) return [];
     return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
   });
   return {
     units: units.features.map((f) => f.properties.name),
+    /** The units whose ground is a territory — by the kind the bundle records, never by name. */
+    territories: units.features
+      .filter((f) => f.properties.kind === 'territory')
+      .map((f) => f.properties.name),
+    sites,
+    viewport,
+    sized: new Map(measured.map((m) => [m.box.key, m.box])),
     placed: new Set(
       layoutLabels(
         measured.map((m) => m.box),
@@ -522,20 +546,40 @@ describe('a variant at the 390px bar', () => {
   /**
    * The units this build cannot name at 390px — listed, because a count would hide which.
    *
-   * All three are the same shape of problem: a long name over ground that is a fraction as wide on
-   * a phone, and no attested abbreviation to fall back to. Every other long name in the app has
-   * one — AJK, ICT, KP, GB, and H3's own NWFP and FATA — and `SHORT_FORMS` forbids inventing the
-   * missing ones: a coinage would be a name for Pakistani-administered ground that no source uses,
-   * which is a worse thing to put on this map than a missing label.
+   * Every one is the same shape of problem: a long name over ground that is a fraction as wide on
+   * a phone, and no attested abbreviation to fall back to. Every long name in the app that has one
+   * uses it — AJK, ICT, KP, GB, and H3's own NWFP and FATA — and `SHORT_FORMS` forbids inventing
+   * the missing ones: a coinage would be a name no source uses, which is a worse thing to put on
+   * this map than a missing label.
    *
-   * H3's *Northern Areas* is Gilgit-Baltistan under the name that variant gives it. L7's two are
-   * the small pockets a mother-tongue partition leaves behind — Keamari is a single Karachi
-   * district, and Kohiostani's ground is smaller still.
+   * H3's *Northern Areas* is Gilgit-Baltistan under the name that variant gives it: 145px of type
+   * set at an anchor 71px from the right edge, so it runs off the frame at any priority — the one
+   * case here that ranking cannot touch. L7's two are the small pockets a mother-tongue partition
+   * leaves behind: Keamari is a single Karachi district, and Kohiostani's ground is smaller still.
    *
-   * The list is what makes this honest rather than a silent floor, and the test below is what
-   * makes it acceptable: not one of them is lost for good.
+   * **A1 to A3 are a different case and are the reason this list grew** (#28). They are not
+   * transcribed proposals whose author chose the names — they are what the rule engine draws, and
+   * a rule stated as "no province above 25 million" produces fourteen to sixteen units, most of
+   * them packed into Punjab and upper Sindh and each named after its capital district. At the bar
+   * the country is 369px wide, central Punjab about 120px of it, and *Bahawalnagar* alone is 124px
+   * of type. There is no packing of six such names into that ground, and no abbreviation this app
+   * is entitled to invent, so the bar #34 set is **not met** for these three and CLAUDE.md says so
+   * in as many words rather than leaving it to be inferred from this table.
+   *
+   * What is *not* here is the part that was fixed rather than recorded. **Azad Jammu & Kashmir was
+   * in this list for A2 and A3 and no longer is.** Its name fits its own ground — `AJK` is 31px
+   * over 29px — and it was dropped only because the unit tier ranked it by area, which puts the
+   * two territories last among sixteen units. Territories now rank first inside the tier
+   * (`TERRITORY_FLOOR`), because a territory drawn and anonymous is a claim rather than a
+   * legibility cost. **A1's *Rawalpindi* is what that costs**, and it is in the list below.
+   *
+   * The list is what makes this honest rather than a silent floor, and the test after it is what
+   * makes it bearable: not one of them is lost for good.
    */
   const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
+    a1: ['Karachi East', 'Gujranwala', 'Rawalpindi', 'Faisalabad', 'Mardan'],
+    a2: ['Gujranwala', 'Peshawar', 'Faisalabad'],
+    a3: ['Multan', 'Lahore', 'Rawalpindi', 'Bahawalnagar', 'Mardan'],
     h3: ['Northern Areas'],
     l7: ['Pushto (Keamari)', 'Kohiostani'],
   };
@@ -546,19 +590,88 @@ describe('a variant at the 390px bar', () => {
       const unnamed = drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
       expect(unnamed).toEqual(UNNAMEABLE_AT_390[variant.id] ?? []);
     });
+
+    it(`ranks ${variant.id}'s territories above every unit that is not one`, () => {
+      /*
+       * The rule, asked where it is decided rather than of the picture it produces (#28). Ranking
+       * the tier on ground covered puts AJK and GB last of sixteen, which is backwards for the two
+       * names this app is least free to drop — a territory drawn and anonymous is a claim, where a
+       * proposed unit that gives way is a legibility cost that returns on zoom.
+       *
+       * Asked of every variant, and keyed on the kind the bundle records: H3 calls
+       * Gilgit-Baltistan the *Northern Areas*, so a rule that recognised the territories by name
+       * would stop protecting one the moment a variant renamed it.
+       */
+      const drawn = variantAt(variant.id, BAR_390);
+      const units = drawn.sites.filter((s) => s.tier === 'unit');
+      const isTerritory = (key: string) =>
+        drawn.territories.some((name) => labelKey('unit', name) === key);
+      const territories = units.filter((s) => isTerritory(s.key));
+      const rest = units.filter((s) => !isTerritory(s.key));
+      // A5 is the exception, and it is the one that proves the key is `kind`: its AJK and GB are
+      // *promotions*, recorded as `proposed`, argued as provinces and ranked as the proposals they
+      // are. It draws seven units and the case above names all seven.
+      if (variant.id === 'a5') expect(territories).toEqual([]);
+      for (const territory of territories) {
+        for (const other of rest) {
+          expect(
+            territory.priority,
+            `${variant.id}: ${territory.key} ranked under ${other.key}`,
+          ).toBeGreaterThan(other.priority);
+        }
+      }
+      // And still inside its own tier: a territory outranks the units, not the map.
+      const divisionSite = drawn.sites.find((s) => s.tier === 'division');
+      for (const territory of territories) {
+        expect(territory.priority).toBeGreaterThan(divisionSite?.priority ?? Infinity);
+      }
+    });
   }
 
-  it('names every one of them as soon as there is room, so nothing is lost for good', () => {
-    // What makes the list above a matter of pixels rather than of policy. A unit that could not be
-    // named at *any* size would be a unit this app cannot draw honestly, and would belong in the
-    // open items rather than in a layout test.
-    for (const [id, units] of Object.entries(UNNAMEABLE_AT_390)) {
-      const drawn = variantAt(id, { width: 1200, height: 800 });
-      for (const unit of units) {
-        expect(drawn.placed.has(labelKey('unit', unit)), `${id}: ${unit}`).toBe(true);
-      }
+  it('leaves no territory anonymous, and says why the one exception is not a ranking failure', () => {
+    /*
+     * The obligation the politically sensitive rendering section states — AJK and GB drawn **and
+     * named** — carried through into the variant views, where until #28 it was only true by luck:
+     * with eight units there was room for everything, and with sixteen there is not.
+     *
+     * H3's *Northern Areas* is the one territory this build still cannot name at the bar, and the
+     * reason is asserted rather than asserted-about-in-a-comment: at 145px set 71px from the right
+     * edge the box runs off the frame, and `layoutLabels` drops an off-frame name rather than
+     * dragging it back over ground it does not name. No priority reaches that, and the alternative
+     * — coining a short form for Pakistani-administered ground that no source uses — is the thing
+     * `SHORT_FORMS` exists to refuse. It is open item 5, not a layout bug.
+     */
+    for (const variant of scenarios.variants) {
+      const drawn = variantAt(variant.id, BAR_390);
+      const anonymous = drawn.territories.filter(
+        (name) => !drawn.placed.has(labelKey('unit', name)),
+      );
+      expect(anonymous, variant.id).toEqual(variant.id === 'h3' ? ['Northern Areas'] : []);
     }
+
+    const h3 = variantAt('h3', BAR_390);
+    const box = h3.sized.get(labelKey('unit', 'Northern Areas')) as LabelBox;
+    expect(box.x + box.width / 2).toBeGreaterThan(h3.viewport.width);
   });
+
+  it(
+    'names every one of them as soon as there is room, so nothing is lost for good',
+    () => {
+      // What makes the list above a matter of pixels rather than of policy. A unit that could not
+      // be named at *any* size would be a unit this app cannot draw honestly, and would belong in
+      // the open items rather than in a layout test. It is the whole warrant for the list, and it
+      // holds for all fifteen units on it including A1 to A3's eleven.
+      for (const [id, units] of Object.entries(UNNAMEABLE_AT_390)) {
+        const drawn = variantAt(id, { width: 1200, height: 800 });
+        for (const unit of units) {
+          expect(drawn.placed.has(labelKey('unit', unit)), `${id}: ${unit}`).toBe(true);
+        }
+      }
+    },
+    // Five whole variant layouts at a second frame, and the interior search behind `labelAnchor`
+    // is not cheap. A timeout raised because the work grew, not because anything here is slow.
+    30_000,
+  );
 });
 
 describe('districtLabelSites', () => {
