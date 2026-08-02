@@ -1,7 +1,10 @@
 import { geoContains, geoPath } from 'd3';
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
+import outlines from '../../data/bundle/unit-outlines.json';
+import type { UnitOutlineBundle } from '../bundle.ts';
 import { readGeography } from './geography.ts';
+import { readUnitOutlines } from './units.ts';
 import { fitProjection } from './projection.ts';
 import {
   baselineLabelSites,
@@ -10,7 +13,9 @@ import {
   labelText,
   layoutLabels,
   measureLabel,
+  variantLabelSites,
   type LabelBox,
+  type LabelTier,
 } from './labels.ts';
 
 const { provinces, divisions } = readGeography(bundle as never);
@@ -94,11 +99,13 @@ describe('the baseline map at default zoom', () => {
   const path = geoPath(project);
   // No browser here, so widths are estimated — generously, and with the stylesheet's capitals and
   // tracking accounted for, because a layout that clears at these widths clears at the real ones.
-  const measure = (text: string, tier: 'province' | 'division') => {
-    const size = tier === 'province' ? 13 : 10.5;
-    return tier === 'province'
-      ? { width: text.length * (size * 0.68 + 1.5), height: size }
-      : { width: text.length * size * 0.5, height: size };
+  // Units are set as provinces are — same size, same tracking, told apart by colour and not by
+  // scale — so they measure the same way here.
+  const measure = (text: string, tier: LabelTier) => {
+    const size = tier === 'division' ? 10.5 : 13;
+    return tier === 'division'
+      ? { width: text.length * size * 0.5, height: size }
+      : { width: text.length * (size * 0.68 + 1.5), height: size };
   };
   const width = (f: { geometry: unknown }) => {
     const [[west], [east]] = path.bounds(f as never);
@@ -162,6 +169,48 @@ describe('the baseline map at default zoom', () => {
       .map((d) => d.properties.name)
       .filter((name) => !drawn.has(labelKey('division', name)));
     expect(dropped.sort()).toEqual(['Poonch']);
+  });
+});
+
+describe('variantLabelSites', () => {
+  const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, 'l1');
+  const sites = variantLabelSites({ divisions }, units.features);
+
+  it('names every unit of the active variant exactly once', () => {
+    const named = sites.filter((s) => s.tier === 'unit').map((s) => s.text);
+    expect(named).toEqual(units.features.map((f) => f.properties.name));
+    expect(new Set(named).size).toBe(named.length);
+  });
+
+  it('hands the province names over to the units rather than drawing both', () => {
+    // Seven of L1's eight units *are* current provinces carried through unchanged, so drawing
+    // both tiers would set "Sindh" twice a few pixels apart, in two colours — and beside South
+    // Punjab it would set the proposal's name next to the name of the province it is carved out
+    // of, which reads as two claims about one piece of ground.
+    expect(sites.filter((s) => s.tier === 'province')).toEqual([]);
+    const punjab = sites.filter((s) => s.text === 'Punjab');
+    expect(punjab).toHaveLength(1);
+    expect(punjab[0]?.tier).toBe('unit');
+  });
+
+  it('keeps the divisions, and keeps skipping the injected ICT pseudo-division', () => {
+    const divisionKeys = sites.filter((s) => s.tier === 'division').map((s) => s.key);
+    expect(divisionKeys).toHaveLength(36);
+    expect(divisionKeys).not.toContain('division:Islamabad');
+  });
+
+  it('ranks every unit above every division', () => {
+    const lowestUnit = Math.min(...sites.filter((s) => s.tier === 'unit').map((s) => s.priority));
+    const highest = Math.max(...sites.filter((s) => s.tier === 'division').map((s) => s.priority));
+    expect(lowestUnit).toBeGreaterThan(highest);
+  });
+
+  it('anchors South Punjab inside South Punjab, not inside the province it leaves', () => {
+    const south = units.features.find((f) => f.properties.unit === 'south-punjab');
+    const site = sites.find((s) => s.text === 'South Punjab');
+    expect(geoContains(south as never, site?.anchor as [number, number])).toBe(true);
+    const punjab = units.features.find((f) => f.properties.unit === 'punjab');
+    expect(geoContains(punjab as never, site?.anchor as [number, number])).toBe(false);
   });
 });
 

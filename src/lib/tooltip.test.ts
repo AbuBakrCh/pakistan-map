@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
 import statistics from '../../data/bundle/statistics.json';
-import type { CensusStatistics } from '../bundle.ts';
+import type { CensusStatistics, UnitKind } from '../bundle.ts';
 import { readDistricts, type ProvinceKind } from './geography.ts';
 import {
   districtTooltip,
   placeTooltip,
   spokenTooltip,
   type DistrictTooltip,
+  type UnitMembership,
 } from './tooltip.ts';
 
 const census = statistics as unknown as CensusStatistics;
@@ -20,13 +21,24 @@ const kinds = new Map<string, ProvinceKind>(
   ).objects.provinces.geometries.map((g) => [g.properties.name, g.properties.kind]),
 );
 
-const tooltipFor = (name: string): DistrictTooltip => {
+const tooltipFor = (name: string, membership: UnitMembership | null = null): DistrictTooltip => {
   const feature = districts.features.find((f) => f.properties.name === name);
   if (feature === undefined) throw new Error(`${name} is not drawn`);
   const kind = kinds.get(feature.properties.province);
   if (kind === undefined) throw new Error(`${feature.properties.province} has no kind`);
-  return districtTooltip(feature.properties, kind, census);
+  return districtTooltip(feature.properties, kind, census, membership);
 };
+
+/** The active variant's answer, as `main.ts` assembles it from the scenario bundle. */
+const inUnit = (
+  name: string,
+  kind: UnitKind,
+  universe: 'drawn' | 'census' = 'drawn',
+): UnitMembership => ({
+  variant: 'South Punjab Secretariat',
+  universe,
+  unit: { name, kind },
+});
 
 const figure = (tooltip: DistrictTooltip, label: string) =>
   tooltip.figures.find((f) => f.label === label);
@@ -168,6 +180,67 @@ describe('districtTooltip — over the whole drawn set', () => {
 
 });
 
+describe('districtTooltip — the third thing a hover names', () => {
+  it('says nothing about a unit at the baseline, where there is none', () => {
+    expect(tooltipFor('Lahore').unit).toBeNull();
+  });
+
+  it('names a proposed province as proposed, twice over', () => {
+    // Once in the label and once in the note. This is the only line in the app where a boundary
+    // that does not exist is named in the same box as two that do, so it says which is which
+    // rather than leaving a reader to infer it from a colour.
+    const multan = tooltipFor('Multan', inUnit('South Punjab', 'proposed')).unit;
+    expect(multan?.label).toBe('Proposed province');
+    expect(multan?.value).toBe('South Punjab');
+    expect(multan?.note).toBe('South Punjab Secretariat — proposed, not official');
+    expect(multan?.kind).toBe('proposed');
+  });
+
+  it('says a province the variant leaves alone is unchanged', () => {
+    // Without this, a reader hovering Lahore under an active variant cannot tell whether the
+    // proposal moved it or left it — and the map looks identical either way.
+    const lahore = tooltipFor('Lahore', inUnit('Punjab', 'unchanged')).unit;
+    expect(lahore?.value).toBe('Punjab');
+    expect(lahore?.note).toBe('Unchanged from the current map');
+    expect(lahore?.label).not.toContain('Proposed');
+  });
+
+  it('keeps a territory a territory inside a variant', () => {
+    const muzaffarabad = tooltipFor('Muzaffarabad', inUnit('Azad Jammu & Kashmir', 'territory'));
+    expect(muzaffarabad.unit?.note).toBe(
+      'Territory, unchanged — not constitutionally a province',
+    );
+    // The census absence and the unit line are two different statements and both are made.
+    expect(muzaffarabad.absence).toMatch(/does not cover it/);
+    expect(muzaffarabad.figures).toEqual([]);
+  });
+
+  it('says a census-universe variant leaves a district in no unit, rather than leaving a blank', () => {
+    const outside = tooltipFor('Gilgit', {
+      variant: 'South Punjab Secretariat',
+      universe: 'census',
+      unit: null,
+    }).unit;
+    expect(outside?.value).toBeNull();
+    expect(outside?.kind).toBeNull();
+    expect(outside?.note).toContain('In no unit');
+    expect(outside?.note).toContain('136 districts');
+  });
+
+  it('calls a gap in a drawn-universe partition a gap, rather than a statement about the ground', () => {
+    // Unreachable through a valid bundle — the partition validator refuses it — which is exactly
+    // why the sentence has to exist: if it is ever seen, it must not read as an editorial claim
+    // that this district belongs to nobody.
+    const gap = tooltipFor('Gilgit', {
+      variant: 'South Punjab Secretariat',
+      universe: 'drawn',
+      unit: null,
+    }).unit;
+    expect(gap?.note).toContain('gap in the partition');
+    expect(gap?.note).not.toContain('136 districts');
+  });
+});
+
 describe('spokenTooltip', () => {
   // `role="img"` on the map makes the live region the only hover surface a screen reader gets,
   // so these are not a convenience copy of the tooltip — they are what that reader is told.
@@ -183,6 +256,22 @@ describe('spokenTooltip', () => {
     expect(spoken).toContain('The 2023 census does not cover it');
     expect(spoken).not.toMatch(/Population\s*\.?$/);
     expect(spoken).not.toContain('Population ');
+  });
+
+  it('speaks the unit last, after what the census counted', () => {
+    const spoken = spokenTooltip(tooltipFor('Multan', inUnit('South Punjab', 'proposed')));
+    expect(spoken).toContain('Proposed province South Punjab');
+    expect(spoken.indexOf('Population')).toBeLessThan(spoken.indexOf('Proposed province'));
+  });
+
+  it('speaks the unit for a district with no figures at all', () => {
+    // The twenty uncounted districts are the ones a reader is most likely to be checking a
+    // proposal's edge against, so the absence branch must not swallow the unit line.
+    const spoken = spokenTooltip(
+      tooltipFor('Muzaffarabad', inUnit('Azad Jammu & Kashmir', 'territory')),
+    );
+    expect(spoken).toContain('The 2023 census does not cover it');
+    expect(spoken).toContain('Azad Jammu & Kashmir');
   });
 
   it("speaks Chitral's absent dominant tongue as the note, never as a bare label", () => {

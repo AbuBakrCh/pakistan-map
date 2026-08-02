@@ -102,7 +102,7 @@ export function labelText(
   return short !== undefined && measure(name) > shapeWidth ? short : name;
 }
 
-export type LabelTier = 'province' | 'division';
+export type LabelTier = 'unit' | 'province' | 'division';
 
 /**
  * What identifies a name across the tiers.
@@ -144,28 +144,47 @@ export function baselineLabelSites(geography: {
   provinces: { features: readonly Shape[] };
   divisions: { features: readonly Shape[] };
 }): LabelSite[] {
-  const sites = (features: readonly Shape[], tier: LabelTier, floor: number): LabelSite[] =>
-    features.map((f) => ({
-      key: labelKey(tier, (f.properties as { name: string }).name),
-      text: (f.properties as { name: string }).name,
-      tier,
-      anchor: labelAnchor(f),
-      priority: floor + geoArea(f as never),
-    }));
-
-  // The floor separates the tiers outright: geoArea is a fraction of the sphere, well under 1,
-  // so no division can climb past any province however large it is.
-  return [
-    ...sites(geography.provinces.features, 'province', 10),
-    ...sites(
-      geography.divisions.features.filter(
-        (f) => (f.properties as { pseudo?: boolean }).pseudo !== true,
-      ),
-      'division',
-      0,
-    ),
-  ];
+  return [...sitesOf(geography.provinces.features, 'province', 10), ...divisionSites(geography)];
 }
+
+/**
+ * The names drawn while a variant is active: the units, and the divisions under them.
+ *
+ * **Units replace the provinces rather than joining them.** Seven of L1's eight units *are*
+ * current provinces carried through unchanged, so drawing both tiers would set "Sindh" twice, a
+ * few pixels apart, in two colours — and on the one unit that differs it would set the proposal's
+ * name beside the name of the province it is being carved out of, which reads as two claims about
+ * the same ground rather than as one replacing the other. The faded province *boundaries* stay
+ * (stratum 2); it is only the names that hand over.
+ *
+ * Units outrank everything for the same reason provinces outrank divisions: they are what the
+ * screen is about. The floors keep the tiers apart outright — `geoArea` is a fraction of the
+ * sphere, well under 1, so no division climbs past a province and no province past a unit.
+ */
+export function variantLabelSites(
+  geography: { divisions: { features: readonly Shape[] } },
+  units: readonly Shape[],
+): LabelSite[] {
+  return [...sitesOf(units, 'unit', 20), ...divisionSites(geography)];
+}
+
+const sitesOf = (features: readonly Shape[], tier: LabelTier, floor: number): LabelSite[] =>
+  features.map((f) => ({
+    key: labelKey(tier, (f.properties as { name: string }).name),
+    text: (f.properties as { name: string }).name,
+    tier,
+    anchor: labelAnchor(f),
+    priority: floor + geoArea(f as never),
+  }));
+
+const divisionSites = (geography: { divisions: { features: readonly Shape[] } }): LabelSite[] =>
+  sitesOf(
+    geography.divisions.features.filter(
+      (f) => (f.properties as { pseudo?: boolean }).pseudo !== true,
+    ),
+    'division',
+    0,
+  );
 
 /** A name measured for the page: anchor in px, the box the text will occupy, and how much it matters. */
 export interface LabelBox {
