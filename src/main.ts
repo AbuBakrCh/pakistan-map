@@ -58,6 +58,8 @@ import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
+import { exportPng } from './export-image.ts';
+import { EXPORT_FAILED } from './lib/export-band.ts';
 import { renderMap, type MapView } from './map.ts';
 import { renderAbout, renderControls, renderVariantCard } from './panel.ts';
 
@@ -149,10 +151,17 @@ const map = renderMap(
   censusStatistics,
   viewFor(selection),
 );
-const panel = renderControls(controlMount, scenarioBundle, choices, go, () => {
-  compare.press();
-  render();
-});
+const panel = renderControls(
+  controlMount,
+  scenarioBundle,
+  choices,
+  go,
+  () => {
+    compare.press();
+    render();
+  },
+  download,
+);
 const card = renderVariantCard(cardMount);
 
 /*
@@ -173,6 +182,35 @@ renderAbout(
     outlines: unitOutlineBundle,
   }),
 );
+
+/**
+ * The sanctioned copy (#32, D22).
+ *
+ * Exports what is *selected*, not what compare happens to be holding out of the way: a reader with
+ * the key down is looking at the baseline for a moment, and an image of that captioned with the
+ * proposal's name would be the one export this app produces that lies about its own picture. The
+ * map itself is photographed as it stands, zoom and pan included — the crop is `map.image()`'s.
+ *
+ * Failure is spoken rather than swallowed. There is no network here and very little to go wrong,
+ * but a browser that refuses a canvas or a blob would otherwise leave a button that does nothing,
+ * and a reader would reasonably conclude the page is broken rather than the feature.
+ */
+function download(): void {
+  const variant = variantOf(scenarioBundle, selection);
+  exportPng({
+    map,
+    scenarios: scenarioBundle,
+    statistics: censusStatistics,
+    geography: provenance,
+    variant,
+    shaded: selection !== null && SHADEABLE.has(selection.basis),
+  })
+    .catch((error: unknown) => {
+      console.error(error);
+      window.alert(EXPORT_FAILED);
+    })
+    .finally(() => panel.exportSettled());
+}
 
 /**
  * A view the reader chose, which is the only kind that takes a history entry.

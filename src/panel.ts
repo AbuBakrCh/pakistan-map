@@ -17,6 +17,7 @@ import type { BasisId, ScenarioBundle } from './bundle.ts';
 import type { AboutBadge, AboutTheData } from './lib/about.ts';
 import type { CardList, CardScorecard, CardUnit, VariantCard } from './lib/card.ts';
 import { COMPARE_HINT, COMPARE_LABEL, COMPARE_TITLE } from './lib/compare.ts';
+import { EXPORT_LABEL, EXPORT_TITLE, EXPORT_WORKING } from './lib/export-band.ts';
 import {
   BASELINE,
   refusalLines,
@@ -33,6 +34,14 @@ export interface PanelHandle {
    * show the same state either way.
    */
   show(selection: Selection, comparing: boolean): void;
+  /**
+   * The export has finished — successfully or not — and the button may be pressed again (#32).
+   *
+   * Separate from `show` because it is not a property of the selection: an export in flight is a
+   * fact about the button, and folding it into the view would make every redraw of the controls
+   * have an opinion about whether a download is running.
+   */
+  exportSettled(): void;
 }
 
 /** What a basis button offers, with the baseline folded in as the first of them. */
@@ -50,6 +59,8 @@ export function renderControls(
   onSelect: (selection: Selection) => void,
   /** The button half of the compare gesture (#22). The key half is wired in `main.ts`. */
   onCompare: () => void,
+  /** Download the current view as a PNG with its provenance baked in (#32, D22). */
+  onExport: () => void,
 ): PanelHandle {
   const options: BasisOption[] = [
     {
@@ -135,6 +146,35 @@ export function renderControls(
   // the key is the faster half of the gesture for everyone who has one.
   compare.append('span').attr('class', 'control-hint').text(COMPARE_HINT);
 
+  /*
+   * The export (#32, D22). Present at the baseline as well as under a proposal, unlike Compare:
+   * the current map is exactly as likely to be screenshotted as a proposed one, and the sanctioned
+   * copy is the one that carries its own sources. What the band says changes with the view; that it
+   * is there does not.
+   *
+   * A plain button and no menu — one format, one resolution. The whole argument for this feature is
+   * that it must be the path of least resistance compared with pressing the screenshot key.
+   */
+  const download = root.append('div').attr('class', 'control control-export');
+  const exportButton = download
+    .append('button')
+    .attr('type', 'button')
+    .attr('class', 'chip chip-export')
+    .attr('title', EXPORT_TITLE)
+    .text(EXPORT_LABEL)
+    .on('click', () => {
+      // Disabled for the duration rather than debounced: encoding a 2× PNG takes long enough on a
+      // phone for a second press to land, and two exports of one view is a confusing answer to one
+      // press. The label says what is happening, since nothing else on the page will change.
+      exportButton.property('disabled', true).text(EXPORT_WORKING);
+      onExport();
+    });
+
+  /** Re-enabled by `main.ts` once the file is handed to the browser, or once it has failed. */
+  function exportSettled(): void {
+    exportButton.property('disabled', false).text(EXPORT_LABEL);
+  }
+
   function show(selection: Selection, comparing: boolean): void {
     basisButtons.attr('aria-checked', (option) =>
       option.id === (selection?.basis ?? null) ? 'true' : 'false',
@@ -174,7 +214,7 @@ export function renderControls(
   }
 
   show(BASELINE, false);
-  return { show };
+  return { show, exportSettled };
 }
 
 /**

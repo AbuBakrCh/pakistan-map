@@ -59,8 +59,15 @@ import {
 } from './lib/line-of-control.ts';
 import { fitProjection } from './lib/projection.ts';
 
-/** Must match `--font-serif` in styles.css: the canvas measures what the browser will draw. */
-const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif';
+/**
+ * Must match `--font-serif` in styles.css: the canvas measures what the browser will draw.
+ *
+ * Exported because the PNG band (#32) sets its type in the same face and measures it the same way.
+ * A second copy of the stack would be a second face the moment either is edited, and the export's
+ * whole claim is that it looks like the page it came from.
+ */
+export const SERIF =
+  '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif';
 
 /** Mirrors `.label-province` and `.label-division` in styles.css; the canvas measures from it. */
 const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }> = {
@@ -146,9 +153,30 @@ export interface MapView {
   readonly description: string;
 }
 
+/**
+ * The live SVG, and the rectangle of it worth putting in an image (#32).
+ *
+ * The crop is the map's own answer because the map is the only thing that knows it: the country's
+ * extent is a projection question, and where the names ended up is a layout question, and both are
+ * settled in here. It is the union of the drawn land and every name and dot placed over it, clipped
+ * to the frame — so a reader zoomed into Balochistan exports Balochistan, and an unzoomed frame on
+ * a wide desktop exports the country rather than the country between two panels of empty paper.
+ *
+ * The labels are in the union rather than the land alone, which is the whole reason this is not one
+ * line of arithmetic: the ceasefire line's name is deliberately placed on *clear paper* beside the
+ * line, and a crop taken to the coastline would slice it off the one image that travels without a
+ * page to explain the dash.
+ */
+export interface MapImage {
+  readonly svg: SVGSVGElement;
+  readonly crop: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+}
+
 export interface MapHandle {
   /** Draw a view. The transition between two views is a cross-fade, never a cut. */
   show(view: MapView): void;
+  /** What an export should photograph, and the node to photograph it from. */
+  image(): MapImage;
 }
 
 export function renderMap(
@@ -885,9 +913,72 @@ export function renderMap(
     drawLabels(zoomTransformOf());
   }
 
+  /**
+   * The rectangle an export should photograph: the country, and everything named over it.
+   *
+   * Taken against the *current* transform rather than against the projection alone, so the picture
+   * is the one the reader is looking at. At zoom 1 that is the whole country and the crop trims the
+   * empty paper either side of it; zoomed in, the frame is already inside the country and the crop
+   * is the frame. Clamped to the frame in both cases, because ground scrolled off the edge was
+   * never drawn and cannot be photographed.
+   */
+  function image(): MapImage {
+    /*
+     * Finish the switch before photographing it.
+     *
+     * Stratum 3 fades in the renderer rather than in CSS, so suspending the stylesheet's
+     * transitions — which is what the export does — does not reach it: a unit outline caught
+     * mid-dissolve would be baked into the file at whatever opacity the frame it landed on. Drawing
+     * the units again with `animate` false interrupts the transition and puts every edge at the
+     * value it was travelling to, which is the view the reader has already chosen. Idempotent, and
+     * invisible: it completes a movement rather than changing one.
+     */
+    drawUnits(geoPath(project), false);
+
+    const transform = zoomTransformOf();
+    const [[west, north], [east, south]] = geoPath(project).bounds(geography.provinces as never);
+    const [left, top] = transform.apply([west, north]);
+    const [right, bottom] = transform.apply([east, south]);
+    let box = {
+      x0: Math.min(left, right),
+      y0: Math.min(top, bottom),
+      x1: Math.max(left, right),
+      y1: Math.max(top, bottom),
+    };
+
+    // The names and the dots are drawn in screen space, outside the zoomed group, so their own
+    // boxes are already in the crop's coordinates. An empty layer reports a zero box, which would
+    // drag the crop to the origin — hence the guard rather than a blind union.
+    for (const layer of [labelLayer, locLabelLayer, cityLayer]) {
+      const node = layer.node();
+      if (node === null) continue;
+      const bounds = node.getBBox();
+      if (bounds.width === 0 && bounds.height === 0) continue;
+      box = {
+        x0: Math.min(box.x0, bounds.x),
+        y0: Math.min(box.y0, bounds.y),
+        x1: Math.max(box.x1, bounds.x + bounds.width),
+        y1: Math.max(box.y1, bounds.y + bounds.height),
+      };
+    }
+
+    const margin = 10;
+    const x = Math.max(0, box.x0 - margin);
+    const y = Math.max(0, box.y0 - margin);
+    return {
+      svg: svg.node() as SVGSVGElement,
+      crop: {
+        x,
+        y,
+        width: Math.max(1, Math.min(size.width, box.x1 + margin) - x),
+        height: Math.max(1, Math.min(size.height, box.y1 + margin) - y),
+      },
+    };
+  }
+
   readSites();
   draw();
   new ResizeObserver(draw).observe(container);
   show(initial);
-  return { show };
+  return { show, image };
 }
