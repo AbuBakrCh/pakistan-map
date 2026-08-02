@@ -70,7 +70,7 @@ import {
   type DistrictOrigins,
 } from './lib/scorecard.ts';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
-import { VARIANTS } from './lib/variants.ts';
+import { variantsFrom } from './lib/variants.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
@@ -306,23 +306,12 @@ function dissolveUnits(
 }
 
 function main(): void {
-  console.log('Validating the scenario set as partitions of the 2023 district set');
-
-  const { variants, problems } = validateScenarios(VARIANTS);
-  if (problems.length > 0) {
-    fail(
-      `${problems.length} problem(s) in the scenario set. A variant is a complete partition — ` +
-        `every district in exactly one unit, no gaps and no overlaps (D6) — and one that is not ` +
-        `must never reach the bundle:\n` +
-        problems.map((p) => `    ${p}`).join('\n'),
-    );
-  }
-  if (variants.length !== VARIANTS.length) fail('a variant was validated away without a problem');
-
   // ---- The adjacency graph (#16) -------------------------------------------------------------
-  // Read first, because the contiguity flag is written into `scenarios.json` below. The graph is
-  // derived from the arcs the geometry build wrote, so a variant cannot be flagged against a
-  // border it does not actually have.
+  // Read first, for two reasons now. The contiguity flag written into `scenarios.json` below is
+  // read off it — the graph is derived from the arcs the geometry build wrote, so a variant cannot
+  // be flagged against a border it does not actually have — and the two derived Language variants
+  // (#26) are *drawn* from it, since a region of one language is a connected group of districts
+  // and there is nothing to connect them across until this exists.
   const geography = JSON.parse(readFileSync(GEOGRAPHY_FILE, 'utf8')) as Topology & {
     readonly provenance?: { readonly generated?: string; readonly vintage?: string };
   };
@@ -346,10 +335,28 @@ function main(): void {
   // `statistics.test.ts` reconciles against PBS Table 1. Two paths to one figure is two figures.
   const statistics = JSON.parse(readFileSync(STATISTICS_FILE, 'utf8')) as {
     readonly provenance?: { readonly generated?: string; readonly vintage?: string };
-    readonly districts?: Record<string, { readonly population?: unknown }>;
+    readonly districts?: Record<
+      string,
+      {
+        readonly population?: unknown;
+        readonly motherTongue?: { readonly dominant?: unknown };
+      }
+    >;
   };
   const populations = new Map<string, number>();
+  /**
+   * District -> the census's dominant mother tongue, or `null` where it names none (#26).
+   *
+   * Only the 136 the census reaches are in here at all, and that is the whole point of the shape:
+   * a district *absent* from this map is one PBS published nothing for, and a district present
+   * with `null` is one PBS counted and could not name a dominant tongue for — Chitral, where
+   * Khowar has no column in Table 11. Stratum 1 already draws those two absences differently
+   * (#17), and the rule engine has to answer them differently too.
+   */
+  const dominant = new Map<string, string | null>();
   for (const [district, record] of Object.entries(statistics.districts ?? {})) {
+    const named = record.motherTongue?.dominant;
+    dominant.set(district, typeof named === 'string' ? named : null);
     if (typeof record.population !== 'number') {
       fail(
         `${STATISTICS_BUNDLE} carries ${district} with no population. Every scorecard figure is a ` +
@@ -381,6 +388,36 @@ function main(): void {
     ROSTER.flatMap((entry) => entry.districts.map((d) => [d, entry.name] as const)),
   );
   const census = { populations, origins };
+
+  // ---- The variants (#26) --------------------------------------------------------------------
+  // Eight of the ten are literals in `variants.ts`, because eight of them transcribe a line
+  // somebody drew. L6 and L7 have no document behind them and are computed here, from the census
+  // and the graph read above — which is why the scenario module hands back a function rather than
+  // a constant. A derivation that threw would be a variant this build cannot draw at all, so it
+  // is caught and reported like any other build failure rather than left as a stack trace.
+  console.log('Validating the scenario set as partitions of the 2023 district set');
+  let VARIANTS: readonly Variant[];
+  try {
+    VARIANTS = variantsFrom({ graph, dominant, populations });
+  } catch (error) {
+    fail(
+      `a variant could not be derived from the committed census and district borders. The two ` +
+        `Language variants with no published district list are drawn from Table 11's dominant ` +
+        `mother tongue, so a change to the census can leave one of them undrawable:\n    ` +
+        `${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  const { variants, problems } = validateScenarios(VARIANTS);
+  if (problems.length > 0) {
+    fail(
+      `${problems.length} problem(s) in the scenario set. A variant is a complete partition — ` +
+        `every district in exactly one unit, no gaps and no overlaps (D6) — and one that is not ` +
+        `must never reach the bundle:\n` +
+        problems.map((p) => `    ${p}`).join('\n'),
+    );
+  }
+  if (variants.length !== VARIANTS.length) fail('a variant was validated away without a problem');
 
   const scenarios = {
     provenance: {

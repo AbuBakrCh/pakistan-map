@@ -22,7 +22,17 @@
  * the artifact records the claim, the drawing, and the difference between them.
  */
 
-import { intactProvince, remainderOf, type Unit, type Variant } from './scenarios.ts';
+import type { AdjacencyGraph } from './adjacency.ts';
+import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-partition.ts';
+import { CENSUS_DISTRICTS, ROSTER } from './roster.ts';
+import {
+  intactProvince,
+  remainderOf,
+  slug,
+  type NonEmpty,
+  type Unit,
+  type Variant,
+} from './scenarios.ts';
 
 /**
  * South Punjab as its advocates state it: three whole divisions, thirteen districts.
@@ -1157,9 +1167,385 @@ const H4: Variant = {
   ],
 };
 
+// ---------------------------------------------------------------------------------------------
+// The two Language variants nobody published a district list for (#26).
+//
+// Everything above this line is a literal, because everything above it transcribes a line somebody
+// drew. L6 and L7 do not exist as documents: no one publishes a district list for "the
+// Pashto-plurality districts of Balochistan", and no one at all proposes assigning every district
+// in Pakistan by its plurality mother tongue. So their boundaries are computed at build time by
+// `mother-tongue-partition.ts`, from the census this app already ships and the adjacency graph it
+// already derives — and the card says on screen that the line was drawn from data rather than
+// copied from a proposal, which is what `composition.kind` and the `derived` badge are for.
+//
+// That is why this module hands back a function rather than a constant. The alternative was to
+// bake the derived district lists into a committed reference file and import it here, which would
+// have put a second derivation in the repo to keep honest; deriving in the one build that already
+// reads the census and the graph leaves exactly one answer to the question.
+// ---------------------------------------------------------------------------------------------
+
 /**
- * Order is the order the selectors offer them in, grouped by basis: a reader entering a basis
- * lands on its first variant (D13), so the first of each group is a deliberate choice and not an
- * accident of when it was written.
+ * What a derived variant is drawn from: the census's own dominant tongues, its populations, and
+ * the borders #16 cut from the arcs the map is drawn with.
+ *
+ * `dominant` carries `null` for a district the census counted and named no dominant tongue for,
+ * and omits a district the census did not reach at all. The two absences are different and the
+ * engine answers them differently (#17).
  */
-export const VARIANTS: readonly Variant[] = [L1, L2, L3, L4, L5, H1, H3, H4];
+export interface DerivationContext {
+  readonly graph: AdjacencyGraph;
+  readonly dominant: ReadonlyMap<string, string | null>;
+  readonly populations: ReadonlyMap<string, number>;
+}
+
+/** Balochistan's 34 census districts, which is the scope L6's rule is applied to. */
+const balochistanDistricts = (): readonly string[] => {
+  const found = ROSTER.find((province) => province.name === 'Balochistan');
+  if (found === undefined) throw new Error('Balochistan is not a province in the roster');
+  return found.districts;
+};
+
+/**
+ * The two districts the census counts and names no dominant mother tongue for.
+ *
+ * Named here rather than discovered, because L7's card says *Khowar* and *Chitral* in so many
+ * words. If the engine ever returned a different set, that copy would be describing a district it
+ * no longer means, so the build stops instead — the same signal the fold table gives when upstream
+ * moves, rather than a card that quietly starts lying.
+ */
+const WITHOUT_A_DOMINANT_TONGUE: readonly string[] = ['Lower Chitral', 'Upper Chitral'];
+
+/** L6 — the Pashto-plurality districts of Balochistan, drawn from Table 11 rather than transcribed. */
+function pashtunBalochistan(context: DerivationContext): Variant {
+  const scope = {
+    districts: balochistanDistricts(),
+    graph: context.graph,
+    dominant: context.dominant,
+    populations: context.populations,
+  };
+  const { partition, problems } = partitionByDominantLanguage(scope);
+  if (partition === null) {
+    throw new Error(`L6 cannot be drawn from the census:\n  ${problems.join('\n  ')}`);
+  }
+  // `Pushto` is the census's own spelling of the category, and the category is what the rule sorts
+  // by. The card writes Pashto in prose and says which is which.
+  const { region, problems: unresolved } = soleRegionOf(partition, 'Pushto');
+  if (region === null) {
+    throw new Error(`L6 cannot be drawn from the census:\n  ${unresolved.join('\n  ')}`);
+  }
+
+  const unit: Unit = {
+    id: 'southern-pakhtunkhwa',
+    name: 'Southern Pakhtunkhwa',
+    // Both names are in use for the same ground, and the app reports what people call things.
+    alsoKnownAs: ['Pashtun Balochistan'],
+    kind: 'proposed',
+    claims: region.districts as NonEmpty<string>,
+  };
+
+  return {
+    id: 'l6',
+    basis: 'language',
+    name: 'Pashtun Balochistan separates',
+    tagline: 'the one line here with no document behind it',
+    rationale:
+      'The Pashto-plurality districts of northern Balochistan leave the province. It is the ' +
+      'oldest live grievance on this map and the only Language variant whose boundary is not ' +
+      'transcribed from anything: no one has published a district list for it, so the line here ' +
+      'follows the census — every Balochistan district the 2023 census records as ' +
+      'Pashto-plurality, and no others. That is why Mastung, Kalat, Khuzdar, Nushki and Surab are ' +
+      'outside it and Quetta is inside it at a plurality of 60.0% rather than a majority.',
+    status:
+      'Live since 1970, when the Quetta and Kalat divisions were merged to constitute Balochistan ' +
+      'and Khan Abdul Samad Khan Achakzai left the National Awami Party over the Pashtun belt ' +
+      'being placed inside a province named for another people. No province has been created and ' +
+      'no constitutional amendment to create one has passed.',
+    advocacy: {
+      kind: 'advocated',
+      by: [
+        'Pashtunkhwa Milli Awami Party (PkMAP) and the Achakzai political tradition',
+        'Pashtun nationalist opinion in northern Balochistan',
+      ],
+    },
+    opposedBy: [
+      'Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational',
+      'opinion in Quetta that rejects the province being divided around its own capital',
+    ],
+    universe: 'drawn',
+    // Not the basis's `census · proxy` and not `documented` either: this boundary was computed
+    // here. `census` because the plurality is PBS's own figure, `proxy` because mother tongue is
+    // standing in for the identity the claim is actually about, and `derived` because the line is
+    // this build's arithmetic and must say so where it is drawn.
+    badges: ['census', 'proxy', 'derived'],
+    composition: {
+      kind: 'derived',
+      rule:
+        'every Balochistan district whose dominant mother tongue in PBS 2023 Census Table 11 is ' +
+        'Pushto, taken as one region because they form a single connected group across shared ' +
+        'district borders',
+      from: 'PBS 2023 Census Table 11, and the district adjacency graph in data/bundle/adjacency.json',
+    },
+    units: [
+      unit,
+      intactProvince('Balochistan', unit.claims),
+      intactProvince('Punjab'),
+      intactProvince('Khyber Pakhtunkhwa'),
+      intactProvince('Sindh'),
+      intactProvince('Islamabad Capital Territory'),
+      intactProvince('Azad Jammu & Kashmir'),
+      intactProvince('Gilgit-Baltistan'),
+    ],
+    footnotes: [
+      {
+        kind: 'derived-boundary',
+        text:
+          'This boundary was drawn from census data, not copied from a proposal. Its advocates ' +
+          'have never published a district list, so the rule stands in for one: every ' +
+          'Balochistan district the 2023 census records as Pashto-plurality, and nothing else. ' +
+          'Change the census and this line moves; nobody whose claim it is chose where it runs. ' +
+          'The districts it produces are the Quetta, Zhob and Loralai division areas together ' +
+          'with Harnai and Ziarat from Sibi division.',
+      },
+      {
+        kind: 'note',
+        text:
+          'Two readings, one territory. Some advocates ask for these districts to be merged into ' +
+          'Khyber Pakhtunkhwa; others for them to be constituted as a province of their own, ' +
+          'usually called Southern Pakhtunkhwa. The ground leaving Balochistan is identical ' +
+          'either way, so this is one variant and not two. What is drawn is the separate-province ' +
+          'reading, because the merged one would put this territory inside Khyber Pakhtunkhwa’s ' +
+          'own outline and leave a reader unable to see what had moved.',
+      },
+      {
+        kind: 'contested-edge',
+        text:
+          'Quetta is inside the line at a plurality and not a majority: the census records Pushto ' +
+          'as the mother tongue of 60.0% of those counted there, and the city is the capital of ' +
+          'the province this variant divides. A rule stated in pluralities places it here; that ' +
+          'is what the rule says, and it is not what everyone in Quetta says.',
+      },
+    ],
+    sources: [
+      {
+        label:
+          'PBS 2023 Census Table 11 — mother tongue by district, the only input to this ' +
+          'boundary besides the district borders themselves',
+      },
+      {
+        label:
+          'data/bundle/adjacency.json — the district adjacency graph this build derives from the ' +
+          'arcs the map is drawn with, used to check that the Pashto-plurality districts form a ' +
+          'single connected group',
+      },
+      {
+        label:
+          'The merger of the Quetta and Kalat divisions to constitute Balochistan in 1970, and ' +
+          'Khan Abdul Samad Khan Achakzai’s resignation from the National Awami Party over it',
+      },
+      {
+        label:
+          'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+          'district set this partition is expressed in',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+      },
+    ],
+    notes: [
+      {
+        label: 'Relationship to the mother-tongue map',
+        text:
+          'These twelve districts also come out of the rule applied nationally, as part of the ' +
+          'much larger Pashto region that reaches across Khyber Pakhtunkhwa. This variant is the ' +
+          'attributed claim — a demand with a movement behind it — and the national one is an ' +
+          'arithmetic nobody proposes.',
+        relatedVariants: ['l7'],
+      },
+    ],
+  };
+}
+
+/** L7 — every district assigned by its plurality mother tongue, which nobody has ever proposed. */
+function motherTongueEverywhere(context: DerivationContext): Variant {
+  const { partition, problems } = partitionByDominantLanguage({
+    districts: CENSUS_DISTRICTS,
+    graph: context.graph,
+    dominant: context.dominant,
+    populations: context.populations,
+  });
+  if (partition === null) {
+    throw new Error(`L7 cannot be drawn from the census:\n  ${problems.join('\n  ')}`);
+  }
+  // The copy below names Khowar and Chitral. If the census ever left a different district without
+  // a dominant tongue, that copy would be describing ground it no longer means.
+  const unreached = [...partition.unnamed].sort((a, b) => a.localeCompare(b));
+  if (unreached.join('|') !== [...WITHOUT_A_DOMINANT_TONGUE].sort().join('|')) {
+    throw new Error(
+      `L7 expects exactly ${WITHOUT_A_DOMINANT_TONGUE.join(' and ')} to have no dominant mother ` +
+        `tongue in the census, and the census now leaves ${unreached.join(', ') || 'nothing'} ` +
+        `without one. The card names Khowar and Chitral, so this is copy to rewrite rather than a ` +
+        `list to widen.`,
+    );
+  }
+
+  const regions: Unit[] = partition.regions.map((region) => ({
+    id: slug(region.name),
+    name: region.name,
+    kind: 'proposed',
+    claims: region.districts as NonEmpty<string>,
+  }));
+
+  const chitral: Unit = {
+    id: 'chitral',
+    name: 'Chitral',
+    kind: 'proposed',
+    claims: [...WITHOUT_A_DOMINANT_TONGUE] as unknown as NonEmpty<string>,
+    note:
+      'The rule does not reach these two districts. Khowar has no column in census Table 11, so ' +
+      'neither has a dominant mother tongue to be assigned by — an answer the census could not ' +
+      'file, not a question it did not ask.',
+  };
+
+  return {
+    id: 'l7',
+    basis: 'language',
+    name: 'Mother tongue applied everywhere',
+    tagline: 'the arithmetic nobody is arguing for',
+    rationale:
+      'Every district in Pakistan assigned to the province of its plurality mother tongue, and ' +
+      'each language then cut into the connected groups its districts actually form. It is the ' +
+      'only variant in this app that nobody proposes: it is a rule applied to a census, run to ' +
+      'the end without being stopped anywhere it produces something awkward. Where its output ' +
+      'coincides with a real demand — the Seraiki belt, Hazara, Karachi, the Pashto districts of ' +
+      'Balochistan — the claim belongs to the people making it and not to this arithmetic.',
+    status:
+      'Not a proposal, and not a demarcation that has ever existed. It is what census Table 11 ' +
+      'says if it is read as a map, which nobody in Pakistani politics is asking for.',
+    // The shape L7 exists for. An empty advocacy list would read as an oversight; this says the
+    // absence out loud, and the card renders these words.
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map. It is a rule applied to the census, drawn so that the ' +
+        'attributed claims elsewhere in this app can be read against what the language data ' +
+        'alone would say. Several of its regions look like real demands; those demands are ' +
+        'argued by people, on grounds this rule cannot see, and are drawn as variants of their ' +
+        'own.',
+    },
+    // Not "nobody, because nobody proposes it" — the objection to language as the basis of ' +
+    // provinces is a real position with a long history, and it is the objection this whole map
+    // runs into.
+    opposedBy: [
+      'those who reject mother tongue as a basis for provincial boundaries at all, for whom the ' +
+        'argument is administrative rather than ethnic',
+      'Sindhi nationalist opinion, which rejects any division of Sindh — and this map divides it',
+      'Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational ' +
+        'and which this map cuts into four',
+    ],
+    universe: 'drawn',
+    // The draft's own badges, and the distinction between them is real: `derived` is a line
+    // computed from data, which L6 is; `synthesized` is a whole map assembled by a rule that no
+    // document stands behind, which is this.
+    badges: ['census', 'proxy', 'synthesized'],
+    composition: {
+      kind: 'derived',
+      rule:
+        'every census district assigned to its dominant mother tongue in PBS 2023 Census Table ' +
+        '11, each language then split into the connected groups its districts form across shared ' +
+        'district borders, and the two districts the census names no dominant tongue for kept ' +
+        'together as themselves',
+      from: 'PBS 2023 Census Table 11, and the district adjacency graph in data/bundle/adjacency.json',
+    },
+    units: [
+      ...regions,
+      chitral,
+      // Outside the rule because they are outside the census: PBS published no mother tongue for
+      // any of their twenty districts (D25), so there is nothing here to sort them by.
+      intactProvince('Azad Jammu & Kashmir'),
+      intactProvince('Gilgit-Baltistan'),
+    ] as unknown as NonEmpty<Unit>,
+    footnotes: [
+      {
+        kind: 'derived-boundary',
+        text:
+          'Every line on this map was computed from census data. No movement drew it, no ' +
+          'commission proposed it, and nothing here was adjusted because the result looked odd — ' +
+          'which is the point of running the rule to the end. A unit is named for the language ' +
+          'that produced it, qualified by its largest district where a language produced more ' +
+          'than one; those are descriptions of an output, not names anybody uses for a place.',
+      },
+      {
+        kind: 'note',
+        text:
+          'Two of the regions are what a mechanical rule looks like when it does not flinch. ' +
+          'Keamari comes out as a Pashto region of one district inside Karachi, because Pushto is ' +
+          'the largest single mother tongue there at 33.1% — a plurality in a district where no ' +
+          'language has a majority. Hyderabad comes out as an Urdu region separate from Karachi’s ' +
+          'at 45.9%, because the districts between them are Sindhi-plurality and the two never ' +
+          'touch. Both are drawn rather than absorbed into a neighbour: absorbing them would be a ' +
+          'second rule with nothing behind it but our sense of how a map should look.',
+      },
+      {
+        kind: 'note',
+        text:
+          'Balochi is dominant in two places that do not touch — the Makran coast and the ' +
+          'Nasirabad plains — with the Brahvi-plurality districts between them, so it produces ' +
+          'two regions rather than one province in two pieces. The same rule keeps the Kohistan ' +
+          'districts together as Kohiostani, which is the census’s own spelling of the category ' +
+          'and is used here unaltered.',
+      },
+      {
+        kind: 'note',
+        text:
+          'Every census district changes hands in this variant, because not one of them stays ' +
+          'inside a unit named after the province it is in today. That is what applying a rule ' +
+          'everywhere means, and not an artefact of how the figure is counted.',
+      },
+    ],
+    notes: [
+      {
+        label: 'Where this coincides with somebody’s claim',
+        text:
+          'Four of these regions land close to demands that real movements make: the Seraiki ' +
+          'belt, Hazara’s Hindko districts, Karachi’s Urdu-plurality districts, and the Pashto ' +
+          'districts of Balochistan. Those are attributed variants in this app, argued by named ' +
+          'people on grounds a census cannot see. The resemblance runs one way — the movements ' +
+          'came first, and this arithmetic takes no credit for their politics.',
+        relatedVariants: ['l1', 'l4', 'l5', 'l6'],
+      },
+    ],
+    sources: [
+      {
+        label:
+          'PBS 2023 Census Table 11 — mother tongue by district, summed from the 591 tehsil rows ' +
+          'the structured release carries and reconciled against PBS’s printed province figures ' +
+          'in all fifteen categories',
+      },
+      {
+        label:
+          'data/bundle/adjacency.json — the district adjacency graph this build derives from the ' +
+          'arcs the map is drawn with, which is what splits each language into connected regions',
+      },
+      {
+        label: 'docs/research/mother-tongue-table-11.md — how the district figures were obtained',
+      },
+      {
+        label:
+          'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+          'district set this partition is expressed in',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+      },
+    ],
+  };
+}
+
+/**
+ * Every variant, in the order the selectors offer them in.
+ *
+ * Grouped by basis, because a reader entering a basis lands on its first variant (D13), so the
+ * first of each group is a deliberate choice and not an accident of when it was written. Within
+ * the Language group the transcribed claims come first and the two derived ones last: L6 and L7
+ * are answers to "what does the data alone say", which reads as a question only once the claims
+ * it is being asked about are on the table.
+ */
+export function variantsFrom(context: DerivationContext): readonly Variant[] {
+  return [L1, L2, L3, L4, L5, pashtunBalochistan(context), motherTongueEverywhere(context), H1, H3, H4];
+}

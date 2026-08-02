@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T10:25:38.650Z",
+    "generated": "2026-08-02T10:53:23.789Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -12,9 +12,9 @@
       "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums"
     },
     "counts": {
-      "variants": 8,
+      "variants": 10,
       "bases": 4,
-      "units": 59
+      "units": 82
     },
     "universes": {
       "drawn": 156,
@@ -3223,6 +3223,1453 @@
           "folded": [],
           "excludes": [],
           "population": 2363863,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "azad-jammu-kashmir",
+          "name": "Azad Jammu & Kashmir",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "districts": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "gilgit-baltistan",
+          "name": "Gilgit-Baltistan",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "districts": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "l6",
+      "basis": "language",
+      "name": "Pashtun Balochistan separates",
+      "tagline": "the one line here with no document behind it",
+      "badges": [
+        "census",
+        "proxy",
+        "derived"
+      ],
+      "rationale": "The Pashto-plurality districts of northern Balochistan leave the province. It is the oldest live grievance on this map and the only Language variant whose boundary is not transcribed from anything: no one has published a district list for it, so the line here follows the census — every Balochistan district the 2023 census records as Pashto-plurality, and no others. That is why Mastung, Kalat, Khuzdar, Nushki and Surab are outside it and Quetta is inside it at a plurality of 60.0% rather than a majority.",
+      "status": "Live since 1970, when the Quetta and Kalat divisions were merged to constitute Balochistan and Khan Abdul Samad Khan Achakzai left the National Awami Party over the Pashtun belt being placed inside a province named for another people. No province has been created and no constitutional amendment to create one has passed.",
+      "advocacy": {
+        "kind": "advocated",
+        "by": [
+          "Pashtunkhwa Milli Awami Party (PkMAP) and the Achakzai political tradition",
+          "Pashtun nationalist opinion in northern Balochistan"
+        ]
+      },
+      "opposedBy": [
+        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational",
+        "opinion in Quetta that rejects the province being divided around its own capital"
+      ],
+      "composition": {
+        "kind": "derived",
+        "rule": "every Balochistan district whose dominant mother tongue in PBS 2023 Census Table 11 is Pushto, taken as one region because they form a single connected group across shared district borders",
+        "from": "PBS 2023 Census Table 11, and the district adjacency graph in data/bundle/adjacency.json"
+      },
+      "footnotes": [
+        {
+          "kind": "derived-boundary",
+          "text": "This boundary was drawn from census data, not copied from a proposal. Its advocates have never published a district list, so the rule stands in for one: every Balochistan district the 2023 census records as Pashto-plurality, and nothing else. Change the census and this line moves; nobody whose claim it is chose where it runs. The districts it produces are the Quetta, Zhob and Loralai division areas together with Harnai and Ziarat from Sibi division."
+        },
+        {
+          "kind": "note",
+          "text": "Two readings, one territory. Some advocates ask for these districts to be merged into Khyber Pakhtunkhwa; others for them to be constituted as a province of their own, usually called Southern Pakhtunkhwa. The ground leaving Balochistan is identical either way, so this is one variant and not two. What is drawn is the separate-province reading, because the merged one would put this territory inside Khyber Pakhtunkhwa’s own outline and leave a reader unable to see what had moved."
+        },
+        {
+          "kind": "contested-edge",
+          "text": "Quetta is inside the line at a plurality and not a majority: the census records Pushto as the mother tongue of 60.0% of those counted there, and the city is the capital of the province this variant divides. A rule stated in pluralities places it here; that is what the rule says, and it is not what everyone in Quetta says."
+        }
+      ],
+      "notes": [
+        {
+          "label": "Relationship to the mother-tongue map",
+          "text": "These twelve districts also come out of the rule applied nationally, as part of the much larger Pashto region that reaches across Khyber Pakhtunkhwa. This variant is the attributed claim — a demand with a movement behind it — and the national one is an arithmetic nobody proposes.",
+          "relatedVariants": [
+            "l7"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "label": "PBS 2023 Census Table 11 — mother tongue by district, the only input to this boundary besides the district borders themselves"
+        },
+        {
+          "label": "data/bundle/adjacency.json — the district adjacency graph this build derives from the arcs the map is drawn with, used to check that the Pashto-plurality districts form a single connected group"
+        },
+        {
+          "label": "The merger of the Quetta and Kalat divisions to constitute Balochistan in 1970, and Khan Abdul Samad Khan Achakzai’s resignation from the National Awami Party over it"
+        },
+        {
+          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+        }
+      ],
+      "statistics": {
+        "modernFigures": true
+      },
+      "partition": {
+        "universe": "drawn",
+        "districts": 156,
+        "claimed": 156
+      },
+      "counts": {
+        "units": 8,
+        "proposedUnits": 1,
+        "claimedDistricts": 12,
+        "drawnDistricts": 12,
+        "nonContiguousUnits": 0
+      },
+      "scorecard": {
+        "units": 8,
+        "proposedUnits": 1,
+        "districtsMoved": {
+          "count": 12,
+          "of": 156,
+          "byOrigin": [
+            {
+              "from": "Balochistan",
+              "districts": 12
+            }
+          ]
+        },
+        "population": {
+          "units": 6,
+          "total": 241499431,
+          "largest": {
+            "unit": "punjab",
+            "name": "Punjab",
+            "population": 127688922
+          },
+          "smallest": {
+            "unit": "islamabad-capital-territory",
+            "name": "Islamabad Capital Territory",
+            "population": 2363863
+          },
+          "ratio": 54
+        },
+        "populationWithheld": null,
+        "outsideTheCensus": [
+          {
+            "unit": "azad-jammu-kashmir",
+            "name": "Azad Jammu & Kashmir",
+            "districts": [
+              "Hattian Bala",
+              "Muzaffarabad",
+              "Neelum",
+              "Bagh",
+              "Haveli",
+              "Sudhnoti",
+              "Poonch",
+              "Bhimber",
+              "Mirpur",
+              "Kotli"
+            ]
+          },
+          {
+            "unit": "gilgit-baltistan",
+            "name": "Gilgit-Baltistan",
+            "districts": [
+              "Gilgit",
+              "Hunza",
+              "Nagar",
+              "Ghizer",
+              "Skardu",
+              "Kharmaung",
+              "Shigar",
+              "Ghanche",
+              "Astore",
+              "Diamir"
+            ]
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "southern-pakhtunkhwa",
+          "name": "Southern Pakhtunkhwa",
+          "alsoKnownAs": [
+            "Pashtun Balochistan"
+          ],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Chaman",
+            "Duki",
+            "Harnai",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Loralai",
+            "Musa Khel",
+            "Pishin",
+            "Quetta",
+            "Sherani",
+            "Zhob",
+            "Ziarat"
+          ],
+          "districts": [
+            "Chaman",
+            "Duki",
+            "Harnai",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Loralai",
+            "Musa Khel",
+            "Pishin",
+            "Quetta",
+            "Sherani",
+            "Zhob",
+            "Ziarat"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 6163599,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "balochistan",
+          "name": "Balochistan",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Chagai",
+            "Nushki",
+            "Kharan",
+            "Washuk",
+            "Barkhan",
+            "Sibi",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Kalat",
+            "Surab",
+            "Mastung",
+            "Khuzdar",
+            "Awaran",
+            "Lasbela",
+            "Kech",
+            "Gwadar",
+            "Panjgur"
+          ],
+          "districts": [
+            "Chagai",
+            "Nushki",
+            "Kharan",
+            "Washuk",
+            "Barkhan",
+            "Sibi",
+            "Kohlu",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Nasirabad",
+            "Kachhi (Bolan)",
+            "Jhal Magsi",
+            "Sohbatpur",
+            "Kalat",
+            "Surab",
+            "Mastung",
+            "Khuzdar",
+            "Awaran",
+            "Lasbela",
+            "Kech",
+            "Gwadar",
+            "Panjgur"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 8730803,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "punjab",
+          "name": "Punjab",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan",
+            "Vehari",
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Dera Ghazi Khan",
+            "Rajanpur",
+            "Layyah",
+            "Muzaffargarh",
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan"
+          ],
+          "districts": [
+            "Attock",
+            "Rawalpindi",
+            "Jhelum",
+            "Chakwal",
+            "Sargodha",
+            "Bhakkar",
+            "Khushab",
+            "Mianwali",
+            "Faisalabad",
+            "Jhang",
+            "Chiniot",
+            "Toba Tek Singh",
+            "Gujranwala",
+            "Hafizabad",
+            "Gujrat",
+            "Mandi Bahauddin",
+            "Sialkot",
+            "Narowal",
+            "Lahore",
+            "Kasur",
+            "Sheikhupura",
+            "Nankana Sahib",
+            "Sahiwal",
+            "Okara",
+            "Pakpattan",
+            "Vehari",
+            "Multan",
+            "Lodhran",
+            "Khanewal",
+            "Dera Ghazi Khan",
+            "Rajanpur",
+            "Layyah",
+            "Muzaffargarh",
+            "Bahawalpur",
+            "Bahawalnagar",
+            "Rahim Yar Khan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 127688922,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "khyber-pakhtunkhwa",
+          "name": "Khyber Pakhtunkhwa",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Upper Chitral",
+            "Lower Chitral",
+            "Upper Dir",
+            "Lower Dir",
+            "Swat",
+            "Shangla",
+            "Buner",
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "districts": [
+            "Upper Chitral",
+            "Lower Chitral",
+            "Upper Dir",
+            "Lower Dir",
+            "Swat",
+            "Shangla",
+            "Buner",
+            "Malakand",
+            "Bajaur",
+            "Upper Kohistan",
+            "Lower Kohistan",
+            "Kolai Pallas Kohistan",
+            "Mansehra",
+            "Torghar",
+            "Batagram",
+            "Abbotabad",
+            "Haripur",
+            "Mardan",
+            "Swabi",
+            "Charsadda",
+            "Peshawar",
+            "Nowshera",
+            "Khyber",
+            "Mohmand",
+            "Kohat",
+            "Hangu",
+            "Karak",
+            "Orakzai",
+            "Kurram",
+            "Bannu",
+            "Lakki Marwat",
+            "North Waziristan",
+            "Dera Ismail Khan",
+            "Tank",
+            "South Waziristan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 40856097,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "sindh",
+          "name": "Sindh",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Khairpur",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "districts": [
+            "Jacobabad",
+            "Kashmore",
+            "Shikarpur",
+            "Larkana",
+            "Kambar Shahdadkot",
+            "Sukkur",
+            "Ghotki",
+            "Khairpur",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Sanghar",
+            "Dadu",
+            "Jamshoro",
+            "Hyderabad",
+            "Matiari",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Badin",
+            "Thatta",
+            "Sujawal",
+            "Mirpur Khas",
+            "Umerkot",
+            "Tharparkar",
+            "Karachi East",
+            "Karachi West",
+            "Karachi South",
+            "Karachi Central",
+            "Malir",
+            "Korangi",
+            "Keamari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 55696147,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "islamabad-capital-territory",
+          "name": "Islamabad Capital Territory",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Islamabad"
+          ],
+          "districts": [
+            "Islamabad"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2363863,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "azad-jammu-kashmir",
+          "name": "Azad Jammu & Kashmir",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "districts": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "gilgit-baltistan",
+          "name": "Gilgit-Baltistan",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "districts": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "l7",
+      "basis": "language",
+      "name": "Mother tongue applied everywhere",
+      "tagline": "the arithmetic nobody is arguing for",
+      "badges": [
+        "census",
+        "proxy",
+        "synthesized"
+      ],
+      "rationale": "Every district in Pakistan assigned to the province of its plurality mother tongue, and each language then cut into the connected groups its districts actually form. It is the only variant in this app that nobody proposes: it is a rule applied to a census, run to the end without being stopped anywhere it produces something awkward. Where its output coincides with a real demand — the Seraiki belt, Hazara, Karachi, the Pashto districts of Balochistan — the claim belongs to the people making it and not to this arithmetic.",
+      "status": "Not a proposal, and not a demarcation that has ever existed. It is what census Table 11 says if it is read as a map, which nobody in Pakistani politics is asking for.",
+      "advocacy": {
+        "kind": "unadvocated",
+        "note": "Nobody advocates this map. It is a rule applied to the census, drawn so that the attributed claims elsewhere in this app can be read against what the language data alone would say. Several of its regions look like real demands; those demands are argued by people, on grounds this rule cannot see, and are drawn as variants of their own."
+      },
+      "opposedBy": [
+        "those who reject mother tongue as a basis for provincial boundaries at all, for whom the argument is administrative rather than ethnic",
+        "Sindhi nationalist opinion, which rejects any division of Sindh — and this map divides it",
+        "Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational and which this map cuts into four"
+      ],
+      "composition": {
+        "kind": "derived",
+        "rule": "every census district assigned to its dominant mother tongue in PBS 2023 Census Table 11, each language then split into the connected groups its districts form across shared district borders, and the two districts the census names no dominant tongue for kept together as themselves",
+        "from": "PBS 2023 Census Table 11, and the district adjacency graph in data/bundle/adjacency.json"
+      },
+      "footnotes": [
+        {
+          "kind": "derived-boundary",
+          "text": "Every line on this map was computed from census data. No movement drew it, no commission proposed it, and nothing here was adjusted because the result looked odd — which is the point of running the rule to the end. A unit is named for the language that produced it, qualified by its largest district where a language produced more than one; those are descriptions of an output, not names anybody uses for a place."
+        },
+        {
+          "kind": "note",
+          "text": "Two of the regions are what a mechanical rule looks like when it does not flinch. Keamari comes out as a Pashto region of one district inside Karachi, because Pushto is the largest single mother tongue there at 33.1% — a plurality in a district where no language has a majority. Hyderabad comes out as an Urdu region separate from Karachi’s at 45.9%, because the districts between them are Sindhi-plurality and the two never touch. Both are drawn rather than absorbed into a neighbour: absorbing them would be a second rule with nothing behind it but our sense of how a map should look."
+        },
+        {
+          "kind": "note",
+          "text": "Balochi is dominant in two places that do not touch — the Makran coast and the Nasirabad plains — with the Brahvi-plurality districts between them, so it produces two regions rather than one province in two pieces. The same rule keeps the Kohistan districts together as Kohiostani, which is the census’s own spelling of the category and is used here unaltered."
+        },
+        {
+          "kind": "note",
+          "text": "Every census district changes hands in this variant, because not one of them stays inside a unit named after the province it is in today. That is what applying a rule everywhere means, and not an artefact of how the figure is counted."
+        }
+      ],
+      "notes": [
+        {
+          "label": "Where this coincides with somebody’s claim",
+          "text": "Four of these regions land close to demands that real movements make: the Seraiki belt, Hazara’s Hindko districts, Karachi’s Urdu-plurality districts, and the Pashto districts of Balochistan. Those are attributed variants in this app, argued by named people on grounds a census cannot see. The resemblance runs one way — the movements came first, and this arithmetic takes no credit for their politics.",
+          "relatedVariants": [
+            "l1",
+            "l4",
+            "l5",
+            "l6"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "label": "PBS 2023 Census Table 11 — mother tongue by district, summed from the 591 tehsil rows the structured release carries and reconciled against PBS’s printed province figures in all fifteen categories"
+        },
+        {
+          "label": "data/bundle/adjacency.json — the district adjacency graph this build derives from the arcs the map is drawn with, which is what splits each language into connected regions"
+        },
+        {
+          "label": "docs/research/mother-tongue-table-11.md — how the district figures were obtained"
+        },
+        {
+          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+        }
+      ],
+      "statistics": {
+        "modernFigures": true
+      },
+      "partition": {
+        "universe": "drawn",
+        "districts": 156,
+        "claimed": 156
+      },
+      "counts": {
+        "units": 15,
+        "proposedUnits": 13,
+        "claimedDistricts": 136,
+        "drawnDistricts": 136,
+        "nonContiguousUnits": 0
+      },
+      "scorecard": {
+        "units": 15,
+        "proposedUnits": 13,
+        "districtsMoved": {
+          "count": 136,
+          "of": 156,
+          "byOrigin": [
+            {
+              "from": "Punjab",
+              "districts": 36
+            },
+            {
+              "from": "Khyber Pakhtunkhwa",
+              "districts": 35
+            },
+            {
+              "from": "Balochistan",
+              "districts": 34
+            },
+            {
+              "from": "Sindh",
+              "districts": 30
+            },
+            {
+              "from": "Islamabad Capital Territory",
+              "districts": 1
+            }
+          ]
+        },
+        "population": {
+          "units": 13,
+          "total": 241499431,
+          "largest": {
+            "unit": "punjabi",
+            "name": "Punjabi",
+            "population": 96264311
+          },
+          "smallest": {
+            "unit": "chitral",
+            "name": "Chitral",
+            "population": 515935
+          },
+          "ratio": 186.6
+        },
+        "populationWithheld": null,
+        "outsideTheCensus": [
+          {
+            "unit": "azad-jammu-kashmir",
+            "name": "Azad Jammu & Kashmir",
+            "districts": [
+              "Hattian Bala",
+              "Muzaffarabad",
+              "Neelum",
+              "Bagh",
+              "Haveli",
+              "Sudhnoti",
+              "Poonch",
+              "Bhimber",
+              "Mirpur",
+              "Kotli"
+            ]
+          },
+          {
+            "unit": "gilgit-baltistan",
+            "name": "Gilgit-Baltistan",
+            "districts": [
+              "Gilgit",
+              "Hunza",
+              "Nagar",
+              "Ghizer",
+              "Skardu",
+              "Kharmaung",
+              "Shigar",
+              "Ghanche",
+              "Astore",
+              "Diamir"
+            ]
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "punjabi",
+          "name": "Punjabi",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Attock",
+            "Bahawalnagar",
+            "Chakwal",
+            "Chiniot",
+            "Faisalabad",
+            "Gujranwala",
+            "Gujrat",
+            "Hafizabad",
+            "Islamabad",
+            "Jhang",
+            "Jhelum",
+            "Kasur",
+            "Khanewal",
+            "Khushab",
+            "Lahore",
+            "Mandi Bahauddin",
+            "Nankana Sahib",
+            "Narowal",
+            "Okara",
+            "Pakpattan",
+            "Rawalpindi",
+            "Sahiwal",
+            "Sargodha",
+            "Sheikhupura",
+            "Sialkot",
+            "Toba Tek Singh",
+            "Vehari"
+          ],
+          "districts": [
+            "Attock",
+            "Bahawalnagar",
+            "Chakwal",
+            "Chiniot",
+            "Faisalabad",
+            "Gujranwala",
+            "Gujrat",
+            "Hafizabad",
+            "Islamabad",
+            "Jhang",
+            "Jhelum",
+            "Kasur",
+            "Khanewal",
+            "Khushab",
+            "Lahore",
+            "Mandi Bahauddin",
+            "Nankana Sahib",
+            "Narowal",
+            "Okara",
+            "Pakpattan",
+            "Rawalpindi",
+            "Sahiwal",
+            "Sargodha",
+            "Sheikhupura",
+            "Sialkot",
+            "Toba Tek Singh",
+            "Vehari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 96264311,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "pushto-peshawar",
+          "name": "Pushto (Peshawar)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Bajaur",
+            "Bannu",
+            "Batagram",
+            "Buner",
+            "Chaman",
+            "Charsadda",
+            "Duki",
+            "Hangu",
+            "Harnai",
+            "Karak",
+            "Khyber",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohat",
+            "Kurram",
+            "Lakki Marwat",
+            "Loralai",
+            "Lower Dir",
+            "Malakand",
+            "Mardan",
+            "Mohmand",
+            "Musa Khel",
+            "North Waziristan",
+            "Nowshera",
+            "Orakzai",
+            "Peshawar",
+            "Pishin",
+            "Quetta",
+            "Shangla",
+            "Sherani",
+            "South Waziristan",
+            "Swabi",
+            "Swat",
+            "Tank",
+            "Torghar",
+            "Upper Dir",
+            "Zhob",
+            "Ziarat"
+          ],
+          "districts": [
+            "Bajaur",
+            "Bannu",
+            "Batagram",
+            "Buner",
+            "Chaman",
+            "Charsadda",
+            "Duki",
+            "Hangu",
+            "Harnai",
+            "Karak",
+            "Khyber",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohat",
+            "Kurram",
+            "Lakki Marwat",
+            "Loralai",
+            "Lower Dir",
+            "Malakand",
+            "Mardan",
+            "Mohmand",
+            "Musa Khel",
+            "North Waziristan",
+            "Nowshera",
+            "Orakzai",
+            "Peshawar",
+            "Pishin",
+            "Quetta",
+            "Shangla",
+            "Sherani",
+            "South Waziristan",
+            "Swabi",
+            "Swat",
+            "Tank",
+            "Torghar",
+            "Upper Dir",
+            "Zhob",
+            "Ziarat"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 39239792,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "saraiki",
+          "name": "Saraiki",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Bahawalpur",
+            "Bhakkar",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Layyah",
+            "Lodhran",
+            "Mianwali",
+            "Multan",
+            "Muzaffargarh",
+            "Rahim Yar Khan",
+            "Rajanpur"
+          ],
+          "districts": [
+            "Bahawalpur",
+            "Bhakkar",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Layyah",
+            "Lodhran",
+            "Mianwali",
+            "Multan",
+            "Muzaffargarh",
+            "Rahim Yar Khan",
+            "Rajanpur"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 35618285,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "sindhi",
+          "name": "Sindhi",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Badin",
+            "Dadu",
+            "Ghotki",
+            "Jacobabad",
+            "Jamshoro",
+            "Kambar Shahdadkot",
+            "Kashmore",
+            "Khairpur",
+            "Larkana",
+            "Malir",
+            "Matiari",
+            "Mirpur Khas",
+            "Naushahro Feroze",
+            "Sanghar",
+            "Shaheed Benazirabad",
+            "Shikarpur",
+            "Sujawal",
+            "Sukkur",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Tharparkar",
+            "Thatta",
+            "Umerkot"
+          ],
+          "districts": [
+            "Badin",
+            "Dadu",
+            "Ghotki",
+            "Jacobabad",
+            "Jamshoro",
+            "Kambar Shahdadkot",
+            "Kashmore",
+            "Khairpur",
+            "Larkana",
+            "Malir",
+            "Matiari",
+            "Mirpur Khas",
+            "Naushahro Feroze",
+            "Sanghar",
+            "Shaheed Benazirabad",
+            "Shikarpur",
+            "Sujawal",
+            "Sukkur",
+            "Tando Allah Yar",
+            "Tando Mohammad Khan",
+            "Tharparkar",
+            "Thatta",
+            "Umerkot"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 35284685,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "urdu-karachi-east",
+          "name": "Urdu (Karachi East)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Karachi Central",
+            "Karachi East",
+            "Karachi South",
+            "Karachi West",
+            "Korangi"
+          ],
+          "districts": [
+            "Karachi Central",
+            "Karachi East",
+            "Karachi South",
+            "Karachi West",
+            "Korangi"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 15910471,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "hindko",
+          "name": "Hindko",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Abbotabad",
+            "Haripur",
+            "Mansehra"
+          ],
+          "districts": [
+            "Abbotabad",
+            "Haripur",
+            "Mansehra"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 4391032,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "balochi-kech",
+          "name": "Balochi (Kech)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Awaran",
+            "Chagai",
+            "Gwadar",
+            "Kech",
+            "Kharan",
+            "Lasbela",
+            "Panjgur",
+            "Washuk"
+          ],
+          "districts": [
+            "Awaran",
+            "Chagai",
+            "Gwadar",
+            "Kech",
+            "Kharan",
+            "Lasbela",
+            "Panjgur",
+            "Washuk"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 3567974,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "balochi-jaffarabad",
+          "name": "Balochi (Jaffarabad)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Barkhan",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Jhal Magsi",
+            "Kachhi (Bolan)",
+            "Kohlu",
+            "Nasirabad",
+            "Sibi",
+            "Sohbatpur"
+          ],
+          "districts": [
+            "Barkhan",
+            "Dera Bugti",
+            "Jaffarabad",
+            "Jhal Magsi",
+            "Kachhi (Bolan)",
+            "Kohlu",
+            "Nasirabad",
+            "Sibi",
+            "Sohbatpur"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 3093912,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "urdu-hyderabad",
+          "name": "Urdu (Hyderabad)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Hyderabad"
+          ],
+          "districts": [
+            "Hyderabad"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2432540,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "brahvi",
+          "name": "Brahvi",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Kalat",
+            "Khuzdar",
+            "Mastung",
+            "Nushki",
+            "Surab"
+          ],
+          "districts": [
+            "Kalat",
+            "Khuzdar",
+            "Mastung",
+            "Nushki",
+            "Surab"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2068917,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "pushto-keamari",
+          "name": "Pushto (Keamari)",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Keamari"
+          ],
+          "districts": [
+            "Keamari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2068451,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "kohiostani",
+          "name": "Kohiostani",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Kolai Pallas Kohistan",
+            "Lower Kohistan",
+            "Upper Kohistan"
+          ],
+          "districts": [
+            "Kolai Pallas Kohistan",
+            "Lower Kohistan",
+            "Upper Kohistan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 1043126,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "chitral",
+          "name": "Chitral",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The rule does not reach these two districts. Khowar has no column in census Table 11, so neither has a dominant mother tongue to be assigned by — an answer the census could not file, not a question it did not ask.",
+          "claimed": [
+            "Lower Chitral",
+            "Upper Chitral"
+          ],
+          "districts": [
+            "Lower Chitral",
+            "Upper Chitral"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 515935,
           "uncounted": [],
           "contiguity": {
             "contiguous": true,
