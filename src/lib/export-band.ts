@@ -12,7 +12,7 @@
  * `src/export-image.ts` does the rasterising and composes not one sentence, exactly as `panel.ts`
  * composes none of the card's.
  *
- * Three things this module refuses to do quietly:
+ * Four things this module refuses to do quietly:
  *
  * - **The disclaimer is not conditional prose.** Every band carries a standing line, and the line
  *   says which of the two maps this is. A proposal says *Proposed — not official*; the baseline
@@ -25,6 +25,12 @@
  * - **The legend is derived, never transcribed.** It is built from the same `unitLegend` and
  *   `motherTongueLegend` the on-screen key is built from, so a band that keys a colour the map no
  *   longer draws is impossible rather than merely unlikely.
+ * - **The attribution names no figure source the variant does not use** (#49). The licence line
+ *   credited every picture's figures to the 2023 census and stamped it "pinned to" that vintage,
+ *   H2's included — a variant that publishes no figure at all precisely because 2023 numbers do not
+ *   describe 1947 boundaries. It is not a figure leaking, which is why the withholding's own checks
+ *   did not catch it; it is a provenance claim the variant disclaims, printed where nothing beside
+ *   the image can correct it.
  */
 
 import type {
@@ -39,6 +45,7 @@ import type {
 import { provenanceBadge, type CardBadge } from './card.ts';
 import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
+import { figuresWithheld } from './tooltip.ts';
 import { unitLegend, type UnitSwatch } from './units.ts';
 
 /**
@@ -315,15 +322,51 @@ function sourceOf(sources: Readonly<Record<string, string>>, key: string): strin
   return found;
 }
 
+/**
+ * The licence line — and, on one variant, a lineage it may not claim (#49).
+ *
+ * Two forms rather than one, because the line is a *provenance* claim and not decoration. Every
+ * band credits the boundaries to OpenStreetMap under ODbL and every band credits the district set
+ * to PBS's 2023 census, because both are true of every picture this app draws: the 156 drawn
+ * districts *are* the census's set (ADR-0001), which is why even H4 dates itself by the district
+ * set rather than by the province it argues for.
+ *
+ * What is conditional is the *figures*. H2 publishes none — no unit population, no total, no
+ * spread, no mother tongue and no development composite — on the ground that 2023 census numbers do
+ * not describe 1947 boundaries. Crediting its figures to the census and stamping the image "pinned
+ * to" that vintage asserted exactly the lineage the variant exists to disclaim, on the one surface
+ * that travels with nothing beside it to correct the record. So a withholding variant's band names
+ * what it does use and says plainly that there are no figures on it, rather than dropping the line
+ * — an export with no attribution at all would breach the licence the boundaries come under.
+ *
+ * Whether a variant withholds is asked of `figuresWithheld` (#48) and never of the field: the card
+ * prints the reason above its units and the tooltip prints it where the district's figures would
+ * be, and a fresh ternary here would be a third derivation of one fact for a third surface to
+ * disagree on. The baseline withholds nothing — it is the census's own map — so it takes the
+ * ordinary form, which is also what a band built while compare is held gets, since that band
+ * describes the baseline picture the map has been given rather than the selection behind it.
+ */
+export function bandAttribution(variant: VariantRecord | null, censusVintage: string): string {
+  const boundaries = 'Boundaries © OpenStreetMap contributors, ODbL';
+  // The attributor names and the licence are the wording those licences *require*, not a figure
+  // read from the data — so they are typed here, and the vintage beside them is the bundle's own.
+  if (variant !== null && figuresWithheld(variant) !== null) {
+    return (
+      `${boundaries} · district set: Pakistan Bureau of Statistics, 2023 Digital Census · ` +
+      `this map carries no census figures, so none is dated by that census`
+    );
+  }
+  return (
+    `${boundaries} · figures: Pakistan Bureau of Statistics, ` +
+    `2023 Digital Census · pinned to ${censusVintage}`
+  );
+}
+
 /** Everything the band says, from the committed bundle. Pure: no DOM, no measurement, no markup. */
 export function exportBand(input: BandInput): ExportBand {
   const { scenarios, statistics, geography, variant, shadedBy, development } = input;
   const legend = bandLegend(statistics, variant, shadedBy, development);
-  // The attributor names and the licence are the wording those licences *require*, not a figure
-  // read from the data — so they are typed here, and the vintage beside them is the bundle's own.
-  const attribution =
-    `Boundaries © OpenStreetMap contributors, ODbL · figures: Pakistan Bureau of Statistics, ` +
-    `2023 Digital Census · pinned to ${statistics.provenance.vintage}`;
+  const attribution = bandAttribution(variant, statistics.provenance.vintage);
 
   if (variant === null) {
     return {
