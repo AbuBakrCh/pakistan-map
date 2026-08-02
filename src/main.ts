@@ -1,12 +1,16 @@
 /**
  * Entry point: the selection, and everything that answers to it.
  *
- * Runtime state is one value — the active basis and variant, or the baseline (D20) — and it is
- * written into the URL and read back out of it (#23), so the value the page holds and the value
- * the address bar shows are the same value and cannot come apart. Nothing here is a framework's
- * job: a selection changes, four surfaces redraw, and each of them is told the whole answer rather
- * than a patch. The decisions those surfaces render are all upstream in `lib/`, under test; what
- * is here is the wiring, and the three history calls, which have no seam to be tested at.
+ * Runtime state is two values (D20) — the active basis and variant, or the baseline; and whether
+ * compare is held. The first is written into the URL and read back out of it (#23), so the value
+ * the page holds and the value the address bar shows are the same value and cannot come apart. The
+ * second deliberately is not: a comparison is a key held down, not a view worth addressing, and
+ * putting it in the URL would make a shared link restore a gesture nobody is performing.
+ *
+ * Nothing here is a framework's job: a selection changes, four surfaces redraw, and each of them is
+ * told the whole answer rather than a patch. The decisions those surfaces render are all upstream
+ * in `lib/`, under test; what is here is the wiring, and the three history calls, which have no
+ * seam to be tested at.
  *
  * Provenance travels with every one of them. A basis shades districts, a variant draws provinces
  * that do not exist, and both are on screen at once — so the legend says what the colours mean,
@@ -26,6 +30,13 @@ import {
   type BasisId,
   type VariantRecord,
 } from './bundle.ts';
+import {
+  answersSpaceItself,
+  comparedDescription,
+  compareGesture,
+  holdsCompare,
+  releasesCompare,
+} from './lib/compare.ts';
 import { boundaryNote } from './lib/context.ts';
 import { hashFor, readRoute } from './lib/deep-link.ts';
 import { shortFormExpansions } from './lib/labels.ts';
@@ -36,7 +47,13 @@ import {
   type DistrictFill,
   type LegendEntry,
 } from './lib/mother-tongue.ts';
-import { basisChoices, mapDescription, variantOf, type Selection } from './lib/selection.ts';
+import {
+  BASELINE,
+  basisChoices,
+  mapDescription,
+  variantOf,
+  type Selection,
+} from './lib/selection.ts';
 import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { variantCard } from './lib/card.ts';
@@ -111,6 +128,17 @@ function viewFor(selection: Selection): MapView {
 const opening = readRoute(window.location.hash, scenarioBundle, choices);
 let selection: Selection = opening.selection;
 
+/**
+ * The second runtime value: whether the current map is standing in for the selection (#22).
+ *
+ * Held, never merged into the selection. A comparison is not a thing you have chosen to look at —
+ * it is the selection, momentarily out of the way — so the moment it ends the map has to come
+ * back to exactly what it was, zoom and pan included, and that is only free if the selection was
+ * never touched. Keeping the two apart is also what keeps the gesture out of the URL: the address
+ * bar follows the selection, and the selection does not move while compare is held.
+ */
+const compare = compareGesture();
+
 const map = renderMap(
   mount,
   geographyTopology,
@@ -118,7 +146,10 @@ const map = renderMap(
   censusStatistics,
   viewFor(selection),
 );
-const panel = renderControls(controlMount, scenarioBundle, choices, go);
+const panel = renderControls(controlMount, scenarioBundle, choices, go, () => {
+  compare.press();
+  render();
+});
 const card = renderVariantCard(cardMount);
 
 /**
@@ -136,6 +167,10 @@ const card = renderVariantCard(cardMount);
  */
 function go(next: Selection): void {
   selection = next;
+  // A reader who asks to see a proposal has asked to stop comparing. Without this, choosing a
+  // variant while the button holds compare would draw the country and leave the new card arguing
+  // for boundaries that are not on screen.
+  compare.interrupt();
   const hash = hashFor(next);
   if (hash !== window.location.hash) window.history.pushState(null, '', hash);
   render();
@@ -148,24 +183,110 @@ function go(next: Selection): void {
  * cannot loop back through here, while every traversal between two of them does. What arrives is
  * an untrusted string either way — a reader may have typed it — so it is read through the same
  * parser as the opening one and canonicalised on the spot, without a further entry.
+ *
+ * Compare is released on the way through, for the reason `go` releases it: arriving at a different
+ * proposal with the country still drawn would leave the card arguing for outlines that are not on
+ * screen. Traversal is a change of view like any other, and the gesture belongs to the view it was
+ * started in.
  */
 window.addEventListener('hashchange', () => {
   const route = readRoute(window.location.hash, scenarioBundle, choices);
   selection = route.selection;
+  compare.interrupt();
   if (!route.asWritten) window.history.replaceState(null, '', hashFor(route.selection));
   render();
 });
 
 function render(): void {
   const variant = variantOf(scenarioBundle, selection);
-  panel.show(selection);
-  map.show(viewFor(selection));
+  // The current map compared against itself is not a comparison (D17), so at the baseline the
+  // gesture has nothing to hold out of the way and the map is drawn as it always is.
+  const comparing = compare.on && variant !== null;
+  panel.show(selection, comparing);
+  map.show(comparing ? comparedView(variant) : viewFor(selection));
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
   card.show(variant === null ? null : variantCard(scenarioBundle, variant));
+  // The card, the legend and the colophon are given the *selection*, and are not told about the
+  // comparison. Compare is a gesture over the map — the reader is looking at the map and has one
+  // key down — and rewriting three blocks of prose underneath it would be the page changing
+  // rather than the map. The proposal is still selected while it is held off the screen, so the
+  // surfaces that say what is selected go on saying it.
   renderLegend(selection, variant);
   renderColophon(selection, variant);
 }
+
+/**
+ * The map as compare shows it: the baseline view, whole.
+ *
+ * Assembled from `viewFor(BASELINE)` rather than by taking fields off the selected view, so
+ * compare cannot fall out of step with what the baseline actually is — the strata it drops are
+ * dropped because the baseline has none of them, and a fourth stratum added later would be
+ * dropped by construction. Only the spoken sentence differs, because for a reader who cannot see
+ * the map this is not the baseline: it is a proposal held off the screen and about to return.
+ *
+ * The zoom and the pan are not mentioned anywhere in here, which is how they survive: `show`
+ * re-projects nothing and never touches the transform, so the country does not move under the
+ * gesture and releasing it puts the outlines back over exactly the ground they left.
+ */
+function comparedView(variant: VariantRecord): MapView {
+  const baseline = viewFor(BASELINE);
+  return { ...baseline, description: comparedDescription(baseline.description, variant.name) };
+}
+
+/*
+ * The key half of the gesture. Bound to the window rather than to the map, because holding Space
+ * should compare wherever the reader is standing on the page — asking them to click the map first
+ * makes a shortcut that only works once you have found the thing it is a shortcut for.
+ *
+ * Two things are settled here and nowhere else, and both are `lib/compare.ts`'s answers:
+ * `holdsCompare` decides whether the press is ours, which is what keeps Space out of the way of
+ * the focused chips and of the Compare button itself; and `preventDefault` stops the page
+ * scrolling, on the repeats as well as on the press, since a key held down goes on firing.
+ */
+window.addEventListener('keydown', (event) => {
+  // Nothing to compare at the baseline, so the key is left alone entirely: Space scrolls a page
+  // with no proposal on it, which is what Space is for.
+  if (selection === null) return;
+  // Read off `Element` rather than off `HTMLElement`: the map itself is SVG and carries focus, so
+  // narrowing to HTML would ask the question of everything except the one place a reader is most
+  // likely to be standing when they compare.
+  const focused = event.target;
+  const element =
+    focused instanceof Element
+      ? {
+          tagName: focused.tagName,
+          isContentEditable: focused instanceof HTMLElement && focused.isContentEditable,
+        }
+      : null;
+  if (
+    !holdsCompare({
+      key: event.key,
+      altKey: event.altKey,
+      ctrlKey: event.ctrlKey,
+      metaKey: event.metaKey,
+      shiftKey: event.shiftKey,
+      onControl: answersSpaceItself(element),
+    })
+  ) {
+    return;
+  }
+  event.preventDefault();
+  if (compare.hold()) render();
+});
+
+window.addEventListener('keyup', (event) => {
+  if (releasesCompare(event.key) && compare.release()) render();
+});
+
+/*
+ * Alt-tabbing away with the key down delivers the `keyup` to whatever the reader switched to, and
+ * this map would hold the comparison for the rest of the session. The window losing focus is the
+ * only notice we get, so it is taken as the release it is.
+ */
+window.addEventListener('blur', () => {
+  if (compare.interrupt()) render();
+});
 
 const swatch = (entry: LegendEntry): string =>
   entry.swatch.kind === 'colour'
