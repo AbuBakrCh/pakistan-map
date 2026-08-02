@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 import {
   districtsMoved,
   scorecardOf,
+  unitAreas,
   unitPopulations,
   type ScorecardUnit,
 } from './scorecard.ts';
@@ -40,6 +41,19 @@ const POPULATIONS = new Map([
   ['Bravo', 2_000_000],
   ['Charlie', 4_000_000],
   ['Delta', 8_000_000],
+]);
+
+/**
+ * The published areas (#49). Echo is absent from these too, and for one reason: PBS published
+ * Table 1 for the districts it counted, so a unit outside the census is outside the area figures as
+ * well. Deliberately not proportional to the populations — an area that tracked a population would
+ * let a test pass that had summed the wrong map.
+ */
+const AREAS = new Map([
+  ['Alpha', 500],
+  ['Bravo', 300],
+  ['Charlie', 100],
+  ['Delta', 700],
 ]);
 
 const UNCOUNTED = 'Echo';
@@ -116,6 +130,66 @@ describe('districts moved', () => {
   });
 });
 
+describe('unit areas', () => {
+  it('is the sum of the published areas under it, and nothing else', () => {
+    const [north] = unitAreas([unit('North', ['Alpha', 'Bravo', 'Charlie'])], AREAS);
+    expect(north?.area).toBe(900);
+    expect(north?.withoutPublishedArea).toEqual([]);
+  });
+
+  it('withholds a unit’s area rather than summing the districts PBS did publish', () => {
+    // The same rule as the population's and for the same reason: 700 km² for a unit that also
+    // covers ground PBS published no area for is short by an unknowable amount and looks exactly
+    // like a figure that is right.
+    const [south] = unitAreas([unit('South', ['Delta', UNCOUNTED])], AREAS);
+    expect(south?.area).toBeNull();
+    expect(south?.withoutPublishedArea).toEqual(['Echo']);
+  });
+
+  it('is carried on a variant that publishes figures as well as on one that withholds them', () => {
+    // Computed for every variant, printed by the card only where the population lines are missing
+    // (#49). A figure derived for one card is a figure nothing else can check.
+    const units = [unit('North', ['Alpha', 'Bravo']), unit('South', ['Delta'])];
+    const shown = scorecardOf(units, {
+      populations: POPULATIONS,
+      areas: AREAS,
+      origins: ORIGINS,
+      modernFigures: SHOWN,
+    });
+    const withheld = scorecardOf(units, {
+      populations: POPULATIONS,
+      areas: AREAS,
+      origins: ORIGINS,
+      modernFigures: { modernFigures: false, reason: 'stated' },
+    });
+    expect(shown.area).toEqual({ units: 2, total: 1_500 });
+    // The whole point: the population goes and the ground stays, because ground did not move.
+    expect(withheld.population).toBeNull();
+    expect(withheld.area).toEqual({ units: 2, total: 1_500 });
+  });
+
+  it('takes the total over the units PBS publishes an area for, and no others', () => {
+    // The same set the population spread sets aside by name, because it is the same census
+    // coverage — which is why nothing here keeps a second list of them.
+    const withTerritory = scorecardOf(
+      [unit('North', ['Alpha', 'Bravo']), unit('Far', [UNCOUNTED], 'territory')],
+      { populations: POPULATIONS, areas: AREAS, origins: ORIGINS, modernFigures: SHOWN },
+    );
+    expect(withTerritory.area).toEqual({ units: 1, total: 800 });
+    expect(withTerritory.outsideTheCensus.map((found) => found.name)).toEqual(['Far']);
+  });
+
+  it('says nothing rather than zero where no unit has a published area at all', () => {
+    const nothing = scorecardOf([unit('Far', [UNCOUNTED], 'territory')], {
+      populations: POPULATIONS,
+      areas: AREAS,
+      origins: ORIGINS,
+      modernFigures: SHOWN,
+    });
+    expect(nothing.area).toBeNull();
+  });
+});
+
 describe('the population spread', () => {
   const units = [
     unit('Charlie', ['Charlie'], 'proposed'),
@@ -124,6 +198,7 @@ describe('the population spread', () => {
   ];
   const scorecard = scorecardOf(units, {
     populations: POPULATIONS,
+    areas: AREAS,
     origins: ORIGINS,
     modernFigures: SHOWN,
   });
@@ -152,6 +227,7 @@ describe('the population spread', () => {
     // reaches, the one it does not is listed, and no figure is invented for it.
     const withTerritory = scorecardOf([...units, unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
+    areas: AREAS,
       origins: ORIGINS,
       modernFigures: SHOWN,
     });
@@ -168,7 +244,7 @@ describe('the population spread', () => {
     // a spread taken around it would be a comparison this app cannot support.
     const reaching = scorecardOf(
       [unit('Greater Charlie', ['Charlie', UNCOUNTED], 'proposed'), unit('North', ['Alpha', 'Bravo'])],
-      { populations: POPULATIONS, origins: ORIGINS, modernFigures: SHOWN },
+      { populations: POPULATIONS, areas: AREAS, origins: ORIGINS, modernFigures: SHOWN },
     );
     expect(reaching.population).toBeNull();
     expect(reaching.populationWithheld).toEqual({
@@ -185,6 +261,7 @@ describe('the population spread', () => {
     // and the reason travels with the withholding rather than being paraphrased downstream.
     const historical = scorecardOf(units, {
       populations: POPULATIONS,
+    areas: AREAS,
       origins: ORIGINS,
       modernFigures: {
         modernFigures: false,
@@ -203,6 +280,7 @@ describe('the population spread', () => {
     // 1 is a number, and a partition of one counted unit would read as perfectly even.
     const alone = scorecardOf([unit('North', ['Alpha']), unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
+    areas: AREAS,
       origins: ORIGINS,
       modernFigures: SHOWN,
     });
@@ -214,6 +292,7 @@ describe('the population spread', () => {
   it('says so where nothing at all is counted, rather than reporting an empty spread', () => {
     const nothing = scorecardOf([unit('Far', [UNCOUNTED], 'territory')], {
       populations: POPULATIONS,
+    areas: AREAS,
       origins: ORIGINS,
       modernFigures: SHOWN,
     });
@@ -224,14 +303,16 @@ describe('the population spread', () => {
 
   it('never carries both a spread and a reason for having none, or neither', () => {
     const cases = [
-      scorecardOf(units, { populations: POPULATIONS, origins: ORIGINS, modernFigures: SHOWN }),
+      scorecardOf(units, { populations: POPULATIONS, areas: AREAS, origins: ORIGINS, modernFigures: SHOWN }),
       scorecardOf(units, {
         populations: POPULATIONS,
+    areas: AREAS,
         origins: ORIGINS,
         modernFigures: { modernFigures: false, reason: 'stated' },
       }),
       scorecardOf([unit('Far', [UNCOUNTED], 'territory')], {
         populations: POPULATIONS,
+    areas: AREAS,
         origins: ORIGINS,
         modernFigures: SHOWN,
       }),

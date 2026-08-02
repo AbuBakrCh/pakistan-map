@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T17:42:23.720Z",
+    "generated": "2026-08-02T18:27:11.691Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -9,7 +9,7 @@
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "geometry": "data/bundle/geography.topojson.json — the districts the outlines are dissolved from",
-      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums",
+      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums, and the published district areas a variant that withholds those populations carries instead (#49)",
       "development": "data/bundle/development-index.json — the composite D1's boundary is cut at, badged synthesized"
     },
     "counts": {
@@ -34,7 +34,7 @@
     "scorecard": {
       "from": "data/bundle/statistics.json",
       "statistics": {
-        "generated": "2026-08-02T16:58:07.181Z",
+        "generated": "2026-08-02T18:27:08.233Z",
         "districts": 136
       },
       "method": "A unit’s population is the sum of its districts’ 2023 census populations and nothing else: the census publishes by district, every unit is composed of districts, and nothing between the two is interpolated or apportioned. Districts moved are those whose unit is not the one carrying their current province forward — the unit named Punjab is Punjab whatever it has lost, and South Punjab is not, however much of Punjab it is made of. Contiguity is not recomputed here; it is read off the adjacency graph and carried on each unit, because two derivations of one fact are two answers to it.",
@@ -166,6 +166,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 11,
           "of": 156,
@@ -278,6 +282,8 @@
           "excludes": [],
           "population": 40377576,
           "uncounted": [],
+          "areaSqKm": 99577,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -348,6 +354,8 @@
           "excludes": [],
           "population": 87311346,
           "uncounted": [],
+          "areaSqKm": 105768,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -438,6 +446,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -518,6 +528,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -606,6 +618,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -628,6 +642,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -679,6 +695,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -719,6 +748,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -826,6 +868,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 13,
           "of": 156,
@@ -942,6 +988,8 @@
           "excludes": [],
           "population": 44133314,
           "uncounted": [],
+          "areaSqKm": 113570,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1008,6 +1056,8 @@
           "excludes": [],
           "population": 83555608,
           "uncounted": [],
+          "areaSqKm": 91775,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1098,6 +1148,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1178,6 +1230,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1266,6 +1320,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1288,6 +1344,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1339,6 +1397,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1379,6 +1450,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -1499,6 +1583,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 15,
           "of": 156,
@@ -1629,6 +1717,8 @@
           ],
           "population": 46433418,
           "uncounted": [],
+          "areaSqKm": 125804,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1695,6 +1785,8 @@
           "excludes": [],
           "population": 83555608,
           "uncounted": [],
+          "areaSqKm": 91775,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1781,6 +1873,8 @@
           "excludes": [],
           "population": 38555993,
           "uncounted": [],
+          "areaSqKm": 89507,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1861,6 +1955,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1949,6 +2045,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -1971,6 +2069,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2022,6 +2122,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2062,6 +2175,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -2149,6 +2275,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 8,
           "of": 156,
@@ -2247,6 +2377,8 @@
           "excludes": [],
           "population": 6188736,
           "uncounted": [],
+          "areaSqKm": 17064,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2321,6 +2453,8 @@
           "excludes": [],
           "population": 34667361,
           "uncounted": [],
+          "areaSqKm": 84677,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2413,6 +2547,8 @@
           "excludes": [],
           "population": 127688922,
           "uncounted": [],
+          "areaSqKm": 205345,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2493,6 +2629,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2581,6 +2719,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2603,6 +2743,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2654,6 +2796,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2694,6 +2849,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -2778,6 +2946,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 7,
           "of": 156,
@@ -2868,6 +3040,8 @@
           "excludes": [],
           "population": 20382881,
           "uncounted": [],
+          "areaSqKm": 3527,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -2934,6 +3108,8 @@
           "excludes": [],
           "population": 35313266,
           "uncounted": [],
+          "areaSqKm": 137387,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3026,6 +3202,8 @@
           "excludes": [],
           "population": 127688922,
           "uncounted": [],
+          "areaSqKm": 205345,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3116,6 +3294,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3204,6 +3384,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3226,6 +3408,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3277,6 +3461,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3317,6 +3514,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -3419,6 +3629,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 12,
           "of": 156,
@@ -3521,6 +3735,8 @@
           "excludes": [],
           "population": 6163599,
           "uncounted": [],
+          "areaSqKm": 61226,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3585,6 +3801,8 @@
           "excludes": [],
           "population": 8730803,
           "uncounted": [],
+          "areaSqKm": 285964,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3677,6 +3895,8 @@
           "excludes": [],
           "population": 127688922,
           "uncounted": [],
+          "areaSqKm": 205345,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3767,6 +3987,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3847,6 +4069,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3869,6 +4093,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3920,6 +4146,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -3960,6 +4199,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -4068,6 +4320,10 @@
       "scorecard": {
         "units": 15,
         "proposedUnits": 13,
+        "area": {
+          "units": 13,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -4214,6 +4470,8 @@
           "excludes": [],
           "population": 96264311,
           "uncounted": [],
+          "areaSqKm": 110272,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4310,6 +4568,8 @@
           "excludes": [],
           "population": 39239792,
           "uncounted": [],
+          "areaSqKm": 123474,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4352,6 +4612,8 @@
           "excludes": [],
           "population": 35618285,
           "uncounted": [],
+          "areaSqKm": 105313,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4418,6 +4680,8 @@
           "excludes": [],
           "population": 35284685,
           "uncounted": [],
+          "areaSqKm": 138554,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4448,6 +4712,8 @@
           "excludes": [],
           "population": 15910471,
           "uncounted": [],
+          "areaSqKm": 808,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4474,6 +4740,8 @@
           "excludes": [],
           "population": 4391032,
           "uncounted": [],
+          "areaSqKm": 7817,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4510,6 +4778,8 @@
           "excludes": [],
           "population": 3567974,
           "uncounted": [],
+          "areaSqKm": 189529,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4548,6 +4818,8 @@
           "excludes": [],
           "population": 3093912,
           "uncounted": [],
+          "areaSqKm": 43534,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4570,6 +4842,8 @@
           "excludes": [],
           "population": 2432540,
           "uncounted": [],
+          "areaSqKm": 993,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4600,6 +4874,8 @@
           "excludes": [],
           "population": 2068917,
           "uncounted": [],
+          "areaSqKm": 52901,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4622,6 +4898,8 @@
           "excludes": [],
           "population": 2068451,
           "uncounted": [],
+          "areaSqKm": 559,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4648,6 +4926,8 @@
           "excludes": [],
           "population": 1043126,
           "uncounted": [],
+          "areaSqKm": 7492,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4672,6 +4952,8 @@
           "excludes": [],
           "population": 515935,
           "uncounted": [],
+          "areaSqKm": 14850,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4723,6 +5005,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -4763,6 +5058,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -4873,6 +5181,10 @@
       "scorecard": {
         "units": 18,
         "proposedUnits": 16,
+        "area": {
+          "units": 16,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -4985,6 +5297,8 @@
           "excludes": [],
           "population": 24026268,
           "uncounted": [],
+          "areaSqKm": 34386,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5017,6 +5331,8 @@
           "excludes": [],
           "population": 21508377,
           "uncounted": [],
+          "areaSqKm": 18584,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5047,6 +5363,8 @@
           "excludes": [],
           "population": 18747726,
           "uncounted": [],
+          "areaSqKm": 25262,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5071,6 +5389,8 @@
           "excludes": [],
           "population": 17088421,
           "uncounted": [],
+          "areaSqKm": 5767,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5103,6 +5423,8 @@
           "excludes": [],
           "population": 16877179,
           "uncounted": [],
+          "areaSqKm": 62856,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5135,6 +5457,8 @@
           "excludes": [],
           "population": 14981906,
           "uncounted": [],
+          "areaSqKm": 23265,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5165,6 +5489,8 @@
           "excludes": [],
           "population": 14510707,
           "uncounted": [],
+          "areaSqKm": 22419,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5213,6 +5539,8 @@
           "excludes": [],
           "population": 14438366,
           "uncounted": [],
+          "areaSqKm": 110817,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5239,6 +5567,8 @@
           "excludes": [],
           "population": 14226180,
           "uncounted": [],
+          "areaSqKm": 12450,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5273,6 +5603,8 @@
           "excludes": [],
           "population": 13856516,
           "uncounted": [],
+          "areaSqKm": 34957,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5313,6 +5645,8 @@
           "excludes": [],
           "population": 13419242,
           "uncounted": [],
+          "areaSqKm": 57770,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5351,6 +5685,8 @@
           "excludes": [],
           "population": 12890963,
           "uncounted": [],
+          "areaSqKm": 15353,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5389,6 +5725,8 @@
           "excludes": [],
           "population": 11514882,
           "uncounted": [],
+          "areaSqKm": 23455,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5459,6 +5797,8 @@
           "excludes": [],
           "population": 11392144,
           "uncounted": [],
+          "areaSqKm": 266456,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5493,6 +5833,8 @@
           "excludes": [],
           "population": 11352936,
           "uncounted": [],
+          "areaSqKm": 41912,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5537,6 +5879,8 @@
           "excludes": [],
           "population": 10667618,
           "uncounted": [],
+          "areaSqKm": 40387,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5588,6 +5932,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5628,6 +5985,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -5737,6 +6107,10 @@
       "scorecard": {
         "units": 14,
         "proposedUnits": 12,
+        "area": {
+          "units": 12,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -5881,6 +6255,8 @@
           "excludes": [],
           "population": 42806019,
           "uncounted": [],
+          "areaSqKm": 219841,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5933,6 +6309,8 @@
           "excludes": [],
           "population": 24144535,
           "uncounted": [],
+          "areaSqKm": 84670,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -5965,6 +6343,8 @@
           "excludes": [],
           "population": 23032690,
           "uncounted": [],
+          "areaSqKm": 50092,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6045,6 +6425,8 @@
           "excludes": [],
           "population": 21628507,
           "uncounted": [],
+          "areaSqKm": 246828,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6077,6 +6459,8 @@
           "excludes": [],
           "population": 21508377,
           "uncounted": [],
+          "areaSqKm": 18584,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6101,6 +6485,8 @@
           "excludes": [],
           "population": 17088421,
           "uncounted": [],
+          "areaSqKm": 5767,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6155,6 +6541,8 @@
           "excludes": [],
           "population": 16891438,
           "uncounted": [],
+          "areaSqKm": 45333,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6189,6 +6577,8 @@
           "excludes": [],
           "population": 16503260,
           "uncounted": [],
+          "areaSqKm": 22076,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6231,6 +6621,8 @@
           "excludes": [],
           "population": 15302781,
           "uncounted": [],
+          "areaSqKm": 33079,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6261,6 +6653,8 @@
           "excludes": [],
           "population": 14510707,
           "uncounted": [],
+          "areaSqKm": 22419,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6287,6 +6681,8 @@
           "excludes": [],
           "population": 14226180,
           "uncounted": [],
+          "areaSqKm": 12450,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6321,6 +6717,8 @@
           "excludes": [],
           "population": 13856516,
           "uncounted": [],
+          "areaSqKm": 34957,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6372,6 +6770,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6412,6 +6823,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -6525,6 +6949,10 @@
       "scorecard": {
         "units": 16,
         "proposedUnits": 14,
+        "area": {
+          "units": 14,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -6663,6 +7091,8 @@
           "excludes": [],
           "population": 37655238,
           "uncounted": [],
+          "areaSqKm": 169231,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6695,6 +7125,8 @@
           "excludes": [],
           "population": 21508377,
           "uncounted": [],
+          "areaSqKm": 18584,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6747,6 +7179,8 @@
           "excludes": [],
           "population": 19526762,
           "uncounted": [],
+          "areaSqKm": 115254,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6777,6 +7211,8 @@
           "excludes": [],
           "population": 18747726,
           "uncounted": [],
+          "areaSqKm": 25262,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6801,6 +7237,8 @@
           "excludes": [],
           "population": 17088421,
           "uncounted": [],
+          "areaSqKm": 5767,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6875,6 +7313,8 @@
           "excludes": [],
           "population": 16975035,
           "uncounted": [],
+          "areaSqKm": 219494,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6907,6 +7347,8 @@
           "excludes": [],
           "population": 16877179,
           "uncounted": [],
+          "areaSqKm": 62856,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6939,6 +7381,8 @@
           "excludes": [],
           "population": 14981906,
           "uncounted": [],
+          "areaSqKm": 23265,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6969,6 +7413,8 @@
           "excludes": [],
           "population": 14510707,
           "uncounted": [],
+          "areaSqKm": 22419,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -6995,6 +7441,8 @@
           "excludes": [],
           "population": 14226180,
           "uncounted": [],
+          "areaSqKm": 12450,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7029,6 +7477,8 @@
           "excludes": [],
           "population": 13856516,
           "uncounted": [],
+          "areaSqKm": 34957,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7067,6 +7517,8 @@
           "excludes": [],
           "population": 12890963,
           "uncounted": [],
+          "areaSqKm": 15353,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7105,6 +7557,8 @@
           "excludes": [],
           "population": 11986803,
           "uncounted": [],
+          "areaSqKm": 30817,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7149,6 +7603,8 @@
           "excludes": [],
           "population": 10667618,
           "uncounted": [],
+          "areaSqKm": 40387,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7200,6 +7656,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7240,6 +7709,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -7355,6 +7837,10 @@
       "scorecard": {
         "units": 12,
         "proposedUnits": 10,
+        "area": {
+          "units": 10,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -7481,6 +7967,8 @@
           "excludes": [],
           "population": 66313575,
           "uncounted": [],
+          "areaSqKm": 57154,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7533,6 +8021,8 @@
           "excludes": [],
           "population": 47584466,
           "uncounted": [],
+          "areaSqKm": 118615,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7599,6 +8089,8 @@
           "excludes": [],
           "population": 36637591,
           "uncounted": [],
+          "areaSqKm": 111037,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7663,6 +8155,8 @@
           "excludes": [],
           "population": 27935832,
           "uncounted": [],
+          "areaSqKm": 56211,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7697,6 +8191,8 @@
           "excludes": [],
           "population": 20382881,
           "uncounted": [],
+          "areaSqKm": 3527,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7739,6 +8235,8 @@
           "excludes": [],
           "population": 16723426,
           "uncounted": [],
+          "areaSqKm": 71583,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7795,6 +8293,8 @@
           "excludes": [],
           "population": 16270361,
           "uncounted": [],
+          "areaSqKm": 140671,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7841,6 +8341,8 @@
           "excludes": [],
           "population": 6278376,
           "uncounted": [],
+          "areaSqKm": 56363,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7871,6 +8373,8 @@
           "excludes": [],
           "population": 2357453,
           "uncounted": [],
+          "areaSqKm": 114670,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7899,6 +8403,8 @@
           "excludes": [],
           "population": 1015470,
           "uncounted": [],
+          "areaSqKm": 66265,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7950,6 +8456,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -7990,6 +8509,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -8112,6 +8644,10 @@
       "scorecard": {
         "units": 7,
         "proposedUnits": 2,
+        "area": {
+          "units": 5,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 0,
           "of": 156,
@@ -8214,6 +8750,19 @@
             "Astore",
             "Diamir"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8254,6 +8803,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
@@ -8357,6 +8919,8 @@
           "excludes": [],
           "population": 127688922,
           "uncounted": [],
+          "areaSqKm": 205345,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8437,6 +9001,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8527,6 +9093,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8615,6 +9183,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8637,6 +9207,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -8722,6 +9294,10 @@
       "scorecard": {
         "units": 3,
         "proposedUnits": 1,
+        "area": {
+          "units": 1,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 136,
           "of": 156,
@@ -9086,6 +9662,8 @@
           "excludes": [],
           "population": 241499431,
           "uncounted": [],
+          "areaSqKm": 796096,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9137,6 +9715,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9177,6 +9768,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -9325,6 +9929,10 @@
       "scorecard": {
         "units": 17,
         "proposedUnits": 13,
+        "area": {
+          "units": 13,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 59,
           "of": 156,
@@ -9428,6 +10036,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 45588,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9450,6 +10060,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 15910,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9482,6 +10094,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 43796,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9510,6 +10124,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 15153,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9534,6 +10150,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 48051,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9566,6 +10184,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 52067,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9598,6 +10218,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 8788,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9628,6 +10250,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 5282,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9652,6 +10276,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 14850,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9676,6 +10302,10 @@
           "uncounted": [
             "Hunza"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Hunza"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9698,6 +10328,10 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Nagar"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Nagar"
           ],
           "contiguity": {
@@ -9778,6 +10412,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 72821,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9866,6 +10502,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 160663,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -9944,6 +10582,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 125004,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10014,6 +10654,8 @@
           "excludes": [],
           "population": null,
           "uncounted": [],
+          "areaSqKm": 188123,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": false,
             "pieces": 2,
@@ -10066,6 +10708,17 @@
             "Astore",
             "Diamir"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Gilgit",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10106,6 +10759,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
@@ -10211,6 +10877,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 2,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 45,
           "of": 156,
@@ -10349,6 +11019,8 @@
           "excludes": [],
           "population": 35112935,
           "uncounted": [],
+          "areaSqKm": 79334,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10385,6 +11057,8 @@
           "excludes": [],
           "population": 5743162,
           "uncounted": [],
+          "areaSqKm": 22407,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10427,6 +11101,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -10530,6 +11217,8 @@
           "excludes": [],
           "population": 127688922,
           "uncounted": [],
+          "areaSqKm": 205345,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10610,6 +11299,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10698,6 +11389,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10720,6 +11413,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10760,6 +11455,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
@@ -10865,6 +11573,10 @@
       "scorecard": {
         "units": 8,
         "proposedUnits": 1,
+        "area": {
+          "units": 6,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 3,
           "of": 156,
@@ -10947,6 +11659,8 @@
           "excludes": [],
           "population": 13400009,
           "uncounted": [],
+          "areaSqKm": 45588,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11033,6 +11747,8 @@
           "excludes": [],
           "population": 114288913,
           "uncounted": [],
+          "areaSqKm": 159757,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11113,6 +11829,8 @@
           "excludes": [],
           "population": 55696147,
           "uncounted": [],
+          "areaSqKm": 140914,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11203,6 +11921,8 @@
           "excludes": [],
           "population": 40856097,
           "uncounted": [],
+          "areaSqKm": 101741,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11291,6 +12011,8 @@
           "excludes": [],
           "population": 14894402,
           "uncounted": [],
+          "areaSqKm": 347190,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11313,6 +12035,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11364,6 +12088,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11404,6 +12141,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",
@@ -11540,6 +12290,10 @@
       "scorecard": {
         "units": 11,
         "proposedUnits": 8,
+        "area": {
+          "units": 9,
+          "total": 796096
+        },
         "districtsMoved": {
           "count": 135,
           "of": 156,
@@ -11638,6 +12392,8 @@
           "excludes": [],
           "population": 2134823,
           "uncounted": [],
+          "areaSqKm": 9532,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11718,6 +12474,8 @@
           "excludes": [],
           "population": 38721274,
           "uncounted": [],
+          "areaSqKm": 92209,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11768,6 +12526,8 @@
           "excludes": [],
           "population": 43684935,
           "uncounted": [],
+          "areaSqKm": 123545,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11830,6 +12590,8 @@
           "excludes": [],
           "population": 84003987,
           "uncounted": [],
+          "areaSqKm": 81800,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11866,6 +12628,8 @@
           "excludes": [],
           "population": 11523772,
           "uncounted": [],
+          "areaSqKm": 64534,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11930,6 +12694,8 @@
           "excludes": [],
           "population": 44172375,
           "uncounted": [],
+          "areaSqKm": 76380,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -11974,6 +12740,8 @@
           "excludes": [],
           "population": 3643803,
           "uncounted": [],
+          "areaSqKm": 56597,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -12038,6 +12806,8 @@
           "excludes": [],
           "population": 11250599,
           "uncounted": [],
+          "areaSqKm": 290593,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -12060,6 +12830,8 @@
           "excludes": [],
           "population": 2363863,
           "uncounted": [],
+          "areaSqKm": 906,
+          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -12111,6 +12883,19 @@
             "Mirpur",
             "Kotli"
           ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
+            "Jhelum Valley",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -12151,6 +12936,19 @@
           "excludes": [],
           "population": null,
           "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "areaSqKm": null,
+          "withoutPublishedArea": [
             "Gilgit",
             "Hunza",
             "Nagar",

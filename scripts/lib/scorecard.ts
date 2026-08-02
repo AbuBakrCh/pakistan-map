@@ -89,6 +89,67 @@ export function unitPopulations(
   });
 }
 
+/**
+ * District -> its published area in km², from PBS Census-2023 Table 1 (#49).
+ *
+ * The same shape and the same rule as `DistrictPopulations`, and for the same reason: PBS
+ * published Table 1 for the four provinces and the capital, so the twenty AJK and
+ * Gilgit-Baltistan districts are **absent from this map** rather than present as zero. The two
+ * absences are the same absence — one census, one coverage — which is why a unit set aside from
+ * the population figures is the same unit set aside from the area, and nothing here keeps a second
+ * list of them.
+ *
+ * Published, never measured. The drawn polygons are clipped to OSM's coastline and knowingly
+ * disagree with PBS by thousands of km² on the Indus delta; a measured area would be a figure of
+ * ours printed under a `census` badge.
+ */
+export type DistrictAreas = ReadonlyMap<string, number>;
+
+export interface UnitArea {
+  readonly unit: string;
+  readonly name: string;
+  /** The sum of its districts' published areas, or `null` where any district has none. */
+  readonly area: number | null;
+  /** Districts of this unit PBS published no area for, named rather than counted. */
+  readonly withoutPublishedArea: readonly string[];
+}
+
+/**
+ * Each unit's area, on exactly the terms its population is computed on: a sum of published
+ * district figures, `null` the moment one of them is missing, and never a partial sum.
+ */
+export function unitAreas(
+  units: readonly ScorecardUnit[],
+  areas: DistrictAreas,
+): readonly UnitArea[] {
+  return units.map((unit) => {
+    const withoutPublishedArea = unit.districts.filter((district) => !areas.has(district));
+    return {
+      unit: unit.id,
+      name: unit.name,
+      area:
+        withoutPublishedArea.length > 0
+          ? null
+          : unit.districts.reduce((km2, district) => km2 + (areas.get(district) ?? 0), 0),
+      withoutPublishedArea,
+    };
+  });
+}
+
+/**
+ * The variant's ground, added up.
+ *
+ * Deliberately not a spread: no largest, no smallest, no ratio. Area is here because H2 draws 1947
+ * and can carry no 2023 figure (#49) — ground is what has not moved since — and a second set of
+ * extremes would be a comparison nobody asked for on a card that is already a column of five.
+ */
+export interface AreaTotal {
+  /** How many units the figure is over — not the variant's unit count where any is set aside. */
+  readonly units: number;
+  /** Those units' km², added up, as published. */
+  readonly total: number;
+}
+
 export interface PopulationExtreme {
   readonly unit: string;
   readonly name: string;
@@ -146,6 +207,15 @@ export interface Scorecard {
   /** `null` exactly when `populationWithheld` is set. Never both, and never neither. */
   readonly population: PopulationSpread | null;
   readonly populationWithheld: PopulationWithholding | null;
+  /**
+   * The ground the variant covers, from PBS's published district areas (#49).
+   *
+   * Never `null`, unlike the population: a variant may withhold modern *figures* — H2 does, because
+   * 2023 counts do not describe 1947 boundaries — and area is exactly the figure that survives
+   * that, since ground has not moved since. It is `null` only in the degenerate case where no unit
+   * of the variant has a published area at all, which the shipped set does not contain.
+   */
+  readonly area: AreaTotal | null;
   /** Units the census does not reach, set aside from the spread and listed rather than dropped. */
   readonly outsideTheCensus: readonly OutsideTheCensus[];
   readonly districtsMoved: DistrictsMoved;
@@ -224,6 +294,7 @@ export function districtsMoved(
 
 export interface ScorecardInput {
   readonly populations: DistrictPopulations;
+  readonly areas: DistrictAreas;
   readonly origins: DistrictOrigins;
   /** The variant's own statistics policy. `false` withholds every population figure, with a reason. */
   readonly modernFigures: { readonly modernFigures: true } | { readonly modernFigures: false; readonly reason: string };
@@ -233,9 +304,19 @@ export interface ScorecardInput {
 export function scorecardOf(units: readonly ScorecardUnit[], input: ScorecardInput): Scorecard {
   const moved = districtsMoved(units, input.origins);
   const populations = unitPopulations(units, input.populations);
+  // Area is computed for every variant and not only for the one that prints it. A figure derived
+  // for a single card is a figure nothing else can check, and the suite re-derives this one over
+  // all seventeen; which cards *show* it is `card.ts`'s decision and is stated there.
+  const measured = unitAreas(units, input.areas).filter(
+    (found): found is UnitArea & { area: number } => found.area !== null,
+  );
   const base = {
     units: units.length,
     proposedUnits: units.filter((unit) => unit.kind === 'proposed').length,
+    area:
+      measured.length === 0
+        ? null
+        : { units: measured.length, total: measured.reduce((km2, found) => km2 + found.area, 0) },
     districtsMoved: moved,
   };
 

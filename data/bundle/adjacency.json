@@ -1,13 +1,13 @@
 {
   "provenance": {
-    "generated": "2026-08-02T17:42:23.748Z",
+    "generated": "2026-08-02T18:27:11.719Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "sources": {
       "content": "scripts/lib/variants.ts — the typed scenario module, reviewed as a diff",
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "geometry": "data/bundle/geography.topojson.json — the districts the outlines are dissolved from",
-      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums",
+      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums, and the published district areas a variant that withholds those populations carries instead (#49)",
       "development": "data/bundle/development-index.json — the composite D1's boundary is cut at, badged synthesized"
     },
     "unit": "district",

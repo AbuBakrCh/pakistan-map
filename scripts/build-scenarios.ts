@@ -65,7 +65,9 @@ import {
 } from './lib/scenarios.ts';
 import {
   scorecardOf,
+  unitAreas,
   unitPopulations,
+  type DistrictAreas,
   type DistrictPopulations,
   type DistrictOrigins,
 } from './lib/scorecard.ts';
@@ -94,7 +96,9 @@ const SOURCE_URLS = {
     'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
   folds: 'data/reference/post-census-district-folds.json',
   geometry: `${GEOGRAPHY_BUNDLE} — the districts the outlines are dissolved from`,
-  statistics: `${STATISTICS_BUNDLE} — the 2023 census populations every scorecard figure sums`,
+  statistics:
+    `${STATISTICS_BUNDLE} — the 2023 census populations every scorecard figure sums, and the ` +
+    `published district areas a variant that withholds those populations carries instead (#49)`,
   development: `${DEVELOPMENT_BUNDLE} — the composite D1's boundary is cut at, badged synthesized`,
 } as const;
 
@@ -106,6 +110,8 @@ function fail(message: string): never {
 /** What the scorecard is computed against: the census, and today's map. */
 interface Census {
   readonly populations: DistrictPopulations;
+  /** PBS's published district areas (#49) — the figure that survives a variant withholding 2023 ones. */
+  readonly areas: DistrictAreas;
   readonly origins: DistrictOrigins;
 }
 
@@ -123,6 +129,9 @@ function emit(
   const statistics = variant.statistics ?? { modernFigures: true };
   const populations = new Map(
     unitPopulations(partition.units, census.populations).map((found) => [found.unit, found]),
+  );
+  const areas = new Map(
+    unitAreas(partition.units, census.areas).map((found) => [found.unit, found]),
   );
   return {
     id: variant.id,
@@ -186,6 +195,7 @@ function emit(
      */
     scorecard: scorecardOf(partition.units, {
       populations: census.populations,
+      areas: census.areas,
       origins: census.origins,
       modernFigures: statistics,
     }),
@@ -215,6 +225,17 @@ function emit(
          */
         population: statistics.modernFigures ? populations.get(unit.id)?.population ?? null : null,
         uncounted: populations.get(unit.id)?.uncounted ?? [],
+        /**
+         * The sum of its districts' **published** areas, and `null` where PBS published none for one
+         * of them — the same twenty districts, because Table 1 is the same census (#49).
+         *
+         * Unlike the population it is not dropped where a variant withholds modern figures: that is
+         * the whole reason it is here. A district's area is a fact about ground that has not moved
+         * since 1947, where its population is a 2023 count, so H2 can carry one and not the other —
+         * which is what makes its scorecard read as a whole block rather than as what survived.
+         */
+        areaSqKm: areas.get(unit.id)?.area ?? null,
+        withoutPublishedArea: areas.get(unit.id)?.withoutPublishedArea ?? [],
         /**
          * Flagged, never blocked (D7). `detached` is every group but the largest, named — the
          * districts stranded away from the body of the unit are what a reader wants said, and the
@@ -366,11 +387,13 @@ function main(): void {
       string,
       {
         readonly population?: unknown;
+        readonly areaSqKm?: unknown;
         readonly motherTongue?: { readonly dominant?: unknown };
       }
     >;
   };
   const populations = new Map<string, number>();
+  const areas = new Map<string, number>();
   // District -> the census's dominant mother tongue, or `null` where it names none (#26). Only the
   // 136 the census reaches are in it at all, which is the distinction the rule engine's first
   // refusal turns on.
@@ -383,7 +406,18 @@ function main(): void {
           `and read as a figure. Run npm run build:data:census first.`,
       );
     }
+    // Read from the same artifact and refused on the same terms as the population beside it (#49):
+    // a district present without an area would be summed as nothing and a unit's ground would come
+    // out short while looking exactly like a unit whose ground is right.
+    if (typeof record.areaSqKm !== 'number') {
+      fail(
+        `${STATISTICS_BUNDLE} carries ${district} with no published area. H2 shows area where it ` +
+          `withholds population, and a district present without one would be added as nothing. ` +
+          `Run npm run build:data:census first.`,
+      );
+    }
     populations.set(district, record.population);
+    areas.set(district, record.areaSqKm);
   }
   // Named, never counted. "137 where 136 were expected" sends a maintainer to diff two artifacts
   // by hand; the district that is missing — or the one that should not be there — is the whole of
@@ -439,7 +473,7 @@ function main(): void {
   const origins = new Map<string, string>(
     ROSTER.flatMap((entry) => entry.districts.map((d) => [d, entry.name] as const)),
   );
-  const census = { populations, origins };
+  const census = { populations, areas, origins };
 
   // ---- The variants (#26) --------------------------------------------------------------------
   // Eight of the ten are literals in `variants.ts`, because eight of them transcribe a line

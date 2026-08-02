@@ -263,11 +263,16 @@ function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
       caveat: census.reconciliation.method,
     },
     {
-      what: 'District areas — what the drawn geometry is measured against',
-      source: geography.sources['publishedAreas'] ?? '',
+      // Two jobs since #49, and the row says both: it is still what the drawn geometry is checked
+      // against, and it is now a figure a card prints — H2's, which withholds every 2023 count and
+      // shows ground instead. So the caveat is the one that matters about it, which is that it is
+      // published and not measured: this build's own polygons are clipped to a coastline and
+      // disagree with these figures, and the discrepancy list below quotes by how much.
+      what: 'District areas — the ground a variant that withholds modern figures is shown by',
+      source: `${geography.sources['publishedAreas'] ?? ''}; transcribed to ${census.area.source}`,
       vintage: censusVintage,
       badges: badges('census'),
-      caveat: null,
+      caveat: `${census.area.note} ${census.area.transcription.method}`,
     },
     {
       what: `Mother tongue — the ${census.motherTongue.categories.length} categories the Language basis shades by`,
@@ -358,6 +363,17 @@ function discrepanciesOf(
       label: 'The development index is this project’s figure, not the census’s',
       figure: null,
       text: `${index.provenance.formula} ${index.provenance.notPoverty}`,
+    },
+    {
+      // Found by transcribing Table 1's areas (#49), which brought its populations along as a
+      // check on the transcription — and they do not quite agree with the package the bundle's
+      // populations come from. Eight districts, in four pairs of neighbours, each pair cancelling
+      // exactly within its province. It changes no figure this app publishes and it goes on the list anyway: a
+      // panel that listed the tables and hid where they disagree is the failure this section
+      // exists to prevent.
+      label: 'PBS’s Table 1 and its structured release disagree on eight districts',
+      figure: `${Object.keys(census.area.transcription.differences.byDistrict).length} districts`,
+      text: census.area.transcription.differences.note,
     },
     {
       label: 'The division totals are a cross-check, not a second source',

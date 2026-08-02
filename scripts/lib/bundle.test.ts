@@ -564,6 +564,9 @@ interface EmittedUnit {
   };
   readonly population: number | null;
   readonly uncounted: readonly string[];
+  /** PBS's published area for its districts, summed — `null` where one of them has none (#49). */
+  readonly areaSqKm: number | null;
+  readonly withoutPublishedArea: readonly string[];
 }
 interface EmittedVariant {
   readonly id: string;
@@ -2417,6 +2420,12 @@ const censusPopulations = new Map<string, number>(
     ([district, record]) => [district, record.population],
   ),
 );
+/** PBS's published district areas (#49) — the same 136, since Table 1 is the same census. */
+const censusAreas = new Map<string, number>(
+  Object.entries(statistics.districts as Record<string, { areaSqKm: number }>).map(
+    ([district, record]) => [district, record.areaSqKm],
+  ),
+);
 /** Today's map, which "moved" is measured against — every drawn district, AJK's and GB's included. */
 const currentOrigins = new Map<string, string>(
   ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
@@ -2482,6 +2491,7 @@ describe('bundle scorecard', () => {
       expect(variant.scorecard, variant.id).toEqual(
         scorecardOf(variant.units, {
           populations: censusPopulations,
+          areas: censusAreas,
           origins: currentOrigins,
           modernFigures: variant.statistics,
         }),
@@ -2543,6 +2553,64 @@ describe('bundle scorecard', () => {
     }
     // The spread is over the units the census reaches, and says how many that was.
     expect(l1.scorecard.population?.units).toBe(l1.units.length - outside.length);
+  });
+
+  it('gives every unit the ground its own districts are published as, variant by variant', () => {
+    // Re-derived from the committed census rather than read back, on the same terms as the
+    // populations above: a unit's area is a sum of PBS's district figures and of nothing else, and
+    // a unit reaching ground PBS published no area for carries none rather than a partial sum.
+    const wrong = variants.flatMap((variant) =>
+      variant.units.flatMap((unit) => {
+        const missing = unit.districts.filter((d) => !censusAreas.has(d));
+        const expected =
+          missing.length > 0
+            ? null
+            : unit.districts.reduce((km2, d) => km2 + (censusAreas.get(d) ?? 0), 0);
+        return unit.areaSqKm === expected && unit.withoutPublishedArea.join() === missing.join()
+          ? []
+          : [`${variant.id} "${unit.name}" reads ${unit.areaSqKm}, and its districts sum to ${expected}`];
+      }),
+    );
+    expect(wrong).toEqual([]);
+  });
+
+  it('covers the whole census area on every variant, and sets the same units aside as the population does', () => {
+    // Two things at once, and both are properties of the partition rather than of one variant. A
+    // complete partition of the drawn map covers the 136 census districts exactly once, so its
+    // area total is Pakistan as PBS publishes it — 796,096 km², the four provinces and the capital.
+    // And the units left out of that total are the units the population spread leaves out, because
+    // Table 1 is the same census: one coverage, two figures, never two lists.
+    for (const variant of variants) {
+      expect(variant.scorecard.area?.total, variant.id).toBe(statistics.area.pakistan);
+      const withoutArea = variant.units.filter((unit) => unit.areaSqKm === null);
+      expect(
+        withoutArea.map((unit) => unit.id).sort(),
+        variant.id,
+      ).toEqual(variant.scorecard.outsideTheCensus.map((found) => found.unit).sort());
+      expect(variant.scorecard.area?.units, variant.id).toBe(
+        variant.units.length - withoutArea.length,
+      );
+    }
+  });
+
+  it('gives H2 the figure it can carry where it withholds the one it cannot', () => {
+    // The point of #49. H2 draws 1947 and publishes no population anywhere (#30), so its scorecard
+    // was the only one in the app with nothing quantitative on it at all. Ground is what survives
+    // the withholding — a district's area has not moved since 1947 — and it is PBS's published
+    // figure, never a measurement of the drawn polygons.
+    const h2 = variants.find((v) => v.id === 'h2') as EmittedVariant;
+    expect(h2.scorecard.population).toBeNull();
+    expect(h2.scorecard.area?.total).toBe(statistics.area.pakistan);
+    const bahawalpur = h2.units.find((u) => u.id === 'bahawalpur-state') as EmittedUnit;
+    expect(bahawalpur.population).toBeNull();
+    expect(bahawalpur.areaSqKm).toBe(
+      bahawalpur.districts.reduce((km2, d) => km2 + (censusAreas.get(d) ?? 0), 0),
+    );
+    // And the four units PBS reaches with neither figure say so with neither, rather than being
+    // given an area the census never published for them (D25).
+    expect(
+      h2.units.filter((unit) => unit.areaSqKm === null).map((unit) => unit.name),
+    ).toEqual(['Hunza', 'Nagar', 'Gilgit Agency and Baltistan', 'Azad Jammu & Kashmir']);
   });
 
   it('names the ground that actually changes hands, and where it comes from', () => {

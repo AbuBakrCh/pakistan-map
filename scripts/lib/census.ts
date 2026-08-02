@@ -70,6 +70,11 @@ const CENSUS_NAME_ALIASES: Readonly<Record<string, string>> = {
   // Malakand is administered as a "Protected Area" and appears under that name in the tables.
   'malakand protected area': 'Malakand',
   'kambar shahdad kot': 'Kambar Shahdadkot',
+  // Table 1's Sindh district table prints TANDO AHYAR where PBS's own district list prints Tando
+  // Allah Yar. Aliased rather than corrected in the transcription: the reference file carries the
+  // name the source actually prints, and disagreements between PBS's own documents are resolved
+  // here, where every other one already is.
+  'tando ahyar': 'Tando Allah Yar',
   'umer kot': 'Umerkot',
   'kolai palas kohistan': 'Kolai Pallas Kohistan',
 };

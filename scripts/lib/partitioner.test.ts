@@ -50,7 +50,7 @@ const adjacency = read('data/bundle/adjacency.json') as {
   neighbours: Record<string, string[]>;
 };
 const statistics = read('data/bundle/statistics.json') as {
-  districts: Record<string, { population: number }>;
+  districts: Record<string, { population: number; areaSqKm: number }>;
 };
 const geography = read('data/bundle/geography.topojson.json') as {
   objects: Record<string, unknown>;
@@ -59,6 +59,9 @@ const geography = read('data/bundle/geography.topojson.json') as {
 const NEIGHBOURS: AdjacencyGraph = new Map(Object.entries(adjacency.neighbours));
 const POPULATIONS: ReadonlyMap<string, number> = new Map(
   Object.entries(statistics.districts).map(([district, row]) => [district, row.population]),
+);
+const AREAS: ReadonlyMap<string, number> = new Map(
+  Object.entries(statistics.districts).map(([district, row]) => [district, row.areaSqKm]),
 );
 
 const districtFeatures = (
@@ -379,6 +382,7 @@ describe('what the engine hands to #28', () => {
     );
     const scorecard = scorecardOf(units, {
       populations: POPULATIONS,
+      areas: AREAS,
       origins,
       modernFigures: { modernFigures: true },
     });
