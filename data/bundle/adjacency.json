@@ -1,13 +1,14 @@
 {
   "provenance": {
-    "generated": "2026-08-02T14:09:26.548Z",
+    "generated": "2026-08-02T14:50:36.750Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "sources": {
       "content": "scripts/lib/variants.ts — the typed scenario module, reviewed as a diff",
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "geometry": "data/bundle/geography.topojson.json — the districts the outlines are dissolved from",
-      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums"
+      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums",
+      "development": "data/bundle/development-index.json — the composite D1's boundary is cut at, badged synthesized"
     },
     "unit": "district",
     "method": "Two districts are neighbours iff they share an arc. The geography bundle draws all three administrative tiers out of one shared arc set, so where two districts touch the edge between them is one arc, used once from each side — adjacency is a set question about integers with an exact answer. Testing polygons for intersection would ask the same question of coordinates and answer it to whatever tolerance a clipper worked to, and two districts left a millimetre apart by simplification would come out strangers. An arc index and its reverse (`~i`) are the one border they are.",

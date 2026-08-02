@@ -37,6 +37,7 @@ import type {
   VariantRecord,
 } from '../bundle.ts';
 import { provenanceBadge, type CardBadge } from './card.ts';
+import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
 import { unitLegend, type UnitSwatch } from './units.ts';
 
@@ -194,6 +195,8 @@ export function bandLegend(
   variant: VariantRecord | null,
   /** The basis whose shading is on the map, or `null` where nothing is shaded. */
   shadedBy: BasisId | null,
+  /** The committed composite, for the one basis whose key is not a census category (#31). */
+  development: DevelopmentIndexBundle,
 ): readonly BandLegendEntry[] {
   const entries: BandLegendEntry[] = [];
 
@@ -215,19 +218,27 @@ export function bandLegend(
   }
 
   if (shadedBy !== null) {
-    // Named rather than assumed. Only the Language basis has a fill in the renderer today, and a
-    // band that answered every shadeable basis with the mother-tongue key would, the day the
-    // Development basis lands, print the wrong key under the right badge — a legend that keys data
-    // the map is not drawing is worse than no legend, because it is checkable and wrong.
-    if (shadedBy !== 'language') {
+    // Named basis by basis rather than assumed. Two of the four have a fill in the renderer, and a
+    // band that answered every shadeable basis with the mother-tongue key would print the wrong
+    // key under the right badge — a legend that keys data the map is not drawing is worse than no
+    // legend, because it is checkable and wrong. The third and fourth still fail by name here.
+    const shaded =
+      shadedBy === 'language'
+        ? [...motherTongueLegend(statistics).onTheMap, ...motherTongueLegend(statistics).absences]
+        : shadedBy === 'development'
+          ? // The bands and the one absence, in the order the scale is read. The lead sentence —
+            // that no published source states this figure — is not a key entry: it is the badge's
+            // gloss, and the band already prints that under `Provenance`.
+            [...developmentLegend(development).bands, ...developmentLegend(development).absences]
+          : null;
+    if (shaded === null) {
       throw new Error(
         `The map is shaded by the ${shadedBy} basis and this band has no key for it. A key is ` +
           `derived from the fill it explains; keying one basis's colours under another's name ` +
           `would put a legend on the image that the picture does not match.`,
       );
     }
-    const legend = motherTongueLegend(statistics);
-    for (const entry of [...legend.onTheMap, ...legend.absences]) {
+    for (const entry of shaded) {
       entries.push({
         label: entry.label,
         swatch:
@@ -275,6 +286,8 @@ export interface BandInput {
    * that does not exist.
    */
   readonly shadedBy: BasisId | null;
+  /** The committed composite (#31) — the one fill whose key is not a census category. */
+  readonly development: DevelopmentIndexBundle;
 }
 
 /**
@@ -299,8 +312,8 @@ function sourceOf(sources: Readonly<Record<string, string>>, key: string): strin
 
 /** Everything the band says, from the committed bundle. Pure: no DOM, no measurement, no markup. */
 export function exportBand(input: BandInput): ExportBand {
-  const { scenarios, statistics, geography, variant, shadedBy } = input;
-  const legend = bandLegend(statistics, variant, shadedBy);
+  const { scenarios, statistics, geography, variant, shadedBy, development } = input;
+  const legend = bandLegend(statistics, variant, shadedBy, development);
   // The attributor names and the licence are the wording those licences *require*, not a figure
   // read from the data — so they are typed here, and the vintage beside them is the bundle's own.
   const attribution =

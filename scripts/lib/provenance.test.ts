@@ -27,6 +27,7 @@ import statistics from '../../data/bundle/statistics.json';
 import scenarios from '../../data/bundle/scenarios.json';
 import outlines from '../../data/bundle/unit-outlines.json';
 import adjacency from '../../data/bundle/adjacency.json';
+import developmentIndex from '../../data/bundle/development-index.json';
 import {
   BASES,
   DATA_VINTAGE,
@@ -65,6 +66,12 @@ const VARIANTS = variantsFrom({
     Object.entries(districtStatistics).map(([district, record]) => [district, record.population]),
   ),
   centroids: districtCentroids(geography as never),
+  // D1's rule is stated in the development composite (#31), a committed artifact of its own.
+  development: new Map(
+    Object.entries(developmentIndex.districts as Record<string, { score: number }>).map(
+      ([district, record]) => [district, record.score],
+    ),
+  ),
 });
 
 const basisEntries = Object.entries(BASES) as [BasisId, Basis][];

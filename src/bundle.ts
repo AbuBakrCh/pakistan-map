@@ -12,7 +12,9 @@ import context from '../data/bundle/context.topojson.json';
 import statistics from '../data/bundle/statistics.json';
 import scenarios from '../data/bundle/scenarios.json';
 import outlines from '../data/bundle/unit-outlines.json';
+import developmentIndex from '../data/bundle/development-index.json';
 import type { ContextProvenance } from './lib/context.ts';
+import type { DevelopmentIndexBundle } from './lib/development.ts';
 
 /** The subset of the bundle's provenance block the baseline map puts on screen. */
 export interface Provenance {
@@ -76,11 +78,40 @@ export interface MotherTongueRecord {
   readonly speakers: Readonly<Record<string, number>>;
 }
 
+/**
+ * The three published development rates, as PBS publishes them and with the denominators PBS gave
+ * them — which are not the same denominator (#11). The third is **flush toilets**, named for the
+ * column that exists: PBS publishes no improved-sanitation figure, and calling this one by that
+ * name would be a definition of ours wearing a `census` badge.
+ */
+export interface DevelopmentRecord {
+  readonly literacy: {
+    readonly population10Plus: number;
+    readonly literate10Plus: number;
+    readonly rate: number;
+  };
+  readonly water: {
+    readonly households: number;
+    readonly improved: number;
+    readonly improvedShare: number;
+  };
+  readonly sanitation: {
+    readonly households: number;
+    readonly flushToilet: number;
+    readonly nonFlushToilet: number;
+    readonly noToilet: number;
+    readonly separateToilet: number;
+    readonly flushToiletShare: number;
+    readonly noToiletShare: number;
+  };
+}
+
 export interface DistrictRecord {
   readonly population: number;
   readonly division: string;
   readonly province: string;
   readonly motherTongue: MotherTongueRecord;
+  readonly development: DevelopmentRecord;
 }
 
 export interface CensusStatistics {
@@ -137,6 +168,18 @@ export interface CensusStatistics {
 }
 
 export const censusStatistics = statistics as unknown as CensusStatistics;
+
+/**
+ * The development composite (#31), on the same terms as everything else: a committed artifact,
+ * imported.
+ *
+ * A file of its own rather than a field of `statistics.json`, and the separation is the point.
+ * That artifact is PBS's figures; this one is **the only number in the app that nobody published**
+ * — the unweighted mean of three published rates, defined by this project and badged `synthesized`
+ * for exactly that reason. It carries its own formula, its own band cuts and its own build date,
+ * so a reader can see that it was computed rather than found.
+ */
+export const developmentIndexBundle = developmentIndex as unknown as DevelopmentIndexBundle;
 
 /**
  * The scenario bundle: every basis, and every variant resolved onto the 2023 district set.

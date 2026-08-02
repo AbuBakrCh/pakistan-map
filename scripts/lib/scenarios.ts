@@ -123,15 +123,22 @@ export const BASES: Readonly<Record<BasisId, Basis>> = {
   development: {
     id: 'development',
     name: 'Development',
-    // Three published rates, named as PBS publishes them. PBS classifies water sources as
-    // improved or not, but for toilets prints only flush / non-flush / none — so there is no
-    // improved-sanitation column to cite, and calling the flush share by that name would be our
-    // definition wearing a `census` badge. The basis is `census` for these three; a composite of
-    // them is `synthesized` and is #31's to badge, on the variant that builds one.
+    // Three published rates, named as PBS publishes them, and one composite of them that nobody
+    // publishes. PBS classifies water sources as improved or not, but for toilets prints only
+    // flush / non-flush / none — so there is no improved-sanitation column to cite, and calling
+    // the flush share by that name would be our definition wearing a `census` badge.
+    //
+    // **Two badges, because the shading is two claims at once** (#31). The three rates are the
+    // census's, to the household; the mean of them is this project's own figure and no published
+    // source states it. `census` alone would pass our arithmetic off as PBS's, and `synthesized`
+    // alone would disown figures PBS counted one household at a time. This is the only basis in
+    // the app whose fill is not somebody else's number.
     source:
-      'PBS 2023 Census — literacy (10+), improved drinking water, households with a flush toilet',
+      'PBS 2023 Census — literacy (10+), improved drinking water and households with a flush ' +
+      'toilet, shaded by the unweighted mean of the three (this project’s own composite; no ' +
+      'published source states it)',
     vintage: DATA_VINTAGE,
-    badges: ['census'],
+    badges: ['census', 'synthesized'],
   },
 };
 

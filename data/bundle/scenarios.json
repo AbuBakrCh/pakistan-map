@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T14:09:26.522Z",
+    "generated": "2026-08-02T14:50:36.727Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -9,12 +9,13 @@
       "roster": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf",
       "folds": "data/reference/post-census-district-folds.json",
       "geometry": "data/bundle/geography.topojson.json — the districts the outlines are dissolved from",
-      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums"
+      "statistics": "data/bundle/statistics.json — the 2023 census populations every scorecard figure sums",
+      "development": "data/bundle/development-index.json — the composite D1's boundary is cut at, badged synthesized"
     },
     "counts": {
-      "variants": 16,
+      "variants": 17,
       "bases": 4,
-      "units": 166
+      "units": 177
     },
     "universes": {
       "drawn": 156,
@@ -74,10 +75,11 @@
     "development": {
       "id": "development",
       "name": "Development",
-      "source": "PBS 2023 Census — literacy (10+), improved drinking water, households with a flush toilet",
+      "source": "PBS 2023 Census — literacy (10+), improved drinking water and households with a flush toilet, shaded by the unweighted mean of the three (this project’s own composite; no published source states it)",
       "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
       "badges": [
-        "census"
+        "census",
+        "synthesized"
       ]
     }
   },
@@ -11285,6 +11287,753 @@
           "folded": [],
           "excludes": [],
           "population": 14894402,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "islamabad-capital-territory",
+          "name": "Islamabad Capital Territory",
+          "alsoKnownAs": [],
+          "kind": "unchanged",
+          "note": null,
+          "claimed": [
+            "Islamabad"
+          ],
+          "districts": [
+            "Islamabad"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2363863,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "azad-jammu-kashmir",
+          "name": "Azad Jammu & Kashmir",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "districts": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Hattian Bala",
+            "Muzaffarabad",
+            "Neelum",
+            "Bagh",
+            "Haveli",
+            "Sudhnoti",
+            "Poonch",
+            "Bhimber",
+            "Mirpur",
+            "Kotli"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "gilgit-baltistan",
+          "name": "Gilgit-Baltistan",
+          "alsoKnownAs": [],
+          "kind": "territory",
+          "note": null,
+          "claimed": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "districts": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": null,
+          "uncounted": [
+            "Gilgit",
+            "Hunza",
+            "Nagar",
+            "Ghizer",
+            "Skardu",
+            "Kharmaung",
+            "Shigar",
+            "Ghanche",
+            "Astore",
+            "Diamir"
+          ],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "d1",
+      "basis": "development",
+      "name": "Each province at its steepest development gradient",
+      "tagline": "the map service access draws, with nothing else in it",
+      "badges": [
+        "census",
+        "synthesized",
+        "derived"
+      ],
+      "rationale": "Every province is cut in two where the 2023 census says its internal gradient of service access divides most sharply. The index behind it is this project’s own: the unweighted mean of literacy among people aged 10 and above, the share of households with an improved drinking-water source, and the share with a flush toilet. No language, no history and no population figure goes into the line — the only question asked of a district is how many of its people can read and how many of its households have water and a toilet.",
+      "status": "Not a proposal and not a demarcation that has ever existed. The argument that Pakistan’s provinces contain regions too differently served to be administered as one unit is made widely, and the southern-Punjab case is made in exactly those terms; nobody has published a boundary drawn from service-access data, and no constitutional amendment creating any province has passed since the four were restored.",
+      "advocacy": {
+        "kind": "unadvocated",
+        "note": "Nobody advocates this map. The case behind it is argued — that a province holding both the best-served and the worst-served districts in the country is administering two different places — but it is argued about a region, never as a rule over all four provinces at once, and this partition is the arithmetic that follows from stating it as one. It is drawn so that the attributed claims elsewhere in this app can be read against what service access alone would say."
+      },
+      "opposedBy": [
+        "those for whom a province is a people and not a service-delivery statistic — the Seraiki, Hazara, Karachi and Pashtun Balochistan claims elsewhere in this app are all arguments this rule cannot see, and it cuts across every one of them",
+        "Sindhi nationalist opinion broadly, which rejects any division of Sindh, and Baloch nationalist parties, for whom Balochistan’s territorial integrity is foundational",
+        "those who argue that a development gap is a reason to spend in a region rather than to make a province of it, and that drawing the boundary around it entrenches the gap instead of closing it",
+        "those who argue that new provinces are an administrative expense before they are anything else — a secretariat, a high court bench, a public service commission and a share of the divisible pool for each"
+      ],
+      "composition": {
+        "kind": "derived",
+        "rule": "Each province is cut in two. The lower unit starts at the province’s lowest-scoring district and grows outward across shared district borders, taking at each step the lowest-scoring district on its edge, ties going to the lower district name — so every cut it can make is connected, and so is the rest of the province, which is checked. Of those cuts the rule takes the one-dimensional natural break: the split maximising the variance between the two halves, k(n−k)(mean high − mean low)² ÷ n², which is Fisher’s and Jenks’s own criterion for where a distribution divides most sharply rather than where one outlier sits. Scores are the development index — the unweighted mean of the 2023 census’s literacy, improved-drinking-water and flush-toilet rates.",
+        "from": "data/bundle/development-index.json — the composite this build computes from PBS 2023 Census Tables 12, 23 and 24 — and the district adjacency graph in data/bundle/adjacency.json"
+      },
+      "footnotes": [
+        {
+          "kind": "derived-boundary",
+          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — Each province is cut in two. The lower unit starts at the province’s lowest-scoring district and grows outward across shared district borders, taking at each step the lowest-scoring district on its edge, ties going to the lower district name — so every cut it can make is connected, and so is the rest of the province, which is checked. Of those cuts the rule takes the one-dimensional natural break: the split maximising the variance between the two halves, k(n−k)(mean high − mean low)² ÷ n², which is Fisher’s and Jenks’s own criterion for where a distribution divides most sharply rather than where one outlier sits. Scores are the development index — the unweighted mean of the 2023 census’s literacy, improved-drinking-water and flush-toilet rates. The cuts it makes are Khyber Pakhtunkhwa at Torghar (47.7%) against Batagram (61.6%), separating 5 districts from 30; Punjab at Layyah (82.2%) against Khanewal (82.4%), separating 15 districts from 21; Sindh at Sanghar (62.0%) against Tando Allah Yar (64.4%), separating 8 districts from 22; Balochistan at Kalat (46.6%) against Ziarat (48.8%), separating 12 districts from 22. Change the census and these lines move; nobody whose argument this is chose where they run."
+        },
+        {
+          "kind": "note",
+          "text": "The index is not a poverty measure and nothing here calls it one. The unweighted mean of three rates the 2023 census publishes: literacy among people aged 10 and above, the share of households with an improved drinking-water source, and the share of households with a flush toilet. Each of the three keeps the denominator PBS gave it — the first is over people, the other two over households — so the mean is a mean of three proportions and not a proportion of anything, which is why it is called an index and never a rate. The three are weighted equally because no published source ranks them, and the figure is not re-scaled to the range the census happens to show, so a district’s score does not move because another district moved. This is service access and attainment, not poverty. The census does not ask about income, consumption, child mortality or nutrition, and three access indicators cannot carry that word. No published index states this figure: it is defined by this project, from published census rates, and is badged synthesized for exactly that reason. Its third component is named for the column PBS actually publishes: the census classifies drinking-water sources as improved or not, but for toilets prints only flush, non-flush and none — a non-flush toilet may be improved or not and the census does not say which — so what is averaged in is the flush-toilet share, and there is no improved-sanitation figure in this app because there is none to have."
+        },
+        {
+          "kind": "note",
+          "text": "Each unit is named for its most populous district, which is a description of an output and not a name anybody uses for a province. The engine has no source for a name, and inventing one — \"lower Punjab\", \"the served half\" — would be both the editorial voice the rule exists to keep out and a judgement about the people living there. The halves are told apart by their scores, which are on each unit above."
+        },
+        {
+          "kind": "note",
+          "text": "The rule finds a division, not an outlier, and the difference shows in how sharp the four cuts are: Sindh divides most cleanly and Punjab least. In Punjab the two districts either side of the break are 0.2% apart, because its gradient is a long smooth slope rather than a cliff — so what the rule finds there is where the province divides most cleanly overall, not where two neighbours differ most. A rule that took the largest single step instead would peel one district off each province and call it a partition."
+        },
+        {
+          "kind": "note",
+          "text": "Islamabad Capital Territory is one district, so it has no internal gradient and is carried through exactly as it is — the only first-level entity inside the census this rule leaves alone. Azad Jammu & Kashmir and Gilgit-Baltistan are outside it entirely: PBS published no literacy, water or toilet figure for any of their twenty districts, so they have no index, and a district with no figure is not a district scoring zero. They are drawn and named exactly as they are today."
+        }
+      ],
+      "notes": [
+        {
+          "label": "What it agrees with, and what it does not",
+          "text": "In Punjab this line lands close to the Seraiki claim without being told anything about language: 9 of South Punjab’s 11 drawn districts fall in the lower half, Khanewal and Multan being the exceptions, and it takes in Bhakkar, Chiniot, Jhang, Khushab, Mianwali, Pakpattan besides — among them the two districts the wider reading of that claim adds. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the south-east and not the interior against Karachi, and in Balochistan the eastern belt and not everything outside Quetta. The rule is reported as it ran rather than tuned until it agreed, because a rule adjusted to match the claims it is meant to be independent of has nothing left to say about them.",
+          "relatedVariants": [
+            "l1",
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "label": "The other rules this app draws",
+          "text": "Four Administrative variants partition the same 136 districts from population and distance, and two Language ones from the census’s dominant mother tongue. They are different maps because they are different questions, and the app draws one at a time.",
+          "relatedVariants": [
+            "a1",
+            "a4",
+            "l7"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "label": "PBS Census-2023 Table 12 — literacy rate, enrolment and out-of-school population by sex and rural/urban, the first of the three rates this index averages",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf"
+        },
+        {
+          "label": "PBS Census-2023 Table 23 — housing facilities by source of drinking water by region, and the improved/not-improved classification is the census’s own published column",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_23_national.pdf"
+        },
+        {
+          "label": "PBS Census-2023 Table 24 — facilities of toilet and washroom used by households. It prints flush, non-flush and none, and no improved-sanitation column, which is why the third component is the flush-toilet share and is named as such",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_24_national.pdf"
+        },
+        {
+          "label": "data/bundle/development-index.json — the composite itself, one score per district, with the formula and the band cuts recorded beside it. Badged synthesized: no published source states this figure"
+        },
+        {
+          "label": "data/bundle/adjacency.json — the district adjacency graph this build derives from the arcs the map is drawn with, across which each half is grown and by which both halves of every province are whole"
+        },
+        {
+          "label": "scripts/lib/development-partition.ts — the engine that draws these boundaries, whose rule statement is quoted on this card in full"
+        },
+        {
+          "label": "docs/research/development-indicators.md — what reconciled against PBS’s printed province figures, the 6,374 households PBS’s two releases of Table 23 disagree by, and why there is no improved-sanitation figure to join"
+        },
+        {
+          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in",
+          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
+        }
+      ],
+      "statistics": {
+        "modernFigures": true
+      },
+      "partition": {
+        "universe": "drawn",
+        "districts": 156,
+        "claimed": 156
+      },
+      "counts": {
+        "units": 11,
+        "proposedUnits": 8,
+        "claimedDistricts": 135,
+        "drawnDistricts": 135,
+        "nonContiguousUnits": 0
+      },
+      "scorecard": {
+        "units": 11,
+        "proposedUnits": 8,
+        "districtsMoved": {
+          "count": 135,
+          "of": 156,
+          "byOrigin": [
+            {
+              "from": "Punjab",
+              "districts": 36
+            },
+            {
+              "from": "Khyber Pakhtunkhwa",
+              "districts": 35
+            },
+            {
+              "from": "Balochistan",
+              "districts": 34
+            },
+            {
+              "from": "Sindh",
+              "districts": 30
+            }
+          ]
+        },
+        "population": {
+          "units": 9,
+          "total": 241499431,
+          "largest": {
+            "unit": "lahore",
+            "name": "Lahore",
+            "population": 84003987
+          },
+          "smallest": {
+            "unit": "shangla",
+            "name": "Shangla",
+            "population": 2134823
+          },
+          "ratio": 39.3
+        },
+        "populationWithheld": null,
+        "outsideTheCensus": [
+          {
+            "unit": "azad-jammu-kashmir",
+            "name": "Azad Jammu & Kashmir",
+            "districts": [
+              "Hattian Bala",
+              "Muzaffarabad",
+              "Neelum",
+              "Bagh",
+              "Haveli",
+              "Sudhnoti",
+              "Poonch",
+              "Bhimber",
+              "Mirpur",
+              "Kotli"
+            ]
+          },
+          {
+            "unit": "gilgit-baltistan",
+            "name": "Gilgit-Baltistan",
+            "districts": [
+              "Gilgit",
+              "Hunza",
+              "Nagar",
+              "Ghizer",
+              "Skardu",
+              "Kharmaung",
+              "Shigar",
+              "Ghanche",
+              "Astore",
+              "Diamir"
+            ]
+          }
+        ]
+      },
+      "units": [
+        {
+          "id": "shangla",
+          "name": "Shangla",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The lower half of Khyber Pakhtunkhwa on the development index — 5 districts averaging 40.5%, against 69.6% across the rest of the province, and 2,134,823 people. Named for Shangla, the most populous district in it.",
+          "claimed": [
+            "Kolai Pallas Kohistan",
+            "Lower Kohistan",
+            "Shangla",
+            "Torghar",
+            "Upper Kohistan"
+          ],
+          "districts": [
+            "Kolai Pallas Kohistan",
+            "Lower Kohistan",
+            "Shangla",
+            "Torghar",
+            "Upper Kohistan"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 2134823,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "peshawar",
+          "name": "Peshawar",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The higher half of Khyber Pakhtunkhwa on the development index — 30 districts averaging 69.6%, against 40.5% across the rest of the province, and 38,721,274 people. Named for Peshawar, the most populous district in it.",
+          "claimed": [
+            "Abbotabad",
+            "Bajaur",
+            "Bannu",
+            "Batagram",
+            "Buner",
+            "Charsadda",
+            "Dera Ismail Khan",
+            "Hangu",
+            "Haripur",
+            "Karak",
+            "Khyber",
+            "Kohat",
+            "Kurram",
+            "Lakki Marwat",
+            "Lower Chitral",
+            "Lower Dir",
+            "Malakand",
+            "Mansehra",
+            "Mardan",
+            "Mohmand",
+            "North Waziristan",
+            "Nowshera",
+            "Orakzai",
+            "Peshawar",
+            "South Waziristan",
+            "Swabi",
+            "Swat",
+            "Tank",
+            "Upper Chitral",
+            "Upper Dir"
+          ],
+          "districts": [
+            "Abbotabad",
+            "Bajaur",
+            "Bannu",
+            "Batagram",
+            "Buner",
+            "Charsadda",
+            "Dera Ismail Khan",
+            "Hangu",
+            "Haripur",
+            "Karak",
+            "Khyber",
+            "Kohat",
+            "Kurram",
+            "Lakki Marwat",
+            "Lower Chitral",
+            "Lower Dir",
+            "Malakand",
+            "Mansehra",
+            "Mardan",
+            "Mohmand",
+            "North Waziristan",
+            "Nowshera",
+            "Orakzai",
+            "Peshawar",
+            "South Waziristan",
+            "Swabi",
+            "Swat",
+            "Tank",
+            "Upper Chitral",
+            "Upper Dir"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 38721274,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "rahim-yar-khan",
+          "name": "Rahim Yar Khan",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The lower half of Punjab on the development index — 15 districts averaging 76.6%, against 86.6% across the rest of the province, and 43,684,935 people. Named for Rahim Yar Khan, the most populous district in it.",
+          "claimed": [
+            "Bahawalnagar",
+            "Bahawalpur",
+            "Bhakkar",
+            "Chiniot",
+            "Dera Ghazi Khan",
+            "Jhang",
+            "Khushab",
+            "Layyah",
+            "Lodhran",
+            "Mianwali",
+            "Muzaffargarh",
+            "Pakpattan",
+            "Rahim Yar Khan",
+            "Rajanpur",
+            "Vehari"
+          ],
+          "districts": [
+            "Bahawalnagar",
+            "Bahawalpur",
+            "Bhakkar",
+            "Chiniot",
+            "Dera Ghazi Khan",
+            "Jhang",
+            "Khushab",
+            "Layyah",
+            "Lodhran",
+            "Mianwali",
+            "Muzaffargarh",
+            "Pakpattan",
+            "Rahim Yar Khan",
+            "Rajanpur",
+            "Vehari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 43684935,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "lahore",
+          "name": "Lahore",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The higher half of Punjab on the development index — 21 districts averaging 86.6%, against 76.6% across the rest of the province, and 84,003,987 people. Named for Lahore, the most populous district in it.",
+          "claimed": [
+            "Attock",
+            "Chakwal",
+            "Faisalabad",
+            "Gujranwala",
+            "Gujrat",
+            "Hafizabad",
+            "Jhelum",
+            "Kasur",
+            "Khanewal",
+            "Lahore",
+            "Mandi Bahauddin",
+            "Multan",
+            "Nankana Sahib",
+            "Narowal",
+            "Okara",
+            "Rawalpindi",
+            "Sahiwal",
+            "Sargodha",
+            "Sheikhupura",
+            "Sialkot",
+            "Toba Tek Singh"
+          ],
+          "districts": [
+            "Attock",
+            "Chakwal",
+            "Faisalabad",
+            "Gujranwala",
+            "Gujrat",
+            "Hafizabad",
+            "Jhelum",
+            "Kasur",
+            "Khanewal",
+            "Lahore",
+            "Mandi Bahauddin",
+            "Multan",
+            "Nankana Sahib",
+            "Narowal",
+            "Okara",
+            "Rawalpindi",
+            "Sahiwal",
+            "Sargodha",
+            "Sheikhupura",
+            "Sialkot",
+            "Toba Tek Singh"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 84003987,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "sanghar",
+          "name": "Sanghar",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The lower half of Sindh on the development index — 8 districts averaging 50.3%, against 76.1% across the rest of the province, and 11,523,772 people. Named for Sanghar, the most populous district in it.",
+          "claimed": [
+            "Badin",
+            "Mirpur Khas",
+            "Sanghar",
+            "Sujawal",
+            "Tando Mohammad Khan",
+            "Tharparkar",
+            "Thatta",
+            "Umerkot"
+          ],
+          "districts": [
+            "Badin",
+            "Mirpur Khas",
+            "Sanghar",
+            "Sujawal",
+            "Tando Mohammad Khan",
+            "Tharparkar",
+            "Thatta",
+            "Umerkot"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 11523772,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "karachi-east",
+          "name": "Karachi East",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The higher half of Sindh on the development index — 22 districts averaging 76.1%, against 50.3% across the rest of the province, and 44,172,375 people. Named for Karachi East, the most populous district in it.",
+          "claimed": [
+            "Dadu",
+            "Ghotki",
+            "Hyderabad",
+            "Jacobabad",
+            "Jamshoro",
+            "Kambar Shahdadkot",
+            "Karachi Central",
+            "Karachi East",
+            "Karachi South",
+            "Karachi West",
+            "Kashmore",
+            "Keamari",
+            "Khairpur",
+            "Korangi",
+            "Larkana",
+            "Malir",
+            "Matiari",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Shikarpur",
+            "Sukkur",
+            "Tando Allah Yar"
+          ],
+          "districts": [
+            "Dadu",
+            "Ghotki",
+            "Hyderabad",
+            "Jacobabad",
+            "Jamshoro",
+            "Kambar Shahdadkot",
+            "Karachi Central",
+            "Karachi East",
+            "Karachi South",
+            "Karachi West",
+            "Kashmore",
+            "Keamari",
+            "Khairpur",
+            "Korangi",
+            "Larkana",
+            "Malir",
+            "Matiari",
+            "Naushahro Feroze",
+            "Shaheed Benazirabad",
+            "Shikarpur",
+            "Sukkur",
+            "Tando Allah Yar"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 44172375,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "jaffarabad",
+          "name": "Jaffarabad",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The lower half of Balochistan on the development index — 12 districts averaging 39.2%, against 57.9% across the rest of the province, and 3,643,803 people. Named for Jaffarabad, the most populous district in it.",
+          "claimed": [
+            "Barkhan",
+            "Dera Bugti",
+            "Harnai",
+            "Jaffarabad",
+            "Jhal Magsi",
+            "Kachhi (Bolan)",
+            "Kalat",
+            "Kohlu",
+            "Musa Khel",
+            "Nasirabad",
+            "Sherani",
+            "Sohbatpur"
+          ],
+          "districts": [
+            "Barkhan",
+            "Dera Bugti",
+            "Harnai",
+            "Jaffarabad",
+            "Jhal Magsi",
+            "Kachhi (Bolan)",
+            "Kalat",
+            "Kohlu",
+            "Musa Khel",
+            "Nasirabad",
+            "Sherani",
+            "Sohbatpur"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 3643803,
+          "uncounted": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "quetta",
+          "name": "Quetta",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": "The higher half of Balochistan on the development index — 22 districts averaging 57.9%, against 39.2% across the rest of the province, and 11,250,599 people. Named for Quetta, the most populous district in it.",
+          "claimed": [
+            "Awaran",
+            "Chagai",
+            "Chaman",
+            "Duki",
+            "Gwadar",
+            "Kech",
+            "Kharan",
+            "Khuzdar",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Lasbela",
+            "Loralai",
+            "Mastung",
+            "Nushki",
+            "Panjgur",
+            "Pishin",
+            "Quetta",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "districts": [
+            "Awaran",
+            "Chagai",
+            "Chaman",
+            "Duki",
+            "Gwadar",
+            "Kech",
+            "Kharan",
+            "Khuzdar",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Lasbela",
+            "Loralai",
+            "Mastung",
+            "Nushki",
+            "Panjgur",
+            "Pishin",
+            "Quetta",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 11250599,
           "uncounted": [],
           "contiguity": {
             "contiguous": true,

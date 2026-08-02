@@ -21,15 +21,8 @@
  */
 
 import type { CensusStatistics } from '../bundle.ts';
+import { NO_DATA, NO_DOMINANT, type DistrictFill, type LegendEntry } from './fill.ts';
 import { motherTongueFill, type MotherTongue } from './palette.ts';
-
-export type DistrictFill =
-  | { readonly kind: 'category'; readonly category: MotherTongue; readonly colour: string }
-  | { readonly kind: 'no-dominant' }
-  | { readonly kind: 'no-data' };
-
-export const NO_DOMINANT: DistrictFill = { kind: 'no-dominant' };
-export const NO_DATA: DistrictFill = { kind: 'no-data' };
 
 /**
  * Every district the bundle knows about, keyed exactly as the geometry names it.
@@ -61,11 +54,6 @@ export function motherTongueFills(statistics: CensusStatistics): Map<string, Dis
   for (const name of statistics.withoutCensusData.districts) fills.set(name, NO_DATA);
 
   return fills;
-}
-
-export interface LegendEntry {
-  readonly label: string;
-  readonly swatch: { kind: 'colour'; colour: string } | { kind: 'stipple' } | { kind: 'hatch' };
 }
 
 export interface Legend {

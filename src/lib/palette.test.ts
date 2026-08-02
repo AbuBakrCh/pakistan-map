@@ -14,11 +14,14 @@ import statistics from '../../data/bundle/statistics.json';
 import type { CensusStatistics } from '../bundle.ts';
 import { contrastRatio, deltaE, dichromatSeparation, lightnessChroma } from './colour-vision.ts';
 import { motherTongueFills } from './mother-tongue.ts';
+import { INDEX_BANDS } from '../../scripts/lib/development-index.ts';
 import {
   ACCENT,
+  DEVELOPMENT_BAND_FILL,
   LAND,
   MOTHER_TONGUE_CATEGORIES,
   UNSEPARATED_PAIRS,
+  WEAKEST_BAND_STEP,
   motherTongueFill,
   type MotherTongue,
 } from './palette.ts';
@@ -96,6 +99,95 @@ describe('the palette', () => {
   });
 });
 
+describe('the development ramp, which is a sequential scale and not a categorical one', () => {
+  const bands = INDEX_BANDS.map((band) => band.id);
+  const ramp = bands.map((id) => DEVELOPMENT_BAND_FILL[id] as string);
+
+  it('covers every band the composite can produce, and invents none', () => {
+    // Read off the module the build applies, not typed: a fifth band added there without a colour
+    // here would render as an absence — the map saying "not measured" about a district PBS
+    // published in full.
+    expect(Object.keys(DEVELOPMENT_BAND_FILL).sort()).toEqual([...bands].sort());
+    expect(new Set(ramp).size).toBe(ramp.length);
+  });
+
+  it('is ordered, which is what a reader actually reads it by', () => {
+    // Lightness falls and chroma rises from the lowest band to the highest, monotonically. This is
+    // the encoding: a sequential scale is read as a progression against its legend, not as four
+    // colours to be recalled. A ramp that dipped anywhere would be four categories in a row.
+    const steps = ramp.map((hex) => lightnessChroma(hex));
+    for (const [i, step] of steps.entries()) {
+      const next = steps[i + 1];
+      if (next === undefined) continue;
+      expect(next.lightness, `${bands[i]} → ${bands[i + 1]} lightness`).toBeLessThan(step.lightness);
+      expect(next.chroma, `${bands[i]} → ${bands[i + 1]} chroma`).toBeGreaterThan(step.chroma);
+    }
+  });
+
+  it('keeps every band clear of the land tone and legible under a unit outline', () => {
+    // The two rules that bound the ramp's lightness window from both ends, and between them there
+    // is about 0.14 of it — which is why there are four bands and not five.
+    for (const [i, hex] of ramp.entries()) {
+      const label = `${bands[i]} ${hex}`;
+      expect(deltaE(hex, LAND), `${label} against unshaded land`).toBeGreaterThanOrEqual(LAND_FLOOR);
+      expect(contrastRatio(hex, ACCENT), `${label} against the unit accent`).toBeGreaterThanOrEqual(3);
+      expect(deltaE(hex, ACCENT), `${label} against the accent`).toBeGreaterThanOrEqual(NORMAL_FLOOR);
+      expect(lightnessChroma(hex).chroma, `${label} chroma`).toBeLessThanOrEqual(0.125);
+    }
+  });
+
+  it('separates the ends of the scale, which is the comparison a reader makes', () => {
+    // "Is this part of the country better served than that one" is a question about the ends, and
+    // they clear every gate the categorical palette is held to, dichromats included.
+    const [lowest, highest] = [ramp[0] as string, ramp[ramp.length - 1] as string];
+    expect(deltaE(lowest, highest)).toBeGreaterThanOrEqual(NORMAL_FLOOR);
+    expect(dichromatSeparation(lowest, highest)).toBeGreaterThanOrEqual(CVD_TARGET);
+    expect(deltaE(lowest, highest, 'tritan')).toBeGreaterThanOrEqual(TRITAN_FLOOR);
+  });
+
+  it('names its weakest step, rather than passing a gate quietly loosened to fit it', () => {
+    /*
+     * No adjacent step clears the categorical targets, and the module says so in those words: four
+     * steps inside 0.14 of lightness are about 0.042 apart, and no amount of hue rotation makes
+     * that ΔE 15. Two things are held instead. Every step clears **this ramp's own floors**, which
+     * are stated here and are lower than the categorical ones — so a ramp re-picked into something
+     * worse fails rather than sliding under a bar that had been moved for it. And the single
+     * weakest number across every step and every view is the one `WEAKEST_BAND_STEP` names, so the
+     * module's claim about where the palette is thinnest is derived from the hexes.
+     */
+    let weakest: { step: string; delta: number } | null = null;
+    for (const [i, hex] of ramp.entries()) {
+      const next = ramp[i + 1];
+      if (next === undefined) continue;
+      const step = `${bands[i]}↔${bands[i + 1]}`;
+      expect(deltaE(hex, next), `${step} for unimpaired vision`).toBeGreaterThanOrEqual(6);
+      expect(dichromatSeparation(hex, next), `${step} for a dichromat`).toBeGreaterThanOrEqual(5);
+      expect(deltaE(hex, next, 'tritan'), `${step} under tritanopia`).toBeGreaterThanOrEqual(3.5);
+      for (const [view, delta] of [
+        ['for unimpaired vision', deltaE(hex, next)],
+        ['for a dichromat', dichromatSeparation(hex, next)],
+        ['under tritanopia', deltaE(hex, next, 'tritan')],
+      ] as const) {
+        if (weakest === null || delta < weakest.delta) weakest = { step: `${step} ${view}`, delta };
+      }
+      // Said out loud rather than left to be inferred from the floors above: this is a sequential
+      // scale and no two of its neighbours reach the bar a categorical pair is held to.
+      expect(deltaE(hex, next), `${step} against the categorical floor`).toBeLessThan(NORMAL_FLOOR);
+    }
+    expect(weakest?.step).toBe(WEAKEST_BAND_STEP);
+  });
+
+  it('is not confusable with the categorical palette it never appears beside', () => {
+    // One basis at a time (D9), so a band and a mother-tongue category are never on one map. They
+    // are on one *page* — the legend redraws with the selection — so a band exactly equal to a
+    // language's fill would teach a reader a colour that means two things.
+    const shared = ramp.filter((hex) =>
+      MOTHER_TONGUE_CATEGORIES.some((category) => motherTongueFill[category] === hex),
+    );
+    expect(shared).toEqual([]);
+  });
+});
+
 /**
  * Which categories share a border on the real map, derived from the bundle's own arcs: two
  * districts are neighbours exactly when they share one. (#16 will publish an adjacency graph in
@@ -134,7 +226,11 @@ function touchingCategories(): { pair: [MotherTongue, MotherTongue]; via: [strin
         if (fa?.kind !== 'category' || fb?.kind !== 'category') continue;
         if (fa.category === fb.category) continue;
         const key = [fa.category, fb.category].sort().join('|');
-        if (!seen.has(key)) seen.set(key, { pair: [fa.category, fb.category], via: [a, b] });
+        const pair: [MotherTongue, MotherTongue] = [
+          fa.category as MotherTongue,
+          fb.category as MotherTongue,
+        ];
+        if (!seen.has(key)) seen.set(key, { pair, via: [a, b] });
       }
     }
   }

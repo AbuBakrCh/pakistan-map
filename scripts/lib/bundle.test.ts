@@ -22,6 +22,7 @@ import {
 } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
+import { GRADIENT_RULE, splitByDevelopmentGradient } from './development-partition.ts';
 import { districtCentroids } from './centroids.ts';
 import {
   haversineKm,
@@ -64,6 +65,9 @@ const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.j
 const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
 const adjacency = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/adjacency.json'), 'utf8'));
 const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
+const developmentIndex = JSON.parse(
+  readFileSync(resolve(ROOT, 'data/bundle/development-index.json'), 'utf8'),
+);
 
 /**
  * The content module's own variants, derived the way the build derives them (#26).
@@ -87,6 +91,13 @@ const VARIANTS = variantsFrom({
   // The distance rule A4 states (#28) is measured on the drawn map, so the centroids come from the
   // committed geometry rather than from a table beside it.
   centroids: districtCentroids(bundle as Topology),
+  // D1's rule is stated in the development composite (#31), which is a committed artifact of its
+  // own — read here rather than recomputed, exactly as the build reads it.
+  development: new Map(
+    Object.entries(developmentIndex.districts as Record<string, { score: number }>).map(
+      ([district, record]) => [district, record.score],
+    ),
+  ),
 });
 
 const layer = (name: string) =>
@@ -1021,9 +1032,10 @@ describe('bundle scenarios', () => {
       )
       .map((v) => v.id);
     expect(unexplained).toEqual([]);
-    // Named rather than counted: the six boundaries in this bundle that nobody published. Two are
-    // the mother-tongue rule's (#26) and four are the administrative engine's (#27, #28), and a
-    // seventh appearing here without the sentence and the badge would be caught above.
+    // Named rather than counted: the seven boundaries in this bundle that nobody published. Two
+    // are the mother-tongue rule's (#26), four are the administrative engine's (#27, #28) and one
+    // is the development gradient's (#31); an eighth appearing here without the sentence and the
+    // badge would be caught above.
     expect(variants.filter((v) => v.composition.kind === 'derived').map((v) => v.id)).toEqual([
       'l6',
       'l7',
@@ -1031,6 +1043,7 @@ describe('bundle scenarios', () => {
       'a2',
       'a3',
       'a4',
+      'd1',
     ]);
 
     // L6 names both readings of its claim, because the territory is the same either way and a
@@ -1356,6 +1369,223 @@ const unsourcedYears = (variant: EmittedVariant): readonly string[] => {
   );
   return [...years(prose)].filter((year) => !sourced.has(year)).sort();
 };
+
+describe('bundle D1, the map service access draws (#31)', () => {
+  const d1 = () => variants.find((v) => v.id === 'd1') as EmittedVariant;
+  const graph: AdjacencyGraph = new Map(
+    Object.entries(adjacency.neighbours as Record<string, string[]>),
+  );
+  const scores = new Map<string, number>(
+    Object.entries(developmentIndex.districts as Record<string, { score: number }>).map(
+      ([district, record]) => [district, record.score],
+    ),
+  );
+  const populations = new Map<string, number>(
+    Object.entries(statistics.districts as Record<string, { population: number }>).map(
+      ([district, record]) => [district, record.population],
+    ),
+  );
+
+  /** The rule, re-run from the committed census, the committed graph and the committed composite. */
+  const rerun = () => {
+    const { partition, problems } = splitByDevelopmentGradient({
+      provinces: ROSTER.filter((e) => e.kind !== 'territory' && e.districts.length > 1).map((e) => ({
+        province: e.name,
+        districts: e.districts,
+      })),
+      graph,
+      scores,
+      populations,
+    });
+    expect(problems).toEqual([]);
+    if (partition === null) throw new Error('the development gradient drew nothing');
+    return partition;
+  };
+
+  it('re-cuts every province and finds the halves that shipped', () => {
+    // The whole of what a `derived` badge promises. A line nothing re-derives is an editorial
+    // opinion with a rule written under it, and this one is cut at a figure the project itself
+    // defines — so it is the derived boundary in the app with the most to prove.
+    const partition = rerun();
+    const shipped = new Map(
+      d1()
+        .units.filter((u) => u.kind === 'proposed')
+        .map((u) => [u.name, [...u.districts].sort()]),
+    );
+    const derived = new Map(
+      partition.splits.flatMap((split) => [
+        [split.lower.principal, [...split.lower.districts].sort()] as const,
+        [split.higher.principal, [...split.higher.districts].sort()] as const,
+      ]),
+    );
+    expect([...shipped.keys()].sort()).toEqual([...derived.keys()].sort());
+    for (const [name, districts] of shipped) {
+      expect(districts, name).toEqual(derived.get(name));
+    }
+    // Eight halves out of four provinces, named for the most populous district in each — which is
+    // a description of an output and is said to be one on the card.
+    expect([...shipped.keys()]).toEqual([
+      'Shangla',
+      'Peshawar',
+      'Rahim Yar Khan',
+      'Lahore',
+      'Sanghar',
+      'Karachi East',
+      'Jaffarabad',
+      'Quetta',
+    ]);
+  });
+
+  it('quotes the engine’s own rule on the card, not a paraphrase of it', () => {
+    const composition = d1().composition;
+    expect(composition.kind).toBe('derived');
+    if (composition.kind !== 'derived') return;
+    expect(composition.rule).toBe(GRADIENT_RULE);
+    // The tie-break is on the card, because which district the lower half takes next is the half
+    // of the rule that actually decides where the line lands.
+    expect(composition.rule).toContain('lower district name');
+    expect(composition.rule).toContain('natural break');
+  });
+
+  it('carries both claims in its badges: the census’s rates and this project’s mean of them', () => {
+    // `census` alone would pass our arithmetic off as PBS's; `synthesized` alone would disown
+    // figures PBS counted one household at a time; `derived` is the line drawn over the composite.
+    expect([...d1().badges].sort()).toEqual(['census', 'derived', 'synthesized']);
+    expect(scenarios.bases.development.badges).toEqual(['census', 'synthesized']);
+  });
+
+  it('leaves both halves of every province whole, because contiguity is the method', () => {
+    // A half is grown across shared district borders and its complement is checked before the cut
+    // is admitted, so neither can be in two pieces. Asserted rather than trusted: a guarantee
+    // nothing looks at is a comment.
+    expect(d1().counts['nonContiguousUnits']).toBe(0);
+    for (const unit of d1().units) {
+      expect(contiguityOf(graph, unit.districts).contiguous, unit.name).toBe(true);
+    }
+  });
+
+  it('leaves the capital and the two territories exactly as they are, and says why', () => {
+    // Islamabad is one district and has no internal gradient; AJK and GB have no index at all,
+    // because PBS published none of the three rates for their twenty districts (D25). Three
+    // different reasons for three units the rule does not touch, and the card gives two of them.
+    const untouched = d1().units.filter((u) => u.kind !== 'proposed');
+    expect(untouched.map((u) => u.name)).toEqual([
+      'Islamabad Capital Territory',
+      'Azad Jammu & Kashmir',
+      'Gilgit-Baltistan',
+    ]);
+    expect(untouched.map((u) => u.kind)).toEqual(['unchanged', 'territory', 'territory']);
+    const prose = d1().footnotes.map((f) => f.text).join('\n');
+    expect(prose).toContain('Islamabad Capital Territory is one district');
+    expect(prose).toContain('not a district scoring zero');
+  });
+
+  it('moves every census district but the capital’s, and the card says that is what it means', () => {
+    // 135 of 156. Not an artefact of the counting rule: "moved" is decided on the unit's name, and
+    // not one of the eight halves carries the name of the province it came out of. Islamabad keeps
+    // its own name and so keeps its district.
+    const scorecard = d1().scorecard;
+    expect(scorecard.districtsMoved.count).toBe(135);
+    expect(scorecard.districtsMoved.of).toBe(156);
+    const moved = Object.fromEntries(
+      scorecard.districtsMoved.byOrigin.map((origin) => [origin.from, origin.districts]),
+    );
+    expect(moved['Islamabad Capital Territory']).toBeUndefined();
+    expect(moved['Azad Jammu & Kashmir']).toBeUndefined();
+    expect(moved['Gilgit-Baltistan']).toBeUndefined();
+    expect(Object.keys(moved).sort()).toEqual([
+      'Balochistan',
+      'Khyber Pakhtunkhwa',
+      'Punjab',
+      'Sindh',
+    ]);
+  });
+
+  it('says on every unit which half of which province it is, and what it scored', () => {
+    // The names are district names, so without this a reader has eight units and no way to tell
+    // which two are one province cut in two, or which of the two is which.
+    const partition = rerun();
+    for (const split of partition.splits) {
+      for (const [half, side] of [
+        [split.lower, 'lower'],
+        [split.higher, 'higher'],
+      ] as const) {
+        const unit = d1().units.find((u) => u.name === half.principal);
+        expect(unit?.note, half.principal).toContain(`${side} half of ${split.province}`);
+        expect(unit?.note, half.principal).toContain(`${(half.mean * 100).toFixed(1)}%`);
+      }
+    }
+  });
+
+  it('states the composite on the card, and never calls it poverty anywhere', () => {
+    // #31's last acceptance criterion, over the whole card rather than over one sentence: the
+    // census sees service access, and a card using the other word would publish a claim about
+    // income this app has no figure for.
+    const prose = [
+      d1().rationale,
+      d1().status,
+      ...(d1().advocacy.kind === 'unadvocated' ? [(d1().advocacy as { note: string }).note] : []),
+      ...d1().footnotes.map((f) => f.text),
+      ...d1().notes.map((n) => n.text),
+      ...d1().units.map((u) => u.note ?? ''),
+      ...d1().sources.map((s) => s.label),
+    ].join('\n');
+    expect(prose).toContain('unweighted mean');
+    expect(prose).toContain('not poverty');
+    expect(prose).toContain('flush toilet');
+    expect(prose).not.toMatch(/improved sanitation/i);
+    // The word does appear — twice — and every appearance is inside a sentence refusing it. Held
+    // that way rather than banned outright, because the honest thing for this card to do is name
+    // the misreading and say it is wrong, not leave a reader to arrive at it unassisted.
+    const sentences = prose.split(/(?<=[.!?])\s+/).filter((s) => /poverty/i.test(s));
+    expect(sentences.length).toBeGreaterThan(0);
+    for (const sentence of sentences) expect(sentence, sentence).toMatch(/\bnot\b/);
+  });
+
+  it('reports what it agrees with and what it does not, rather than being tuned until it agrees', () => {
+    /*
+     * The finding #31 is written around, and the one sentence on this card most able to become
+     * false without anybody noticing — the census moves, the break moves, and a claim about which
+     * districts two independent lines agree on goes on sitting there. So it is re-derived here from
+     * L1's own district list and from the partition, and the disagreement is held as well as the
+     * agreement: this rule does *not* reproduce interior Sindh or interior Balochistan, and the
+     * card says so.
+     */
+    const southPunjab = new Set(
+      (variants.find((v) => v.id === 'l1') as EmittedVariant).units.find(
+        (u) => u.name === 'South Punjab',
+      )?.districts ?? [],
+    );
+    const lower = new Set(
+      d1().units.find((u) => u.name === 'Rahim Yar Khan')?.districts ?? [],
+    );
+    const shared = [...southPunjab].filter((d) => lower.has(d));
+    expect(southPunjab.size).toBe(11);
+    expect(shared).toHaveLength(9);
+    // The two it does not take, and the two of L2's wider reading that it does — which is the
+    // convergence, stated as the near-miss it actually is rather than as a match.
+    expect([...southPunjab].filter((d) => !lower.has(d)).sort()).toEqual(['Khanewal', 'Multan']);
+    for (const district of ['Mianwali', 'Bhakkar']) expect([...lower]).toContain(district);
+
+    const note = d1().notes.find((n) => n.label === 'What it agrees with, and what it does not');
+    expect(note?.text).toContain('9 of South Punjab’s 11 drawn districts');
+    expect(note?.text).toContain('Khanewal and Multan');
+    expect(note?.text).toContain('not the interior against Karachi');
+    expect(note?.relatedVariants).toEqual(['l1', 'l2', 'l3']);
+  });
+
+  it('is unadvocated, opposed anyway, and says both in the schema’s own shapes', () => {
+    // Nobody proposes this map, which is a state the schema spells out rather than an empty list;
+    // and an unadvocated variant still carries opposition, or the card reads as an endorsement.
+    expect(d1().advocacy.kind).toBe('unadvocated');
+    const advocacy = d1().advocacy;
+    expect(advocacy.kind === 'unadvocated' ? advocacy.note : '').toContain(
+      'Nobody advocates this map',
+    );
+    expect(d1().opposedBy.length).toBeGreaterThan(0);
+    expect(d1().opposedBy.join(' ')).toContain('a people and not a service-delivery statistic');
+  });
+});
 
 describe('bundle H2, the map with no figures on it', () => {
   const h2 = () => variants.find((v) => v.id === 'h2') as EmittedVariant;

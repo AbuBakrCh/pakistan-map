@@ -25,6 +25,7 @@ import {
   contextTopology,
   geographyTopology,
   provenance,
+  developmentIndexBundle,
   scenarioBundle,
   unitOutlineBundle,
   type BasisId,
@@ -41,12 +42,9 @@ import { boundaryNote } from './lib/context.ts';
 import { hashFor, readRoute } from './lib/deep-link.ts';
 import { shortFormExpansions } from './lib/labels.ts';
 import { arcsOf, readLineOfControl } from './lib/line-of-control.ts';
-import {
-  motherTongueFills,
-  motherTongueLegend,
-  type DistrictFill,
-  type LegendEntry,
-} from './lib/mother-tongue.ts';
+import type { DistrictFill, LegendEntry } from './lib/fill.ts';
+import { developmentFills, developmentLegend } from './lib/development.ts';
+import { motherTongueFills, motherTongueLegend } from './lib/mother-tongue.ts';
 import {
   BASELINE,
   basisChoices,
@@ -54,7 +52,7 @@ import {
   variantOf,
   type Selection,
 } from './lib/selection.ts';
-import type { UnitMembership } from './lib/tooltip.ts';
+import type { DistrictShading, UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
@@ -77,16 +75,43 @@ if (aboutMount === null) throw new Error('#about is missing from index.html');
  * What each basis shades districts with — and, by being the same object, which bases may be
  * selected at all.
  *
- * One entry today. The administrative, historical and development bases have their tables in the
- * bundle and no fill in the renderer, and the selector says exactly that rather than offering a
- * basis that would shade nothing. Stated once so the menu and the map cannot disagree: a basis
- * offered here and unshaded there is a basis that switches the boundaries back and explains
- * nothing.
+ * Two entries. The administrative and historical bases have their variants in the bundle and no
+ * fill in the renderer, and the selector says exactly that rather than offering a basis that would
+ * shade nothing. Stated once so the menu and the map cannot disagree: a basis offered here and
+ * unshaded there is a basis that switches the boundaries back and explains nothing.
  */
 const FILLS: Partial<Record<BasisId, ReadonlyMap<string, DistrictFill>>> = {
   language: motherTongueFills(censusStatistics),
+  development: developmentFills(developmentIndexBundle, censusStatistics),
 };
 const SHADEABLE = new Set(Object.keys(FILLS) as BasisId[]);
+
+/**
+ * What the Development basis's fill *is*, per district, for the tooltip (#31).
+ *
+ * The one basis whose shading is a figure nobody published, so the one basis whose shading has to
+ * explain itself where it is read. Assembled once from the committed artifact — the formula, the
+ * badge and the component labels are all the artifact's words, and nothing here composes a
+ * sentence out of them; `tooltip.ts` does that.
+ */
+const developmentShading = (district: string): DistrictShading | null => {
+  const record = developmentIndexBundle.districts[district];
+  if (record === undefined) return null;
+  const band = developmentIndexBundle.provenance.bands.find((entry) => entry.id === record.band);
+  return {
+    basis: 'development',
+    score: record.score,
+    bandLabel: band?.label ?? record.band,
+    formula: developmentIndexBundle.provenance.formula,
+    badge: developmentIndexBundle.provenance.badge,
+    components: developmentIndexBundle.provenance.components as DistrictShading['components'],
+  };
+};
+
+/** Which bases explain their own fill on hover. Only the one whose fill nobody published does. */
+const SHADING: Partial<Record<BasisId, (district: string) => DistrictShading | null>> = {
+  development: developmentShading,
+};
 
 /**
  * The ceasefire line's arcs, held out of every unit outline.
@@ -104,12 +129,20 @@ function viewFor(selection: Selection): MapView {
   const variant = variantOf(scenarioBundle, selection);
   const description = mapDescription(scenarioBundle, selection);
   if (selection === null || variant === null) {
-    return { fill: null, units: null, boundaries: null, membershipOf: null, description };
+    return {
+      fill: null,
+      units: null,
+      boundaries: null,
+      membershipOf: null,
+      shadingOf: null,
+      description,
+    };
   }
 
   const owner = unitByDistrict(variant);
   return {
     fill: FILLS[selection.basis] ?? null,
+    shadingOf: SHADING[selection.basis] ?? null,
     units: readUnitOutlines(geographyTopology, unitOutlineBundle, variant.id),
     boundaries: unitBoundaries(geographyTopology, unitOutlineBundle, variant.id, locArcs),
     membershipOf: (district): UnitMembership => {
@@ -192,6 +225,7 @@ renderAbout(
     census: censusStatistics,
     scenarios: scenarioBundle,
     outlines: unitOutlineBundle,
+    index: developmentIndexBundle,
   }),
 );
 
@@ -236,6 +270,7 @@ function download(): void {
     statistics: censusStatistics,
     geography: provenance,
     variant,
+    development: developmentIndexBundle,
     shadedBy:
       variant === null || selection === null || !SHADEABLE.has(selection.basis)
         ? null
@@ -439,7 +474,12 @@ function renderLegend(active: Selection, variant: VariantRecord | null): void {
         `<span class="legend-item"><span class="swatch swatch-${entry.swatch}"></span>${entry.label}</span>`,
     )
     .join('');
-  const fill = active.basis === 'language' ? motherTongueKey() : { key: '', grouped: '' };
+  const fill =
+    active.basis === 'language'
+      ? motherTongueKey()
+      : active.basis === 'development'
+        ? developmentKey()
+        : { key: '', grouped: '' };
   // The grouped categories go last, after the line's own entry: they are the six a reader never
   // has to match to the map, and putting them mid-legend pushes the ones they do off the end.
   legend.innerHTML = `${units}${fill.key}${lineOfControlEntry}${fill.grouped}`;
@@ -454,6 +494,25 @@ function motherTongueKey(): { key: string; grouped: string } {
       <span class="legend-group">
         <span class="legend-group-label">Named by the census, dominant in no district</span>
         ${namedButNowhereDominant.map(item).join('')}
+      </span>`,
+  };
+}
+
+/**
+ * Stratum 1's key under the Development basis, lowest band first — the order the scale is read in.
+ *
+ * The lead sentence goes in the `grouped` slot rather than beside the swatches: it is the sentence
+ * saying this figure is nobody else's, and a legend row that said so per band would say it four
+ * times. The swatches themselves carry their own numbers, because identity is never colour alone —
+ * the more so here, where the ramp's adjacent steps are the closest two fills in the app.
+ */
+function developmentKey(): { key: string; grouped: string } {
+  const legend = developmentLegend(developmentIndexBundle);
+  return {
+    key: `${legend.bands.map(item).join('')}${legend.absences.map(item).join('')}`,
+    grouped: `
+      <span class="legend-group">
+        <span class="legend-group-label">${legend.lead}</span>
       </span>`,
   };
 }
@@ -487,6 +546,7 @@ function renderColophon(active: Selection, variant: VariantRecord | null): void 
       .join(' · ')}. Names are shortened only where the full name is wider than the ground it
       names, and only to the form the unit uses for itself.</p>
     ${active?.basis === 'language' ? motherTongueProvenance() : ''}
+    ${active?.basis === 'development' ? developmentProvenance() : ''}
     <p><strong>Sources</strong> ${sources['boundaries']} · roster: PBS.</p>
   `;
 }
@@ -573,6 +633,25 @@ function motherTongueProvenance(): string {
       ${gap} below Table 1's population, a difference PBS shares with Table 10 and does not
       explain, so it is stated and not closed. Khowar has no column, so the census names no
       dominant language in Chitral and the map says so rather than guessing one.</p>`;
+}
+
+/**
+ * No unsourced surface anywhere — and this is the one fill on the map that is not a published
+ * figure, so it owes the most.
+ *
+ * The colophon says what the composite is, what it is a mean of, that no source states it, and
+ * that it is not a poverty measure. The last of those is not decoration: three access indicators
+ * are what the census has, income and consumption and child mortality are what it does not, and a
+ * shaded map of "development" read as a map of poverty is the single most likely misreading of
+ * this basis.
+ */
+function developmentProvenance(): string {
+  const { formula, notPoverty, badge, range, counts, bandMethod } = developmentIndexBundle.provenance;
+  return `
+    <p><strong>Development index</strong> <span class="badge">${badge}</span> ${formula}
+      ${notPoverty} Shaded over ${counts.districts} districts, from ${range.lowest.district} at
+      ${(range.lowest.score * 100).toFixed(1)}% to ${range.highest.district} at
+      ${(range.highest.score * 100).toFixed(1)}%. ${bandMethod}</p>`;
 }
 
 render();

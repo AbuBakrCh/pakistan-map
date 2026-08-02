@@ -39,12 +39,15 @@ import {
   type BandPalette,
   type BandStyle,
 } from './export-band.ts';
+import developmentIndex from '../../data/bundle/development-index.json';
+import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
 import { unitLegend } from './units.ts';
 
 const bundle = scenarios as unknown as ScenarioBundle;
 const census = statistics as unknown as CensusStatistics;
 const provenance = (geography as { provenance: unknown }).provenance as Provenance;
+const development = developmentIndex as unknown as DevelopmentIndexBundle;
 
 const variantNamed = (id: string): VariantRecord => {
   const found = bundle.variants.find((variant) => variant.id === id);
@@ -54,8 +57,20 @@ const variantNamed = (id: string): VariantRecord => {
 
 const band = (
   variant: VariantRecord | null,
-  shadedBy: 'language' | null = variant?.basis === 'language' ? 'language' : null,
-) => exportBand({ scenarios: bundle, statistics: census, geography: provenance, variant, shadedBy });
+  shadedBy: 'language' | 'development' | null = variant?.basis === 'language'
+    ? 'language'
+    : variant?.basis === 'development'
+      ? 'development'
+      : null,
+) =>
+  exportBand({
+    scenarios: bundle,
+    statistics: census,
+    geography: provenance,
+    variant,
+    shadedBy,
+    development,
+  });
 
 /**
  * A measurer that is arithmetic rather than a browser. The layout's job is to wrap and stack; what
@@ -268,15 +283,28 @@ describe('the baseline is a view, not the absence of one', () => {
 describe('the legend is derived from the map, never transcribed beside it', () => {
   it('keys every unit kind the variant contains, in the page’s own words', () => {
     for (const variant of bundle.variants) {
-      const keyed = bandLegend(census, variant, null).map((entry) => entry.label);
+      const keyed = bandLegend(census, variant, null, development).map((entry) => entry.label);
       for (const entry of unitLegend(variant)) expect(keyed, variant.id).toContain(entry.label);
     }
   });
 
   it('keys every category the shading actually draws, and both absences', () => {
     const { onTheMap, absences } = motherTongueLegend(census);
-    const keyed = bandLegend(census, variantNamed('l1'), 'language').map((entry) => entry.label);
+    const keyed = bandLegend(census, variantNamed('l1'), 'language', development).map((entry) => entry.label);
     for (const entry of [...onTheMap, ...absences]) expect(keyed).toContain(entry.label);
+  });
+
+  it('keys the development ramp under the basis whose fill nobody published', () => {
+    // Two of the four bases have a fill and the band derives each from the same function the
+    // screen's legend is built from. The lead sentence — that no published source states this
+    // figure — is deliberately not a key entry: it is the badge's gloss, and the band prints that
+    // under Provenance, where a reader looks for exactly that claim.
+    const legend = developmentLegend(development);
+    const keyed = bandLegend(census, variantNamed('d1'), 'development', development).map(
+      (entry) => entry.label,
+    );
+    for (const entry of [...legend.bands, ...legend.absences]) expect(keyed).toContain(entry.label);
+    expect(keyed).not.toContain(legend.lead);
   });
 
   it('leaves off the six categories that are dominant in no district, and only those', () => {
@@ -284,17 +312,19 @@ describe('the legend is derived from the map, never transcribed beside it', () =
     // swatches a reader never has to match against the picture, pushing the nine that matter onto
     // a line of their own. Named here so the omission is a decision and not a slip.
     const { namedButNowhereDominant } = motherTongueLegend(census);
-    const keyed = bandLegend(census, variantNamed('l1'), 'language').map((entry) => entry.label);
+    const keyed = bandLegend(census, variantNamed('l1'), 'language', development).map((entry) => entry.label);
     expect(namedButNowhereDominant.length).toBeGreaterThan(0);
     for (const entry of namedButNowhereDominant) expect(keyed).not.toContain(entry.label);
   });
 
   it('refuses to key a basis it has no fill for, rather than printing the wrong key', () => {
-    // Only Language has a fill in the renderer today. The day the Development basis lands, a band
-    // that answered every shadeable basis with the mother-tongue key would print the wrong legend
-    // under the right badge — checkable, and wrong, on the copy that travels with no page.
-    expect(() => bandLegend(census, variantNamed('l1'), 'development')).toThrow(/development/);
-    expect(() => bandLegend(census, variantNamed('l1'), 'administrative')).toThrow(
+    // Two of the four have a fill. A band that answered every shadeable basis with the
+    // mother-tongue key would print the wrong legend under the right badge — checkable, and wrong,
+    // on the copy that travels with no page. The other two still fail by name.
+    expect(() => bandLegend(census, variantNamed('l1'), 'administrative', development)).toThrow(
+      /administrative/,
+    );
+    expect(() => bandLegend(census, variantNamed('l1'), 'historical', development)).toThrow(
       /has no key for it/,
     );
   });
@@ -303,7 +333,7 @@ describe('the legend is derived from the map, never transcribed beside it', () =
     // The dash means ceasefire line and the export is the copy that travels furthest from the
     // page that says so. An unkeyed dash is a line a reader is entitled to read as a border.
     const dashed = (variant: VariantRecord | null, shadedBy: 'language' | null) =>
-      bandLegend(census, variant, shadedBy).filter((e) => e.swatch.kind === 'rule' && e.swatch.rule === 'dashed');
+      bandLegend(census, variant, shadedBy, development).filter((e) => e.swatch.kind === 'rule' && e.swatch.rule === 'dashed');
     expect(dashed(null, null)).toHaveLength(1);
     for (const variant of bundle.variants) expect(dashed(variant, 'language'), variant.id).toHaveLength(1);
   });
@@ -349,7 +379,7 @@ describe('the swatches are the map’s own ink', () => {
 
   it('gives every swatch the band can carry an ink, on every variant', () => {
     for (const variant of [null, ...bundle.variants]) {
-      for (const entry of bandLegend(census, variant, 'language')) {
+      for (const entry of bandLegend(census, variant, 'language', development)) {
         expect(swatchInk(entry.swatch, palette), entry.label).toBeTruthy();
       }
     }

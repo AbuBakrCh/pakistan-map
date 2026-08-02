@@ -192,6 +192,10 @@ describe('unitBoundaries', () => {
       h2: ['Gilgit Agency and Baltistan', 'Azad Jammu & Kashmir'],
       h3: ['Northern Areas', 'Azad Jammu & Kashmir'],
       h4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      // D1 (#31) cuts the four provinces at the census's development gradient and leaves both
+      // territories exactly as they are — they have no index to be cut at, because PBS published
+      // none of the three rates for their twenty districts (D25).
+      d1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
     });
   });
 });

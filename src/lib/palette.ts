@@ -119,6 +119,57 @@ export const motherTongueFill: Readonly<Record<MotherTongue, string>> = {
 };
 
 /**
+ * The Development basis's ramp (#31) — the app's one **sequential** scale, and a different kind of
+ * palette from everything above.
+ *
+ * The composite it keys is ordered, so the encoding is the order: lightness falls and chroma rises
+ * monotonically from the lowest band to the highest, along the green-to-blue path a reader will
+ * recognise from any sequential map (ColorBrewer's GnBu has this shape). Held inside this
+ * project's own visual direction, which is what makes it four steps rather than five or seven.
+ *
+ * ## The window is 0.14 of lightness wide, and that is the whole design constraint
+ *
+ * Two rules bound it from both ends and neither is negotiable. A fill must sit clear of `LAND`, or
+ * a shaded district reads as one the basis did not reach — twenty of them genuinely are (D25). And
+ * a fill must clear 3:1 against `ACCENT`, or a unit outline over it stops reading as an outline.
+ * Between those, on this warm paper, there is about 0.14 of OKLab lightness. Four steps inside it
+ * are 0.042 apart, which is the honest ceiling on how far apart two adjacent bands can be.
+ *
+ * ## So adjacent bands do not clear the categorical gates, and that is stated rather than hidden
+ *
+ * `motherTongueFill` is held to ΔE 15 for unimpaired vision and ΔE 8 for dichromats on every pair
+ * that shares a border. **This ramp reaches neither on any adjacent step, and cannot**: adjacent
+ * bands run about ΔE 7 for unimpaired vision and ΔE 5–7 for a dichromat, and the weakest step of
+ * all is `WEAKEST_BAND_STEP` at ΔE 3.9 — named here because a palette that quietly fails is worse
+ * than one that says where. The **ends** of the ramp, which is what a reader is actually comparing
+ * when they ask whether one part of the country is better served than another, are ΔE 20 apart and
+ * clear every gate, dichromats included.
+ *
+ * What carries the rest is not colour. The scale is *ordered*, and a reader reads it against the
+ * legend in order rather than by recalling an absolute hue; every band is labelled with its own
+ * numbers there; and the tooltip prints the district's composite **and all three components**, so
+ * the band is never the only thing on screen saying what the district scored. `palette.test.ts`
+ * re-derives every claim in this note from the hexes, including the weak pair.
+ */
+export const DEVELOPMENT_BAND_FILL: Readonly<Record<string, string>> = {
+  'under-50': '#9be8c6', // pale green
+  '50-65': '#6cdcdb', // teal
+  '65-80': '#5bc8f0', // sky
+  '80-plus': '#77aff6', // blue
+};
+
+/**
+ * The weakest pair of neighbours on the ramp — the smallest ΔE between two adjacent bands under
+ * any of the four views (unimpaired, protan, deutan, tritan), named as `UNSEPARATED_PAIRS` names
+ * its own. Asserted exactly by `palette.test.ts`, so it is derived from the hexes rather than
+ * believed about them.
+ *
+ * **No adjacent step clears the categorical targets**, and that is the arithmetic above rather than
+ * a lapse. This is the worst of them, at ΔE 3.9.
+ */
+export const WEAKEST_BAND_STEP = '50-65↔65-80 under tritanopia';
+
+/**
  * The pairs this palette does not separate — below the ΔE 8 dichromat target, the ΔE 6 tritan
  * floor, or the ΔE 15 normal-vision floor, when the two swatches sit side by side.
  *

@@ -35,10 +35,11 @@ import {
   districtTooltip,
   placeTooltip,
   spokenTooltip,
+  type DistrictShading,
   type DistrictTooltip,
   type UnitMembership,
 } from './lib/tooltip.ts';
-import type { DistrictFill } from './lib/mother-tongue.ts';
+import type { DistrictFill } from './lib/fill.ts';
 import type { UnitBoundary, UnitTier } from './lib/units.ts';
 import {
   baselineLabelSites,
@@ -97,7 +98,11 @@ const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }>
 /** SVG fill for one district. `none` leaves the unshaded baseline showing through. */
 const fillPaint = (fill: DistrictFill | undefined): string => {
   if (fill === undefined || fill.kind === 'no-data') return 'none';
-  return fill.kind === 'category' ? fill.colour : 'url(#no-dominant-stipple)';
+  // A categorical answer and an ordered one are both a colour; the stipple is for the district the
+  // basis reached and could file no answer for.
+  return fill.kind === 'category' || fill.kind === 'band'
+    ? fill.colour
+    : 'url(#no-dominant-stipple)';
 };
 
 /**
@@ -106,7 +111,7 @@ const fillPaint = (fill: DistrictFill | undefined): string => {
  * The two absences are stroked by the stylesheet instead: a pattern makes a poor hairline.
  */
 const strokePaint = (fill: DistrictFill | undefined): string | null =>
-  fill?.kind === 'category' ? fill.colour : null;
+  fill?.kind === 'category' || fill?.kind === 'band' ? fill.colour : null;
 
 /**
  * The ceasefire line's own label. Not a tier: one line, named along itself.
@@ -153,6 +158,11 @@ export interface MapView {
   readonly boundaries: readonly UnitBoundary[] | null;
   /** What the active variant makes of a district, for the tooltip's third line. */
   readonly membershipOf: ((district: string) => UnitMembership | null) | null;
+  /**
+   * What stratum 1 has shaded a district with, where that needs explaining (#31). Null under every
+   * basis whose fill is a figure the census published and the tooltip already prints.
+   */
+  readonly shadingOf: ((district: string) => DistrictShading | null) | null;
   /** The one sentence a screen reader gets, since `role="img"` hides the shapes. */
   readonly description: string;
 }
@@ -733,6 +743,7 @@ export function renderMap(
         kind,
         statistics,
         view.membershipOf?.(feature.properties.name) ?? null,
+        view.shadingOf?.(feature.properties.name) ?? null,
       );
       renderTooltip(content);
       readout.text(spokenTooltip(content));

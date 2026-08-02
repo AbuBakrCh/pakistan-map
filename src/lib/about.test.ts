@@ -17,6 +17,7 @@ import contextBundle from '../../data/bundle/context.topojson.json';
 import statisticsBundle from '../../data/bundle/statistics.json';
 import scenariosBundle from '../../data/bundle/scenarios.json';
 import outlinesBundle from '../../data/bundle/unit-outlines.json';
+import developmentIndex from '../../data/bundle/development-index.json';
 import type {
   CensusStatistics,
   Provenance,
@@ -28,6 +29,7 @@ import { aboutTheData, readableDate, type AboutInputs } from './about.ts';
 import { PROVENANCE_GLOSS } from './card.ts';
 import { groupDigits } from './figures.ts';
 import type { ContextProvenance } from './context.ts';
+import type { DevelopmentIndexBundle } from './development.ts';
 
 const inputs: AboutInputs = {
   geography: (geographyBundle as { provenance: unknown }).provenance as Provenance,
@@ -35,6 +37,7 @@ const inputs: AboutInputs = {
   census: statisticsBundle as unknown as CensusStatistics,
   scenarios: scenariosBundle as unknown as ScenarioBundle,
   outlines: outlinesBundle as unknown as UnitOutlineBundle,
+  index: developmentIndex as unknown as DevelopmentIndexBundle,
 };
 
 const about = aboutTheData(inputs);
@@ -60,15 +63,17 @@ describe('readableDate — one date, one face', () => {
 
 describe('the bundle generation date, per artifact', () => {
   it('stamps every committed artifact the runtime reads, and none it does not', () => {
-    // Five files are imported by `bundle.ts` and drawn from; each is baked by its own build and
+    // Six files are imported by `bundle.ts` and drawn from; each is baked by its own build and
     // carries its own date, which is the whole reason they are listed apart rather than summed
-    // into one "generated" line.
+    // into one "generated" line. The last is the development composite (#31), which has a build of
+    // its own precisely because it is not the census.
     expect(about.built.stamps.map((stamp) => stamp.iso)).toEqual([
       inputs.geography.generated,
       inputs.context.generated,
       inputs.census.provenance.generated,
       inputs.scenarios.provenance.generated,
       inputs.outlines.provenance.generated,
+      inputs.index.provenance.generated,
     ]);
   });
 
@@ -131,10 +136,29 @@ describe('every source on the panel carries a badge, a source and a vintage', ()
       'District areas',
       'Mother tongue',
       'Development',
+      'Development index',
       'Proposed unit outlines',
     ]) {
       expect(rows, surface).toContain(surface);
     }
+  });
+
+  it('is the one row on the panel that is not somebody else’s figure, and says so (#31)', () => {
+    // Every other source here is a document or a published table. The composite is this project's
+    // own, and the panel that exists to let a reader check the "no unsourced surface" claim is the
+    // last place it could be allowed to look like the census's.
+    const index = about.sources.items.find((row) => row.what.startsWith('Development index'));
+    expect(index?.badges.map((badge) => badge.label)).toEqual(['synthesized']);
+    expect(index?.caveat).toContain('unweighted mean');
+    expect(index?.caveat).toContain('not poverty');
+    // Dated by the census it is a function of, never by the day the arithmetic ran.
+    expect(index?.vintage).toBe(inputs.census.provenance.vintage);
+    // And it appears again among the discrepancies, because the failure it invites is not a
+    // disagreement between sources but a reader taking it for one.
+    const stated = about.discrepancies.items.find((item) =>
+      item.label.includes('this project’s figure'),
+    );
+    expect(stated?.text).toContain('not poverty');
   });
 
   it('badges every row from the closed vocabulary and glosses each on the panel', () => {

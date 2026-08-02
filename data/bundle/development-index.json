@@ -1,0 +1,668 @@
+{
+  "provenance": {
+    "generated": "2026-08-02T14:53:55.144Z",
+    "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
+    "unit": "district",
+    "joinsTo": "data/bundle/statistics.json and data/bundle/geography.topojson.json, on the district `name` property",
+    "badge": "synthesized",
+    "what": "The composite the Development basis shades districts by. One number per district, derived from three rates PBS published and from nothing else.",
+    "formula": "The unweighted mean of three rates the 2023 census publishes: literacy among people aged 10 and above, the share of households with an improved drinking-water source, and the share of households with a flush toilet. Each of the three keeps the denominator PBS gave it — the first is over people, the other two over households — so the mean is a mean of three proportions and not a proportion of anything, which is why it is called an index and never a rate. The three are weighted equally because no published source ranks them, and the figure is not re-scaled to the range the census happens to show, so a district’s score does not move because another district moved.",
+    "notPoverty": "This is service access and attainment, not poverty. The census does not ask about income, consumption, child mortality or nutrition, and three access indicators cannot carry that word. No published index states this figure: it is defined by this project, from published census rates, and is badged synthesized for exactly that reason.",
+    "components": [
+      {
+        "key": "literacy",
+        "label": "Literacy (10+)",
+        "table": "PBS Census-2023 Table 12",
+        "numerator": "literate people aged 10 and above",
+        "denominator": "people aged 10 and above",
+        "caveat": "PBS’s own denominator, which is not the district’s population — nationally it is about three people in ten smaller."
+      },
+      {
+        "key": "improvedWater",
+        "label": "Improved drinking water",
+        "table": "PBS Census-2023 Table 23",
+        "numerator": "households whose drinking-water source PBS classifies as improved",
+        "denominator": "households, as the housing tables count them",
+        "caveat": "The improved/not-improved line is the census’s own published column, not a rule of ours. The denominator is the housing tables’ household count, which is 48,010 below the district table’s in all 136 districts."
+      },
+      {
+        "key": "flushToilet",
+        "label": "Households with a flush toilet",
+        "table": "PBS Census-2023 Table 24",
+        "numerator": "households with a flush toilet",
+        "denominator": "households, as the housing tables count them",
+        "caveat": "PBS publishes no improved-sanitation column: for toilets it prints only flush, non-flush and none, and a non-flush toilet may be improved or not. So this is the flush-toilet share and is named as such — adding flush to non-flush would be a definition of ours wearing a census badge."
+      }
+    ],
+    "bands": [
+      {
+        "id": "under-50",
+        "from": 0,
+        "to": 0.5,
+        "label": "Under 50%",
+        "districts": 26
+      },
+      {
+        "id": "50-65",
+        "from": 0.5,
+        "to": 0.65,
+        "label": "50% to 65%",
+        "districts": 32
+      },
+      {
+        "id": "65-80",
+        "from": 0.65,
+        "to": 0.8,
+        "label": "65% to 80%",
+        "districts": 37
+      },
+      {
+        "id": "80-plus",
+        "from": 0.8,
+        "to": 1.0000001,
+        "label": "80% and above",
+        "districts": 41
+      }
+    ],
+    "bandMethod": "Fixed cuts at round numbers, not quantiles. Quantile bands would make a district’s colour a function of every other district’s score — one district moving would repaint another — and would make the legend a property of the distribution rather than of the figure. Fixed cuts mean the legend says the same thing at every vintage. Four bands and not five, because a sequential ramp on this paper has about 0.14 of OKLab lightness to spend between the tone an unshaded district keeps and the point where a unit outline stops reading over it.",
+    "range": {
+      "lowest": {
+        "district": "Kohlu",
+        "score": 0.27176
+      },
+      "highest": {
+        "district": "Karachi Central",
+        "score": 0.930906
+      }
+    },
+    "counts": {
+      "districts": 136,
+      "byBand": {
+        "under-50": 26,
+        "50-65": 32,
+        "65-80": 37,
+        "80-plus": 41
+      }
+    },
+    "withoutIndex": {
+      "reason": "PBS published the 2023 census for 136 districts — the four provinces and Islamabad — and for no district of Azad Jammu & Kashmir or Gilgit-Baltistan (D25). None of the three rates exists for them, so none of them has a composite: absent, never zero, which would shade twenty districts as the least served in Pakistan on all three counts at once.",
+      "districts": [
+        "Hattian Bala",
+        "Muzaffarabad",
+        "Neelum",
+        "Bagh",
+        "Haveli",
+        "Sudhnoti",
+        "Poonch",
+        "Bhimber",
+        "Mirpur",
+        "Kotli",
+        "Gilgit",
+        "Hunza",
+        "Nagar",
+        "Ghizer",
+        "Skardu",
+        "Kharmaung",
+        "Shigar",
+        "Ghanche",
+        "Astore",
+        "Diamir"
+      ]
+    },
+    "statistics": {
+      "generated": "2026-08-01T17:16:00.843Z",
+      "districts": 136
+    },
+    "sources": {
+      "rates": "PBS Census-2023 Table 12 (literacy rate, enrolment and out-of-school population by sex and rural/urban), Table 23 (housing facilities by source of drinking water by region) and Table 24 (housing characteristics, facilities of toilet and washroom used by households, rural/urban). Published at tehsil level in PakPC2023 (objects TABLE_12, TABLE_23, TABLE_24); the province figures checked against are typed from https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf, table_23_national.pdf and table_24_national.pdf",
+      "statistics": "data/bundle/statistics.json — the three published rates this composite is the mean of",
+      "formula": "scripts/lib/development-index.ts — the rule, stated once and read by every surface"
+    }
+  },
+  "districts": {
+    "Kohlu": {
+      "score": 0.27176,
+      "band": "under-50"
+    },
+    "Kolai Pallas Kohistan": {
+      "score": 0.283319,
+      "band": "under-50"
+    },
+    "Upper Kohistan": {
+      "score": 0.296735,
+      "band": "under-50"
+    },
+    "Jhal Magsi": {
+      "score": 0.346695,
+      "band": "under-50"
+    },
+    "Musa Khel": {
+      "score": 0.347703,
+      "band": "under-50"
+    },
+    "Kachhi (Bolan)": {
+      "score": 0.356515,
+      "band": "under-50"
+    },
+    "Nasirabad": {
+      "score": 0.372064,
+      "band": "under-50"
+    },
+    "Dera Bugti": {
+      "score": 0.373687,
+      "band": "under-50"
+    },
+    "Tharparkar": {
+      "score": 0.402611,
+      "band": "under-50"
+    },
+    "Lower Kohistan": {
+      "score": 0.405905,
+      "band": "under-50"
+    },
+    "Sherani": {
+      "score": 0.4066,
+      "band": "under-50"
+    },
+    "Washuk": {
+      "score": 0.412942,
+      "band": "under-50"
+    },
+    "Killa Saifullah": {
+      "score": 0.426423,
+      "band": "under-50"
+    },
+    "Sohbatpur": {
+      "score": 0.428161,
+      "band": "under-50"
+    },
+    "Jaffarabad": {
+      "score": 0.43759,
+      "band": "under-50"
+    },
+    "Sujawal": {
+      "score": 0.438471,
+      "band": "under-50"
+    },
+    "Barkhan": {
+      "score": 0.4406,
+      "band": "under-50"
+    },
+    "Thatta": {
+      "score": 0.452115,
+      "band": "under-50"
+    },
+    "Harnai": {
+      "score": 0.452734,
+      "band": "under-50"
+    },
+    "South Waziristan": {
+      "score": 0.457013,
+      "band": "under-50"
+    },
+    "Panjgur": {
+      "score": 0.459373,
+      "band": "under-50"
+    },
+    "Umerkot": {
+      "score": 0.463627,
+      "band": "under-50"
+    },
+    "Kalat": {
+      "score": 0.465864,
+      "band": "under-50"
+    },
+    "Torghar": {
+      "score": 0.476538,
+      "band": "under-50"
+    },
+    "Ziarat": {
+      "score": 0.487744,
+      "band": "under-50"
+    },
+    "Zhob": {
+      "score": 0.495144,
+      "band": "under-50"
+    },
+    "Mohmand": {
+      "score": 0.504399,
+      "band": "50-65"
+    },
+    "Khuzdar": {
+      "score": 0.504425,
+      "band": "50-65"
+    },
+    "Bajaur": {
+      "score": 0.51076,
+      "band": "50-65"
+    },
+    "North Waziristan": {
+      "score": 0.517635,
+      "band": "50-65"
+    },
+    "Orakzai": {
+      "score": 0.519503,
+      "band": "50-65"
+    },
+    "Khyber": {
+      "score": 0.521004,
+      "band": "50-65"
+    },
+    "Badin": {
+      "score": 0.526755,
+      "band": "50-65"
+    },
+    "Surab": {
+      "score": 0.530684,
+      "band": "50-65"
+    },
+    "Awaran": {
+      "score": 0.541959,
+      "band": "50-65"
+    },
+    "Tando Mohammad Khan": {
+      "score": 0.549586,
+      "band": "50-65"
+    },
+    "Kurram": {
+      "score": 0.550165,
+      "band": "50-65"
+    },
+    "Loralai": {
+      "score": 0.560317,
+      "band": "50-65"
+    },
+    "Killa Abdullah": {
+      "score": 0.562781,
+      "band": "50-65"
+    },
+    "Shangla": {
+      "score": 0.564578,
+      "band": "50-65"
+    },
+    "Duki": {
+      "score": 0.568387,
+      "band": "50-65"
+    },
+    "Mirpur Khas": {
+      "score": 0.57153,
+      "band": "50-65"
+    },
+    "Upper Dir": {
+      "score": 0.585519,
+      "band": "50-65"
+    },
+    "Kharan": {
+      "score": 0.586776,
+      "band": "50-65"
+    },
+    "Kech": {
+      "score": 0.59031,
+      "band": "50-65"
+    },
+    "Chaman": {
+      "score": 0.600258,
+      "band": "50-65"
+    },
+    "Sibi": {
+      "score": 0.603181,
+      "band": "50-65"
+    },
+    "Kashmore": {
+      "score": 0.604247,
+      "band": "50-65"
+    },
+    "Rajanpur": {
+      "score": 0.61236,
+      "band": "50-65"
+    },
+    "Batagram": {
+      "score": 0.615688,
+      "band": "50-65"
+    },
+    "Sanghar": {
+      "score": 0.620022,
+      "band": "50-65"
+    },
+    "Chagai": {
+      "score": 0.625634,
+      "band": "50-65"
+    },
+    "Tank": {
+      "score": 0.627361,
+      "band": "50-65"
+    },
+    "Lasbela": {
+      "score": 0.629507,
+      "band": "50-65"
+    },
+    "Kambar Shahdadkot": {
+      "score": 0.635044,
+      "band": "50-65"
+    },
+    "Mastung": {
+      "score": 0.635735,
+      "band": "50-65"
+    },
+    "Jacobabad": {
+      "score": 0.637188,
+      "band": "50-65"
+    },
+    "Tando Allah Yar": {
+      "score": 0.643935,
+      "band": "50-65"
+    },
+    "Ghotki": {
+      "score": 0.651119,
+      "band": "65-80"
+    },
+    "Pishin": {
+      "score": 0.669451,
+      "band": "65-80"
+    },
+    "Bannu": {
+      "score": 0.675183,
+      "band": "65-80"
+    },
+    "Buner": {
+      "score": 0.684777,
+      "band": "65-80"
+    },
+    "Khairpur": {
+      "score": 0.686563,
+      "band": "65-80"
+    },
+    "Jamshoro": {
+      "score": 0.688041,
+      "band": "65-80"
+    },
+    "Matiari": {
+      "score": 0.691989,
+      "band": "65-80"
+    },
+    "Dera Ghazi Khan": {
+      "score": 0.694751,
+      "band": "65-80"
+    },
+    "Shikarpur": {
+      "score": 0.70289,
+      "band": "65-80"
+    },
+    "Shaheed Benazirabad": {
+      "score": 0.703098,
+      "band": "65-80"
+    },
+    "Dera Ismail Khan": {
+      "score": 0.711187,
+      "band": "65-80"
+    },
+    "Swat": {
+      "score": 0.719942,
+      "band": "65-80"
+    },
+    "Gwadar": {
+      "score": 0.722,
+      "band": "65-80"
+    },
+    "Hangu": {
+      "score": 0.724775,
+      "band": "65-80"
+    },
+    "Lakki Marwat": {
+      "score": 0.730492,
+      "band": "65-80"
+    },
+    "Lower Dir": {
+      "score": 0.732186,
+      "band": "65-80"
+    },
+    "Nushki": {
+      "score": 0.734854,
+      "band": "65-80"
+    },
+    "Dadu": {
+      "score": 0.736415,
+      "band": "65-80"
+    },
+    "Chiniot": {
+      "score": 0.740765,
+      "band": "65-80"
+    },
+    "Muzaffargarh": {
+      "score": 0.743359,
+      "band": "65-80"
+    },
+    "Naushahro Feroze": {
+      "score": 0.757501,
+      "band": "65-80"
+    },
+    "Rahim Yar Khan": {
+      "score": 0.760539,
+      "band": "65-80"
+    },
+    "Sukkur": {
+      "score": 0.763369,
+      "band": "65-80"
+    },
+    "Bahawalnagar": {
+      "score": 0.766544,
+      "band": "65-80"
+    },
+    "Mansehra": {
+      "score": 0.771056,
+      "band": "65-80"
+    },
+    "Lodhran": {
+      "score": 0.779856,
+      "band": "65-80"
+    },
+    "Bahawalpur": {
+      "score": 0.782638,
+      "band": "65-80"
+    },
+    "Jhang": {
+      "score": 0.782947,
+      "band": "65-80"
+    },
+    "Karak": {
+      "score": 0.783135,
+      "band": "65-80"
+    },
+    "Bhakkar": {
+      "score": 0.786434,
+      "band": "65-80"
+    },
+    "Larkana": {
+      "score": 0.788756,
+      "band": "65-80"
+    },
+    "Lower Chitral": {
+      "score": 0.789021,
+      "band": "65-80"
+    },
+    "Quetta": {
+      "score": 0.789779,
+      "band": "65-80"
+    },
+    "Kohat": {
+      "score": 0.791804,
+      "band": "65-80"
+    },
+    "Pakpattan": {
+      "score": 0.795813,
+      "band": "65-80"
+    },
+    "Malakand": {
+      "score": 0.796274,
+      "band": "65-80"
+    },
+    "Khushab": {
+      "score": 0.797522,
+      "band": "65-80"
+    },
+    "Swabi": {
+      "score": 0.801972,
+      "band": "80-plus"
+    },
+    "Peshawar": {
+      "score": 0.802526,
+      "band": "80-plus"
+    },
+    "Upper Chitral": {
+      "score": 0.802937,
+      "band": "80-plus"
+    },
+    "Nowshera": {
+      "score": 0.807055,
+      "band": "80-plus"
+    },
+    "Vehari": {
+      "score": 0.813836,
+      "band": "80-plus"
+    },
+    "Mianwali": {
+      "score": 0.814354,
+      "band": "80-plus"
+    },
+    "Charsadda": {
+      "score": 0.816227,
+      "band": "80-plus"
+    },
+    "Mardan": {
+      "score": 0.818935,
+      "band": "80-plus"
+    },
+    "Nankana Sahib": {
+      "score": 0.819503,
+      "band": "80-plus"
+    },
+    "Layyah": {
+      "score": 0.82211,
+      "band": "80-plus"
+    },
+    "Khanewal": {
+      "score": 0.824343,
+      "band": "80-plus"
+    },
+    "Okara": {
+      "score": 0.825128,
+      "band": "80-plus"
+    },
+    "Sargodha": {
+      "score": 0.826207,
+      "band": "80-plus"
+    },
+    "Multan": {
+      "score": 0.830013,
+      "band": "80-plus"
+    },
+    "Malir": {
+      "score": 0.832558,
+      "band": "80-plus"
+    },
+    "Hafizabad": {
+      "score": 0.834065,
+      "band": "80-plus"
+    },
+    "Keamari": {
+      "score": 0.838898,
+      "band": "80-plus"
+    },
+    "Sahiwal": {
+      "score": 0.839377,
+      "band": "80-plus"
+    },
+    "Abbotabad": {
+      "score": 0.8427,
+      "band": "80-plus"
+    },
+    "Hyderabad": {
+      "score": 0.845302,
+      "band": "80-plus"
+    },
+    "Kasur": {
+      "score": 0.847224,
+      "band": "80-plus"
+    },
+    "Mandi Bahauddin": {
+      "score": 0.85096,
+      "band": "80-plus"
+    },
+    "Attock": {
+      "score": 0.857638,
+      "band": "80-plus"
+    },
+    "Toba Tek Singh": {
+      "score": 0.858139,
+      "band": "80-plus"
+    },
+    "Haripur": {
+      "score": 0.860385,
+      "band": "80-plus"
+    },
+    "Faisalabad": {
+      "score": 0.865087,
+      "band": "80-plus"
+    },
+    "Karachi West": {
+      "score": 0.865981,
+      "band": "80-plus"
+    },
+    "Sheikhupura": {
+      "score": 0.874179,
+      "band": "80-plus"
+    },
+    "Chakwal": {
+      "score": 0.881918,
+      "band": "80-plus"
+    },
+    "Narowal": {
+      "score": 0.894124,
+      "band": "80-plus"
+    },
+    "Jhelum": {
+      "score": 0.895916,
+      "band": "80-plus"
+    },
+    "Rawalpindi": {
+      "score": 0.903111,
+      "band": "80-plus"
+    },
+    "Karachi East": {
+      "score": 0.905674,
+      "band": "80-plus"
+    },
+    "Gujranwala": {
+      "score": 0.908754,
+      "band": "80-plus"
+    },
+    "Lahore": {
+      "score": 0.910701,
+      "band": "80-plus"
+    },
+    "Karachi South": {
+      "score": 0.911241,
+      "band": "80-plus"
+    },
+    "Sialkot": {
+      "score": 0.911391,
+      "band": "80-plus"
+    },
+    "Korangi": {
+      "score": 0.917279,
+      "band": "80-plus"
+    },
+    "Gujrat": {
+      "score": 0.920491,
+      "band": "80-plus"
+    },
+    "Islamabad": {
+      "score": 0.923576,
+      "band": "80-plus"
+    },
+    "Karachi Central": {
+      "score": 0.930906,
+      "band": "80-plus"
+    }
+  }
+}

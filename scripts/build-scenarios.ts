@@ -77,6 +77,7 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
 const GEOGRAPHY_FILE = resolve(ROOT, 'data/bundle/geography.topojson.json');
 const STATISTICS_FILE = resolve(ROOT, 'data/bundle/statistics.json');
+const DEVELOPMENT_FILE = resolve(ROOT, 'data/bundle/development-index.json');
 const OUTLINES_FILE = resolve(ROOT, 'data/bundle/unit-outlines.json');
 const ADJACENCY_FILE = resolve(ROOT, 'data/bundle/adjacency.json');
 
@@ -84,6 +85,8 @@ const ADJACENCY_FILE = resolve(ROOT, 'data/bundle/adjacency.json');
 const GEOGRAPHY_BUNDLE = 'data/bundle/geography.topojson.json';
 /** Where every population on the scorecard comes from, district by district (#20). */
 const STATISTICS_BUNDLE = 'data/bundle/statistics.json';
+/** Where D1's boundary comes from, district by district (#31). */
+const DEVELOPMENT_BUNDLE = 'data/bundle/development-index.json';
 
 const SOURCE_URLS = {
   content: 'scripts/lib/variants.ts — the typed scenario module, reviewed as a diff',
@@ -92,6 +95,7 @@ const SOURCE_URLS = {
   folds: 'data/reference/post-census-district-folds.json',
   geometry: `${GEOGRAPHY_BUNDLE} — the districts the outlines are dissolved from`,
   statistics: `${STATISTICS_BUNDLE} — the 2023 census populations every scorecard figure sums`,
+  development: `${DEVELOPMENT_BUNDLE} — the composite D1's boundary is cut at, badged synthesized`,
 } as const;
 
 function fail(message: string): never {
@@ -397,6 +401,39 @@ function main(): void {
         (unexpected.length === 0 ? '' : ` Not census districts: ${unexpected.join(', ')}.`),
     );
   }
+  // ---- The development composite D1 is cut at (#31) ------------------------------------------
+  // Read from the committed artifact rather than recomputed from the three published rates here,
+  // for the reason that artifact exists at all: the composite is this project's own figure, and a
+  // figure computed twice is two figures — the map would be free to shade a district on one and
+  // draw the boundary over it on another.
+  const development = JSON.parse(readFileSync(DEVELOPMENT_FILE, 'utf8')) as {
+    readonly provenance?: { readonly statistics?: { readonly generated?: string | null } };
+    readonly districts?: Record<string, { readonly score?: unknown }>;
+  };
+  const scores = new Map<string, number>();
+  for (const [district, record] of Object.entries(development.districts ?? {})) {
+    if (typeof record.score !== 'number') {
+      fail(
+        `${DEVELOPMENT_BUNDLE} carries ${district} with no development index. D1 cuts each ` +
+          `province at that figure; a district present without one would be sorted as the least ` +
+          `served in its province. Run npm run build:data:development first.`,
+      );
+    }
+    scores.set(district, record.score);
+  }
+  // The composite is a mean of figures in `statistics.json`, so a composite taken over a census
+  // that has since been rebuilt is a boundary drawn from numbers nothing else on the map uses.
+  // Detectable only from the stamp, since every score would still be a plausible mean.
+  const censusStamp = statistics.provenance?.generated ?? null;
+  if (development.provenance?.statistics?.generated !== censusStamp) {
+    fail(
+      `${DEVELOPMENT_BUNDLE} was computed from a census join stamped ` +
+        `${development.provenance?.statistics?.generated ?? 'nothing'}, and ${STATISTICS_BUNDLE} ` +
+        `is stamped ${censusStamp ?? 'nothing'}. D1's boundary would be cut at scores taken over ` +
+        `figures the rest of the map no longer carries. Run npm run build:data:development.`,
+    );
+  }
+
   // Today's map, which "districts moved" is measured against, from the roster the geometry is
   // drawn from — so every drawn district has a first-level entity, AJK's and GB's twenty included.
   const origins = new Map<string, string>(
@@ -421,6 +458,9 @@ function main(): void {
       // distance to a capital, and a centroid derived anywhere but from the drawn district would
       // measure a map this build does not publish.
       centroids: districtCentroids(geography),
+      // D1's rule is stated in the development composite, read above from the artifact that
+      // defines it rather than recomputed here (#31).
+      development: scores,
     });
   } catch (error) {
     fail(

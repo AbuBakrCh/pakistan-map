@@ -137,9 +137,35 @@ answer would change a district's colour. What the bundle carries instead:
 - `flushToiletShare` — the share the map shades by, named as what it is;
 - `noToiletShare` beside it, the one category nobody can misread.
 
-Any composite is #31's job and is badged `synthesized`. `separateToilet` is orthogonal to the
-other three (it says a toilet is not shared with another household, not what kind it is) and is
-carried but not partitioned with them.
+`separateToilet` is orthogonal to the other three (it says a toilet is not shared with another
+household, not what kind it is) and is carried but not partitioned with them.
+
+## The composite (#31)
+
+Built, and built as its own artifact: `data/bundle/development-index.json`, from
+`scripts/lib/development-index.ts`. It is the **unweighted mean of the three rates above** —
+literacy (10+), improved drinking water, and the flush-toilet share — each keeping the denominator
+PBS gave it, which means the result is a mean of three proportions and not a proportion of anything.
+Hence *index*, never *rate*.
+
+Three choices, each made because the census gives no basis for the alternative:
+
+| Choice | Why not otherwise |
+|---|---|
+| **Unweighted** | A weighted mean claims literacy is worth some stated amount more than a toilet, and no source states that number. Equal weights are also a claim — the difference is that this one fits in a sentence, and the tooltip shows all three components so a reader can disagree with it |
+| **PBS's own denominators** | Mixing a numerator from one release with a denominator from another is the mistake this document already records once |
+| **Not re-scaled to the observed range** | A district's score would move because another district moved, and the legend would mean something different at each census |
+
+Badged **`synthesized`**, which is what that badge is in the vocabulary for: no published source
+states this figure. Shaded in four bands at fixed cuts — under 50%, 50–65%, 65–80%, 80% and above —
+rather than quantiles, so a district's colour is not a function of every other district's score.
+
+Observed range on this census: **Kohlu 27.2%** to **Karachi Central 93.1%**, with 26 / 32 / 37 / 41
+districts in the four bands. AJK and Gilgit-Baltistan have no composite at all, because they have
+none of the three rates.
+
+It is not a poverty measure and no surface in the app calls it one — see the last section of this
+document, which is the whole reason the basis is named *Development*.
 
 ## Rates
 

@@ -40,6 +40,7 @@ import type {
 } from '../bundle.ts';
 import { PROVENANCE_GLOSS } from './card.ts';
 import type { ContextProvenance } from './context.ts';
+import type { DevelopmentIndexBundle } from './development.ts';
 import { groupDigits } from './figures.ts';
 
 /** A badge and its gloss, on the panel itself: the hard bar is a 390px phone, which has no hover. */
@@ -101,6 +102,8 @@ export interface AboutInputs {
   readonly census: CensusStatistics;
   readonly scenarios: ScenarioBundle;
   readonly outlines: UnitOutlineBundle;
+  /** The development composite (#31) — a committed artifact with a build date of its own. */
+  readonly index: DevelopmentIndexBundle;
 }
 
 const MONTHS = [
@@ -175,7 +178,7 @@ function basesOf(scenarios: ScenarioBundle): readonly AboutBasis[] {
  * was surveyed by the census. Each row takes its own.
  */
 function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
-  const { geography, context, census, outlines } = inputs;
+  const { geography, context, census, outlines, index } = inputs;
   const osm = (tier: string): string => {
     const stamp = geography.osmBaseTimestamp[tier];
     return stamp === undefined
@@ -281,6 +284,19 @@ function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
       caveat: census.development.indicators['sanitation']?.note ?? null,
     },
     {
+      // The one row on this panel that is not somebody else's figure, and it is written as such.
+      // A composite badged `census` would pass this project's arithmetic off as PBS's; badged
+      // `synthesized` and set beside the three rates it averages, a reader can take it apart.
+      what: `Development index — the composite the Development basis shades by, over ${index.provenance.counts.districts} districts`,
+      source: `${index.provenance.sources['formula'] ?? ''}, applied to ${index.provenance.sources['statistics'] ?? ''}`,
+      // The vintage of the *rates*, not of the arithmetic: the composite is a function of the 2023
+      // census and of nothing dated later, and stamping it with the build date would say the
+      // figure describes the year it was computed in.
+      vintage: censusVintage,
+      badges: badges('synthesized'),
+      caveat: `${index.provenance.formula} ${index.provenance.notPoverty} ${index.provenance.bandMethod}`,
+    },
+    {
       what: `Proposed unit outlines — ${outlines.provenance.counts['units'] ?? 0} across ${outlines.provenance.counts['variants'] ?? 0} variant(s), drawn on top of everything`,
       source: `${outlines.provenance.sources['content'] ?? ''}; dissolved out of ${outlines.provenance.arcsFrom}`,
       // Points at Sources on the card, which is a list that exists and carries the dates. It used
@@ -306,7 +322,11 @@ function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
  * saying so is the point: an app that reconciled a census gap by inventing a residual would have
  * published a figure nobody counted.
  */
-function discrepanciesOf(census: CensusStatistics, geography: Provenance): readonly AboutDiscrepancy[] {
+function discrepanciesOf(
+  census: CensusStatistics,
+  geography: Provenance,
+  index: DevelopmentIndexBundle,
+): readonly AboutDiscrepancy[] {
   const { universe } = census.motherTongue;
   const water = census.development.improvedWaterDifference;
   const items: AboutDiscrepancy[] = [
@@ -332,6 +352,14 @@ function discrepanciesOf(census: CensusStatistics, geography: Provenance): reado
       text: census.development.indicators['water']?.note ?? '',
     },
     {
+      // Not a disagreement between sources but a disagreement between this app and the reader's
+      // likely reading of it, which belongs on the same list: the index is the one figure here
+      // nobody published, and the failure it invites is being read as a poverty measure.
+      label: 'The development index is this project’s figure, not the census’s',
+      figure: null,
+      text: `${index.provenance.formula} ${index.provenance.notPoverty}`,
+    },
+    {
       label: 'The division totals are a cross-check, not a second source',
       figure: null,
       text: census.reconciliation.method,
@@ -350,7 +378,7 @@ function discrepanciesOf(census: CensusStatistics, geography: Provenance): reado
 
 /** The whole panel, from the committed bundles. Pure: no DOM, no fetch, no markup. */
 export function aboutTheData(inputs: AboutInputs): AboutTheData {
-  const { geography, context, census, scenarios, outlines } = inputs;
+  const { geography, context, census, scenarios, outlines, index } = inputs;
   const uncounted = census.withoutCensusData.districts.length;
 
   return {
@@ -383,6 +411,7 @@ export function aboutTheData(inputs: AboutInputs): AboutTheData {
         { label: 'The census join', iso: census.provenance.generated },
         { label: 'The proposals and their scorecards', iso: scenarios.provenance.generated },
         { label: 'The dissolved unit outlines', iso: outlines.provenance.generated },
+        { label: 'The development composite', iso: index.provenance.generated },
       ].map((stamp) => ({ ...stamp, date: readableDate(stamp.iso) })),
     },
     bases: {
@@ -405,7 +434,7 @@ export function aboutTheData(inputs: AboutInputs): AboutTheData {
         'Where the sources disagree — with each other, or with this map. These are stated rather ' +
         'than closed: reconciling a census gap by inventing a residual would publish a figure ' +
         'nobody counted, and smoothing an area difference would draw a line no source draws.',
-      items: discrepanciesOf(census, geography),
+      items: discrepanciesOf(census, geography, index),
     },
     omitted:
       'Left off this panel and kept in the artifacts: the SHA-256 digests of the census cache ' +

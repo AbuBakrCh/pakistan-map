@@ -546,3 +546,48 @@ describe('variantCard — over every variant the bundle ships', () => {
     expect(() => variantCard(bundle, orphan)).toThrow(/orphan.*sectarian/s);
   });
 });
+
+describe('variantCard — the composite is stated on the card that is drawn from it (#31)', () => {
+  const card = variantCard(bundle, variantNamed('d1'));
+
+  it('prints the combining formula, in the words the build applied', () => {
+    // The acceptance criterion. Not a gloss of the formula and not a link to it: the card is where
+    // a reader meets a boundary cut at a figure this project defines, and the rule that made the
+    // figure belongs in the same view as the claim.
+    const prose = card.footnotes.map((note) => note.text).join('\n');
+    expect(prose).toContain('unweighted mean of three rates');
+    expect(prose).toContain('weighted equally because no published source ranks them');
+    // Each rate keeps its own denominator, which is why the composite is an index and not a rate.
+    expect(prose).toContain('a mean of three proportions and not a proportion of anything');
+  });
+
+  it('names the third component for the column PBS publishes, and says the other does not exist', () => {
+    const prose = card.footnotes.map((note) => note.text).join('\n');
+    expect(prose).toContain('flush-toilet share');
+    expect(prose).toContain('no improved-sanitation figure in this app because there is none to have');
+  });
+
+  it('glosses the badge that says nobody published this figure', () => {
+    // `synthesized` is in the closed vocabulary for exactly this case, and the gloss is on the card
+    // rather than in a `title`, because the hard bar is a 390px phone.
+    const synthesized = card.provenance.find((badge) => badge.label === 'synthesized');
+    expect(synthesized?.gloss).toContain('no published figure states it');
+    expect(card.provenance.map((badge) => badge.label)).toEqual([
+      'census',
+      'synthesized',
+      'derived',
+    ]);
+  });
+
+  it('says why its badges differ from the basis it is argued on', () => {
+    // The basis shades `census · synthesized`; the boundary adds `derived`. Left unsaid, the
+    // disagreement reads as a mistake rather than as two separately sourced things on one screen.
+    expect(card.provenanceNote).toContain('Development');
+    expect(card.provenanceNote).toContain('derived');
+  });
+
+  it('describes the boundary as computed rather than transcribed', () => {
+    expect(card.composition).toContain('Derived from data rather than transcribed from a proposal');
+    expect(card.composition).toContain('natural break');
+  });
+});

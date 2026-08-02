@@ -1,16 +1,16 @@
 /**
  * The variants themselves — the product.
  *
- * This module is the source of truth for scenario content. `SCENARIOS-DRAFT.md` is the review
- * copy and is deleted once every variant has been migrated here (#36, CLAUDE.md open item 4);
- * keeping both would be two sources that drift within a week. Everything in a variant is
- * rendered card content, not documentation: rationale, status, advocacy, opposition, footnotes
- * and per-unit district lists all appear on screen.
+ * This module is the **only** source of truth for scenario content. `SCENARIOS-DRAFT.md` was the
+ * review copy and is deleted (#36, CLAUDE.md open item 4) now that every variant has been migrated
+ * here; keeping both would have been two sources that drift within a week — and the draft had
+ * already drifted, describing the third development indicator as "improved sanitation", a column
+ * PBS does not publish. Everything in a variant is rendered card content, not documentation:
+ * rationale, status, advocacy, opposition, footnotes and per-unit district lists all appear on
+ * screen.
  *
- * Fifteen variants are expressed so far — the whole Language basis (L1 to L7), the whole
- * Administrative one (A1 to A5), and H1, H3 and H4 on the Historical. The remaining two, H2 and
- * D1, arrive under #30 and #31, each as a diff against this file that the partition validator has
- * to accept before it can be committed.
+ * All seventeen are expressed: the whole Language basis (L1 to L7), the whole Administrative one
+ * (A1 to A5), the whole Historical one (H1 to H4) and the Development basis's D1.
  *
  * L1, L2 and L3 are one claim read three ways, and they are written to stay that way: each builds
  * its district list out of the one before it rather than restating it. A reading that differed by
@@ -24,6 +24,8 @@
  */
 
 import type { AdjacencyGraph } from './adjacency.ts';
+import { GRADIENT_RULE, splitByDevelopmentGradient } from './development-partition.ts';
+import { INDEX_FORMULA, NOT_A_POVERTY_MEASURE } from './development-index.ts';
 import { groupDigits as group } from './digits.ts';
 import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-partition.ts';
 import {
@@ -38,6 +40,7 @@ import {
   intactProvince,
   nonEmpty,
   remainderOf,
+  resolveClaimedDistrict,
   slug,
   type Footnote,
   type NonEmpty,
@@ -1698,6 +1701,16 @@ export interface DerivationContext {
    * arrive as "a variant could not be derived" rather than as a missing argument.
    */
   readonly centroids: ReadonlyMap<string, Centroid>;
+  /**
+   * District -> its development index, read off `data/bundle/development-index.json`, which D1's
+   * rule cuts each province at (#31).
+   *
+   * Read from the committed artifact rather than recomputed from the three rates here, for the
+   * reason that artifact exists at all: a composite computed twice is two composites, and the one
+   * that shades a district would be free to disagree with the one that drew the boundary over it.
+   * A district the census does not reach is **absent**, never zero.
+   */
+  readonly development: ReadonlyMap<string, number>;
 }
 
 /**
@@ -2716,6 +2729,321 @@ const A5: Variant = {
 };
 
 /**
+ * D1 — each province cut where its development gradient is steepest (#31).
+ *
+ * The one variant on the Development basis, and the only boundary in the app drawn from what the
+ * census says about **service access** rather than from language, from population or from a
+ * document. Nobody publishes a district list for it, so the rule stands in for one, exactly as it
+ * does for L6, L7 and A1 to A4: `development-partition.ts` computes the cut and the card prints
+ * the rule that produced it.
+ *
+ * Two things about it are worth reading before the copy below.
+ *
+ * **The scores are the committed composite, not a recomputation.** `development-index.json` is
+ * where the formula is applied, once, and both the shading and this boundary read it — because a
+ * composite computed twice is two composites, and the map would be free to shade a district one
+ * way while the line drawn over it had been decided on another number.
+ *
+ * **What the rule finds is not quite what the ticket expected, and the card says so.** #31's
+ * premise is that this split independently reproduces South Punjab, interior Sindh and interior
+ * Balochistan. Punjab is the case it is right about — the lower half is South Punjab plus the
+ * Thal, and it picks up exactly the two districts L2's wider reading of the Seraiki claim adds.
+ * Sindh and Balochistan come out differently: what separates in Sindh is the south-east rather
+ * than the interior against Karachi, and in Balochistan the eastern belt rather than everything
+ * outside Quetta. The rule is run to the end and reported, which is the same discipline L7 is
+ * under: a rule tuned until it agrees with the claims it was meant to be independent of would have
+ * nothing left to say about them.
+ */
+function developmentGradient(context: DerivationContext): Variant {
+  // The four provinces. Islamabad Capital Territory is one district and has no internal gradient;
+  // the engine returns it as `unsplit` with the reason, and it is carried through below. AJK and
+  // Gilgit-Baltistan are outside the census entirely (D25), so the rule cannot see them at all.
+  const provinces = ROSTER.filter(
+    (entry) => entry.kind !== 'territory' && entry.districts.length > 1,
+  ).map((entry) => ({ province: entry.name, districts: entry.districts }));
+  const capital = ROSTER.find(
+    (entry) => entry.kind !== 'territory' && entry.districts.length === 1,
+  );
+
+  const { partition, problems } = splitByDevelopmentGradient({
+    provinces,
+    graph: context.graph,
+    scores: context.development,
+    populations: context.populations,
+  });
+  if (partition === null) {
+    throw new Error(`D1 cannot be drawn from the census:\n  ${problems.join('\n  ')}`);
+  }
+  if (capital === undefined) {
+    throw new Error('D1 expects a single-district capital territory to carry through, and the roster has none');
+  }
+
+  const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
+
+  /** The two halves of one province, as units. Named for their most populous district. */
+  const halves = partition.splits.flatMap((split) =>
+    (
+      [
+        [split.lower, split.higher, 'lower'],
+        [split.higher, split.lower, 'higher'],
+      ] as const
+    ).map(
+      ([half, other, side]): Unit => ({
+        id: slug(half.principal),
+        name: half.principal,
+        kind: 'proposed',
+        claims: nonEmpty(half.districts, `the ${side} half of ${split.province}`),
+        note:
+          `The ${side} half of ${split.province} on the development index — ` +
+          `${half.districts.length} districts averaging ${percent(half.mean)}, against ` +
+          `${percent(other.mean)} across the rest of the province, and ` +
+          `${group(half.population)} people. Named for ${half.principal}, the most populous ` +
+          `district in it.`,
+      }),
+    ),
+  );
+
+  /** The seams, in one sentence each: where the rule cut, and how sharp the cut is there. */
+  const seams = partition.splits
+    .map(
+      (split) =>
+        `${split.province} at ${split.seam.below} (${percent(
+          context.development.get(split.seam.below) ?? 0,
+        )}) against ${split.seam.above} (${percent(
+          context.development.get(split.seam.above) ?? 0,
+        )}), separating ${split.lower.districts.length} districts from ` +
+        `${split.higher.districts.length}`,
+    )
+    .join('; ');
+
+  /** Which of the four provinces the rule divides most sharply, and which least. */
+  const ranked = [...partition.splits].sort((a, b) => b.separation - a.separation);
+  const sharpest = ranked[0];
+  const shallowest = ranked[ranked.length - 1];
+
+  /**
+   * The convergence with the Seraiki claim, computed rather than asserted.
+   *
+   * This is the finding #31 is written around, and it is the one sentence on the card most likely
+   * to become false without anybody noticing — the census moves, the break moves, and a claim
+   * about which districts two independent lines agree on goes on sitting there. So it is derived
+   * from L1's own district list and from the partition, in the same run.
+   */
+  const southPunjab = new Set(
+    SOUTH_PUNJAB.claims.flatMap((claim) => {
+      const found = resolveClaimedDistrict(claim);
+      return found === null ? [] : [found.district];
+    }),
+  );
+  const punjab = partition.splits.find((split) => split.province === 'Punjab');
+  const lowerPunjab = new Set(punjab?.lower.districts ?? []);
+  const shared = [...southPunjab].filter((district) => lowerPunjab.has(district)).sort();
+  const claimedNotFound = [...southPunjab].filter((district) => !lowerPunjab.has(district)).sort();
+  const foundNotClaimed = [...lowerPunjab].filter((district) => !southPunjab.has(district)).sort();
+
+  return {
+    id: 'd1',
+    basis: 'development',
+    name: 'Each province at its steepest development gradient',
+    tagline: 'the map service access draws, with nothing else in it',
+    // The basis shades `census · synthesized`; this variant's boundary adds `derived`, because the
+    // composite is a figure this project defines and the *line* is arithmetic this build did over
+    // it. Both claims are on the card, and the card says why the two disagree with the basis.
+    badges: ['census', 'synthesized', 'derived'],
+    rationale:
+      'Every province is cut in two where the 2023 census says its internal gradient of service ' +
+      'access divides most sharply. The index behind it is this project’s own: the unweighted ' +
+      'mean of literacy among people aged 10 and above, the share of households with an improved ' +
+      'drinking-water source, and the share with a flush toilet. No language, no history and no ' +
+      'population figure goes into the line — the only question asked of a district is how many ' +
+      'of its people can read and how many of its households have water and a toilet.',
+    status:
+      'Not a proposal and not a demarcation that has ever existed. The argument that Pakistan’s ' +
+      'provinces contain regions too differently served to be administered as one unit is made ' +
+      'widely, and the southern-Punjab case is made in exactly those terms; nobody has published ' +
+      'a boundary drawn from service-access data, and no constitutional amendment creating any ' +
+      'province has passed since the four were restored.',
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map. The case behind it is argued — that a province holding both ' +
+        'the best-served and the worst-served districts in the country is administering two ' +
+        'different places — but it is argued about a region, never as a rule over all four ' +
+        'provinces at once, and this partition is the arithmetic that follows from stating it as ' +
+        'one. It is drawn so that the attributed claims elsewhere in this app can be read against ' +
+        'what service access alone would say.',
+    },
+    opposedBy: [
+      'those for whom a province is a people and not a service-delivery statistic — the Seraiki, ' +
+        'Hazara, Karachi and Pashtun Balochistan claims elsewhere in this app are all arguments ' +
+        'this rule cannot see, and it cuts across every one of them',
+      'Sindhi nationalist opinion broadly, which rejects any division of Sindh, and Baloch ' +
+        'nationalist parties, for whom Balochistan’s territorial integrity is foundational',
+      'those who argue that a development gap is a reason to spend in a region rather than to ' +
+        'make a province of it, and that drawing the boundary around it entrenches the gap ' +
+        'instead of closing it',
+      'those who argue that new provinces are an administrative expense before they are anything ' +
+        'else — a secretariat, a high court bench, a public service commission and a share of the ' +
+        'divisible pool for each',
+    ],
+    universe: 'drawn',
+    composition: {
+      kind: 'derived',
+      rule: GRADIENT_RULE,
+      from:
+        'data/bundle/development-index.json — the composite this build computes from PBS 2023 ' +
+        'Census Tables 12, 23 and 24 — and the district adjacency graph in ' +
+        'data/bundle/adjacency.json',
+    },
+    units: nonEmpty(
+      [
+        ...halves,
+        // The capital, whole, because a single district has no gradient to cut. Said on the card
+        // rather than left as an eight-unit map with a ninth thing on it nobody explained.
+        intactProvince(capital.name),
+        intactProvince('Azad Jammu & Kashmir'),
+        intactProvince('Gilgit-Baltistan'),
+      ],
+      'the units of a development-gradient partition',
+    ),
+    footnotes: [
+      {
+        kind: 'derived-boundary',
+        text:
+          'This boundary was computed, not copied from a proposal. Nobody publishes a district ' +
+          `list for this rule, so the rule stands in for one — ${GRADIENT_RULE} The cuts it ` +
+          `makes are ${seams}. Change the census and these lines move; nobody whose argument ` +
+          'this is chose where they run.',
+      },
+      {
+        kind: 'note',
+        text:
+          `The index is not a poverty measure and nothing here calls it one. ${INDEX_FORMULA} ` +
+          NOT_A_POVERTY_MEASURE +
+          ' Its third component is named for the column PBS actually publishes: the census ' +
+          'classifies drinking-water sources as improved or not, but for toilets prints only ' +
+          'flush, non-flush and none — a non-flush toilet may be improved or not and the census ' +
+          'does not say which — so what is averaged in is the flush-toilet share, and there is no ' +
+          'improved-sanitation figure in this app because there is none to have.',
+      },
+      {
+        kind: 'note',
+        text:
+          'Each unit is named for its most populous district, which is a description of an output ' +
+          'and not a name anybody uses for a province. The engine has no source for a name, and ' +
+          'inventing one — "lower Punjab", "the served half" — would be both the editorial voice ' +
+          'the rule exists to keep out and a judgement about the people living there. The halves ' +
+          'are told apart by their scores, which are on each unit above.',
+      },
+      {
+        kind: 'note',
+        text:
+          `The rule finds a division, not an outlier, and the difference shows in how sharp the ` +
+          `four cuts are: ${sharpest?.province ?? ''} divides most cleanly and ` +
+          `${shallowest?.province ?? ''} least. In ${shallowest?.province ?? ''} the two ` +
+          `districts either side of the break are ` +
+          `${percent(Math.abs(shallowest?.seam.difference ?? 0))} apart, because its gradient is ` +
+          'a long smooth slope rather than a cliff — so what the rule finds there is where the ' +
+          'province divides most cleanly overall, not where two neighbours differ most. A rule ' +
+          'that took the largest single step instead would peel one district off each province ' +
+          'and call it a partition.',
+      },
+      {
+        kind: 'note',
+        text:
+          `${capital.name} is one district, so it has no internal gradient and is carried ` +
+          'through exactly as it is — the only first-level entity inside the census this rule ' +
+          'leaves alone. Azad Jammu & Kashmir and Gilgit-Baltistan are outside it entirely: PBS ' +
+          'published no literacy, water or toilet figure for any of their twenty districts, so ' +
+          'they have no index, and a district with no figure is not a district scoring zero. ' +
+          'They are drawn and named exactly as they are today.',
+      },
+    ],
+    notes: [
+      {
+        label: 'What it agrees with, and what it does not',
+        text:
+          'In Punjab this line lands close to the Seraiki claim without being told anything about ' +
+          `language: ${shared.length} of South Punjab’s ${southPunjab.size} drawn districts fall ` +
+          `in the lower half` +
+          (claimedNotFound.length === 0
+            ? ''
+            : `, ${claimedNotFound.join(' and ')} being the exception` +
+              `${claimedNotFound.length === 1 ? '' : 's'}`) +
+          (foundNotClaimed.length === 0
+            ? ''
+            : `, and it takes in ${foundNotClaimed.join(', ')} besides — among them the two ` +
+              'districts the wider reading of that claim adds') +
+          '. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the ' +
+          'south-east and not the interior against Karachi, and in Balochistan the eastern belt ' +
+          'and not everything outside Quetta. The rule is reported as it ran rather than tuned ' +
+          'until it agreed, because a rule adjusted to match the claims it is meant to be ' +
+          'independent of has nothing left to say about them.',
+        relatedVariants: ['l1', 'l2', 'l3'],
+      },
+      {
+        label: 'The other rules this app draws',
+        text:
+          'Four Administrative variants partition the same 136 districts from population and ' +
+          'distance, and two Language ones from the census’s dominant mother tongue. They are ' +
+          'different maps because they are different questions, and the app draws one at a time.',
+        relatedVariants: ['a1', 'a4', 'l7'],
+      },
+    ],
+    sources: [
+      {
+        label:
+          'PBS Census-2023 Table 12 — literacy rate, enrolment and out-of-school population by ' +
+          'sex and rural/urban, the first of the three rates this index averages',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_12_national.pdf',
+      },
+      {
+        label:
+          'PBS Census-2023 Table 23 — housing facilities by source of drinking water by region, ' +
+          'and the improved/not-improved classification is the census’s own published column',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_23_national.pdf',
+      },
+      {
+        label:
+          'PBS Census-2023 Table 24 — facilities of toilet and washroom used by households. It ' +
+          'prints flush, non-flush and none, and no improved-sanitation column, which is why the ' +
+          'third component is the flush-toilet share and is named as such',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_24_national.pdf',
+      },
+      {
+        label:
+          'data/bundle/development-index.json — the composite itself, one score per district, ' +
+          'with the formula and the band cuts recorded beside it. Badged synthesized: no ' +
+          'published source states this figure',
+      },
+      {
+        label:
+          'data/bundle/adjacency.json — the district adjacency graph this build derives from the ' +
+          'arcs the map is drawn with, across which each half is grown and by which both halves ' +
+          'of every province are whole',
+      },
+      {
+        label:
+          'scripts/lib/development-partition.ts — the engine that draws these boundaries, whose ' +
+          'rule statement is quoted on this card in full',
+      },
+      {
+        label:
+          'docs/research/development-indicators.md — what reconciled against PBS’s printed ' +
+          'province figures, the 6,374 households PBS’s two releases of Table 23 disagree by, and ' +
+          'why there is no improved-sanitation figure to join',
+      },
+      {
+        label:
+          'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+          'district set this partition is expressed in',
+        url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+      },
+    ],
+  };
+}
+
+/**
  * Every variant, in the order the selectors offer them in.
  *
  * Grouped by basis, because a reader entering a basis lands on its first variant (D13), so the
@@ -2752,5 +3080,9 @@ export function variantsFrom(context: DerivationContext): readonly Variant[] {
     H2,
     H3,
     H4,
+    // The Development basis, and its one variant (#31). Last, because that is where the basis
+    // sits in the selectors and in CLAUDE.md's own table; it is the only basis whose shading is a
+    // figure this project defines rather than one somebody published, and the card leads with it.
+    developmentGradient(context),
   ];
 }

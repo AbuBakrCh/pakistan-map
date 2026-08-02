@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
 import statistics from '../../data/bundle/statistics.json';
+import developmentIndex from '../../data/bundle/development-index.json';
 import type { CensusStatistics, UnitKind } from '../bundle.ts';
 import { readDistricts, type ProvinceKind } from './geography.ts';
 import {
   districtTooltip,
   placeTooltip,
   spokenTooltip,
+  type DistrictShading,
   type DistrictTooltip,
   type UnitMembership,
 } from './tooltip.ts';
+import type { DevelopmentIndexBundle } from './development.ts';
+import { groupDigits } from './figures.ts';
 
 const census = statistics as unknown as CensusStatistics;
 const districts = readDistricts(bundle as never);
@@ -21,12 +25,36 @@ const kinds = new Map<string, ProvinceKind>(
   ).objects.provinces.geometries.map((g) => [g.properties.name, g.properties.kind]),
 );
 
-const tooltipFor = (name: string, membership: UnitMembership | null = null): DistrictTooltip => {
+const index = developmentIndex as unknown as DevelopmentIndexBundle;
+
+/**
+ * The Development basis's answer for one district, as `main.ts` assembles it from the committed
+ * composite (#31). Null where the index does not reach the district, which is the twenty.
+ */
+const shadingFor = (name: string): DistrictShading | null => {
+  const record = index.districts[name];
+  if (record === undefined) return null;
+  return {
+    basis: 'development',
+    score: record.score,
+    bandLabel:
+      index.provenance.bands.find((band) => band.id === record.band)?.label ?? record.band,
+    formula: index.provenance.formula,
+    badge: index.provenance.badge,
+    components: index.provenance.components as DistrictShading['components'],
+  };
+};
+
+const tooltipFor = (
+  name: string,
+  membership: UnitMembership | null = null,
+  shading: DistrictShading | null = null,
+): DistrictTooltip => {
   const feature = districts.features.find((f) => f.properties.name === name);
   if (feature === undefined) throw new Error(`${name} is not drawn`);
   const kind = kinds.get(feature.properties.province);
   if (kind === undefined) throw new Error(`${feature.properties.province} has no kind`);
-  return districtTooltip(feature.properties, kind, census, membership);
+  return districtTooltip(feature.properties, kind, census, membership, shading);
 };
 
 /** The active variant's answer, as `main.ts` assembles it from the scenario bundle. */
@@ -410,5 +438,112 @@ describe('placeTooltip', () => {
     const placed = placeTooltip([300, 20], { width: 420, height: 90 }, { width: 390, height: 300 }, options);
     expect(placed.x).toBe(options.margin);
     expect(placed.y).toBe(34);
+  });
+});
+
+describe('the Development basis explains its own fill on hover (#31)', () => {
+  const lahore = tooltipFor('Lahore', null, shadingFor('Lahore'));
+  const record = census.districts['Lahore'];
+  if (record === undefined) throw new Error('Lahore is not in the census');
+
+  it('shows the composite and all three components, so the composite is never alone', () => {
+    // The acceptance criterion, and the reason for it: the composite is the one figure in this app
+    // that nobody published, and a number defined by us with only a colour to explain it is the
+    // exact shape of unsourced surface the working agreement forbids.
+    expect(lahore.figures.map((f) => f.label)).toEqual([
+      'Population',
+      'Development index',
+      'Literacy (10+)',
+      'Improved drinking water',
+      'Households with a flush toilet',
+      'Dominant mother tongue',
+    ]);
+  });
+
+  it('quotes each component against its own denominator, which the three do not share', () => {
+    // Literacy is over people aged 10 and above; the other two are over the housing tables'
+    // households. A share quoted against the wrong denominator is a wrong share.
+    expect(figure(lahore, 'Literacy (10+)')?.note).toContain(
+      groupDigits(record.development.literacy.population10Plus),
+    );
+    expect(figure(lahore, 'Improved drinking water')?.note).toContain(
+      groupDigits(record.development.water.households),
+    );
+    expect(figure(lahore, 'Households with a flush toilet')?.note).toContain(
+      groupDigits(record.development.sanitation.households),
+    );
+    expect(figure(lahore, 'Literacy (10+)')?.value).toBe(
+      `${(record.development.literacy.rate * 100).toFixed(1)}%`,
+    );
+  });
+
+  it('names the third component for the column PBS actually publishes', () => {
+    // The one place the ticket's wording and the census part company. There is no
+    // improved-sanitation column, and the tooltip says so where the figure is rather than leaving
+    // the correction to a card the reader may never open.
+    const sanitation = figure(lahore, 'Households with a flush toilet');
+    expect(sanitation?.note).toContain('no improved-sanitation column');
+    expect(lahore.figures.map((f) => f.label).join(' ')).not.toContain('Improved sanitation');
+  });
+
+  it('sources the composite as ours and each component as the census’s', () => {
+    // No unsourced surface anywhere, and the composite's source is the honest one: it has none but
+    // this project. Each rate keeps the PBS table it was published in.
+    expect(figure(lahore, 'Development index')?.source).toContain('synthesized');
+    expect(figure(lahore, 'Development index')?.source).toContain('no published figure states it');
+    expect(figure(lahore, 'Literacy (10+)')?.source).toBe('PBS Census-2023 Table 12');
+    expect(figure(lahore, 'Improved drinking water')?.source).toBe('PBS Census-2023 Table 23');
+    expect(figure(lahore, 'Households with a flush toilet')?.source).toBe('PBS Census-2023 Table 24');
+  });
+
+  it('prints the formula and the band on the composite’s own line', () => {
+    const composite = figure(lahore, 'Development index');
+    expect(composite?.value).toBe(`${(index.districts['Lahore']!.score * 100).toFixed(1)}%`);
+    expect(composite?.note).toContain('on the map');
+    expect(composite?.note).toContain('unweighted mean');
+  });
+
+  it('never calls it poverty, on any district', () => {
+    // #31's last acceptance criterion, held over every district the basis shades rather than over
+    // one: the census sees service access, and a tooltip that used the other word would be this
+    // app publishing a claim about income it has no figure for.
+    for (const name of Object.keys(index.districts)) {
+      const words = tooltipFor(name, null, shadingFor(name))
+        .figures.map((f) => `${f.label} ${f.note ?? ''} ${f.source ?? ''}`)
+        .join(' ');
+      expect(words.toLowerCase(), name).not.toContain('poverty');
+      expect(words.toLowerCase(), name).not.toContain('poor');
+    }
+  });
+
+  it('says the census does not reach the twenty, rather than shading them zero', () => {
+    // The shading is null for these because the index does not reach them, and the tooltip's
+    // census-coverage branch answers first — so a reader hovering Neelum under this basis is told
+    // about the census's coverage and not about a composite that was never taken.
+    const neelum = tooltipFor('Neelum', null, shadingFor('Neelum'));
+    expect(shadingFor('Neelum')).toBeNull();
+    expect(neelum.coverage).toBe('not-counted');
+    expect(neelum.figures).toEqual([]);
+    expect(neelum.absence).toContain('census');
+  });
+
+  it('leaves every other basis’s tooltip exactly as it was', () => {
+    // Additive, and checked to be: the development figures arrive only when the development basis
+    // is shading, so a reader on the language basis sees the two lines they have always seen.
+    const plain = tooltipFor('Lahore');
+    expect(plain.figures.map((f) => f.label)).toEqual(['Population', 'Dominant mother tongue']);
+  });
+
+  it('is dropped whole where the variant withholds figures, like every other figure', () => {
+    // A variant that attaches no 2023 figures attaches none of these either — the composite is a
+    // mean of 2023 rates, and three of them beside a boundary of 1947 would be the same claim the
+    // withholding exists to refuse.
+    const withheld = tooltipFor(
+      'Lahore',
+      { ...inUnit('Punjab', 'proposed'), withholds: 'this map is older than the census' },
+      shadingFor('Lahore'),
+    );
+    expect(withheld.coverage).toBe('withheld');
+    expect(withheld.figures).toEqual([]);
   });
 });

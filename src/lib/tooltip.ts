@@ -100,6 +100,41 @@ export interface UnitMembership {
 }
 
 /**
+ * What the *shading* under this district is, where the active basis has one that needs explaining
+ * (#31).
+ *
+ * Only the Development basis supplies it, and the reason is the whole of why it exists. The
+ * language basis shades a district by a figure PBS published and the tooltip already prints that
+ * figure. The development basis shades it by a **composite this project defines**, and a composite
+ * on screen with nothing but a colour to explain it is the one shape of unsourced surface the
+ * working agreement forbids — so the components go on the tooltip beside it, and a reader who
+ * disagrees with weighting the three equally can see all three and say so.
+ *
+ * Handed over per district by the renderer, exactly as `UnitMembership` is, and carrying no words
+ * of its own: the labels, the tables and the caveats are the artifact's, and the sentences built
+ * around them are this module's.
+ */
+export interface DistrictShading {
+  readonly basis: 'development';
+  /** The composite, a proportion in 0–1. */
+  readonly score: number;
+  /** Which band it falls in, in the legend's own words. */
+  readonly bandLabel: string;
+  /** The rule that produced it, from the artifact that applies it. */
+  readonly formula: string;
+  /** The badge the composite carries — `synthesized`, because nobody published this figure. */
+  readonly badge: string;
+  /** The three published rates it is the mean of, as the artifact names them. */
+  readonly components: readonly {
+    readonly key: 'literacy' | 'improvedWater' | 'flushToilet';
+    readonly label: string;
+    readonly table: string;
+    readonly denominator: string;
+    readonly caveat?: string;
+  }[];
+}
+
+/**
  * The unit line.
  *
  * A proposed unit is labelled as proposed and says so again in its note, because this line is the
@@ -176,12 +211,71 @@ export const UNIT_STANDING: Readonly<Record<UnitKind, string>> = {
 const grouped = groupDigits;
 const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
 
+/**
+ * The composite and its three components — five lines, and every one of them needed.
+ *
+ * The composite alone would be a number this project invented with nothing under it. The three
+ * alone would leave the reader to average them in their head against a map that already has. So
+ * both, in that order, with the formula on the composite's own line and each component carrying
+ * the table it came from and the denominator it is over — because the three do not share one, and
+ * a share quoted against the wrong denominator is a wrong share.
+ *
+ * The third is **Households with a flush toilet**, and it says why: PBS publishes no
+ * improved-sanitation column, and this app does not invent one.
+ */
+function developmentFigures(
+  shading: DistrictShading,
+  development: CensusStatistics['districts'][string]['development'],
+): readonly TooltipFigure[] {
+  const rates: Readonly<Record<DistrictShading['components'][number]['key'], {
+    share: number;
+    outOf: number;
+  }>> = {
+    literacy: {
+      share: development.literacy.rate,
+      outOf: development.literacy.population10Plus,
+    },
+    improvedWater: {
+      share: development.water.improvedShare,
+      outOf: development.water.households,
+    },
+    flushToilet: {
+      share: development.sanitation.flushToiletShare,
+      outOf: development.sanitation.households,
+    },
+  };
+
+  return [
+    {
+      label: 'Development index',
+      value: percent(shading.score),
+      note: `${shading.bandLabel} on the map. ${shading.formula}`,
+      // Not a table, because no table publishes it. The badge is the source: this figure is one
+      // this project defines, and saying so is the whole of its provenance.
+      source: `Composite defined by this project — ${shading.badge}, no published figure states it`,
+    },
+    ...shading.components.map((component): TooltipFigure => {
+      const found = rates[component.key];
+      return {
+        label: component.label,
+        value: percent(found.share),
+        note:
+          `of the ${grouped(found.outOf)} ${component.denominator}` +
+          (component.caveat === undefined ? '' : `. ${component.caveat}`),
+        source: component.table,
+      };
+    }),
+  ];
+}
+
 export function districtTooltip(
   district: DistrictProperties,
   kind: ProvinceKind,
   statistics: CensusStatistics,
   /** The active variant's answer for this district. Absent at the baseline, where there is none. */
   membership: UnitMembership | null = null,
+  /** What the active basis has shaded this district with, where that needs explaining (#31). */
+  shading: DistrictShading | null = null,
 ): DistrictTooltip {
   const { status, coverage } = describeKind(kind);
   const record = statistics.districts[district.name];
@@ -254,6 +348,16 @@ export function districtTooltip(
   return {
     ...common,
     coverage: 'counted',
+    /*
+     * Population, then the shading's own evidence, then the dominant mother tongue.
+     *
+     * The development figures are **added** rather than swapped in, and the cost is stated: under
+     * that basis this is the longest tooltip in the app, six figures deep. The alternative was to
+     * drop the language line while the development basis is active, and it was refused — that line
+     * is the census's answer for the district and not a claim about the shading, it has been on
+     * every tooltip since #13, and a district whose tooltip means different things under different
+     * bases is a district a reader cannot compare with itself.
+     */
     figures: [
       {
         label: 'Population',
@@ -261,6 +365,7 @@ export function districtTooltip(
         note: null,
         source: POPULATION_SOURCE,
       },
+      ...(shading === null ? [] : developmentFigures(shading, record.development)),
       language,
     ],
     absence: null,

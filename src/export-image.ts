@@ -50,6 +50,7 @@ import {
   type BandPalette,
   type BandStyle,
 } from './lib/export-band.ts';
+import type { DevelopmentIndexBundle } from './lib/development.ts';
 import { SERIF, type MapHandle, type MapImage } from './map.ts';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -216,6 +217,8 @@ export interface ExportInput {
   readonly variant: VariantRecord | null;
   /** Which basis's fill is on the map, or `null`. The renderer's answer, not the selection's. */
   readonly shadedBy: BasisId | null;
+  /** The committed composite (#31), which the Development basis's key is derived from. */
+  readonly development: DevelopmentIndexBundle;
 }
 
 /**
@@ -241,6 +244,7 @@ function compose(
     geography: input.geography,
     variant: input.variant,
     shadedBy: input.shadedBy,
+    development: input.development,
   });
   const laid = layoutBand(band, { width: crop.width, measure: bandMeasurer() });
 

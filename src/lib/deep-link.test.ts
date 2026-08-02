@@ -18,7 +18,7 @@ import { BASELINE, basisChoices } from './selection.ts';
 
 const bundle = scenarios as unknown as ScenarioBundle;
 /** What this build can actually shade. `main.ts` derives the same set from its fill table. */
-const SHADEABLE = new Set<BasisId>(['language']);
+const SHADEABLE = new Set<BasisId>(['language', 'development']);
 const choices = basisChoices(bundle, SHADEABLE);
 
 const route = (hash: string) => readRoute(hash, bundle, choices);
@@ -40,8 +40,9 @@ describe('hashFor', () => {
     // Both directions, over the real set: a hash that reads back as a different variant would be
     // a link that draws a proposal its sender never had on screen. Restricted to the variants
     // this build can *reach*, which is not the same as the variants it ships — the Historical
-    // basis has three written and no shading built, and a link to one of those is answered with
-    // the baseline on purpose, asserted by name below.
+    // basis has four written and no shading built, and a link to one of those is answered with
+    // the baseline on purpose, asserted by name below. `#/development/d1` is on this list rather
+    // than that one as of #31, which is the whole of what that ticket changed about linking.
     const selections = [
       BASELINE,
       ...bundle.variants
@@ -92,12 +93,27 @@ describe('readRoute', () => {
 
   it('falls back for a basis this build cannot draw, rather than fading the map for nothing', () => {
     // The URL is not a way in through the back of a control that already refuses these out loud:
-    // the three unshaded bases are unreachable by link for exactly as long as they are unreachable
+    // the two unshaded bases are unreachable by link for exactly as long as they are unreachable
     // by chip, and the two cannot drift because both read the same `choices`.
-    for (const basis of ['administrative', 'historical', 'development']) {
+    for (const basis of ['administrative', 'historical']) {
       expect(route(`#/${basis}`).selection, basis).toBeNull();
       expect(route(`#/${basis}/x1`).selection, basis).toBeNull();
     }
+  });
+
+  it('reaches the development basis by link, and enters it on its one variant', () => {
+    // #31 closed both halves of what Development was short of, so `#/development/d1` is now a URL
+    // that draws something — and `#/development` alone is a link to it, which is D13 rather than a
+    // guess. Named here because these are the two URLs whose *answer changed*: a reader sent one
+    // before this ticket landed on the country instead.
+    expect(route('#/development/d1')).toEqual({
+      selection: { basis: 'development', variant: 'd1' },
+      asWritten: true,
+    });
+    expect(route('#/development')).toEqual({
+      selection: { basis: 'development', variant: 'd1' },
+      asWritten: false,
+    });
   });
 
   it('refuses a link to a variant whose basis has variants but no shading', () => {

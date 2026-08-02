@@ -2,24 +2,27 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, scenario content in draft (16 of 17 variants migrated into the typed
-module — the whole Language basis, L1 to L7, the whole Administrative one, A1 to A5, and the whole
-Historical one, H1 to H4; only D1 is left. L2 and
+**Status:** design agreed, **scenario content complete — all 17 variants are in the typed module**
+(the whole Language basis, L1 to L7, the whole Administrative one, A1 to A5, the whole Historical
+one, H1 to H4, and the Development basis's D1; `SCENARIOS-DRAFT.md` is deleted, which is #36). L2 and
 L3 are the two wider readings of the Seraiki claim, and L3 is the one *transcribed* proposal whose
 province crosses an existing provincial boundary; L6 and L7 are the first two variants this build
-**draws itself**, from census plurality rather than from anybody's document, and A1 to A4 are the
-four the rule engine draws from population and distance — six derived boundaries in all, every one
+**draws itself**, from census plurality rather than from anybody's document, A1 to A4 are the
+four the rule engine draws from population and distance, and D1 is the one cut at a figure this
+project defines rather than one anybody published — seven derived boundaries in all, every one
 of them re-derived by the suite. A5 is the one variant that redraws nothing: it promotes
 Gilgit-Baltistan and Azad Kashmir to provinces and moves not a single district, and H2 is the
-oldest map in the app and the only one carrying **no population figure at all**), pipeline and
+oldest map in the app and the only one carrying **no population figure at all**. Pipeline and
 bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
 contiguity (#16), the **scorecard** (#20) carrying the figures a proposal is judged on, the
 **compare gesture** holding a proposal off the map (#22), every view carrying a **deep link**
 of its own (#23), the **About the data** panel (#21) putting every source, its vintage and the
-bundle's own build dates on one auditable surface, and the **phone adaptation** (#33) turning the
-card into a draggable bottom sheet and hover into tap.
+bundle's own build dates on one auditable surface, the **phone adaptation** (#33) turning the
+card into a draggable bottom sheet and hover into tap, and the **Development basis** (#31) shading
+the country by the app's one **`synthesized`** figure — a composite of three published census
+rates that nobody else publishes — with **two of the four bases now drawable**.
 
 ---
 
@@ -68,7 +71,14 @@ Basis (4)  →  Variant (17 total)  →  Units  →  Districts
 | **Language / dialect** | PBS 2023 Census Table 11, mother tongue by district | `census` · `proxy` |
 | **Administrative** | 2023 census population + derived geometry | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
-| **Development** | PBS 2023 Census Tables 12, 23, 24 — literacy, drinking water, toilet facilities | `census` for the three published rates; `synthesized` for any composite of them (#31) |
+| **Development** | PBS 2023 Census Tables 12, 23, 24 — literacy (10+), improved drinking water, households with a flush toilet — shaded by **the unweighted mean of the three** | `census` · `synthesized` (#31) |
+
+The Development basis is the only one carrying **two badges for one fill**, and the pair is the
+point: the three rates are PBS's to the household, and the mean of them is **this project's own
+figure, which nobody publishes**. `census` alone would pass our arithmetic off as the census's;
+`synthesized` alone would disown figures PBS counted one household at a time. It is also the only
+basis whose shading is not somebody else's number, which is why the composite states its formula on
+the card, in the legend, in the colophon, on the export band and on every tooltip that prints it.
 
 A basis carries a **vintage** as well as a badge and a source (#21), and the field is checked
 rather than assumed: a badge says which *kind* of claim a shading is and the vintage says which
@@ -129,7 +139,7 @@ drawing something.*
 | District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against |
 | Population | PBS 2023 Digital Census | District level. Extracted from the `PakPC2023` `.RData` tables, committed as upstream bytes in `data/raw/pakpc2023-*.RData` and parsed by `scripts/lib/rdata.ts`, so the numbers trace to a published file rather than to a transcription. **Anchored outside the package** at exactly two tiers: the 5 province totals and the 241,499,431 national total, typed from PBS Census-2023 **Table 1 (national)** — both agree exactly. The **31 division totals** are checked against `pakpc2023-division.RData`, i.e. against another table of the same package whose district table is being validated: a cross-table consistency check, **not** an independent source. A division figure wrong in the package would agree with itself and pass. PBS publishes no division tier in Table 1 |
 | Mother tongue | PBS 2023 Census **Table 11** | The structured release carries **tehsil rows only** — no district tier — so districts are summed from the 591 units under them, keyed on the table's own 136 district names. Safe because the sums reconcile exactly against PBS's printed province figures in **all fifteen categories**, typed from `table_11_national.pdf`: column by column, because a tehsil summed into the wrong district inside a province moves whole languages and leaves the total intact. Categories are the census's own, unmerged, including its spelling `Kohiostani`; an unknown one fails the build rather than falling into `Others`. Table 11's universe is **240,458,089** — 1,041,342 below Table 1, a difference PBS shares with Table 10 and does not explain, so it is stated and not closed. Khowar has no column, so **Chitral has no dominant language** and says so. See `docs/research/mother-tongue-table-11.md` |
-| Development | PBS 2023 Census **Tables 12, 23 and 24** | Literacy (10+), improved drinking water, toilet facilities. Like Table 11 the structured release is **tehsil rows only**, so all three are summed from the 591 units and reconciled on **counts, not rates** — a province literacy rate is population-weighted and unrecoverable from district rates, so both halves of every rate are checked against the figures typed from the three `*_national.pdf` files. Seven of the eight counts reconcile exactly; **improved water does not** — PBS's tehsil rows count 6,374 more improved-water households than PBS's own printed province rows, a reclassification between sources that leaves the household totals exact. The deltas are pinned per province and any other value fails the build. **PBS publishes no improved-*sanitation* column:** it classifies water sources as improved or not, but for toilets prints only flush / non-flush / none, and a non-flush toilet may be improved or not. So the shaded share is **flush toilets, named as such**; combining them would be our definition wearing a `census` badge (that is #31, `synthesized`). Each rate keeps its own denominator — population 10+ for literacy, the **housing tables'** households for the other two, which are 48,010 below the district table's in all 136 districts. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage. See `docs/research/development-indicators.md` |
+| Development | PBS 2023 Census **Tables 12, 23 and 24** | Literacy (10+), improved drinking water, toilet facilities. Like Table 11 the structured release is **tehsil rows only**, so all three are summed from the 591 units and reconciled on **counts, not rates** — a province literacy rate is population-weighted and unrecoverable from district rates, so both halves of every rate are checked against the figures typed from the three `*_national.pdf` files. Seven of the eight counts reconcile exactly; **improved water does not** — PBS's tehsil rows count 6,374 more improved-water households than PBS's own printed province rows, a reclassification between sources that leaves the household totals exact. The deltas are pinned per province and any other value fails the build. **PBS publishes no improved-*sanitation* column:** it classifies water sources as improved or not, but for toilets prints only flush / non-flush / none, and a non-flush toilet may be improved or not. So the shaded share is **flush toilets, named as such**; combining them would be our definition wearing a `census` badge (that is #31, `synthesized`). Each rate keeps its own denominator — population 10+ for literacy, the **housing tables'** households for the other two, which are 48,010 below the district table's in all 136 districts. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage. **The composite over the three is #31's**, is the unweighted mean of them, is badged `synthesized` and lives in an artifact of its own — see the Development composite note below. See `docs/research/development-indicators.md` |
 
 Structured census extraction path: `PakPC2023` (CRAN, GPL-2, GitHub `myaseen208/PakPC2023`).
 PBS publishes primarily as PDF.
@@ -169,8 +179,9 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6, the coastline, the four neighbour countries and the first-level `admin_centre` nodes → `data/raw/`, retrying across four Overpass mirrors. Level 4 sources ICT and, now, each unit's seat |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
-| `scripts/build-scenarios.ts` | `build:data:scenarios` | Reads the census and the borders **first**, because `variants.ts` is a function of both — eight variants are literals and L6 and L7 are drawn here from Table 11's plurality (#26). Then validates every variant as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant. Refuses, besides, a basis or a variant short of a badge, a source or a vintage; a badge outside the closed vocabulary; a `census` badge at a vintage that is not the project's; and a boundary this build derived that does not say so — each naming the basis or variant and the word (#21) |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Reads the census, the borders **and the development composite** first, because `variants.ts` is a function of all three — ten variants are literals, L6 and L7 are drawn here from Table 11's plurality (#26), A1 to A4 from population and distance (#28) and D1 from the composite (#31). Refuses a composite computed over a census join stamped differently from the one it is reading, since a boundary cut at scores taken over figures the rest of the map no longer carries is undetectable from its own contents. Then validates every variant as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant. Refuses, besides, a basis or a variant short of a badge, a source or a vintage; a badge outside the closed vocabulary; a `census` badge at a vintage that is not the project's; and a boundary this build derived that does not say so — each naming the basis or variant and the word (#21) |
 | `scripts/build-context.ts` | `build:data:context` | Stitches each neighbour relation into closed polygons with the districts' own stitcher → intersects them with `CONTEXT_EXTENT` → pairs each first-level unit with its `admin_centre` node → simplifies to 4% and quantizes → `data/bundle/context.topojson.json`. Fails on a country whose ISO code is not in the cache, a ring that will not stitch shut, a silhouette that clips to nothing, a shape that does not contain its own capital, or a unit with no seat — each named. **A separate artifact from the geography bundle, deliberately:** nothing here shares an edge with anything in there, and merging them would renumber every arc in the country to add a background and imply the two sides of a border are one line. Quantization comes *after* simplification, the opposite order from the geometry build, because `presimplify` restores absolute coordinates for arcs and not for **points** — quantized first, every city dot lands in the Bay of Bengal |
+| `scripts/build-development.ts` | `build:data:development` | Reads the three published rates out of `statistics.json` → takes the **unweighted mean** of them per district → bands each at fixed cuts → `data/bundle/development-index.json`, with the formula, the band method, the range, the counts per band and the twenty districts the census does not reach recorded beside the scores. Fails on a census district with no development block, a rate that is not a proportion in 0–1, a score that falls in no band, or a district set that is not the 136 — each naming the district. **A separate artifact from the census join, deliberately:** that one is PBS's figures and this one is the figure nobody published, and a `synthesized` number inside a `census` artifact is one field away from being read as another published column |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
 The fold table — post-census district → 2023 parent — is data, not code:
@@ -203,25 +214,29 @@ with every fold recorded. A change to a proposal's territory is therefore a date
 than something that happens between two page loads, and the runtime reads one bundle directory
 rather than reaching into `scripts/`.
 
-**Nine of the fifteen variants are literals; six are functions of the census** (#26, #28).
-`variants.ts` exports `variantsFrom(context)` rather than a constant, because those six have no
+**Ten of the seventeen variants are literals; seven are functions of the census** (#26, #28, #31).
+`variants.ts` exports `variantsFrom(context)` rather than a constant, because those seven have no
 document to transcribe — nobody publishes a district list for "the Pashto-plurality districts of
 Balochistan", nobody at all proposes assigning every district in Pakistan by its plurality mother
-tongue, and nobody publishes one for "no province above 25 million people" either.
+tongue, nobody publishes one for "no province above 25 million people" either, and nobody publishes
+one for "split each province where its development gradient is steepest".
 Their boundaries are computed in the one build that already reads the census and the adjacency
 graph, which is what keeps the repo to a single derivation: baking the district lists into a
-committed reference file would have put a second one in the tree to keep honest. A4 needs one
-input the other five do not — district **centroids**, since its rule is stated in kilometres — and
-they are taken from the committed geometry through `scripts/lib/centroids.ts`, shared by the build
-and the suite for the same reason everything else here is: a centroid derived twice is two
-centroids, and a distance rule is exactly the constraint that would pass its own re-derivation
-while disagreeing with the drawn map by a district.
+committed reference file would have put a second one in the tree to keep honest. Two of the seven
+need an input the others do not, and both take it from a committed artifact rather than recomputing
+it. A4 needs district **centroids**, since its rule is stated in kilometres, taken from the drawn
+geometry through `scripts/lib/centroids.ts`; D1 needs the **development composite**, taken from
+`development-index.json` — the same file the shading reads, so the map cannot shade a district on
+one number while the line drawn over it was decided on another. Both are shared by the build and
+the suite for the reason everything else here is: a figure derived twice is two figures, and a rule
+stated in one is exactly the constraint that would pass its own re-derivation while disagreeing
+with the drawn map by a district.
 
 Two things a partition has to state out loud, because both have two defensible answers:
 
 | Question | How it is expressed | Current answer |
 |---|---|---|
-| **Which district set must a partition cover?** | `universe` on the variant — `drawn` (all 156, nothing left uncoloured) or `census` (the 136 with statistics; AJK and GB outside the partition, drawn and named and in no unit) | Per variant; all ten written so far declare `drawn` |
+| **Which district set must a partition cover?** | `universe` on the variant — `drawn` (all 156, nothing left uncoloured) or `census` (the 136 with statistics; AJK and GB outside the partition, drawn and named and in no unit) | Per variant; all seventeen declare `drawn` |
 | **May a variant claim AJK or GB territory?** (open item 2b) | `TERRITORY_CLAIM_POLICY` in `scenarios.ts`, both settings tested | **`forbid`** — a non-`territory` unit taking a territory district fails the build, naming it. Those districts carry no PBS statistic, so the unit's population would be short by an unknowable amount. One narrow exception, and only one: a **promotion** — a `proposed` unit that is *exactly* one territory's whole district set under that territory's exact name (`promotedTerritoryOf`), where nothing is taken, no boundary moves and the population is not short but absent. Nine of ten, ten plus a Punjab district, the same ten renamed, and the same ten held as `unchanged` are all still refused by name. The policy itself is a product decision, not a technical one: settling it is a one-line change |
 
 **A unit is drawn by dissolving its districts, and the dissolve is baked** (#15). An outline is
@@ -483,8 +498,81 @@ a majority) and **Hyderabad** as an Urdu region detached from Karachi's, the dis
 being Sindhi-plurality. Both are drawn rather than absorbed into a neighbour, because absorbing
 them would be a second rule with nothing behind it but our sense of how a map should look.
 
-Still to come: the composite development index (#31, badged `synthesized` — the census publishes no
-such figure). Shared pure logic lives in `scripts/lib/` with tests beside it.
+**The development composite is the app's one `synthesized` figure, and it is baked in an artifact of
+its own** (#31). PBS publishes literacy, improved drinking water and toilet facilities; it publishes
+no index over them and nor does anybody else at this vintage, so `scripts/lib/development-index.ts`
+defines one — the **unweighted mean of the three published rates**, each keeping the denominator PBS
+gave it. Three choices, each made the way this repo makes them: **unweighted**, because a weighted
+mean is a claim that literacy is worth some stated amount more than a toilet and no source states
+that number; **over PBS's own denominators**, which are not one denominator — literacy is over
+people aged 10 and above, the other two over the housing tables' households — so the result is
+called an *index* and never a rate; and **not re-scaled to the observed range**, or a district's
+score would move because another district moved and the legend would mean something different at
+each census.
+
+It goes in `data/bundle/development-index.json` rather than into `statistics.json`, and the
+separation is the whole of its provenance. That artifact is PBS's figures; this one is the figure
+nobody published, and putting a `synthesized` number one field away from the rates it is a mean of
+would let it be read as another census column. It is **baked rather than computed on the page** on
+the scorecard's reasoning (#20): a figure the runtime derived is a figure nobody reviewed — and it
+would be derived twice besides, once to shade a district and once to draw D1's boundary over it,
+which is two answers to one number. The suite re-derives the whole file from the committed census on
+every run.
+
+The **shading bands are four, at fixed cuts** — under 50%, 50–65%, 65–80%, 80% and above — rather
+than quantiles, so a district's colour is not a function of every other district's score and the
+legend says the same thing at every vintage. Four rather than five is a constraint and not a
+preference: see the palette note in **Stack**.
+
+**The third component is flush toilets, named as such, everywhere.** PBS classifies water sources as
+improved or not and prints the result; for toilets it prints only flush / non-flush / none, and a
+non-flush toilet may be improved or not. There is no improved-*sanitation* column to average in, and
+adding flush to non-flush would be a definition of ours inside a composite of ours — a judgement
+squared, and invisible. The tooltip, the card and the About panel each say so where the figure is.
+
+**And it is not a poverty measure**, which is said on the card, in the colophon and on the panel
+rather than assumed. The census sees service access and attainment; it does not ask about income,
+consumption, child mortality or nutrition. The suite holds the word out of every development
+surface, and the two places the card does use it are the sentences refusing it.
+
+Shared pure logic lives in `scripts/lib/` with tests beside it.
+
+**D1 is the variant that composite draws** (#31) — each province cut in two where the census says
+its internal gradient of service access divides most sharply, and the last of the seventeen.
+`scripts/lib/development-partition.ts` computes it in two steps. The lower unit grows outward from
+the province's lowest-scoring district across shared district borders, taking the lowest-scoring
+district on its edge each time, so **every candidate cut is connected by construction** — and the
+*complement* is checked too, since a whole lower half can still leave the rest of a province in two
+pieces, and such a cut is simply not a candidate. Among those cuts the rule takes the
+**one-dimensional natural break**, `k(n−k)(mean high − mean low)² ÷ n²`, which is Fisher's and
+Jenks's criterion and not ours. The obvious reading of "steepest" — the largest single step between
+two consecutive districts — was tried and rejected on the data: it peels off one district per
+province (Punjab would be Rajanpur and everything else), because a largest gap finds an outlier
+where a natural break finds a division. The cost of the choice is stated on the card: in **Punjab**
+the two districts either side of the break are 0.2 points apart, because Punjab's gradient is a long
+smooth slope rather than a cliff, so what the rule finds there is where the province divides most
+cleanly overall and not where two neighbours differ most.
+
+**What it draws is 11 units and one finding that is only half the finding #31 expected.** Eight
+halves out of the four provinces, named for the most populous district in each — Shangla and
+Peshawar, Rahim Yar Khan and Lahore, Sanghar and Karachi East, Jaffarabad and Quetta — plus
+Islamabad Capital Territory, which is a single district with no internal gradient and is carried
+through unchanged, plus the two territories, which have no index at all because PBS published none
+of the three rates for their twenty districts (D25). 135 of 156 districts move, every census
+district but Islamabad's, for the reason A1 to A4 already give: not one of the eight halves carries
+the name of the province it came out of. Spread 39.3 : 1, and **nought non-contiguous units**,
+because contiguity is the method here as it is in the other two engines.
+
+**Punjab is the case the ticket was right about and Sindh and Balochistan are not, and the card says
+so rather than the rule being tuned until they are.** The lower half of Punjab contains **9 of South
+Punjab's 11 drawn districts** — all but Multan and Khanewal — and adds the Thal, including exactly
+the two districts (Mianwali and Bhakkar) that L2's wider reading of the Seraiki claim adds. That
+convergence is computed from L1's own district list in the same run rather than asserted, because it
+is the sentence on that card most able to become false without anybody noticing. What separates in
+**Sindh** is the south-east — Tharparkar, Umerkot, Badin, Mirpur Khas, Sanghar, Sujawal, Thatta and
+Tando Mohammad Khan — and not the interior against Karachi; in **Balochistan** it is the eastern
+belt around Nasirabad, Kachhi and Kohlu and not everything outside Quetta. A rule adjusted to agree
+with the claims it is meant to be independent of has nothing left to say about them.
 
 Every relation must be classified. A relation matching no 2023 district and no fold rule
 **fails the build** rather than being skipped — a silent discard is how the district set drifts
@@ -532,6 +620,11 @@ What it holds:
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids; both district counts wherever a claim and the drawing disagree, each with a `district-count` footnote saying why — South Punjab's 13-for-11 and Hazara's 9-for-8, with Allai named as the fold; and every card cross-reference pointing at a variant that exists, the L1↔H4 collision wired **both** ways so neither proposal reads as the uncontested one | `bundle.test.ts` |
 | The two Language variants nobody published (#26) — the rule **re-run** from the committed census and the committed graph and compared region by region against what shipped, since a derived line nothing re-derives is an editorial opinion wearing a `derived` badge; L6's twelve districts with Mastung outside and Quetta inside, and one Pushto region rather than two; every `derived` variant carrying both the badge and the sentence that says the line was computed, held over the kind rather than over the two by name; L6 naming **both** readings of its claim; and L7 unadvocated, opposed anyway, and pointing at the four attributed claims its output resembles | `bundle.test.ts` |
 | The Administrative basis (#28) — all four rule-drawn maps **re-run** from the committed census, the committed graph and the committed geometry and compared unit by unit against what shipped, the card's rule statement held to be the engine's own words rather than a paraphrase that can drift from the arithmetic; the count stated as a *finding* where it is one and as an instruction where it is not; A4's 300 km re-measured district by district and the 635 km its card quotes for Gwadar–Quetta checked against the geometry it is quoted from. And the trade-off asserted rather than described: **zero** non-contiguous units under every rule, because contiguity is the method, with the spread moving from 2.3:1 to 65.3:1 across the four — a ceiling more even than a count, and fourteen units less even than twelve | `bundle.test.ts` |
+| The Development composite (#31) — the whole artifact **re-derived** from the three published rates in the committed census, district by district and naming any that moved, so the one figure in the app nobody published is the one figure most re-computed; its 136 districts exactly the census's and the twenty named as absent with the reason; the band cuts partitioning 0–1 with no gap and no seam, both ends of the range in a band, and a score outside it refused rather than shaded as the lowest; and the composite stamped with the census join it was taken over, so a boundary cut at stale scores fails rather than adding up | `development-index.test.ts`, `src/lib/development.test.ts` |
+| D1, the map service access draws (#31) — every province **re-cut** from the committed census, the committed graph and the committed composite and compared half by half against what shipped, the eight named one by one; the card's rule statement held to be the engine's own words; both halves of every province whole, because contiguity is the method; the capital carried through as a single district with no gradient and the two territories left outside a rule that cannot see them, each with its own reason on the card; 135 of 156 districts moved with Islamabad's absent from the origins; and each unit saying which half of which province it is and what it scored, since the names are district names and eight of them otherwise say nothing about which two are one province cut in two | `bundle.test.ts` |
+| What the gradient rule does at its own seam (#31) — the cases the real map cannot show: a natural break taken where the largest single step would peel off an outlier, a cut refused because it would leave the *rest* of a province in two pieces, a province whose own districts do not hang together reported rather than jumped across, a district the census does not reach refused by name, a one-district province returned as unsplit with its reason rather than dropped, and the same map from a shuffled scope, which is the determinism claim | `development-partition.test.ts` |
+| What the composite agrees with, and what it does not (#31) — the convergence #31 is written around, re-derived from L1's own district list rather than asserted: **9 of South Punjab's 11 drawn districts** in Punjab's lower half, Multan and Khanewal named as the two it does not take, and Mianwali and Bhakkar — L2's own additions — named as two it does. And the disagreement held with it, since the ticket expected three: what separates in Sindh is the south-east and not the interior against Karachi, and in Balochistan the eastern belt and not everything outside Quetta | `bundle.test.ts` |
+| Nothing calls it poverty (#31) — held over every district's tooltip and over the whole of D1's card rather than over one sentence, since the census sees service access and not income; the two places the card uses the word are the sentences refusing it, and that is asserted by requiring every sentence containing it to be a negation. The third component named **flush toilets** everywhere, and *improved sanitation* — a column PBS does not publish — nowhere | `bundle.test.ts`, `src/lib/tooltip.test.ts`, `src/lib/card.test.ts` |
 | A5, the variant that redraws nothing — nought districts moved and the *only* variant of which that is true, every unit exactly one of today's first-level entities holding exactly its districts; the two territories `proposed` and still carrying no population, set aside by name rather than voided, the spread over the five units the census reaches; the two halves said to be unequally sourced, naming the 2020 announcement, the assembly resolution and the 1974 Act; India's rejection first on the opposition line and not alone on it; and the boundary `transcribed` and badged `documented`, since crediting a government's announcement to this build's arithmetic is what a `derived` badge would do | `bundle.test.ts` |
 | A promotion is not a claim (#28, open item 2b) — a whole territory under its own name admitted with `TERRITORY_CLAIM_POLICY` still `forbid`, and each of the three conditions refused by name where it fails: nine districts of ten, ten plus a counted district, and the whole ten renamed. Held over the artifact as well, where the carve-out is asserted to fire for exactly A5's two units — an exclusion that never excludes anything passes a test perfectly | `scenarios.test.ts`, `bundle.test.ts` |
 | A variant with no figures has nothing to be short of (#30, open item 2b) — the second narrowing, held on the **pair** that is its whole content: the same units on a variant that withholds and on one that does not, admitted and then refused by name, so an exception written to fire on anything would fail. Refused too where the withholding is asserted and not explained, since the reason is what the card prints where the figures would be; `forbid` still `forbid` and `allow` still a different setting. And over the artifact, asserted to admit **exactly H2's Hunza and Nagar** and nothing else in the shipped set | `scenarios.test.ts`, `bundle.test.ts` |
@@ -553,7 +646,9 @@ What it holds:
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
 | The dashed line is the **right stretch** — every arc of it belongs to AJK or GB and to no province, it is the whole of AJK's outer boundary, and it is only part of GB's, the remaining 3 arcs being the China and Afghanistan frontier. Endpoints named (Chenab, Karakoram), districts named, length agreeing with the provenance that states it. A set question on arc indices, exact, because line and boundary share arcs | `src/lib/line-of-control.test.ts` |
 | Palette — every census category coloured, colourblind separation re-derived from the hexes on the category pairs that actually share a border, the pairs it cannot separate named in the module | `src/lib/palette.test.ts` |
+| The sequential ramp (#31) — the app's one ordered scale, held to a sequential scale's criteria and not a categorical one's: lightness falling and chroma rising monotonically, which *is* the encoding; every band clear of the unshaded land tone and legible under a unit outline, which is the 0.14 of lightness the ramp has to spend; the **ends** clearing every gate the categorical palette is held to, dichromats included, since that is the comparison a reader actually makes; and the fact that **no adjacent step reaches those gates** asserted rather than glossed over, with the weakest of them re-derived from the hexes and named in the module | `src/lib/palette.test.ts` |
 | Fill = data — every drawn district decided, each category fill agreeing with the census figure, Chitral and the twenty AJK/GB districts as two different absences | `src/lib/mother-tongue.test.ts` |
+| Fill = data on the basis whose data is ours (#31) — every drawn district decided; each district's band **re-derived from its own score** against the band cuts rather than read back, so the colour on the map and the number in the tooltip cannot come apart; the twenty as the one absence this basis has, and no third state, since a mean of three published rates always has a value where a dominant tongue can be unnameable; a band the ramp has no colour for refused rather than falling back to a neutral; and the legend keying every band with its own count, saying so where a band is empty | `src/lib/development.test.ts` |
 | Hover resolution — all 156 drawn districts reachable from inside themselves, nine cities standing in the district they actually stand in, the sea and the ground across the border resolving to nothing, the neighbour silhouettes answering nothing from anywhere on them, every city dot standing in the unit it is the seat of, and the shortlist a point costs bounded, which is the whole reason hover is not slow | `src/lib/hit-test.test.ts` |
 | The context (#8) — four countries drawn and named, each containing its own ground so the name on a faint blob is a claim rather than a caption; **no silhouette over any of the 156 drawn districts**, and none over another; seven dots, one seat per first-level unit, each standing on the unit it names; the criterion, why it is administrative and which larger cities it omits | `src/lib/context.test.ts` |
 | The Durand footnote — carried with Afghanistan's silhouette rather than typed into the renderer, naming 1893, saying no Afghan government has recognised it, and saying it is drawn *not dashed* because the dash belongs to the Line of Control. The only boundary note, because it is the only *ordinary* boundary in dispute. **Sourced and badged like any other surface**: every year the prose asserts as fact is a year its source line accounts for, checked by extracting both rather than by reading the sentence back at itself | `src/lib/context.test.ts` |
@@ -568,8 +663,8 @@ What it holds:
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along — asked of **every variant**, because those two units are not always called the same thing and are not always the same *kind* of thing: H3 calls Gilgit-Baltistan the *Northern Areas* and A5 draws both territories as `proposed` provinces, so a renderer recognising the line by unit name or by unit kind would stroke it solid the moment a variant renamed a territory or argued for its promotion. Every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names; every unit's name anchored inside its own shape across every variant — 166 outlines now, the rule-drawn administrative units among them, which take whatever shape the arithmetic leaves them — which is where a crescent (North-West Frontier Province around the tribal districts) and a 261-polygon province (West Pakistan) would put a name on someone else's ground; and the legend keying only the kinds a variant contains, over H1, which genuinely has no `unchanged` unit rather than an edited one | `src/lib/units.test.ts` |
-| The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing **per basis rather than one reason for all three**: Administrative and Historical have their variants and no fill, Development has neither, and the refusal lines group accordingly. A basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
-| Deep links — every selection this build can *reach* round-tripping through its own hash, the baseline's URL among them; a basis named alone entering its first variant and saying the URL was corrected; an unknown variant and an unshadeable basis both answered with the country rather than with the nearest proposal — `#/historical/h1`, `h3` and `h4` named one by one, since those are complete drawable variants whose basis has no fill yet — as, now, are `#/administrative/a1` to `a5` and are exactly the URLs a reader may already have been sent; a hash whose two halves disagree settled by the variant; case, whitespace and stray slashes read as one link; and garbage — a lone `%`, four segments, 4,096 characters — answered without an exception | `src/lib/deep-link.test.ts` |
+| The selectors — all four bases offered in the spec's order, **two of them live** since #31, and the two that cannot be drawn refused with *which half* is missing per basis: Administrative and Historical have their variants and no fill, and Development — which used to be the one basis short of both — now has both and is asserted to be selectable on D1. The singular refusal line is held on a set of one rather than on the shipped pair, since the case where the sentence would disagree with itself in number is the one a future ticket closing one of the two produces. A basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
+| Deep links — every selection this build can *reach* round-tripping through its own hash, the baseline's URL among them; a basis named alone entering its first variant and saying the URL was corrected; an unknown variant and an unshadeable basis both answered with the country rather than with the nearest proposal — `#/historical/h1`, `h3` and `h4` named one by one, since those are complete drawable variants whose basis has no fill yet — as, now, are `#/administrative/a1` to `a5` and are exactly the URLs a reader may already have been sent; `#/development/d1` and `#/development` named as the two whose *answer changed* under #31, since a reader sent either before it landed got the country instead; a hash whose two halves disagree settled by the variant; case, whitespace and stray slashes read as one link; and garbage — a lone `%`, four segments, 4,096 characters — answered without an exception | `src/lib/deep-link.test.ts` |
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
 | The scorecard — every figure recomputed from the committed census and the committed partition rather than read back, naming the unit whose numbers moved; each unit's population equal to its own districts' rows; the census join stamped, so a scorecard summed from a rebuilt census fails rather than adding up to the wrong vintage. Anchored outside our own derivation on the province totals typed from PBS Table 1 — Sindh, KP and Balochistan to the person, and South Punjab plus the Punjab it leaves behind equal to Punjab; the twenty uncounted districts set aside by name against `withoutCensusData`; a spread or a reason for having none, never both; contiguity absent from the block, because #16 answers it. Two states the shipped set can now show for itself: **H1** puts every census district in one unit, so there is one counted unit, its population *is* the national total, and the ratio is absent rather than 1; **H3** renames two first-level units and so counts 45 districts moved where only 7 change hands, with the footnote that says which seven asserted beside the figure | `bundle.test.ts` |
 | What a *voided* scorecard looks like — the states the shipped set cannot show, on five districts: a unit reaching into ground the census does not cover, one counted unit and no ratio to give, nothing counted at all. And the "moved" rule against the two readings it refuses — a shrinking province keeping its districts, a territory promoted keeping its ground. A variant withholding its own figures is no longer among them: H2 (#30) is that state on the real map, and is asserted over the artifact | `scorecard.test.ts`, `bundle.test.ts` |
@@ -615,11 +710,11 @@ the active variant's unit outlines draw prominently on top.
 one-of-N and the alternatives *are* the product. The baseline sits first among the bases, because
 returning to the real map is the same kind of act as choosing one. **A basis is never active on
 its own** — selecting one selects its first variant (D13), so there is no state that means
-"shaded, with nothing proposed over it". All four bases are always offered, and the three that
-cannot yet be drawn are **refused out loud**: the control says whether the variants are missing,
-the shading is missing, or both — Administrative and Historical now have their variants written
-and want only a fill, and Development is the one basis short of both — said on being pressed and
-not only on hover, since `disabled`
+"shaded, with nothing proposed over it". All four bases are always offered, **two of them are live**
+— Language and, since #31, Development — and the two that cannot yet be drawn are **refused out
+loud**: the control says whether the variants are missing, the shading is missing, or both;
+Administrative and Historical have their variants written and want only a fill, and no basis is now
+short of both. Said on being pressed and not only on hover, since `disabled`
 takes no tap and the hard bar is a 390px phone. Which bases can be shaded is a property of the renderer, not of
 the bundle, and is stated once in `main.ts` so the menu and the map cannot disagree.
 
@@ -693,6 +788,13 @@ on purpose: one is an answer the census could not file, the other a question it 
 here, and a single grey for both would say the map knows less than it does. Neither is `Others`
 — a residual is not a language, and the pipeline already refuses to let it win a dominance.
 
+**Under the Development basis it carries two, and the missing third is a difference rather than an
+omission** (#31). A district falls in one of four **bands** of the composite, or it is left at the
+unshaded baseline because PBS published none of the three rates for it — the same twenty. There is
+no stipple, because a mean of three published rates always has a value where a dominant mother
+tongue is an answer the census can fail to name; the vocabulary is shared (`lib/fill.ts`) so that
+the two bases cannot draw the same absence two ways.
+
 **Hover** — highlights district, current province, and proposed unit at once; tooltip names
 all three (#13, #18). The district and its province are washed and named, with population,
 dominant mother tongue and a source per figure; the unit line arrives with the variant and says
@@ -703,6 +805,23 @@ deliberately and a `drawn` one can only mean as a gap. The tooltip is also the *
 surface a screen reader gets, since `role="img"` on the map hides the shapes, so the live region
 carries the same sentence — the unit included, and included even for the twenty districts with no
 figures, which are exactly the ones a reader checks a proposal's edge against.
+
+**Under the Development basis the tooltip carries the shading's own evidence too, and it must**
+(#31). Every other fill on this map is a figure PBS published and the tooltip already prints it; the
+development fill is a **composite this project defines**, and a number of ours on screen with
+nothing but a colour to explain it is the one shape of unsourced surface the working agreement
+forbids. So the box carries the composite with its formula and its `synthesized` badge, and then all
+three components — each with the PBS table it came from and **its own denominator**, since the three
+do not share one — so a reader who disagrees with weighting them equally can see all three and say
+so. The third is *Households with a flush toilet* and says why it is not called improved sanitation.
+
+Two costs, stated. This is the **longest tooltip in the app**, six figures deep. And the
+mother-tongue line stays rather than being swapped out: it is the census's answer for the district
+and not a claim about the shading, it has been on every tooltip since #13, and a district whose
+tooltip means different things under different bases is a district a reader cannot compare with
+itself. The development figures are dropped whole where a variant withholds modern ones (H2), for
+the reason that rule exists — they are a mean of 2023 rates, and three of them beside a boundary of
+1947 would be the same claim the withholding refuses.
 
 **Unit names replace province names, rather than joining them.** Seven of L1's eight units *are*
 current provinces carried through, so drawing both tiers would set "Sindh" twice a few pixels
@@ -843,6 +962,13 @@ the sheet the reader is already holding; and a **tap on any district names its u
 tooltip's third line (#33), so no ground on the map is more than one press from the name of the
 proposal covering it. What is lost is the name set *on* the ground, and it comes back on zoom —
 asserted, for all thirteen, at desktop size.
+
+**D1 adds none to that list, and the reason is the shape of the map rather than luck** (#31). It is
+also rule-drawn and its units are also named for a district, but it draws **eleven** where A1 draws
+eighteen, and each of the eight is half a province rather than one of six units packed into central
+Punjab — so *Rahim Yar Khan* and *Karachi East* have the room *Bahawalnagar* does not. Every one of
+its units is named at the bar, which the suite asserts along with every other variant's rather than
+by name, because the general check is what would catch a twenty-first.
 
 **District names are the one tier with a zoom threshold** (#34). 156 names over a 369px frame is a
 word search rather than a map, and the district is the building block every proposal is stated in
@@ -1060,6 +1186,15 @@ and the per-district mother-tongue excesses are an auditor's appendix of some hu
 they stay in the artifacts where the suite re-derives them every run, and the panel says so and
 names the files.
 
+**The development composite has a row of its own on it, and it is the only row that is not somebody
+else's figure** (#31). Badged `synthesized` alone, carrying the formula and the sentence saying what
+it is not, dated by the census it is a function of and never by the day the arithmetic ran, and
+stamped with a build date of its own beside the other five artifacts. It appears a second time
+**among the discrepancies**, which is where it belongs even though it is not two sources
+disagreeing: the failure it invites is a reader taking it for a published statistic, and a panel
+that listed it once as a source and left that alone would be using the audit surface to make the
+data look tidier than it is.
+
 Nothing on it answers to the selection — the sources, the vintages and the build dates are the
 same under every basis and every proposal — so it is rendered once, at load. The words are decided
 in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with the card.
@@ -1074,7 +1209,9 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   the *same* weight as a province. A fainter or thinner outline is legible and says the wrong
   thing — provisional, or not quite ours — about ground Pakistan administers. **Not fully
   interactive:** PBS's 2023 results cover 136 districts — the four provinces and ICT only — so
-  no AJK or GB district has a mother tongue, literacy, water or sanitation figure. They cannot
+  no AJK or GB district has a mother tongue, literacy, water or sanitation figure — and so none has
+  a development composite either (#31), since a mean of three absent rates is not a low score but no
+  score. They cannot
   be shaded under any basis, and carry no hover statistics beyond a name. Hovering names them
   and says *the census does not cover them*, so the absence reads as coverage and not as a zero
   or a failed load. AJK population exists only relayed via AJK BoS, never direct from PBS.
@@ -1146,10 +1283,16 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   of this proposal's own source* and point at the Source line, where 1947, 1955 and 1970 actually
   are; quoting the deferral after "Vintage:" would put a sentence on the image saying the date is
   stated per variant, on a variant that states none. **The key is derived, never transcribed**,
-  from the same `unitLegend` and `motherTongueLegend` the on-screen legend is built from — less the
-  six categories dominant in no district, which on a band would push the nine that matter onto a
-  line of their own. And **the badges are glossed in the image**, because a PNG has no hover and a
-  provenance word a reader cannot check is a claim.
+  from the same `unitLegend`, `motherTongueLegend` and — since #31 — `developmentLegend` the
+  on-screen legend is built from, less the six categories dominant in no district, which on a band
+  would push the nine that matter onto a line of their own. It still **refuses by name** a basis it
+  has no fill for: two of the four have one now and two do not, and a band that answered every
+  shadeable basis with the mother-tongue key would print the wrong legend under the right badge.
+  The development key is the four bands and the one absence, in the order the scale is read; the
+  sentence saying no published source states the figure is deliberately *not* a key entry, because
+  it is the badge's gloss and the band already prints that under Provenance. And **the badges are
+  glossed in the image**, because a PNG has no hover and a provenance word a reader cannot check is
+  a claim.
 
   **The band describes the picture, never the selection**, which is the one place this could have
   gone badly wrong. While compare is held the map has been given the baseline whole (#22), so a band
@@ -1217,6 +1360,18 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   so the gate is held on the pairs that actually share a border on the map — geography, not a
   scatter plot, decides which two fills a reader ever sees touching — and the pairs that fail
   when any two swatches sit side by side are named in `palette.ts` rather than left to be found.
+- **The Development ramp is the one sequential scale, and it is held to a sequential scale's
+  criteria** (#31). Lightness falls and chroma rises monotonically from the lowest band to the
+  highest along a green-to-blue path — the order *is* the encoding, and a reader reads it against
+  the legend in order rather than by recalling an absolute hue. It has about **0.14 of OKLab
+  lightness to spend**, bounded below by the rule that a fill must clear 3:1 against the unit accent
+  and above by the rule that it must not be mistakable for an unshaded district, and four steps
+  inside that window are 0.042 apart. So **no two adjacent bands reach the ΔE the categorical
+  palette is held to**, which is stated in `palette.ts` and asserted in the suite rather than
+  smoothed over: the weakest step is named, the ends of the ramp clear every gate including for
+  dichromats, and the relief is that every band is labelled with its own numbers in the legend and
+  the tooltip prints the district's composite *and* its three components. It is also why there are
+  four bands and not five.
 - **Responsive, and the phone is not the degraded case** (#33). Hard bar: **map legible and
   variant switching functional at 390px.** Pakistan's internet is overwhelmingly mobile-first, so
   this is where most of the audience meets the app. Panel becomes a bottom sheet; hover becomes
@@ -1312,14 +1467,17 @@ Numbered by the grilling question that settled each.
    not buy the exception with a blank field, and a variant that carries figures is refused exactly
    as before.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
-4. **`SCENARIOS-DRAFT.md` is temporary.** The typed data module now exists
-   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) and carries the whole Language
-   basis, L1 to L7, the whole Administrative one, A1 to A5, and the whole Historical one, H1 to H4;
-   the markdown is deleted once the last one has migrated into it (#36) — **D1 alone**. The draft's estimate of
-   ~9 units for A1 was made at division resolution; the district-resolution answer is 16, the count
-   is a finding and the card says so. Until then the two coexist and
-   the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
-   rendered variant-card content, not documentation. Keeping both would be two sources of truth.
+4. ~~**`SCENARIOS-DRAFT.md` is temporary.**~~ — **resolved (#36).** The typed data module
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) now carries all seventeen
+   variants, D1 last (#31), and the markdown is **deleted**. Keeping both would have been two
+   sources of truth, and the draft had already drifted from the build in the one place it mattered
+   most: it named the third development indicator "improved sanitation", which is a column PBS does
+   not publish, and the shipped basis shades by the flush-toilet share and says so. Two of the
+   draft's own estimates are worth recording as it goes, because both were made at division
+   resolution and both came out differently at district resolution: A1's "~9 units" is 16, and D1's
+   claim that the gradient split "independently reproduces South Punjab, interior Sindh and interior
+   Balochistan" is right about Punjab and wrong about the other two — see the Data section. Both are
+   findings the cards state.
 
 5. **`GB` as Gilgit-Baltistan's short form is unconfirmed.** Added for #34, where the alternative
    was leaving the territory drawn and anonymous at 390px — the one thing the politically sensitive
@@ -1343,8 +1501,9 @@ Numbered by the grilling question that settled each.
    met for those three variants, which is stated where the labelling doctrine is rather than left
    waiting on a source that does not exist.
 
-**Scenario content: 17 variants approved, 16 built** — Language 7, Administrative 5, Historical 4,
-Development 1; only D1 is outstanding. H2 omits Amb and Phulra (sub-district, cannot be drawn
+**Scenario content: 17 variants approved, 17 built** — Language 7, Administrative 5, Historical 4,
+Development 1. Nothing is outstanding, and `SCENARIOS-DRAFT.md` is deleted (#36): the typed module
+is the only source of scenario content. H2 omits Amb and Phulra (sub-district, cannot be drawn
 without inventing a boundary) and names both on the card. Karachi and Pashtun Balochistan are
 attributed variants, not algorithmic by-products.
 
