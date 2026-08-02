@@ -429,6 +429,25 @@ export function resolveClaimedDistrict(
 }
 
 /**
+ * A list the type system has been told is non-empty, checked rather than asserted.
+ *
+ * `NonEmpty` exists so that a variant with no opposition line, or a unit claiming nothing, does not
+ * typecheck. A derived variant assembles its lists at build time, and `as unknown as NonEmpty<T>`
+ * would hand that guarantee straight back — so the cast is made here once, behind a check that
+ * fails naming what was empty, in the same voice as every other refusal in this file.
+ */
+export function nonEmpty<T>(values: readonly T[], what: string): NonEmpty<T> {
+  const [first, ...rest] = values;
+  if (first === undefined) {
+    throw new Error(
+      `${what} came out empty. A rule that produces nothing has not drawn a smaller map; it has ` +
+        `failed, and a unit or a card built on it would be a blank where a claim should be.`,
+    );
+  }
+  return [first, ...rest];
+}
+
+/**
  * Slug for a unit id, so `intactProvince` need not be told one.
  *
  * Exported because the partitioner (#27) names generated units too, and two private copies of this

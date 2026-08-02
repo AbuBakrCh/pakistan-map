@@ -83,7 +83,12 @@ describe('readUnitOutlines', () => {
   });
 
   it('refuses a variant nothing was dissolved for', () => {
-    expect(() => readUnitOutlines(topology, bundle, 'l7')).toThrow(/no units for variant "l7"/);
+    // Deliberately not a variant id this project will ever mint — it used to be `l7`, which the
+    // mother-tongue rule then made real, and a test whose premise is "this one is not written
+    // yet" quietly stops testing anything the week it is.
+    expect(() => readUnitOutlines(topology, bundle, 'no-such-variant')).toThrow(
+      /no units for variant "no-such-variant"/,
+    );
   });
 });
 
@@ -163,6 +168,10 @@ describe('unitBoundaries', () => {
       l3: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       l4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       l5: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      l6: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      // L7 replaces every province with a language region and still leaves the two territories as
+      // themselves, because the census reaches neither and the rule has nothing to sort them by.
+      l7: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       h3: ['Northern Areas', 'Azad Jammu & Kashmir'],
       h4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],

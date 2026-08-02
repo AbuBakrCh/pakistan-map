@@ -15,7 +15,8 @@ import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
-import { VARIANTS } from './variants.ts';
+import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
+import { dominantTongues, variantsFrom } from './variants.ts';
 import {
   districtsMoved,
   scorecardOf,
@@ -50,6 +51,27 @@ const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.j
 const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
 const adjacency = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/adjacency.json'), 'utf8'));
 const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
+
+/**
+ * The content module's own variants, derived the way the build derives them (#26).
+ *
+ * Two of the ten have no published district list and are computed from the census and the district
+ * borders, so `variants.ts` is a function of both. The context comes from the committed bundle,
+ * which is what every other assertion in this file stands on — and it is only used below to
+ * compare the *module* against the *artifact*, which is a question the artifact cannot answer
+ * about itself.
+ */
+const VARIANTS = variantsFrom({
+  graph: new Map(Object.entries(adjacency.neighbours as Record<string, string[]>)),
+  dominant: dominantTongues(
+    statistics as { districts: Record<string, { motherTongue?: { dominant?: unknown } }> },
+  ),
+  populations: new Map(
+    Object.entries(statistics.districts as Record<string, { population: number }>).map(
+      ([district, record]) => [district, record.population],
+    ),
+  ),
+});
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -522,6 +544,9 @@ interface EmittedVariant {
     | { readonly kind: 'advocated'; readonly by: readonly string[] }
     | { readonly kind: 'unadvocated'; readonly note: string };
   readonly opposedBy: readonly string[];
+  readonly composition:
+    | { readonly kind: 'transcribed'; readonly from: string }
+    | { readonly kind: 'derived'; readonly rule: string; readonly from: string };
   readonly sources: readonly { readonly label: string }[];
   readonly footnotes: readonly { readonly kind: string; readonly text: string }[];
   readonly notes: readonly {
@@ -795,11 +820,12 @@ describe('bundle scenarios', () => {
     const holder = l3.units.find((u) => u.districts.includes('South Waziristan'));
     expect(holder?.id).toBe('khyber-pakhtunkhwa');
 
-    // Only L3 crosses, and *crossing* means taking part of one province and part of another.
-    // Merging provinces whole is a different act and H1 does it to five of them: West Pakistan
-    // spans the country and cuts through nothing. Held over every proposed unit in the bundle, so
-    // that a later variant reaching into a second province is a failure here rather than a
-    // surprise on the map.
+    // Among the claims this app *transcribes*, only L3 crosses — and *crossing* means taking part
+    // of one province and part of another. Merging provinces whole is a different act and H1 does
+    // it to five of them: West Pakistan spans the country and cuts through nothing. The derived
+    // variants are excluded by construction rather than by exception: L7 assigns districts by
+    // language and has never heard of a province, so it crosses in seven places, and that is
+    // asserted below rather than waived here.
     const size = new Map(ROSTER.map((p) => [p.name, p.districts.length]));
     const partiallyTaken = (unit: EmittedUnit) => {
       const byProvince = new Map<string, number>();
@@ -809,13 +835,125 @@ describe('bundle scenarios', () => {
       }
       return [...byProvince].filter(([province, taken]) => taken < (size.get(province) as number));
     };
-    const crossing = variants.flatMap((variant) =>
-      variant.units
-        .filter((unit) => unit.kind === 'proposed')
-        .filter((unit) => partiallyTaken(unit).length > 1)
-        .map((unit) => `${variant.id} ${unit.id}`),
+    const crossingIn = (chosen: readonly EmittedVariant[]) =>
+      chosen.flatMap((variant) =>
+        variant.units
+          .filter((unit) => unit.kind === 'proposed')
+          .filter((unit) => partiallyTaken(unit).length > 1)
+          .map((unit) => `${variant.id} ${unit.id}`),
+      );
+    expect(crossingIn(variants.filter((v) => v.composition.kind === 'transcribed'))).toEqual([
+      'l3 saraikistan',
+    ]);
+
+    // And the derived side, said rather than excluded. A rule stated in mother tongue does not
+    // know where a provincial boundary runs, so most of its regions straddle one — which is the
+    // most informative thing L7 has to say, and would be invisible if this test simply skipped it.
+    expect(crossingIn(variants.filter((v) => v.id === 'l7')).length).toBeGreaterThan(1);
+  });
+
+  it('re-derives the two variants nobody published a district list for', () => {
+    // L6 and L7 are the only boundaries in the bundle this build drew itself, so they are the only
+    // ones a reader cannot check against somebody's document. What replaces that check is this:
+    // the rule is re-run here, from the committed census and the committed graph, and compared
+    // district by district against what shipped. A derived line nothing re-derives is an editorial
+    // opinion wearing a `derived` badge.
+    const dominant = dominantTongues(
+      statistics as { districts: Record<string, { motherTongue?: { dominant?: unknown } }> },
     );
-    expect(crossing).toEqual(['l3 saraikistan']);
+    const populations = new Map<string, number>(
+      Object.entries(statistics.districts as Record<string, { population: number }>).map(
+        ([district, record]) => [district, record.population],
+      ),
+    );
+    // The committed graph, which `adjacency` is re-derived from the arcs and compared against
+    // further down this file — so a re-derivation here stands on a graph the suite has checked.
+    const borders: AdjacencyGraph = new Map(
+      Object.entries(adjacency.neighbours as Record<string, string[]>),
+    );
+
+    const l7 = variants.find((v) => v.id === 'l7') as EmittedVariant;
+    const rerun = partitionByDominantLanguage({
+      districts: Object.keys(statistics.districts),
+      graph: borders,
+      dominant,
+      populations,
+    });
+    expect(rerun.problems).toEqual([]);
+
+    const shipped = new Map(
+      l7.units.filter((u) => u.kind === 'proposed').map((u) => [u.name, [...u.districts].sort()]),
+    );
+    const derived = new Map(
+      (rerun.partition?.regions ?? []).map((r) => [r.name, [...r.districts].sort()]),
+    );
+    // Chitral is the one unit the rule does not produce — it is what the rule could not reach —
+    // so it is compared against `unnamed` rather than against a region.
+    expect(shipped.get('Chitral')).toEqual([...(rerun.partition?.unnamed ?? [])].sort());
+    shipped.delete('Chitral');
+    expect([...shipped.keys()].sort()).toEqual([...derived.keys()].sort());
+    for (const [name, districts] of shipped) {
+      expect(districts, `l7 ${name}`).toEqual(derived.get(name));
+    }
+
+    // L6 is the Pashto region of the same rule run over Balochistan alone, and the census's own
+    // spelling of the category is what the rule sorts by.
+    const balochistan = ROSTER.find((p) => p.name === 'Balochistan')?.districts ?? [];
+    const inBalochistan = partitionByDominantLanguage({
+      districts: balochistan,
+      graph: borders,
+      dominant,
+      populations,
+    });
+    const pashto = (inBalochistan.partition?.regions ?? []).filter((r) => r.language === 'Pushto');
+    expect(pashto, 'one region, or the claim names two places').toHaveLength(1);
+
+    const l6 = variants.find((v) => v.id === 'l6') as EmittedVariant;
+    const southern = l6.units.find((u) => u.id === 'southern-pakhtunkhwa') as EmittedUnit;
+    expect([...southern.districts].sort()).toEqual([...(pashto[0]?.districts ?? [])].sort());
+    // Named rather than counted: these are the districts the census excludes from the claim, and
+    // they are the ones a reader checks the line against on an atlas.
+    expect(southern.districts).not.toContain('Mastung');
+    expect(southern.districts).toContain('Quetta');
+    expect(southern.districts).toHaveLength(12);
+  });
+
+  it('says on both derived cards that the line was drawn from data, not copied', () => {
+    // The obligation the `derived` badge creates. Held over every derived variant rather than over
+    // the two by name, so a third one cannot ship without the sentence that makes it honest.
+    const unexplained = variants
+      .filter((v) => v.composition.kind === 'derived')
+      .filter(
+        (v) =>
+          !v.footnotes.some((f) => f.kind === 'derived-boundary') ||
+          !v.badges.some((b) => b === 'derived' || b === 'synthesized'),
+      )
+      .map((v) => v.id);
+    expect(unexplained).toEqual([]);
+    expect(variants.filter((v) => v.composition.kind === 'derived').map((v) => v.id)).toEqual([
+      'l6',
+      'l7',
+    ]);
+
+    // L6 names both readings of its claim, because the territory is the same either way and a
+    // card that named one would report half a demand.
+    const l6 = variants.find((v) => v.id === 'l6') as EmittedVariant;
+    const words = l6.footnotes.map((f) => f.text).join('\n');
+    expect(words).toMatch(/Khyber Pakhtunkhwa/);
+    expect(words).toMatch(/Southern Pakhtunkhwa/);
+
+    // L7 is the one variant nobody advocates, and it says so in its own words rather than
+    // shipping an empty list.
+    const l7 = variants.find((v) => v.id === 'l7') as EmittedVariant;
+    expect(l7.advocacy.kind).toBe('unadvocated');
+    expect(l7.opposedBy.length).toBeGreaterThan(0);
+    // And it points at the attributed claims its output resembles, rather than taking credit.
+    expect(l7.notes.flatMap((n) => n.relatedVariants ?? []).sort()).toEqual([
+      'l1',
+      'l4',
+      'l5',
+      'l6',
+    ]);
   });
 
   it('says on the card what is contested about the two wider Seraiki readings', () => {
