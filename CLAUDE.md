@@ -413,6 +413,18 @@ no figure for a variant to withhold, and answering the withholding first would d
 as reaching ground it does not. So on H2 no unit carries a figure, and Punjab's is *declined* where
 Azad Jammu & Kashmir's *does not exist*.
 
+**Whether a variant withholds, and what its reason is, is asked once** (#48). `figuresWithheld` is
+exported from beside the tooltip and answers for both surfaces — the card prints it above its units,
+the tooltip prints it where the district's figures would be, and `main.ts` hands it over rather than
+deriving it, exactly as it composes no sentence of its own. It was three ternaries over one field,
+and the copy `main.ts` held was the one nothing asserted, since that file has no test seam by
+design. That copy is still answered **structurally rather than by assertion** — re-inlining the
+ternary there would leave the suite green, which is what having no seam costs — so what the one
+export buys is that there is no second derivation left for it to disagree with. What the suite does
+reach is held the way the regions list's standing words are: the card's sentence and the tooltip's
+are both taken from the value the predicate returns and compared against **each other**, never each
+against its own literal, because pinned to literals both pass while two vocabularies are live.
+
 **H2's Punjab is `proposed`, and the reason is worth reading rather than assuming.** `unchanged`
 prints one sentence — *Unchanged from the current map* — so it is a claim and not a default. The
 rule this app states is that the unit called Punjab is Punjab **whatever it has lost**, which is why
@@ -638,6 +650,7 @@ What it holds:
 | The 59 districts H2 calls moved, decomposed (#30) — 22 as princely states, 28 as North-West Frontier Province, 8 in the Gilgit Agency and Islamabad, each checked against the partition rather than against the figure; AJK absent from the origins, since it keeps its own name and moves nothing. The card carries all four numbers, because 59 read alone is a redraw of a third of the country and what it mostly records is this map using the names of 1947 | `bundle.test.ts` |
 | The first non-contiguous unit the shipped set actually has (#30) — H2's **Balochistan**, two pieces, **Awaran** named as the stranded one, flagged and drawn with no error path (D7); and asserted to be the *only* one in the whole set, so the flag is not decoration on the other 165 outlines | `bundle.test.ts` |
 | Three absences the tooltip words apart (#30) — a district the census never reached, one it reached and named no dominant tongue for, and one whose figures the variant declines; no two sharing a sentence, and the census's own coverage asked **first**, so Hunza under H2 says the census does not reach it rather than that H2 withheld it. The withholding drops the **mother tongue** with the population, since that note quotes a headcount of its own; every other variant's tooltips asserted unchanged | `tooltip.test.ts` |
+| One withholding rule, one answer (#48) — the card's sentence held against the **tooltip's own value** rather than against a literal of its own, both taken from `figuresWithheld`, so an edit to either surface's copy cannot leave the pair green; and exactly H2 withholding in the shipped set, since a predicate that never fires passes a test perfectly | `tooltip.test.ts` |
 | `unchanged` is a claim and not a default (#30) — H2's Sindh and Balochistan only *lose* ground and stay `unchanged`; its Punjab also **gains** the ground ICT now covers and is `proposed`, checked against the origins the bundle records rather than against the kind it was given. And `districtsMoved` shown to be independent of `kind` from both ends: Punjab's 33 districts still carry the province forward at `proposed`, exactly as A5's two promotions move nought | `bundle.test.ts` |
 | No unsourced year on a variant card (#30) — every year the prose asserts extracted and checked against every year the sources reach, the Durand check generalised from one footnote to all sixteen variants. Held with the four pre-existing gaps **named** — A1 to A3's 1970 and H1's 1961 — so a new one fails rather than joining a tolerated count | `bundle.test.ts` |
 | A withheld figure and an absent one, worded apart on one card (#30) — H2's Punjab has a 2023 population and declines to print it; its Azad Jammu & Kashmir has none to print. Both carry `null`, so a card reading only that field would say the census does not reach Punjab — which is why the census-coverage sentence is asked *first* and the variant's own withholding second | `card.test.ts` |
