@@ -45,7 +45,15 @@ describe('basisChoices', () => {
     // The order the selector offers them in, which is the order they are written in the module: a
     // reader entering the basis lands on the first (D13), and the three southern readings sit
     // together and widest-last so that walking down the group walks outward from one claim.
-    expect(language?.variants.map((v) => v.id)).toEqual(['l1', 'l2', 'l3', 'l4', 'l5']);
+    expect(language?.variants.map((v) => v.id)).toEqual([
+      'l1',
+      'l2',
+      'l3',
+      'l4',
+      'l5',
+      'l6',
+      'l7',
+    ]);
     expect(language?.variants[0]?.tagline).toBe('the version that partly exists');
   });
 
