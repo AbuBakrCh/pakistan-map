@@ -16,7 +16,7 @@ import { feature } from 'topojson-client';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
-import { dominantTongues } from './variants.ts';
+import { dominantTongues, variantsFrom } from './variants.ts';
 import {
   districtsMoved,
   scorecardOf,
@@ -51,6 +51,27 @@ const scenarios = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/scenarios.j
 const outlines = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/unit-outlines.json'), 'utf8'));
 const adjacency = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/adjacency.json'), 'utf8'));
 const statistics = JSON.parse(readFileSync(resolve(ROOT, 'data/bundle/statistics.json'), 'utf8'));
+
+/**
+ * The content module's own variants, derived the way the build derives them (#26).
+ *
+ * Two of the ten have no published district list and are computed from the census and the district
+ * borders, so `variants.ts` is a function of both. The context comes from the committed bundle,
+ * which is what every other assertion in this file stands on — and it is only used below to
+ * compare the *module* against the *artifact*, which is a question the artifact cannot answer
+ * about itself.
+ */
+const VARIANTS = variantsFrom({
+  graph: new Map(Object.entries(adjacency.neighbours as Record<string, string[]>)),
+  dominant: dominantTongues(
+    statistics as { districts: Record<string, { motherTongue?: { dominant?: unknown } }> },
+  ),
+  populations: new Map(
+    Object.entries(statistics.districts as Record<string, { population: number }>).map(
+      ([district, record]) => [district, record.population],
+    ),
+  ),
+});
 
 const layer = (name: string) =>
   feature(bundle, bundle.objects[name]) as unknown as {
@@ -515,6 +536,8 @@ interface EmittedVariant {
   readonly basis: string;
   readonly name: string;
   readonly badges: readonly string[];
+  /** Present only where the variant dates its own boundary; absent means "read at the basis's". */
+  readonly vintage?: string;
   readonly rationale: string;
   readonly status: string;
   readonly advocacy:
@@ -550,6 +573,45 @@ describe('bundle scenarios', () => {
   it('ships at least one variant, expressed as data rather than as prose', () => {
     expect(variants.length).toBeGreaterThan(0);
     expect(variants.map((v) => v.id)).toContain('l1');
+  });
+
+  /*
+   * The bake carries a variant's own vintage, which it did not until #32 went looking for one.
+   *
+   * The schema has had an optional `vintage` since it was written and the validator has always
+   * checked it, so the *module* was right and every review of the content passed. What was missing
+   * was one line in `build-scenarios.ts`: the field was never written into the artifact, so every
+   * variant reached the runtime dated at its basis and nothing went red — because until the PNG
+   * band nothing on screen printed a variant's date.
+   *
+   * Held against `VARIANTS` rather than only against the artifact, so this compares the two sides
+   * of the bake instead of asking the artifact whether it agrees with itself.
+   */
+  it('carries each variant’s own vintage through the bake, or leaves it to the basis', () => {
+    const declared = new Map(VARIANTS.map((variant) => [variant.id, variant.vintage]));
+    const lost = variants.flatMap((variant) => {
+      const own = declared.get(variant.id);
+      if (own === undefined) {
+        return variant.vintage === undefined
+          ? []
+          : [`${variant.id} is dated "${variant.vintage}" in the bundle and nowhere in VARIANTS`];
+      }
+      return variant.vintage === own
+        ? []
+        : [`${variant.id} states the vintage "${own}" and the bundle carries ${JSON.stringify(variant.vintage)}`];
+    });
+    expect(lost).toEqual([]);
+  });
+
+  it('dates every Historical variant itself, since its basis defers rather than declaring one', () => {
+    // The Historical basis's declared vintage is "the date of each demarcation, 1947 onward —
+    // stated per variant, not shared": a rule for finding a date, not a date. A Historical variant
+    // that states none therefore resolves to a sentence where a date should be, on the card, in
+    // the band and anywhere else the date is printed. Named per variant, never counted.
+    const undated = variants
+      .filter((variant) => variant.basis === 'historical' && variant.vintage === undefined)
+      .map((variant) => `${variant.id} (${variant.name}) states no vintage of its own`);
+    expect(undated).toEqual([]);
   });
 
   it('gives every unit districts the map actually draws', () => {

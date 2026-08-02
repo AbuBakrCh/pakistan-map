@@ -12,8 +12,9 @@ and variant selectors** (#18) over its **neighbour silhouettes and city dots** (
 **variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
 contiguity (#16), the **scorecard** (#20) carrying the figures a proposal is judged on, the
 **compare gesture** holding a proposal off the map (#22), every view carrying a **deep link**
-of its own (#23), and the **About the data** panel (#21) putting every source, its vintage and the
-bundle's own build dates on one auditable surface.
+of its own (#23), the **About the data** panel (#21) putting every source, its vintage and the
+bundle's own build dates on one auditable surface, and the **phone adaptation** (#33) turning the
+card into a draggable bottom sheet and hover into tap.
 
 ---
 
@@ -73,6 +74,24 @@ declares that and each variant carries its own document's date. A variant may ca
 its own for the same reason — H2 draws 1947 — and where it does not, it is read at its basis's and
 the resolution says so, so that no surface prints the census's year against a boundary the census
 had nothing to do with.
+
+**Every Historical variant must date itself, and the build now says so.** Its basis declares a rule
+for finding a date rather than a date, so a Historical variant that states none resolves to a
+sentence where a date should be — *"stated per variant, not shared"*, printed against a variant that
+states nothing. H1 is dated **14 October 1955 to 30 June 1970**, the fifteen years One Unit was in
+force, and H3 **1 July 1970**, the four provinces as restored when it was dissolved. H4 is dated
+differently on purpose: it is the one Historical variant whose *boundary* is not historical, since
+what is drawn is Bahawalpur Division as PBS publishes it **today** — so its vintage is the district
+set's, and the 1947–1955 province is the claim's history rather than its geometry. Dating it 1947
+would say the app had drawn the 1947 state, which it has not.
+
+The field also has to **survive the bake**, which it did not until #32 went looking for one. The
+schema has carried an optional `vintage` since it was written and the validator has always checked
+it, so the module was right and every content review passed; `build-scenarios.ts` simply never
+emitted it, so every variant reached the runtime dated at its basis and nothing went red — because
+until the PNG band, no surface printed a variant's date. It is written **only where the variant
+states one**, since an absent field is the signal to read the basis's, and the suite compares the
+two sides of the bake rather than asking the artifact whether it agrees with itself.
 
 **Deliberately cut:**
 
@@ -392,10 +411,16 @@ What it holds:
 | The scorecard on the card — five figures in a fixed order; census populations in full and never rounded to a headline; the total qualified by which units it is over and which are outside it; a missing ratio said rather than printed as 1; the stranded districts of a broken unit named; and population voided in the words of whatever is missing it — a variant's own reason and a census gap worded apart | `card.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
+| The vintage through the bake — each variant's own date compared against `VARIANTS` rather than read back off the artifact, naming the variant and both strings where they differ; and every Historical variant dated by itself, named rather than counted, since its basis declares a rule for finding a date and not a date | `scripts/lib/bundle.test.ts` |
 | Provenance (#21) — every basis and every variant carrying a badge, a source **and a vintage**, held over `BASES` and `VARIANTS` where a content diff is actually made rather than only over the artifact; badges from the closed vocabulary at both tiers, naming the basis or variant *and* the word; both the **Advocated by** and the **Opposed by** line, with *unadvocated* held as the stated state it is; the one vintage (D24) anchored against the string all five committed artifacts stamp, and a `census` badge at any other vintage failing by name; and a boundary this build **derived** refused unless it says so — in both directions, since an unbadged derived line passes our arithmetic off as somebody's proposal and a `derived` badge over a transcribed one credits their document to us | `provenance.test.ts` |
 | The About panel (#21) — every source row and every basis carrying all three, none blank and each named; a boundary dated by **OpenStreetMap's own edit date** and a figure by the census, and neither by the date the build ran; every drawn surface reached, named rather than counted, so a row lost to a renamed bundle key is a failure and not a silence; the discrepancies present **with their figures** — 1,041,342 people, 6,374 households, the flush-toilet share and the 48,010-household denominator — and the geometry's own disagreements with PBS quoted whole rather than summarised; what the panel leaves off said on the panel; and a date set by hand rather than by the browser's locale, for the reason `groupDigits` exists | `src/lib/about.test.ts` |
+| The export band (#32) — the six things D22 requires, held one at a time on every variant rather than counted: the scenario name, *Proposed — not official* in those words, the badge with its gloss, the basis, a vintage, the sources and the licence line. The baseline's own band, which names the current map and never calls it a proposal, keys the three tiers it actually draws, and does not spend the accent on a map with nothing proposed on it; the key derived from the same two functions the screen's is, with the six nowhere-dominant categories left off by name and the ceasefire line keyed under every basis; the accent reserved for `proposed` and the two absences painted apart; and a layout whose height is a result — wrapping rather than running off a 390px band, growing taller as it narrows, losing no row it was given, and setting the standing line above the key and the small print. Above all **the date this build would otherwise have got wrong**: H1, H3 and H4 inherit a basis whose "vintage" is a deferral, and the band is held to printing the proposal's own source instead of quoting it — asserted per variant, since a plausible date in the right place is a silent failure | `src/lib/export-band.test.ts` |
 | The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
 | The rule engine — a rule partitioning the real 136 exactly once, every unit contiguous against the committed graph, every unit's people its own districts' census rows and the whole partition equal to Table 1's national figure; the same rule drawing a byte-identical map twice and again from a shuffled scope and every map reversed, which is the determinism claim; a ceiling holding on every unit and never in fewer units than the arithmetic floor; a distance limit re-measured from the committed geometry; the output validating as a variant, both universes, with `TERRITORY_CLAIM_POLICY` still `forbid`. And what it refuses, each naming the district — the twenty AJK and GB districts the census cannot see, Lahore where a ceiling is below a district that cannot be split, and a district no unit could grow into | `partitioner.test.ts` |
+| The bottom sheet's velocity (#33) — measured over the **end** of the drag and not averaged over it, which is the whole reason the flick rule is reachable at all: the gesture it is written for — dragged far down, flicked back up — has a net displacement near zero, so an average reports no gesture and `settle` leaves the sheet where it started. Never a division by zero from a drag with one sample or no elapsed time, since an infinity reads as a flick and would move the sheet on a gesture nobody made; and a drag whose samples arrive further apart than the window measured rather than reported as still | `src/lib/sheet.test.ts` |
+| The bottom sheet (#33) — the sheet never getting *shorter* as it is opened, held over viewports short enough to break it rather than over the phone it was designed on; a drag that went nowhere resting where it started, since there is no position between two detents; the flick answered where the distance would refuse it, and taken **over** the distance where the two disagree; one detent per drag, never two; `peek` as the floor, because the card leaves with the outlines and no view draws boundaries with nothing saying whose they are; and every detent reachable by press, so none is a state only a finger can enter | `src/lib/sheet.test.ts` |
+| The docked tooltip joins the yielding order (#33) — a name over ground the bar stands on moved clear or given up, never left underneath it; a name the bar does not reach keeping its own anchor, so a desktop pays nothing | `src/lib/labels.test.ts` |
+| Hover becomes tap (#33) — a pan and a pinch each refused as the map being *moved* rather than read, the pinch counted across the whole gesture so one finger lifted early is not a tap; the long press left to the platform; the two ways a finger can dismiss a tooltip that a mouse gets free from `pointerleave`, and a different district moving it in one tap rather than two; and an unrecognised pointer left hovering, because a tooltip put up by a mistaken hover is taken down again and one put up by a mistaken tap is not | `src/lib/touch.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
@@ -531,6 +556,15 @@ wins the tight frame and the qualified name returns with the room. The cost is p
 zoom by **Mardan**, which now gives way to `Peshawar Division` in the most crowded corner of KP —
 named in the suite, not absorbed into a count, and back on the first zoom step.
 
+**Download PNG (#32)** — the export button, beside Compare. Present at the baseline as well as
+under a proposal, unlike Compare: the current map is exactly as likely to be screenshotted as a
+proposed one, and the sanctioned copy is the one carrying its own sources. One format and one
+resolution, no menu — the whole argument for the feature is that it must be less effort than the
+screenshot key. Disabled for the duration of the encode rather than debounced, since on a phone a
+second press lands before the first PNG is done and two files is a confusing answer to one press;
+a failure is spoken rather than swallowed, because a button that silently does nothing reads as a
+broken page.
+
 **Compare (#22)** — hold `Space` (or press Compare) to drop strata 1 and 3 and restore the real
 map at full strength. The *only* map comparison; no side-by-side, no cross-variant table (D17).
 
@@ -569,6 +603,68 @@ strands the map on the baseline while the card beside it argues for boundaries t
 Auto-repeat is swallowed but not acted on: every repeat would scroll the page if its default were
 let through, and none of them may restart a cross-fade mid-fade. The full accessibility pass is
 #35's; this is the narrower obligation not to leave it a conflict to find.
+
+**On a phone (#33)** — the card is a **bottom sheet**, hover is a **tap**, and Compare moves to the
+corner a thumb reaches — as one row with the PNG export (#32), because the two are the same kind of
+control and #32 says so itself: neither chooses what the map shows, and both act on whatever is
+already on it. None of the three is a second version of the app: the sheet holds the same
+card, whole, because a card that hid its opposition line on a phone would read as an endorsement on
+a phone; and the Compare button is the gesture it already was (#22), holding the comparison until it
+is pressed again, moved rather than redefined.
+
+The sheet rests at **three detents** — `peek`, the ticket's ~40% `half`, and `full`, which stops
+short of the top so a strip of map stays visible and the reader is still on a map rather than on a
+page they navigated to. `peek` is the **floor**: the card arrives and leaves with the outlines (#19),
+so while a proposal is drawn there is no state in which nothing on screen says whose boundaries
+those are, and the sheet can therefore be got out of the way but not got rid of. Where a drag
+settles is decided in `lib/sheet.ts` under test, because a sheet that settles somewhere the reader
+did not mean is the whole of what makes one feel broken and is not a thing that can be found by
+reading the code back — **velocity is asked before distance**, since a reader who drags down and
+then flicks back up has changed their mind and the last thing the hand did is the better evidence
+than the furthest it got. One detent per drag, never two, or any brisk pull skips `half`, which is
+the position the ticket is about. The grip is a **`<button>`** as well as something to drag, so
+every detent a finger can reach a press can reach too, and the map is not left with a state only a
+touchscreen can enter.
+
+**Hover becomes tap, and the dismissal is the part that has to be invented.** A mouse clears the
+tooltip by leaving the district; a finger cannot leave anything, so without a deliberate way to put
+the box away it sits over the very ground it was tapped to explain for the rest of the visit. So a
+tap on the district already showing puts it away, and so does a tap on the sea — while a tap on a
+*different* district moves the tooltip in one press rather than two, because the common act is
+comparing two districts and charging it double makes the map feel stuck. Only a **still, brief,
+single** finger is a tap: a second finger is a pinch, travel is a pan, and a long hold already
+belongs to the platform, and the map has its own answer to all three. Moves are not answered at all
+on touch — every pan across the country is a `pointermove`, and answering those would drag a tooltip
+along behind the thumb.
+
+**The tooltip docks rather than follows**, and for two reasons that are not cosmetic. The pointer is
+a finger and it is standing on the district the box is about, so a box beside the pointer is a box
+over the answer. And the sheet *overlays* the map rather than shortening it, so a box clamped
+honestly inside the map's own frame can still come out underneath the card, clipped at whichever
+line the sheet happens to reach. Docked to the top of the frame it is the one place the sheet cannot
+reach. Nothing is dropped and nothing is abbreviated to make it fit — every figure keeps its label,
+its value, its note and the release it came from, because a tooltip that shed its sources on a phone
+would shed them for most of this app's readers; what changes is only that a label sits beside its
+value instead of above it.
+
+**The docked box takes part in the label layout**, and it has to, because it is an opaque bar across
+northern Pakistan — over Gilgit-Baltistan, Azad Kashmir and the ceasefire line's own name. `layoutLabels`
+cannot see a `<div>`, so it is seeded into the same `taken` set the names contend over, and put to the
+line's name as well as to the tier names — a separate placement path, and leaving it out was worse
+than doing nothing: the tier names yielded, which freed the north, and the line's name then walked
+into exactly that space and set itself at full length underneath the box. So the four-step order
+means what it says here too, ending in **no name at all** rather than in a name a reader cannot see
+(D12). The names come back the moment the box is dismissed; the pass is labels only, with no
+re-projection, which is what makes it cheap enough to run on a tap.
+
+**The sheet overlays the map; it never resizes it.** The room the page keeps for it is the room it
+takes when it is *down* (`--sheet-peek`), never its current height. `map.ts` redraws on a
+`ResizeObserver`, and a redraw refits the projection and relays out every label — so a frame tied to
+the live height would re-project the country on every frame of the drag, and the map would zoom and
+shift under the very finger opening the card. The country does not move under a gesture, which is
+the rule compare is already held to. The accepted cost, stated rather than hidden: at `half` the
+sheet covers the lower part of the map **and the legend**, and both come back the moment the card
+comes down.
 
 **Variant card (#19)** — name and tagline, the **basis** badge beside the **provenance** badges,
 unit count, the 2–3 sentence rationale, the proposal's real-world status, where the boundary came
@@ -707,8 +803,55 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   Turkmenistan, Uzbekistan and Oman are — the silhouettes exist for the boundary, not for the
   corner of the frame.
 - **PNG export bakes in** scenario name, legend, provenance badge, data vintage, source, and
-  "proposed — not official". This content will travel as WhatsApp and X screenshots regardless;
-  the sanctioned export exists so circulating copies carry their own disclaimer.
+  "proposed — not official" (#32). This content will travel as WhatsApp and X screenshots
+  regardless; the sanctioned export exists so circulating copies carry their own disclaimer.
+  A 2× raster of the current view with a footer band under it, produced **entirely on the
+  machine** — the SVG is serialised into a `data:` URL, decoded by an `<img>` and read back off a
+  canvas, so no server ever sees a reader's composition of a politically live picture (D19).
+
+  Four things the band settles that a source list would not. **The standing line is not
+  conditional prose**: every band carries one, and it says which of the two maps this is — a
+  proposal says *Proposed — not official*, and the baseline says it is the official geography,
+  because an export of the real provinces stamped "not official" would be this app disclaiming the
+  government's own map. It is set in the accent **only when something is proposed**, since the
+  accent means exactly that everywhere else. **An inherited vintage says whose it is, and a basis
+  with no date to lend says that instead** — the Historical basis's declared vintage is not a date
+  but the rule for finding one ("stated per variant, not shared"), so H1, H3 and H4 print *the date
+  of this proposal's own source* and point at the Source line, where 1947, 1955 and 1970 actually
+  are; quoting the deferral after "Vintage:" would put a sentence on the image saying the date is
+  stated per variant, on a variant that states none. **The key is derived, never transcribed**,
+  from the same `unitLegend` and `motherTongueLegend` the on-screen legend is built from — less the
+  six categories dominant in no district, which on a band would push the nine that matter onto a
+  line of their own. And **the badges are glossed in the image**, because a PNG has no hover and a
+  provenance word a reader cannot check is a claim.
+
+  **The band describes the picture, never the selection**, which is the one place this could have
+  gone badly wrong. While compare is held the map has been given the baseline whole (#22), so a band
+  built from the selection would caption the real provinces with a proposal's name, badge it and
+  stamp it *Proposed — not official* — the single most damaging image this app could emit, and
+  exactly the thing the ticket exists to prevent. So the export asks what the *map* is showing and
+  gets the baseline's own band while the comparison is held; `shadedBy` is the renderer's answer for
+  the same reason, since three of the four bases can be selected and shade nothing, and the band
+  **refuses by name** to key a basis it has no fill for rather than printing one basis's colours
+  under another's title.
+
+  Two things had to be got right about the picture rather than the words, and both are stated
+  because both were wrong first. The crop is the union of the drawn land **and every name and dot
+  over it**, clipped to the frame — the ceasefire line's name is deliberately placed on clear paper
+  beside the line, and a crop taken to the coastline slices it off the one copy that travels with
+  nothing to explain the dash. And the export **photographs a settled map, never a cross-fade**:
+  the strata fade in CSS and the outlines in the renderer, so both are stilled for the length of one
+  read — otherwise pressing Download within `--switch` of a variant change bakes one proposal half
+  dissolved into another, with nothing in the picture to say so. Stilling is `map.photograph`'s, a
+  callback rather than a getter, because stilling the map and reading it have to be one operation
+  and the knowledge of what animates belongs in the file that animates it. The band also defines its
+  **own** hatch and stipple: the map's are counter-scaled by 1/k so their texture survives a 24×
+  zoom, which is right inside the zoomed group and wrong in a legend, where it would collapse the
+  pitch to a fraction of a pixel and leave a swatch keying nothing.
+
+  The words and the arithmetic are decided in `src/lib/export-band.ts`, under test; the crop is
+  `map.image()`'s; `src/export-image.ts` rasterises and composes no sentence of its own, exactly as
+  `panel.ts` composes none of the card's.
 - **Naming:** units named as *their own advocates* name them, alternatives shown in the card
   ("South Punjab (also: Saraikistan, Saraiki Wasaib)"). The app reports what people call
   things; it doesn't adjudicate.
@@ -719,9 +862,17 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
 
 ## Stack
 
-- **Vanilla TypeScript + Vite + D3.** No framework — runtime state is four values (active
-  basis, active variant, hovered district, compare-held); no async, no forms. Routing is the
-  URL hash and nothing else (#23): one parser, one `hashchange` listener, no router.
+- **Vanilla TypeScript + Vite + D3.** No framework — runtime state is five values (active
+  basis, active variant, hovered district, compare-held, and on a phone the sheet's detent); no
+  async, no forms. Routing is the URL hash and nothing else (#23): one parser, one `hashchange`
+  listener, no router.
+
+  Two near-misses, counted deliberately. The sheet's detent (#33) **is** one of the five, but it is
+  kept out of the URL and out of `main.ts`: how far a reader has pulled the card open is a property
+  of the device in their hand, not of the view being argued, and a shared link that restored it
+  would move a stranger's sheet. The export button's busy state (#32) is **not** one at all — it
+  belongs to the control, which disables itself for the length of one encode, and the app is never
+  told: a download in flight changes nothing about what the map shows.
 - **Inline SVG, custom projection, no basemap.** Showing only Pakistan deletes the reason to
   use a mapping library. D3 owns the SVG *and* renders the panel lists.
 - Pan/zoom via `d3-zoom`. Sparse major-city dots instead of a basemap — seven of them, and
@@ -740,8 +891,14 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
   so the gate is held on the pairs that actually share a border on the map — geography, not a
   scatter plot, decides which two fills a reader ever sees touching — and the pairs that fail
   when any two swatches sit side by side are named in `palette.ts` rather than left to be found.
-- **Responsive, desktop-primary.** Hard bar: **map legible and variant switching functional
-  at 390px.** Panel becomes a bottom sheet; hover becomes tap; `Space` becomes a button.
+- **Responsive, and the phone is not the degraded case** (#33). Hard bar: **map legible and
+  variant switching functional at 390px.** Pakistan's internet is overwhelmingly mobile-first, so
+  this is where most of the audience meets the app. Panel becomes a bottom sheet; hover becomes
+  tap; `Space` becomes a button. The breakpoint is stated **once, in the stylesheet** (`--sheet`)
+  and read from there by `sheet.ts`, the same arrangement `--switch` already has and for the same
+  reason: a JS copy of `560px` eventually disagrees with the CSS one, and a sheet whose script
+  thinks it is a sheet while its CSS thinks it is a column sets a height on a box that is not
+  positioned to have one.
 
 ---
 

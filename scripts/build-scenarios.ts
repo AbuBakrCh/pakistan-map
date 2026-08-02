@@ -128,6 +128,22 @@ function emit(
     // basis (L7 is synthesized where the Language basis is a proxy) must not depend on the
     // renderer remembering to check for an override.
     badges: variant.badges ?? BASES[variant.basis].badges,
+    /*
+     * The other half of the provenance (#21), and it has to survive the bake.
+     *
+     * The schema has carried an optional `vintage` since it was written and the validator has
+     * checked it, but this function never emitted it — so every variant reached the runtime dated
+     * at its basis, and nothing went red, because until #32 nothing on screen printed a variant's
+     * date. That is exactly the silence a badge without a date is: checkable in the module, absent
+     * from the artifact.
+     *
+     * Written **only where the variant states one**. An absent field is the signal to read the
+     * basis's, and filling it in here with the basis's value would erase the difference between a
+     * variant that dated its own boundary and one that did not — which is the difference the
+     * Historical basis exists on, since what it declares is a rule for finding a date rather than
+     * a date.
+     */
+    ...(variant.vintage === undefined ? {} : { vintage: variant.vintage }),
     rationale: variant.rationale,
     status: variant.status,
     advocacy: variant.advocacy,

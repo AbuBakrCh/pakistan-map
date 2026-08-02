@@ -40,6 +40,29 @@
 
   /* One duration for every stratum, so a switch reads as one movement and not as three. */
   --switch: 340ms;
+
+  /*
+   * Whether the card is a bottom sheet (#33), stated here and read from here by `sheet.ts` — the
+   * same arrangement `--switch` already has, and for the same reason. The breakpoint is a fact
+   * about the layout, so the stylesheet owns it; a JS copy of `560px` would eventually disagree
+   * with this one, and a sheet whose script thinks it is a sheet while its CSS thinks it is a
+   * column would set a height on a box that is not positioned to have one.
+   */
+  --sheet: 0;
+  /*
+   * How tall the collapsed sheet is: the grip, and nothing else. **Stated here and nowhere else** —
+   * `sheet.ts` reads it rather than restating it, and the page reserves exactly this much room for
+   * the sheet, never `--sheet-h`, for the reason given at `.card-well` below.
+   *
+   * In `px` rather than `rem` deliberately. The grip is drawn from this value and the sheet's
+   * geometry is computed from it, and the two have to be the same number: as `3.5rem` against a
+   * `56` in the script they agreed at a 16px root and were 14px apart at a 20px one, so a reader
+   * with larger type got a collapsed sheet that clipped the very line `peek` exists to show whole.
+   */
+  --sheet-peek: 56px;
+  /* Set by `sheet.ts` while the sheet is live. Starts at the peek height so the furniture that
+   * rides above the sheet is in the right place on the first frame, before any script has run. */
+  --sheet-h: var(--sheet-peek);
 }
 
 * {
@@ -112,6 +135,17 @@ body {
   min-height: 1.9rem;
 }
 
+/*
+ * Compare and the export sit together, because they are the same kind of control — neither chooses
+ * what the map shows, and both act on whatever is already on it. Grouped rather than merely
+ * adjacent so that on a phone the pair can be moved into the corner a thumb reaches as one row.
+ */
+.control-action {
+  align-items: baseline;
+  display: flex;
+  gap: 0.3rem 0.5rem;
+}
+
 /* Collapsed rather than removed, so choosing a basis does not move the map under the pointer. */
 .controls[data-variants='none'] .control-variant {
   visibility: hidden;
@@ -178,6 +212,18 @@ body {
  * word on the button is the whole of what it is.
  */
 .chip-compare {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+/*
+ * The export (#32). Set like Compare and beside it, because the two are the same kind of control —
+ * neither chooses what the map shows, and both act on whatever is already on it.
+ *
+ * Not given the accent. The accent belongs to a proposed unit and to nothing else, and a download
+ * button wearing it would be the loudest thing on a page whose subject is the map.
+ */
+.chip-export {
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
 }
@@ -308,6 +354,20 @@ body {
 .stratum-fill {
   opacity: 0;
   transition: opacity var(--switch) ease;
+}
+
+/*
+ * Held for exactly as long as an export reads the computed styles off this map (#32).
+ *
+ * Every stratum here fades on `--switch`, and the export photographs whatever the styles say at the
+ * instant it looks. Without this, pressing Download inside a third of a second of switching bakes a
+ * cross-fade into the file — a proposal half dissolved into the one before it, with nothing in the
+ * picture to say so. Suspending the transitions makes each property compute to the value it was
+ * already heading for, which is the map the reader asked for.
+ */
+.map.is-exporting,
+.map.is-exporting * {
+  transition: none !important;
 }
 
 .map[data-fill='on'] .stratum-fill {
@@ -1149,38 +1209,153 @@ body {
   }
 }
 
+/*
+ * The phone (#33). Pakistan's internet is overwhelmingly mobile-first, so this is not a graceful
+ * degradation of the desktop layout — it is where most readers will meet the app.
+ *
+ * Three things move. The card leaves the flow and becomes a sheet anchored to the bottom of the
+ * viewport, because a card of this length under the map means the map scrolls away the moment a
+ * reader reads what is drawn on it. The map takes a fixed share of the screen rather than
+ * competing for what is left, so the country is the same size whatever the card is doing. And
+ * Compare leaves the control row for the corner a thumb can actually reach.
+ *
+ * Nothing is dropped anywhere. A card that hid its opposition line on a phone would read as an
+ * endorsement on a phone, and the phone is the majority case.
+ */
 @media (max-width: 560px) {
-  #app {
-    gap: 0.5rem;
-    padding: 0.75rem 0.6rem;
+  :root {
+    --sheet: 1;
+    /* The floor both platforms publish for a touch target, and the step the two stacked action
+     * buttons are offset by. Stated once so the stack cannot drift from the buttons. */
+    --action-h: 44px;
   }
 
+  /*
+   * The room kept for the sheet is the room the sheet takes when it is *down* — `--sheet-peek`,
+   * never `--sheet-h`.
+   *
+   * This is the whole reason the sheet overlays the map rather than displacing it. `map.ts` redraws
+   * on a `ResizeObserver`, and a redraw refits the projection and relays out every label: a frame
+   * tied to `--sheet-h` would re-project the country on every frame of the drag, so the map would
+   * zoom and shift under the very finger opening the card. The country does not move under a
+   * gesture — the same rule compare is held to, for the same reason.
+   *
+   * What a reader gets instead is what a bottom sheet gives them everywhere else: the lower part of
+   * the map covered while the card is up, and the whole of it back the moment the card comes down.
+   */
+  #app {
+    gap: 0.5rem;
+    padding: 0.75rem 0.6rem calc(var(--sheet-peek) + 0.6rem);
+  }
+
+  /* Trimmed, not dropped. Every 10px here is 10px of visible map above the sheet, and the strip
+   * between the map's top and the card is where the docked tooltip and the two action buttons both
+   * have to fit. */
   .dek {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.25;
   }
 
   .legend {
     font-size: 0.72rem;
     gap: 0.35rem 0.9rem;
-    max-height: 8rem;
+    /* Fifteen categories will not fit beside a map on a phone whatever is done to them, so the
+     * key is capped low and scrolled — the map is what the page is for. */
+    max-height: 6rem;
     padding: 0.45rem 0.6rem;
   }
 
+  /*
+   * The map takes what is left, and what is left is measured against the sheet at rest. Both
+   * floors are lowered from the desktop's: a 26rem frame on an 844px screen would push the legend
+   * off the bottom, and the whole point of the floors is that the boxes overflow in order rather
+   * than collapsing into one another.
+   */
+  /*
+   * The frame is its contents on a phone, not a share of what is left.
+   *
+   * `flex: 1 1 auto` lets the column squeeze it below the map's own floor when the colophon and
+   * the audit panel are long — and a flex item squeezed under its content does not clip, it
+   * *overflows*: the map spilled over the small print underneath it and the two drew on top of
+   * each other. Sized to its contents it cannot be squeezed, and the page scrolls instead, which
+   * is the behaviour the rest of the column already has.
+   */
   .frame {
-    min-height: 26rem;
-  }
-
-  .map-well {
-    min-height: 17rem;
+    flex: 0 0 auto;
+    min-height: 0;
   }
 
   /*
-   * The card at the hard bar. Still the whole card — nothing is dropped, because a card that
-   * hides its opposition line on a phone is a card that reads as an endorsement on a phone. The
-   * two party columns simply stack, and the full bottom-sheet adaptation is #33's.
+   * The map's floor, and on a phone it is the map that has one rather than the frame around it.
+   *
+   * The colophon and the audit panel are long prose and are flex items of the same column, so a
+   * frame left to `flex: 1 1 auto` is squeezed to its minimum by the small print underneath it —
+   * which on an 844px screen left the country 176px tall. Pakistan is very nearly square, so a
+   * floor here in the map's own box is what makes the frame square too; the page scrolls to reach
+   * the prose, which is what a page does.
    */
-  .card-well {
-    padding: 0.7rem 0.75rem;
+  .map-well {
+    min-height: 21rem;
+  }
+
+  /*
+   * The chips scroll along one line rather than wrapping into three.
+   *
+   * Wrapped, the five bases and three variants cost 330px of an 844px screen at the 44px touch
+   * target below — which is the map's height, spent on a menu. The refusal lines are deliberately
+   * left out of the strip and wrap underneath it: they are the app saying out loud why a basis is
+   * dimmed, and a sentence a reader has to scroll sideways to find is not said out loud.
+   */
+  /*
+   * Each control gets a line of its own, and both it and the strip inside it are allowed to be
+   * narrower than their contents. Without `min-width: 0` a flex item refuses to shrink below its
+   * intrinsic width, so the strip does not scroll — it pushes the page wider than the screen, and
+   * a phone answers *that* by scaling the whole layout down until it fits.
+   */
+  .control {
+    /*
+     * The label sits *beside* its strip rather than above it. Two labels stacked cost ~32px of an
+     * 844px screen, and every pixel above the map is a pixel out of the strip the docked tooltip
+     * and the action buttons share — which is the tightest space on this layout. The strip loses
+     * the label's width and scrolls, which it already does.
+     */
+    align-items: center;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  /* Except the basis row, whose refusal lines must wrap onto their own lines underneath. */
+  .control-basis {
+    flex-wrap: wrap;
+  }
+
+  .control-basis .control-options {
+    flex: 1 1 0;
+  }
+
+  .control-refusal {
+    flex: 1 1 100%;
+  }
+
+  .control-options {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    /* Chips are flush with the frame's edge, so a half-visible one says there is more to come. */
+    padding-inline-end: 0.6rem;
+    /* The strip is scrolled by the same finger that taps it; a bar would eat the target. */
+    scrollbar-width: none;
+  }
+
+  .control-options::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex: 0 0 auto;
   }
 
   .card-parties {
@@ -1189,6 +1364,219 @@ body {
 
   .card-units {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * The sheet itself. Fixed to the bottom, its height set by `sheet.ts` from the detent the reader
+   * put it at, and animated on the one duration the stylesheet states — so `prefers-reduced-motion`
+   * turns the sheet into a straight swap for free, exactly as it does the map's cross-fade.
+   */
+  .card-well {
+    border: 0;
+    border-top: 1px solid var(--rule-province);
+    bottom: 0;
+    box-shadow: 0 -2px 14px rgb(51 41 29 / 14%);
+    display: flex;
+    flex-direction: column;
+    height: var(--sheet-h);
+    left: 0;
+    overflow: hidden;
+    padding: 0;
+    position: fixed;
+    right: 0;
+    transition: height var(--switch) ease;
+    z-index: 5;
+  }
+
+  /* Mid-drag the sheet is following a finger, and a finger is not something to ease towards. */
+  .card-well[data-dragging] {
+    transition: none;
+  }
+
+  .card {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    /* The card scrolls to its own end and stops, rather than handing the rest of the gesture to
+     * the page underneath and scrolling the map away behind the sheet. */
+    overscroll-behavior: contain;
+    padding: 0 0.75rem 1rem;
+  }
+
+  /*
+   * The grip. `min-height` is `--sheet-peek` itself, so the collapsed sheet is exactly the handle
+   * and shows no clipped half-line of the card beneath it — and so the drawn height and the
+   * computed one are the same number rather than two that agree at one root font-size.
+   * `touch-action: none` because the vertical drag is this control's own; without it the browser
+   * takes the gesture for a scroll and the sheet never moves.
+   */
+  .sheet-handle {
+    align-items: center;
+    background: var(--paper-sunk);
+    border: 0;
+    color: var(--ink-faint);
+    cursor: grab;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    font-family: inherit;
+    font-size: 0.68rem;
+    gap: 0.3rem;
+    justify-content: center;
+    letter-spacing: 0.09em;
+    min-height: var(--sheet-peek);
+    padding: 0.5rem 0.75rem;
+    text-transform: uppercase;
+    touch-action: none;
+    width: 100%;
+  }
+
+  /* `display: flex` above would otherwise beat the attribute's own `display: none`, and a handle
+   * left visible past the breakpoint would sit on a card that is a column again. */
+  .sheet-handle[hidden] {
+    display: none;
+  }
+
+  .sheet-handle:active {
+    cursor: grabbing;
+  }
+
+  .sheet-grip {
+    background: var(--land-hatch);
+    border-radius: 999px;
+    display: block;
+    height: 0.25rem;
+    width: 2.5rem;
+  }
+
+  /*
+   * The two actions, in the corner a thumb reaches (#33).
+   *
+   * Compare and the export are clustered because they are the same kind of control — #32 says so
+   * itself, setting the export "like Compare and beside it": neither chooses what the map shows,
+   * and both act on whatever is already on it. On a phone that kinship is worth a row. Left in the
+   * flow they cost the map ~50px of an 844px screen for a control nobody reads, and the map is what
+   * the page is for.
+   *
+   * Compare is otherwise untouched, and that is the point: it is still the held-not-toggled gesture
+   * of #22, holding the comparison until it is pressed again exactly as it already did for a reader
+   * with no keyboard. Only where it sits has changed.
+   *
+   * The export sits lowest because it is on every view; Compare stacks above it because it arrives
+   * and leaves with the outlines, so nothing is left hovering over a gap at the baseline. Both ride
+   * above the sheet, so opening the card carries them up rather than burying them.
+   */
+  .control-actions {
+    /* Seated close to the card's edge rather than floating over the map: the room between it and
+     * the map's top belongs to the docked tooltip, which is content. */
+    bottom: calc(var(--sheet-h) + 0.35rem);
+    gap: 0.4rem;
+    justify-content: flex-end;
+    position: fixed;
+    right: 0.7rem;
+    transition: bottom var(--switch) ease;
+    z-index: 6;
+  }
+
+  .chip-compare,
+  .chip-export {
+    box-shadow: 0 1px 6px rgb(51 41 29 / 22%);
+    min-height: var(--action-h);
+  }
+
+  /*
+   * The tooltip docks to the top of the map rather than following the pointer (#33).
+   *
+   * The pointer is a finger and it is standing on the district the box is about, so a box beside
+   * it is a box over the answer. Docked, it is also the one place on the map the sheet cannot
+   * reach — a box clamped honestly inside the map's own frame can still come out under the card,
+   * because the card overlays the frame rather than shortening it.
+   *
+   * Full width and squared off against the frame's edges, so it reads as a bar the map is
+   * reporting through rather than as a callout that has drifted into the corner. `map.ts` removes
+   * its inline placement here, which is what lets these rules apply at all.
+   */
+  .tooltip {
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    font-size: 0.72rem;
+    left: 0;
+    /*
+     * Set tighter than anywhere else on the page, and the figure is not arbitrary: the visible
+     * strip of map above the sheet is ~210px, the two action buttons take 44 of it, and a bar
+     * taller than what is left would be overdrawn by them — costing the reader the third line,
+     * which is the one that says what the *proposal* makes of the district.
+     */
+    line-height: 1.28;
+    max-width: none;
+    padding: 0.4rem 0.6rem;
+    right: 0;
+    top: 0;
+    width: auto;
+  }
+
+  /*
+   * The figures fold onto their own lines instead of stacking four deep.
+   *
+   * Nothing is dropped and nothing is abbreviated — every figure keeps its label, its value, its
+   * note and the release it came from, because a tooltip that shed its sources on a phone would
+   * shed them for most of this app's readers. What changes is only that a label sits beside its
+   * value rather than above it: on a wide screen the box has height to spend on that and here it
+   * does not, and a bar taller than the country it reports on tells a reader nothing about the
+   * country.
+   */
+  .tooltip-figure {
+    margin-top: 0.18rem;
+    padding-top: 0.18rem;
+  }
+
+  .tooltip-label {
+    display: inline;
+    margin-right: 0.3rem;
+  }
+
+  .tooltip-value {
+    display: inline;
+    font-size: 1rem;
+    /* The figure and the note that qualifies it are separate elements with no whitespace between
+     * them in the markup, so inline they would set as "Balochi44.2%". */
+    margin-right: 0.35rem;
+  }
+
+  .tooltip-note,
+  .tooltip-source {
+    display: inline;
+  }
+
+  /* The source follows its own note on the same line, so the two read as one attribution. */
+  .tooltip-source::before {
+    content: ' · ';
+  }
+}
+
+/*
+ * A finger is about 9mm across and cannot be aimed at a 24px chip. The 44px floor is the figure
+ * both platforms publish, and it is asked of the *pointer* rather than of the width: a touchscreen
+ * laptop past the breakpoint has the same finger.
+ *
+ * `min-height` and not `height`, so a chip with a tagline on two lines still grows.
+ */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+  }
+
+  /* The keyboard half of the compare gesture, offered to a device with no keyboard. The button
+   * beside it is the whole gesture there, and it says so itself. */
+  .control-compare .control-hint {
+    display: none;
+  }
+}
+
+/* The grip is drag-and-press on a touchscreen and press-only elsewhere, so the cursor says so. */
+@media (pointer: fine) {
+  .sheet-handle {
+    cursor: pointer;
   }
 }
 

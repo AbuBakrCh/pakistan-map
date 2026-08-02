@@ -58,8 +58,11 @@ import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
 import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
+import { exportPng } from './export-image.ts';
+import { EXPORT_FAILED } from './lib/export-band.ts';
 import { renderMap, type MapView } from './map.ts';
 import { renderAbout, renderControls, renderVariantCard } from './panel.ts';
+import { attachSheet } from './sheet.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
@@ -149,11 +152,25 @@ const map = renderMap(
   censusStatistics,
   viewFor(selection),
 );
-const panel = renderControls(controlMount, scenarioBundle, choices, go, () => {
-  compare.press();
-  render();
-});
+const panel = renderControls(
+  controlMount,
+  scenarioBundle,
+  choices,
+  go,
+  () => {
+    compare.press();
+    render();
+  },
+  download,
+);
 const card = renderVariantCard(cardMount);
+/*
+ * On a phone the card is a bottom sheet rather than a column (#33). Attached to the same element
+ * the card is rendered into and asked nothing about the card's contents: whether the page is
+ * narrow enough for a sheet is a question for the stylesheet, and everything the sheet decides is
+ * in `lib/sheet.ts`. On a wide screen it does nothing at all.
+ */
+const sheet = attachSheet(cardMount);
 
 /*
  * The audit surface (#21), rendered once and never again.
@@ -173,6 +190,59 @@ renderAbout(
     outlines: unitOutlineBundle,
   }),
 );
+
+/**
+ * Whether the map is currently standing in for the selection (#22).
+ *
+ * One expression, read by the two places that need it — the render and the export — because the two
+ * must not disagree about what is on screen. At the baseline there is nothing to hold out of the
+ * way, so compare is not on however hard the key is held.
+ */
+const comparing = (variant: VariantRecord | null): variant is VariantRecord =>
+  compare.on && variant !== null;
+
+/**
+ * The sanctioned copy (#32, D22).
+ *
+ * **The band describes the picture, never the selection**, and the difference is the whole of what
+ * this function has to get right. While compare is held the map has been given `comparedView` — the
+ * baseline, whole, with strata 1 and 3 dropped — and a band built from the selection would caption
+ * that picture with the proposal's name, badge it, and stamp it *Proposed — not official*. It would
+ * be the one image this app produces that lies about its own contents, and it would lie in the
+ * direction the whole ticket exists to prevent: a picture of the real provinces, forwarded, labelled
+ * as somebody's proposal. So the export asks what the *map* is showing, and gets the baseline's own
+ * band while the comparison is held.
+ *
+ * `shadedBy` is the renderer's answer for the same reason: three of the four bases can be selected
+ * and shade nothing, and a key for a fill the map never drew explains a picture that does not exist.
+ *
+ * The map itself is photographed as it stands, zoom and pan included — the crop is `map.photograph`'s.
+ *
+ * Failure is spoken rather than swallowed. There is no network here and very little to go wrong,
+ * but a browser that refuses a canvas or a blob would otherwise leave a button that does nothing,
+ * and a reader would reasonably conclude the page is broken rather than the feature.
+ */
+function download(): void {
+  const selected = variantOf(scenarioBundle, selection);
+  const held = comparing(selected);
+  const variant = held ? null : selected;
+  exportPng({
+    map,
+    scenarios: scenarioBundle,
+    statistics: censusStatistics,
+    geography: provenance,
+    variant,
+    shadedBy:
+      variant === null || selection === null || !SHADEABLE.has(selection.basis)
+        ? null
+        : selection.basis,
+  })
+    .catch((error: unknown) => {
+      console.error(error);
+      window.alert(EXPORT_FAILED);
+    })
+    .finally(() => panel.exportSettled());
+}
 
 /**
  * A view the reader chose, which is the only kind that takes a history entry.
@@ -223,12 +293,15 @@ function render(): void {
   const variant = variantOf(scenarioBundle, selection);
   // The current map compared against itself is not a comparison (D17), so at the baseline the
   // gesture has nothing to hold out of the way and the map is drawn as it always is.
-  const comparing = compare.on && variant !== null;
-  panel.show(selection, comparing);
-  map.show(comparing ? comparedView(variant) : viewFor(selection));
+  const held = comparing(variant);
+  panel.show(selection, held);
+  map.show(held ? comparedView(variant) : viewFor(selection));
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
   card.show(variant === null ? null : variantCard(scenarioBundle, variant));
+  // Leaving a proposal forgets how far the last reader pulled the card open (#33). Arriving at one
+  // does not need saying: `panel.ts` hides the container at the baseline, so the sheet goes with it.
+  if (variant === null) sheet.reset();
   // The card, the legend and the colophon are given the *selection*, and are not told about the
   // comparison. Compare is a gesture over the map — the reader is looking at the map and has one
   // key down — and rewriting three blocks of prose underneath it would be the page changing
