@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T08:06:46.306Z",
+    "generated": "2026-08-02T08:50:13.304Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "sources": {
       "content": "scripts/lib/variants.ts — the typed scenario module, reviewed as a diff",

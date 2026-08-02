@@ -38,11 +38,17 @@ describe('hashFor', () => {
 
   it('round-trips every selection this build can reach, the baseline included', () => {
     // Both directions, over the real set: a hash that reads back as a different variant would be
-    // a link that draws a proposal its sender never had on screen.
+    // a link that draws a proposal its sender never had on screen. Restricted to the variants
+    // this build can *reach*, which is not the same as the variants it ships — the Historical
+    // basis has three written and no shading built, and a link to one of those is answered with
+    // the baseline on purpose, asserted by name below.
     const selections = [
       BASELINE,
-      ...bundle.variants.map((variant) => ({ basis: variant.basis, variant: variant.id })),
+      ...bundle.variants
+        .filter((variant) => SHADEABLE.has(variant.basis))
+        .map((variant) => ({ basis: variant.basis, variant: variant.id })),
     ];
+    expect(selections.length).toBeGreaterThan(1);
     for (const selection of selections) {
       const read = route(hashFor(selection));
       expect(read.selection, hashFor(selection)).toEqual(selection);
@@ -94,10 +100,17 @@ describe('readRoute', () => {
     }
   });
 
-  it('would refuse a link to a variant whose basis has variants but no shading', () => {
-    // The case that will actually arrive: a variant lands on a basis before its fill does. A link
-    // to it must land on the baseline, because a proposal drawn against no evidence is the failure
-    // stratum 1 exists to prevent (D14).
+  it('refuses a link to a variant whose basis has variants but no shading', () => {
+    // The case that used to be hypothetical and now ships: H1, H3 and H4 are written, complete
+    // and drawable, and the Historical basis has no fill behind it yet. A link to one must land on
+    // the baseline, because a proposal drawn against no evidence is the failure stratum 1 exists to
+    // prevent (D14) — named rather than counted, since these are the three URLs a reader is most
+    // likely to have been sent before the shading lands.
+    for (const id of ['h1', 'h3', 'h4']) {
+      expect(route(`#/historical/${id}`).selection, id).toBeNull();
+      expect(route(`#/historical/${id}`).asWritten, id).toBe(false);
+    }
+    // And the same, held against a build that can shade nothing at all.
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     expect(readRoute('#/language/l1', bundle, unshaded).selection).toBeNull();
   });
