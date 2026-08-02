@@ -96,7 +96,13 @@ describe('variantCard — the counts', () => {
 
   it('prints one count where there is only one', () => {
     const same = like('same', {
-      counts: { units: 8, proposedUnits: 1, claimedDistricts: 11, drawnDistricts: 11 },
+      counts: {
+        units: 8,
+        proposedUnits: 1,
+        claimedDistricts: 11,
+        drawnDistricts: 11,
+        nonContiguousUnits: 0,
+      },
     });
     expect(variantCard(bundle, same).summary).toContain('11 districts change province');
   });
