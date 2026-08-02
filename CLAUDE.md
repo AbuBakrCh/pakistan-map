@@ -124,7 +124,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 and the coastline → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
-| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json` |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
 The fold table — post-census district → 2023 parent — is data, not code:
@@ -179,11 +179,37 @@ floating point, every ring closed — and a disagreement fails the build naming 
 whose districts do not touch draws as one piece per group without complaint (D7). Islands make
 pieces of their own, so the recorded `polygons` is a drawing fact and **not** a contiguity
 measure: South Punjab draws as three pieces because Rahim Yar Khan is three in OSM, two of them
-under 200 km². Contiguity is #16's question, asked of the adjacency graph.
+under 200 km². Contiguity is a different question, asked of the adjacency graph.
 
-Still to come: the adjacency graph (#16), per-variant derived stats (#20) and the composite
-development index (#31, badged `synthesized` — the census publishes no such figure). Shared pure
-logic lives in `scripts/lib/` with tests beside it.
+**Adjacency is derived from shared arcs, and contiguity is read off it** (#16). Two districts are
+neighbours *iff* they share an arc — the same one arc, seen once from each side, with `~i` and `i`
+recognised as the one border they are. Asking the question of integers rather than of coordinates
+is what makes the answer exact: a polygon-intersection test would answer to whatever tolerance a
+clipper worked to, and two districts left a millimetre apart by simplification would come out
+strangers, reporting a real proposal as broken because of a rounding. The coastline clip does not
+disturb it, and that is checked rather than hoped: the clip replaced only the *seaward* part of a
+coastal ring, so the inland arcs a district's neighbours use came through untouched — all 156 drawn
+districts form **one connected component**, 401 shared borders, not one isolated, Gwadar included
+after losing half its area to the clip. `data/bundle/adjacency.json` carries the graph and, like
+the outlines, records the geometry build's own timestamp: it is district *names*, so a stale copy
+is undetectable from its own contents — every name would still resolve, against a topology whose
+borders had moved. Each unit then carries a `contiguity` block — `contiguous`, `pieces`, and
+`detached`, which names every group *but the largest*, since the stranded districts are what a
+reader wants said and the body of the unit is already listed. A non-contiguous unit is **flagged
+and drawn** (D7); there is no error path, because refusing to draw a claim is a stronger editorial
+act than drawing it with a note. Every variant also carries `counts.nonContiguousUnits`, over
+**every** unit and not only the proposed ones — a variant that leaves a current province in two
+pieces has done that to a real province, and filing it under "unchanged" would be the app choosing
+what counts as its own doing. The count is #20's scorecard line.
+
+The graph is a fact about the geometry and is nonetheless built by the *scenario* script, because
+its only consumer is the flag written in the same run and because building it in
+`normalize-geometry.ts` would mean rewriting a 2.2 MB boundary artifact whose boundaries had not
+changed — the whole value of committing that file is that a diff in it means a border moved.
+
+Still to come: per-variant derived stats (#20) and the composite development index (#31, badged
+`synthesized` — the census publishes no such figure). Shared pure logic lives in `scripts/lib/`
+with tests beside it.
 
 Every relation must be classified. A relation matching no 2023 district and no fold rule
 **fails the build** rather than being skipped — a silent discard is how the district set drifts
@@ -231,6 +257,9 @@ What it holds:
 | Variant cards — every rendered field present on every variant, badges from the closed provenance vocabulary, an **Opposed by** line without exception, an unadvocated variant saying so rather than carrying an empty list, unique deep-link ids | `bundle.test.ts` |
 | Unit outlines — every unit exactly the union of the districts it claims: its arcs are the ones its districts do not share, its area theirs to floating point, every ring closed; the outlines cut against the geometry that ships beside them rather than some other build; a unit of two districts that touch nowhere drawing as several pieces without error | `bundle.test.ts` |
 | What a *wrong* dissolve looks like — an internal border left in, an outline that is not the union of its members, a ring that does not close — each named, on a topology of three squares | `unit-outlines.test.ts` |
+| Adjacency — the shipped graph re-derived from the committed arcs and compared district by district, naming the ones whose neighbours moved; symmetric, nobody their own neighbour, no arc shared by three districts; borders checkable on any atlas rather than only against our own derivation (Islamabad's two, Chaman's one — every other side of it is Afghanistan, so a second would mean the graph had started joining across the Durand Line); no district cut loose by the coastline clip, and 156 districts in **one** component | `bundle.test.ts` |
+| Contiguity flags — recomputed from the shipped graph and compared unit by unit rather than read back, `detached` empty exactly where the unit is whole, and the two numbers held apart on the unit where they visibly disagree: South Punjab is **one piece and three polygons**. A non-contiguous unit flagged over the real map — Lower Chitral and Karachi South — with nothing that can refuse it | `bundle.test.ts` |
+| What a *non-contiguous* unit looks like — the one thing the shipped set cannot demonstrate, since all eight units hang together: the stranded district named, the walk confined to the unit's own districts (unconfined, every unit on a one-component map reads contiguous and the flag becomes decoration), an asymmetric graph and an uncut three-way arc each named, on the same three squares | `adjacency.test.ts` |
 | What the validator does when a partition is *wrong* — the one thing a valid bundle cannot demonstrate: the district named, both units named on an overlap, both answers to open item 2b expressible | `scenarios.test.ts` |
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
 | The dashed line is the **right stretch** — every arc of it belongs to AJK or GB and to no province, it is the whole of AJK's outer boundary, and it is only part of GB's, the remaining 3 arcs being the China and Afghanistan frontier. Endpoints named (Chenab, Karakoram), districts named, length agreeing with the provenance that states it. A set question on arc indices, exact, because line and boundary share arcs | `src/lib/line-of-control.test.ts` |
@@ -338,7 +367,9 @@ at full strength. The *only* map comparison; no side-by-side, no cross-variant t
 **Advocated by** *and* **Opposed by**, and a scorecard (population spread, largest:smallest
 ratio, districts moved, non-contiguous units).
 
-Contiguity is **flagged, never blocked**.
+Contiguity is **flagged, never blocked** — computed at build time off the district adjacency graph
+(#16) and carried on the unit, so the card names the stranded districts rather than reporting a
+count, and never confuses being in two pieces with drawing as two shapes.
 
 ---
 

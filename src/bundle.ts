@@ -106,6 +106,18 @@ export interface UnitRecord {
   readonly districts: readonly string[];
   readonly folded: readonly { readonly from: string; readonly into: string }[];
   readonly excludes: readonly string[];
+  /**
+   * Whether the unit's districts hang together, read off the adjacency graph rather than off the
+   * shape it draws as (#16). Flagged, never blocked (D7). Not the same number as the outline's
+   * `polygons`, which counts shapes on paper and so counts islands: South Punjab is one piece and
+   * three polygons. `detached` is every group but the largest, named, and is empty for a
+   * contiguous unit — so the card renders it without asking first.
+   */
+  readonly contiguity: {
+    readonly contiguous: boolean;
+    readonly pieces: number;
+    readonly detached: readonly (readonly string[])[];
+  };
 }
 
 export interface VariantRecord {
@@ -144,6 +156,8 @@ export interface VariantRecord {
     readonly proposedUnits: number;
     readonly claimedDistricts: number;
     readonly drawnDistricts: number;
+    /** The scorecard's contiguity line (#20), over every unit and not only the proposed ones. */
+    readonly nonContiguousUnits: number;
   };
   readonly units: readonly UnitRecord[];
 }
