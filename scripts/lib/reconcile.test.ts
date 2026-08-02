@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { classifyDistrict, classifyDivision, reconcileDistricts } from './reconcile.ts';
 import {
   CENSUS_DISTRICT_COUNT,
+  NAME_ALIASES,
+  PINNED_RELATION_IDS,
   ROSTER,
   ROSTER_DISTRICT_COUNT,
   normalizeName,
@@ -39,6 +41,79 @@ describe('the 2023 roster', () => {
   it('keeps Surab, which predates the census despite reading as new', () => {
     // Created between the 2017 and 2023 censuses, so it has a census row and must be drawn.
     expect(resolveRosterName('Surab District')).toBe('Surab');
+  });
+});
+
+describe('official name for display, OSM name for the join', () => {
+  // docs/research/ajk-district-set.md settles which name goes where for AJK, and the rule has
+  // two halves that are easy to swap by accident: the roster name is what every rendered
+  // surface prints, and the alias is only ever the spelling somebody else uses to find it.
+  // Both directions are asserted, because inverting the pair leaves a build that passes every
+  // join test while displaying a headquarters town where a district should be.
+
+  it('displays the AJK government name and not the OSM one', () => {
+    const ajk = ROSTER.find((p) => p.code === 'AJK')?.districts ?? [];
+    // Official: AJ&K Bureau of Statistics, "AJ&K at a Glance – 2025".
+    expect(ajk).toContain('Jhelum Valley');
+    // OSM's "Hattian Bala District" is the headquarters town and the tehsil, not the district.
+    expect(ajk).not.toContain('Hattian Bala');
+    expect(ajk).toContain('Sudhnoti');
+    expect(ajk).not.toContain('Sudhanoti');
+  });
+
+  it('still resolves the OSM name onto it, by name and by relation id', () => {
+    expect(resolveRosterName('Hattian Bala District')).toBe('Jhelum Valley');
+    expect(PINNED_RELATION_IDS['Jhelum Valley']).toBe(8192278);
+    expect(classifyDistrict(rel(8192278, 'Hattian Bala District'))).toEqual({
+      kind: 'unit',
+      name: 'Jhelum Valley',
+    });
+    // And the official name is not a second way in that the id would fail to vouch for.
+    expect(classifyDistrict(rel(999_003, 'Jhelum Valley District'))).toEqual({
+      kind: 'unclassified',
+    });
+  });
+
+  it('does not confuse Jhelum Valley with Punjab’s own Jhelum', () => {
+    expect(resolveRosterName('Jhelum District')).toBe('Jhelum');
+    expect(provinceOf('Jhelum')).toBe('Punjab');
+    expect(provinceOf('Jhelum Valley')).toBe('Azad Jammu & Kashmir');
+  });
+
+  it('carries both of Neelum’s outside spellings', () => {
+    // The canonical name being right is not evidence that the aliases are: OSM and the AJK
+    // Election Commission spell it two different ways, and neither is the roster name.
+    expect(resolveRosterName('Neelam Valley District')).toBe('Neelum'); // OSM
+    expect(resolveRosterName('District Neelum Valley')).toBe('Neelum'); // AJK EC
+    expect(resolveRosterName('Neelum District')).toBe('Neelum');
+  });
+
+  it('never lets an alias be a name the app displays', () => {
+    // The inversion guard. An alias key that normalizes to a roster district's own name means
+    // some district is displayed under the spelling that was meant to be the join key.
+    const displayed = new Map(
+      ROSTER.flatMap((p) => p.districts).map((d) => [normalizeName(d), d] as const),
+    );
+    for (const key of Object.keys(NAME_ALIASES)) {
+      const collision = displayed.get(key);
+      expect(
+        collision === undefined,
+        `${key} is an alias and also the displayed name of ${collision} — ` +
+          'the display/join rule is inverted',
+      ).toBe(true);
+    }
+  });
+
+  it('points every alias at a district that exists', () => {
+    const districts = new Set(ROSTER.flatMap((p) => p.districts));
+    for (const [key, target] of Object.entries(NAME_ALIASES)) {
+      expect(districts.has(target), `${key} aliases ${target}, which is not a roster district`)
+        .toBe(true);
+    }
+    for (const name of Object.keys(PINNED_RELATION_IDS)) {
+      expect(districts.has(name), `${name} is pinned to a relation but is not a roster district`)
+        .toBe(true);
+    }
   });
 });
 

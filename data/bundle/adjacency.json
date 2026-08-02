@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T14:50:36.750Z",
+    "generated": "2026-08-02T16:58:12.983Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "sources": {
       "content": "scripts/lib/variants.ts — the typed scenario module, reviewed as a diff",
@@ -14,7 +14,7 @@
     "method": "Two districts are neighbours iff they share an arc. The geography bundle draws all three administrative tiers out of one shared arc set, so where two districts touch the edge between them is one arc, used once from each side — adjacency is a set question about integers with an exact answer. Testing polygons for intersection would ask the same question of coordinates and answer it to whatever tolerance a clipper worked to, and two districts left a millimetre apart by simplification would come out strangers. An arc index and its reverse (`~i`) are the one border they are.",
     "arcsFrom": "data/bundle/geography.topojson.json",
     "geography": {
-      "generated": "2026-08-01T17:19:09.764Z",
+      "generated": "2026-08-02T16:57:24.783Z",
       "arcs": 852,
       "bbox": [
         60.872855,
@@ -72,8 +72,8 @@
     ],
     "Bagh": [
       "Abbotabad",
-      "Hattian Bala",
       "Haveli",
+      "Jhelum Valley",
       "Muzaffarabad",
       "Poonch",
       "Rawalpindi"
@@ -308,11 +308,6 @@
       "Sibi",
       "Ziarat"
     ],
-    "Hattian Bala": [
-      "Bagh",
-      "Muzaffarabad",
-      "Neelum"
-    ],
     "Haveli": [
       "Bagh",
       "Poonch"
@@ -384,6 +379,11 @@
       "Mirpur",
       "Rawalpindi",
       "Sargodha"
+    ],
+    "Jhelum Valley": [
+      "Bagh",
+      "Muzaffarabad",
+      "Neelum"
     ],
     "Kachhi (Bolan)": [
       "Jhal Magsi",
@@ -745,7 +745,7 @@
     "Muzaffarabad": [
       "Abbotabad",
       "Bagh",
-      "Hattian Bala",
+      "Jhelum Valley",
       "Mansehra",
       "Neelum"
     ],
@@ -795,7 +795,7 @@
     "Neelum": [
       "Astore",
       "Diamir",
-      "Hattian Bala",
+      "Jhelum Valley",
       "Mansehra",
       "Muzaffarabad"
     ],

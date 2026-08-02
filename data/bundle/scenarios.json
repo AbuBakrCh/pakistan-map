@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T14:50:36.727Z",
+    "generated": "2026-08-02T16:58:12.954Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -34,7 +34,7 @@
     "scorecard": {
       "from": "data/bundle/statistics.json",
       "statistics": {
-        "generated": "2026-08-01T17:16:00.843Z",
+        "generated": "2026-08-02T16:58:07.181Z",
         "districts": 136
       },
       "method": "A unit’s population is the sum of its districts’ 2023 census populations and nothing else: the census publishes by district, every unit is composed of districts, and nothing between the two is interpolated or apportioned. Districts moved are those whose unit is not the one carrying their current province forward — the unit named Punjab is Punjab whatever it has lost, and South Punjab is not, however much of Punjab it is made of. Contiguity is not recomputed here; it is read off the adjacency graph and carried on each unit, because two derivations of one fact are two answers to it.",
@@ -197,7 +197,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -641,7 +641,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -653,7 +653,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -668,7 +668,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -857,7 +857,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -1301,7 +1301,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -1313,7 +1313,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -1328,7 +1328,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -1534,7 +1534,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -1984,7 +1984,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -1996,7 +1996,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -2011,7 +2011,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -2180,7 +2180,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -2616,7 +2616,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -2628,7 +2628,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -2643,7 +2643,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -2809,7 +2809,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -3239,7 +3239,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -3251,7 +3251,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -3266,7 +3266,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -3450,7 +3450,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -3882,7 +3882,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -3894,7 +3894,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -3909,7 +3909,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -4115,7 +4115,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -4685,7 +4685,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -4697,7 +4697,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -4712,7 +4712,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -4920,7 +4920,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -5550,7 +5550,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -5562,7 +5562,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -5577,7 +5577,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -5784,7 +5784,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -6334,7 +6334,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -6346,7 +6346,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -6361,7 +6361,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -6572,7 +6572,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -7162,7 +7162,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -7174,7 +7174,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -7189,7 +7189,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -7402,7 +7402,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -7912,7 +7912,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -7924,7 +7924,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -7939,7 +7939,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -8154,7 +8154,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -8227,7 +8227,7 @@
           "kind": "proposed",
           "note": "Proposed as a province on the same reasoning, and on markedly weaker evidence — there is no announcement, no drafted amendment and no assembly resolution for it. See the footnote below, which says so at length rather than letting the two halves of this variant look equally sourced.",
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -8239,7 +8239,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -8254,7 +8254,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -8769,7 +8769,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -9099,7 +9099,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -9111,7 +9111,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -9126,7 +9126,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -9393,7 +9393,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -10079,7 +10079,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10091,7 +10091,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10106,7 +10106,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10259,7 +10259,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -10730,7 +10730,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10742,7 +10742,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10757,7 +10757,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -10893,7 +10893,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -11323,7 +11323,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -11335,7 +11335,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -11350,7 +11350,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -11580,7 +11580,7 @@
             "unit": "azad-jammu-kashmir",
             "name": "Azad Jammu & Kashmir",
             "districts": [
-              "Hattian Bala",
+              "Jhelum Valley",
               "Muzaffarabad",
               "Neelum",
               "Bagh",
@@ -12070,7 +12070,7 @@
           "kind": "territory",
           "note": null,
           "claimed": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -12082,7 +12082,7 @@
             "Kotli"
           ],
           "districts": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
@@ -12097,7 +12097,7 @@
           "excludes": [],
           "population": null,
           "uncounted": [
-            "Hattian Bala",
+            "Jhelum Valley",
             "Muzaffarabad",
             "Neelum",
             "Bagh",
