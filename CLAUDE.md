@@ -244,6 +244,24 @@ twenty-five districts still in Punjab "moved" when it is the province that shran
 rather than hidden: a variant that renamed a province it otherwise left alone would read as moving all
 of it, which is a thing to catch in the content review the variants already get.
 
+**The Administrative basis draws its own boundaries, and the rule is what keeps them from being ours**
+(#27). No one publishes a district list for "no province above 25 million people", so
+`scripts/lib/partitioner.ts` computes one: units grow outward from a capital across the **shared
+district borders** of #16's graph — contiguous by construction, never by filtering — the unit with
+the fewest people taking the next district each time, ties broken on the district and capital names
+so nothing about the caller's ordering can move a boundary. Three rules, each of which determines a
+partition on its own: a stated **unit count**, a **population ceiling** in the fewest units that
+honour it, and a **distance to the capital** in the fewest units that honour that. For the last two
+the unit count is a *finding*, and the statement the card prints says so. Capitals are the one choice
+the engine makes, so it is made out loud and differently for the two questions — the most populous
+districts, no two of them sharing a border, for the population rules; as far as possible from the
+capitals already chosen for the distance rule, because seating every capital in Punjab would answer a
+question about Balochistan with a fact about Lahore. **A district the census does not reach is refused
+by name**, never counted as zero: a zero would let a unit take AJK's or GB's twenty districts of
+ground for free under a ceiling it never came near (D25), so the engine partitions the 136 and the
+variant carries the territories through as themselves. The engine is build-time only, and generates
+nothing on its own — the variants it draws are #28's.
+
 Still to come: the composite development index (#31, badged `synthesized` — the census publishes no
 such figure). Shared pure logic lives in `scripts/lib/` with tests beside it.
 
@@ -320,6 +338,7 @@ What it holds:
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
+| The rule engine — a rule partitioning the real 136 exactly once, every unit contiguous against the committed graph, every unit's people its own districts' census rows and the whole partition equal to Table 1's national figure; the same rule drawing a byte-identical map twice and again from a shuffled scope and every map reversed, which is the determinism claim; a ceiling holding on every unit and never in fewer units than the arithmetic floor; a distance limit re-measured from the committed geometry; the output validating as a variant, both universes, with `TERRITORY_CLAIM_POLICY` still `forbid`. And what it refuses, each naming the district — the twenty AJK and GB districts the census cannot see, Lahore where a ceiling is below a district that cannot be split, and a district no unit could grow into | `partitioner.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
