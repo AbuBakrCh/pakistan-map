@@ -38,52 +38,67 @@ describe('basisChoices', () => {
     expect(language?.basis.badges).toContain('proxy');
   });
 
-  it('makes the language basis selectable, on the one variant that is written', () => {
+  it('makes the language basis selectable, on the variants that are written', () => {
     const language = choices.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(true);
     expect(language?.unavailable).toBeNull();
-    expect(language?.variants.map((v) => v.id)).toEqual(['l1']);
+    expect(language?.variants.map((v) => v.id)).toEqual(['l1', 'l4', 'l5']);
     expect(language?.variants[0]?.tagline).toBe('the version that partly exists');
   });
 
-  it('refuses the other three and says which half of them is missing', () => {
-    // "Coming soon" is the one answer that tells a reader nothing. Both halves are real and
-    // separate: the development tables are joined and unshaded, and no variant is written for
-    // any of the three — so a reason naming only one of them would be half true.
+  it('refuses the other three, and says which half of each is missing rather than one reason for all', () => {
+    // "Coming soon" is the one answer that tells a reader nothing, and one reason for three bases
+    // is nearly as bad now that they are not short of the same things. Historical has three
+    // variants written and no fill behind them; the other two have neither. Both halves are real
+    // and separate, so the control says which applies to which.
     const refused = choices.filter((c) => !c.available);
     expect(refused.map((c) => c.basis.id)).toEqual(['administrative', 'historical', 'development']);
-    for (const choice of refused) {
-      expect(choice.unavailable).toContain(choice.basis.name);
-      expect(choice.missing).toEqual(['no variant is written yet', 'no shading is built yet']);
-    }
+    for (const choice of refused) expect(choice.unavailable).toContain(choice.basis.name);
+
+    const missing = Object.fromEntries(refused.map((c) => [c.basis.id, c.missing]));
+    expect(missing['historical']).toEqual(['no shading is built yet']);
+    expect(missing['administrative']).toEqual([
+      'no variant is written yet',
+      'no shading is built yet',
+    ]);
+    expect(missing['development']).toEqual(missing['administrative']);
   });
 
   it('prints the refusal on screen, grouped by reason and naming every basis it applies to', () => {
     // On screen and not only in a `title`: a `title` needs a hovering mouse, a disabled control
-    // takes no tap, and the hard bar is a 390px phone. Grouped, because three bases short of the
-    // same two things are one sentence, not three.
+    // takes no tap, and the hard bar is a 390px phone. Grouped by what is actually missing, so
+    // Historical — which is only short of its fill — is not filed under a sentence saying nobody
+    // has written its variants.
     expect(refusalLines(choices)).toEqual([
-      'Administrative, Historical and Development are not selectable yet — no variant is ' +
-        'written yet, and no shading is built yet.',
+      'Administrative and Development are not selectable yet — no variant is written yet, and no ' +
+        'shading is built yet.',
+      'Historical is not selectable yet — no shading is built yet.',
     ]);
   });
 
   it('says "is" of a single refused basis, and nothing at all when none is refused', () => {
-    const oneShort = basisChoices(bundle, new Set<BasisId>(['administrative']));
-    expect(refusalLines(oneShort)).toContain(
-      'Language / dialect is not selectable yet — no shading is built yet.',
+    // Historical is the one basis short of exactly one thing, so it stands alone in its group and
+    // the sentence has to agree with itself in number.
+    expect(refusalLines(choices)).toContain(
+      'Historical is not selectable yet — no shading is built yet.',
     );
     expect(refusalLines(choices.filter((c) => c.available))).toEqual([]);
   });
 
-  it('would still refuse a basis whose variants exist but whose shading does not', () => {
-    // The case that will actually arrive: a variant lands on a basis before the fill does. It
-    // must not be selectable, because a basis that fades the boundaries back and shades nothing
-    // is a proposal drawn against no evidence at all (D14).
+  it('refuses a basis whose variants exist but whose shading does not', () => {
+    // No longer hypothetical: Historical carries H1, H3 and H4, all three complete partitions the
+    // build has already dissolved, and there is no fill behind them. It must not be selectable,
+    // because a basis that fades the boundaries back and shades nothing is a proposal drawn
+    // against no evidence at all (D14).
+    const historical = choices.find((c) => c.basis.id === 'historical');
+    expect(historical?.available).toBe(false);
+    expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h3', 'h4']);
+    expect(historical?.unavailable).toBe('Historical: no shading is built yet.');
+
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     const language = unshaded.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(false);
-    expect(language?.variants).toHaveLength(1);
+    expect(language?.variants).toHaveLength(3);
     expect(language?.unavailable).toBe('Language / dialect: no shading is built yet.');
   });
 
@@ -100,9 +115,15 @@ describe('selectBasis', () => {
   });
 
   it('refuses a basis with nothing to draw, naming it and saying why', () => {
-    // Louder than a silent baseline, which would look like a dead control.
+    // Louder than a silent baseline, which would look like a dead control. Two bases, refused for
+    // different reasons and each saying its own: Administrative has neither half, Historical has
+    // its variants and not its fill.
+    expect(() => selectBasis(choices, 'administrative')).toThrow(
+      /administrative cannot be selected/,
+    );
+    expect(() => selectBasis(choices, 'administrative')).toThrow(/no variant is written/);
     expect(() => selectBasis(choices, 'historical')).toThrow(/historical cannot be selected/);
-    expect(() => selectBasis(choices, 'historical')).toThrow(/no variant is written/);
+    expect(() => selectBasis(choices, 'historical')).toThrow(/no shading is built/);
   });
 });
 

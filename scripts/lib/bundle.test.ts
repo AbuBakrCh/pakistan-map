@@ -520,6 +520,12 @@ interface EmittedVariant {
     | { readonly kind: 'unadvocated'; readonly note: string };
   readonly opposedBy: readonly string[];
   readonly sources: readonly { readonly label: string }[];
+  readonly footnotes: readonly { readonly kind: string; readonly text: string }[];
+  readonly notes: readonly {
+    readonly label: string;
+    readonly text: string;
+    readonly relatedVariants?: readonly string[];
+  }[];
   readonly partition: { readonly universe: 'drawn' | 'census'; readonly districts: number };
   readonly counts: Readonly<Record<string, number>>;
   readonly statistics:
@@ -636,6 +642,52 @@ describe('bundle scenarios', () => {
     const l1 = variants.find((v) => v.id === 'l1');
     expect(l1?.counts['claimedDistricts']).toBe(13);
     expect(l1?.counts['drawnDistricts']).toBe(11);
+    // L4 is the same property with a different arithmetic: Hazara Division is nine districts
+    // today and Allai is one of them, created out of Battagram after the census. Named rather
+    // than counted, because "9 claimed, 8 drawn" with no district attached to the difference is
+    // exactly the miscount the footnote exists to prevent a reader from concluding.
+    const l4 = variants.find((v) => v.id === 'l4');
+    expect(l4?.counts['claimedDistricts']).toBe(9);
+    expect(l4?.counts['drawnDistricts']).toBe(8);
+    const hazara = l4?.units.find((u) => u.id === 'hazara') as EmittedUnit;
+    expect(hazara.folded).toEqual([{ from: 'Allai', into: 'Batagram' }]);
+    expect(hazara.claimed).toContain('Allai');
+    expect(hazara.districts).not.toContain('Allai');
+    expect(hazara.districts).toContain('Batagram');
+  });
+
+  it('says in words why a claim and a drawing disagree, on every variant where they do', () => {
+    // Both counts printed is half the obligation; the other half is a footnote saying which
+    // districts account for the difference. A variant that quietly drew fewer districts than its
+    // advocates name would pass every partition check in this file.
+    const unexplained = variants
+      .filter((v) => v.counts['claimedDistricts'] !== v.counts['drawnDistricts'])
+      .filter((v) => !v.footnotes.some((f) => f.kind === 'district-count'))
+      .map((v) => `${v.id} draws ${v.counts['drawnDistricts']} of ${v.counts['claimedDistricts']} claimed districts and does not say why`);
+    expect(unexplained).toEqual([]);
+  });
+
+  it('points every card cross-reference at a variant that is actually in the bundle', () => {
+    // A note naming another proposal is a sentence on screen — "Bahawalpur's advocates reject
+    // being folded into a single southern province" is only meaningful if the reader can reach
+    // the proposal it means. The build refuses a dangling id; this holds the artifact to it.
+    const dangling = variants.flatMap((variant) =>
+      variant.notes.flatMap((note) =>
+        (note.relatedVariants ?? [])
+          .filter((related) => !variants.some((v) => v.id === related))
+          .map((related) => `${variant.id} note "${note.label}" points at ${related}`),
+      ),
+    );
+    expect(dangling).toEqual([]);
+
+    // And the collision between L1 and H4 is wired both ways. One-sided, the card a reader
+    // happens to open first reads as the uncontested one.
+    const pointsAt = (from: string, to: string) =>
+      (variants.find((v) => v.id === from) as EmittedVariant).notes.some((note) =>
+        (note.relatedVariants ?? []).includes(to),
+      );
+    expect(pointsAt('l1', 'h4'), 'l1 -> h4').toBe(true);
+    expect(pointsAt('h4', 'l1'), 'h4 -> l1').toBe(true);
   });
 
   it('never draws a district a unit says it excludes', () => {
@@ -1210,6 +1262,61 @@ describe('bundle scorecard', () => {
     ).toBe(0);
   });
 
+  it('gives a one-unit partition no ratio at all, on the variant that is one', () => {
+    // The case `scorecard.test.ts` could only build out of five invented districts, now standing
+    // on the real map: One Unit puts every district the census covers into a single province, so
+    // there is one counted unit, its population is the country's, and there is nothing for it to
+    // be a ratio against. Printed as absent rather than as 1, which is a number and would read as
+    // a perfectly even partition.
+    const h1 = variants.find((v) => v.id === 'h1') as EmittedVariant;
+    const west = h1.units.find((u) => u.id === 'west-pakistan') as EmittedUnit;
+    expect(west.districts).toHaveLength(CENSUS_DISTRICT_COUNT);
+    expect(west.population).toBe(statistics.totals.pakistan);
+    expect(h1.scorecard.population?.units).toBe(1);
+    expect(h1.scorecard.population?.ratio).toBeNull();
+    expect(h1.scorecard.population?.largest.unit).toBe('west-pakistan');
+    expect(h1.scorecard.population?.smallest.unit).toBe('west-pakistan');
+    // And the two territories are set aside by name rather than counted as nobody — the same
+    // distinction L1 makes, on a variant where they are the whole of the rest of the map.
+    expect(h1.scorecard.outsideTheCensus.map((found) => found.name)).toEqual([
+      'Azad Jammu & Kashmir',
+      'Gilgit-Baltistan',
+    ]);
+    // Every census district changes hands, because not one of them stays under a unit named after
+    // the entity it belongs to today. That is the scheme, not an artefact of the counting rule.
+    expect(h1.scorecard.districtsMoved.count).toBe(CENSUS_DISTRICT_COUNT);
+  });
+
+  it('counts a renamed unit’s districts as moved, and says so on the variant that renames two', () => {
+    // The blind spot `scorecard.ts` names in the open, now visible on the shipped set. H3 renames
+    // Khyber Pakhtunkhwa back to North-West Frontier Province and Gilgit-Baltistan back to the
+    // Northern Areas, so 38 districts whose boundaries have not moved are counted as having moved,
+    // beside the 7 agencies that genuinely changed hands in 2018. The figure is the rule working;
+    // what makes it honest is the footnote beside it, so the footnote is asserted too.
+    const h3 = variants.find((v) => v.id === 'h3') as EmittedVariant;
+    expect(h3.scorecard.districtsMoved).toEqual({
+      count: 45,
+      of: ROSTER_DISTRICT_COUNT,
+      byOrigin: [
+        { from: 'Khyber Pakhtunkhwa', districts: 35 },
+        { from: 'Gilgit-Baltistan', districts: 10 },
+      ],
+    });
+    const explains = h3.footnotes.filter((f) => f.text.includes('45')).map((f) => f.text);
+    expect(explains).toHaveLength(1);
+    expect(explains[0]).toContain('seven');
+
+    // The Northern Areas is Gilgit-Baltistan's ten districts under another name, and it is still a
+    // territory: nothing in this app calls it a province, and under `forbid` nothing else could
+    // hold those districts at all.
+    const northern = h3.units.find((u) => u.id === 'northern-areas') as EmittedUnit;
+    expect(northern.kind).toBe('territory');
+    expect(northern.population).toBeNull();
+    expect(northern.uncounted).toEqual(northern.districts);
+    const gilgitBaltistan = ROSTER.find((p) => p.name === 'Gilgit-Baltistan');
+    expect([...northern.districts].sort()).toEqual([...(gilgitBaltistan?.districts ?? [])].sort());
+  });
+
   it('reads its contiguity line off #16 rather than answering the question twice', () => {
     // Deliberately not a field of the scorecard. Contiguity is derived from the adjacency graph and
     // carried on the units; a second derivation here would be a second answer, and the failure
@@ -1231,8 +1338,12 @@ describe('bundle scorecard', () => {
       if (spread === null) continue;
       const ratio = spread.largest.population / spread.smallest.population;
       // One decimal, which is the precision the card sets — the artifact does not carry a figure
-      // that nothing on screen can show.
-      expect(spread.ratio, variant.id).toBe(Math.round(ratio * 10) / 10);
+      // that nothing on screen can show. A partition with one counted unit compares that unit
+      // against itself, so it carries no ratio at all rather than a 1 that would read as a
+      // perfectly even spread.
+      expect(spread.ratio, variant.id).toBe(
+        spread.units < 2 ? null : Math.round(ratio * 10) / 10,
+      );
       expect(spread.largest.population, variant.id).toBeGreaterThanOrEqual(
         spread.smallest.population,
       );

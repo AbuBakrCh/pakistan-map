@@ -7,8 +7,9 @@
  * rendered card content, not documentation: rationale, status, advocacy, opposition, footnotes
  * and per-unit district lists all appear on screen.
  *
- * One variant is expressed so far. The remaining sixteen arrive under #24–#31, each as a diff
- * against this file that the partition validator has to accept before it can be committed.
+ * Six variants are expressed so far — L1, L4 and L5 on the Language basis, H1, H3 and H4 on the
+ * Historical one. The remaining eleven arrive under #24–#31, each as a diff against this file that
+ * the partition validator has to accept before it can be committed.
  *
  * The shape of a unit's district list is worth reading once: a unit claims districts **as its
  * advocates state them**, and `scenarios.ts` resolves that onto the 2023 set the map draws. Where
@@ -16,7 +17,7 @@
  * the artifact records the claim, the drawing, and the difference between them.
  */
 
-import { intactProvince, type Unit, type Variant } from './scenarios.ts';
+import { intactProvince, remainderOf, type Unit, type Variant } from './scenarios.ts';
 
 /**
  * South Punjab as its advocates state it: three whole divisions, thirteen districts.
@@ -129,6 +130,10 @@ const L1: Variant = {
         'Bahawalpur’s restoration movement rejects being folded into a single southern province ' +
         'at all, and PML-N’s stated position is two provinces rather than one. Those are ' +
         'separate variants on separate bases, and the app never draws two at once.',
+      // Wired in both directions: H4 carries the reciprocal note. A cross-reference that only one
+      // side knows about is a card that reads as neutral from the other, and the validator checks
+      // that the id names a variant that exists — so a rename cannot orphan either half.
+      relatedVariants: ['h4'],
     },
   ],
   sources: [
@@ -151,4 +156,656 @@ const L1: Variant = {
   ],
 };
 
-export const VARIANTS: readonly Variant[] = [L1];
+/**
+ * Hazara as the division it already is: nine districts today, six when the movement named them.
+ *
+ * The claim has never moved — it is Hazara Division, whole — but the ground under it has been
+ * subdivided twice since 1987. Kohistan became three districts (Upper Kohistan, Lower Kohistan and
+ * Kolai Pallas Kohistan) before the census counted anybody, so all three are drawn; Allai was
+ * carved out of Battagram after it, so ADR-0001 puts it back inside Batagram and the unit renders
+ * as eight. Three counts of one piece of ground, and the footnote says so, because a card that
+ * printed only one of them would read as a miscount of a real movement's demand.
+ *
+ * Names are PBS's own, from the 2023 roster this partition is expressed in — PBS spells Abbottabad
+ * with one T and Battagram with one T as well. The resolver takes either spelling; the roster's is
+ * used here so the module and the artifact read the same.
+ */
+const HAZARA: Unit = {
+  id: 'hazara',
+  name: 'Hazara',
+  kind: 'proposed',
+  claims: [
+    // The six the movement names, in its own order.
+    'Haripur',
+    'Abbotabad',
+    'Mansehra',
+    'Batagram',
+    'Torghar',
+    // Kohistan, split three ways between 2014 and 2017 — before the census, so all three are
+    // districts of the 2023 set and all three are drawn.
+    'Upper Kohistan',
+    'Lower Kohistan',
+    'Kolai Pallas Kohistan',
+    // Created out of Battagram after the census date. No population row, so it is not drawn on
+    // its own; the fold table carries it back into Batagram and the artifact records that.
+    'Allai',
+  ],
+};
+
+/** L4 — Hazara, the Hindko-speaking division that has asked to be a province since 1987. */
+const L4: Variant = {
+  id: 'l4',
+  basis: 'language',
+  name: 'Hazara',
+  tagline: 'a division that has asked for forty years',
+  rationale:
+    'Hazara Division leaves Khyber Pakhtunkhwa as a province of its own. It is the one Language ' +
+    'variant whose boundary needs no interpretation at all: the claim is an existing ' +
+    'administrative division, entire, and its advocates have never asked for more or less than ' +
+    'that. What makes it a language claim is what is inside the line — Hindko, not Pashto, is the ' +
+    'majority mother tongue across most of the division, and the movement’s case rests on it.',
+  status:
+    'Live and unimplemented. The Hazara Qaumi Mahaz was founded in 1987; the demand became mass ' +
+    'mobilisation in April 2010, when the 18th Amendment renamed North-West Frontier Province as ' +
+    'Khyber Pakhtunkhwa and Hazara read the new name as one it had not been consulted on. On 12 ' +
+    'April 2010 police fired on demonstrators in Abbottabad, killing seven. No province has been ' +
+    'created, and no constitutional amendment to create one has been tabled since.',
+  advocacy: {
+    kind: 'advocated',
+    by: [
+      'Hazara Qaumi Mahaz, founded 1987',
+      'broad cross-party support within the division itself',
+    ],
+  },
+  opposedBy: [
+    'Pashtun nationalist parties, the Awami National Party foremost, for whom Khyber ' +
+      'Pakhtunkhwa’s territorial integrity is bound up with the province’s Pashtun identity',
+  ],
+  universe: 'drawn',
+  // Not the basis's `census · proxy`. The shading under this variant is census mother tongue and
+  // is badged that way by the basis; the *boundary* is not census analysis at all — it is Hazara
+  // Division as PBS publishes it, claimed by a movement that names its own districts. `documented`
+  // says that. `official` would be worse than wrong: the division is official, the province is a
+  // proposal, and one badge cannot mean both.
+  badges: ['documented'],
+  composition: {
+    kind: 'transcribed',
+    from: 'Hazara Division as PBS publishes it, which is the movement’s own claim entire',
+  },
+  units: [
+    HAZARA,
+    intactProvince('Khyber Pakhtunkhwa', HAZARA.claims),
+    intactProvince('Punjab'),
+    intactProvince('Sindh'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'district-count',
+      text:
+        'The movement states this claim as six districts — Haripur, Abbottabad, Mansehra, ' +
+        'Battagram, Kohistan and Torghar. That was the division’s composition when the demand was ' +
+        'framed. Kohistan has since been split three ways, into Upper Kohistan, Lower Kohistan ' +
+        'and Kolai Pallas Kohistan, and Allai was carved out of Battagram: the same territory is ' +
+        'nine districts today. This map is pinned to the 2023 census, in which Allai has no ' +
+        'population row, so it is drawn inside Batagram and the unit reads as eight. Six as ' +
+        'claimed, nine today, eight drawn — one division, and not one boundary of it has moved.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Hindko has a column of its own in census Table 11, so the shading under this variant is ' +
+        'the movement’s own evidence rather than a stand-in for it. Where a district of the ' +
+        'division shades as something else, that disagreement is on the map and is not footnoted ' +
+        'away.',
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Hazara Qaumi Mahaz — the movement’s stated claim: the six districts of Hazara Division ' +
+        'as constituted in 1987',
+    },
+    {
+      label:
+        'Contemporary press reporting of 12 April 2010, when police fired on a Hazara province ' +
+        'demonstration in Abbottabad and seven people were killed, in the days after the 18th ' +
+        'Amendment renamed North-West Frontier Province as Khyber Pakhtunkhwa',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), which ' +
+        'is where the nine-district composition of Hazara Division is read from',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+    {
+      label:
+        'data/reference/post-census-district-folds.json — Allai, created after the census date ' +
+        'and folded into Batagram under ADR-0001',
+    },
+  ],
+};
+
+/**
+ * Karachi Division, which is the part of "urban Sindh" that can be drawn.
+ *
+ * MQM-P argues for a province of urban Sindh, not for a province of Karachi: the claim reaches
+ * into urban Hyderabad, Sukkur and Mirpur Khas as well. No published district list exists for that
+ * wider demand, and there is no such thing as half a district on this map — so drawing it would
+ * mean choosing which parts of four more districts belong to it, which is the app inventing a
+ * boundary and putting a movement's name on it. The expressible core is drawn and the rest is
+ * stated in a footnote, which is the same answer H2 gives to Amb and Phulra.
+ */
+const KARACHI: Unit = {
+  id: 'karachi',
+  name: 'Karachi',
+  kind: 'proposed',
+  claims: [
+    // Karachi Division, all seven districts. Four of them were renamed in 2013 and OSM still
+    // carries the old names; the roster resolves them by relation id rather than by name.
+    'Karachi Central',
+    'Karachi East',
+    'Karachi South',
+    'Karachi West',
+    'Korangi',
+    'Malir',
+    'Keamari',
+  ],
+};
+
+/** L5 — Karachi / urban Sindh, the Urdu-speaking claim. */
+const L5: Variant = {
+  id: 'l5',
+  basis: 'language',
+  name: 'Karachi / urban Sindh',
+  tagline: 'the claim that is larger than the map can draw',
+  rationale:
+    'Karachi Division leaves Sindh as a province of its own. It is the only variant in this app ' +
+    'whose drawn extent is smaller than the demand behind it: MQM-P frames the claim as urban ' +
+    'Sindh — Karachi together with urban Hyderabad, Sukkur and Mirpur Khas — on the basis of ' +
+    'mother tongue and of the land exchanged at partition. The economic argument runs alongside ' +
+    'it: one segment of Karachi’s population generates the large majority of Sindh’s tax revenue ' +
+    'while control of the provincial budget sits elsewhere.',
+  status:
+    'A long-standing demand, raised repeatedly by MQM and its successors and as recently as 2026. ' +
+    'No province has been created and no constitutional amendment to create one has passed. Sindh ' +
+    'has never had a provincial government that supported it.',
+  advocacy: {
+    kind: 'advocated',
+    by: ['Muttahida Qaumi Movement – Pakistan (MQM-P)', 'historically the Muttahida Qaumi Movement'],
+  },
+  // Not a list of the usual opponents: this is close to a cross-party consensus in rural Sindh,
+  // and a card that named one party would report a national disagreement as a factional one.
+  opposedBy: [
+    'Pakistan Peoples Party (PPP)',
+    'the Grand Democratic Alliance (GDA)',
+    'Awami Tehreek',
+    'Sindhi nationalist opinion broadly, which rejects any division of Sindh outright',
+  ],
+  universe: 'drawn',
+  // Same reasoning as L4's: the shading is census mother tongue and the basis badges it, but the
+  // boundary is Karachi Division as published, claimed by a movement — `documented`, not `census`.
+  badges: ['documented'],
+  composition: {
+    kind: 'transcribed',
+    from: 'Karachi Division as PBS publishes it — the part of the urban Sindh claim that has a ' +
+      'published district list behind it',
+  },
+  units: [
+    KARACHI,
+    intactProvince('Sindh', KARACHI.claims),
+    intactProvince('Punjab'),
+    intactProvince('Khyber Pakhtunkhwa'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'omission',
+      text:
+        'MQM-P’s framing is urban Sindh, not Karachi: the claim extends to urban Hyderabad, ' +
+        'Sukkur and Mirpur Khas. No published district list exists for that wider claim, and this ' +
+        'map is built out of whole districts — so drawing it would mean deciding for ourselves ' +
+        'which parts of Hyderabad, Sukkur and Mirpur Khas are urban enough to belong to it. What ' +
+        'is drawn here is the expressible core, Karachi Division, and the remainder is said ' +
+        'rather than invented.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Urdu is a census category of its own in Table 11, so the shading under this variant is ' +
+        'the claim’s own evidence. The three districts named above are shaded like any other and ' +
+        'are not inside the unit, which is the disagreement between the claim and the drawing ' +
+        'made visible rather than described.',
+    },
+  ],
+  sources: [
+    {
+      label:
+        'MQM-P — the urban Sindh province demand, stated on the basis of mother tongue and of ' +
+        'land exchanged at partition, and raised again in 2026',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), which ' +
+        'is where the seven-district composition of Karachi Division is read from',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
+/**
+ * West Pakistan — every province and princely state west of India, consolidated into one.
+ *
+ * Three things this unit is *not*, each of which would have been the easy mistake. It is not the
+ * whole map: Azad Jammu & Kashmir was never part of it, and the Northern Areas were administered
+ * federally rather than as part of the province, so both are drawn as themselves. It is not a
+ * proposal — nobody advocates restoring One Unit, and the variant says so where its advocacy line
+ * would otherwise be. And Islamabad is inside it, which is the one judgement here worth reading
+ * the footnote for.
+ */
+const WEST_PAKISTAN: Unit = {
+  id: 'west-pakistan',
+  name: 'West Pakistan',
+  kind: 'proposed',
+  claims: [
+    // The four provinces and the capital, entire — which is exactly the 136 districts PBS
+    // published 2023 results for. Written as remainders rather than typed out, because a
+    // hand-listed 136 is 136 chances to mistype one and the remainder is checked like any claim.
+    ...remainderOf('Punjab'),
+    ...remainderOf('Sindh'),
+    ...remainderOf('Khyber Pakhtunkhwa'),
+    ...remainderOf('Balochistan'),
+    ...remainderOf('Islamabad Capital Territory'),
+  ],
+};
+
+/** H1 — One Unit, 1955–1970. */
+const H1: Variant = {
+  id: 'h1',
+  basis: 'historical',
+  name: 'One Unit',
+  tagline: '1955–1970, and the whole west in one colour',
+  rationale:
+    'Every province and princely state west of India was merged into a single province of West ' +
+    'Pakistan on 14 October 1955, to stand as one half of a two-province federation against East ' +
+    'Bengal. It lasted fifteen years and was dissolved on 1 July 1970. It is the most dramatic ' +
+    'map in this app and the only one that has actually been imposed: nothing else here has ever ' +
+    'been the law.',
+  status:
+    'Historical, and reversed. West Pakistan was constituted by the Establishment of West ' +
+    'Pakistan Act, 1955, with effect from 14 October 1955, and dissolved with effect from 1 July ' +
+    '1970, which restored the four provinces that had been merged into it. No party advocates ' +
+    'its restoration.',
+  // Nobody proposes this. That is a fact about the variant and it is said in the advocacy's own
+  // words rather than shown as an empty list — the same shape L7 and D1 use for a rule nobody
+  // argues the output of, and for the same reason: an empty list reads as an oversight.
+  advocacy: {
+    kind: 'unadvocated',
+    note:
+      'Nobody advocates One Unit. It is drawn here as a demarcation that existed, not as a ' +
+      'proposal — the app carries it because every other map in this file is argued against a ' +
+      'past that includes it, and because it is the only arrangement on this list that was ever ' +
+      'actually in force.',
+  },
+  opposedBy: [
+    'Sindhi, Baloch and Pashtun nationalist opinion, whose opposition to One Unit is what ended ' +
+      'it: the scheme was dissolved in 1970 after fifteen years of it',
+    'Bengali opinion in the eastern wing, for whom parity between two provinces meant a majority ' +
+      'population held to half the seats',
+  ],
+  universe: 'drawn',
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the Establishment of West Pakistan Act, 1955 — every province and princely state west of ' +
+      'India, less the territories never inside it',
+  },
+  units: [
+    WEST_PAKISTAN,
+    // Kept as themselves because that is what they were. Neither was part of the province of West
+    // Pakistan: AJK has been separately administered since 1947, and the Gilgit Agency and
+    // Baltistan were administered directly by the federal government throughout.
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'note',
+      text:
+        'The map draws three shapes and One Unit is one of them. Azad Jammu & Kashmir was never ' +
+        'part of the province of West Pakistan, and the Gilgit Agency and Baltistan — the ' +
+        'Northern Areas — were administered directly by the federal government rather than ' +
+        'through it. Drawing either inside West Pakistan would be a constitutional claim the ' +
+        'scheme itself did not make.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Islamabad is drawn inside West Pakistan, which is true of the ground and not of the ' +
+        'whole period. When One Unit was formed the capital was Karachi, itself federal territory ' +
+        'until 1961, and the ground Islamabad Capital Territory now covers was part of Rawalpindi ' +
+        'district inside West Pakistan. This map is built out of the 2023 district set, which has ' +
+        'one Islamabad and no 1955 Karachi federal area, so the capital’s own changing standing ' +
+        'over the fifteen years is stated here rather than drawn.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Every one of the 136 districts the census covers changes hands in this variant, because ' +
+        'not one of them stays inside a unit named after the province it is in today. That is the ' +
+        'scheme working as it was designed to, not an artefact of how the figure is counted.',
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Establishment of West Pakistan Act, 1955 — the four provinces, the princely states and ' +
+        'the tribal areas of the western wing merged into one province with effect from 14 ' +
+        'October 1955',
+    },
+    {
+      label:
+        'The Province of West Pakistan (Dissolution) Order, 1970 — West Pakistan dissolved and ' +
+        'the four provinces restored with effect from 1 July 1970',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
+/**
+ * The Federally Administered Tribal Areas as they stood until 2018 — seven agencies, seven
+ * districts today.
+ *
+ * The six Frontier Regions that were also FATA are not here, and cannot be: each was a strip
+ * attached to a settled district, all six were absorbed into their neighbours by the same 2018
+ * merger, and none is a district of the 2023 set. Drawing them would mean inventing six boundaries
+ * inside districts this map draws whole, which is the omission footnote's job to say instead.
+ */
+const FATA: Unit = {
+  id: 'fata',
+  name: 'Federally Administered Tribal Areas',
+  alsoKnownAs: ['FATA'],
+  kind: 'proposed',
+  claims: [
+    // The seven agencies, north to south. Each is a district of the 2023 census set, because the
+    // 2018 merger converted them into districts of Khyber Pakhtunkhwa before anybody was counted.
+    'Bajaur',
+    'Mohmand',
+    'Khyber',
+    'Orakzai',
+    'Kurram',
+    'North Waziristan',
+    'South Waziristan',
+  ],
+};
+
+/** H3 — the map restored on 1 July 1970, before the FATA merger and before GB was named. */
+const H3: Variant = {
+  id: 'h3',
+  basis: 'historical',
+  name: '1970 restoration',
+  tagline: 'how much has already changed without a new province',
+  rationale:
+    'The four provinces as they were restored when One Unit was dissolved on 1 July 1970, with ' +
+    'the Federally Administered Tribal Areas and the Northern Areas outside all four. It proposes ' +
+    'nothing: every boundary on it was Pakistan’s own within living memory. What it shows is how ' +
+    'much of the map has been redrawn already — a whole tier of federally administered territory ' +
+    'merged into a province in 2018, and a territory renamed in 2009 — without a single new ' +
+    'province having been created.',
+  status:
+    'Historical, and superseded in two separate steps. The 25th Amendment merged FATA into Khyber ' +
+    'Pakhtunkhwa in 2018; the Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 gave ' +
+    'the Northern Areas the name they carry now. The province of North-West Frontier Province was ' +
+    'renamed Khyber Pakhtunkhwa by the 18th Amendment in April 2010.',
+  advocacy: {
+    kind: 'unadvocated',
+    note:
+      'Nobody proposes restoring this map. It is drawn as the baseline the current one departed ' +
+      'from — the thing every variant in this app is implicitly compared against when someone ' +
+      'says that Pakistan’s provinces have not changed since 1970.',
+  },
+  opposedBy: [
+    'every party that voted for the 25th Amendment in 2018, which merged FATA into Khyber ' +
+      'Pakhtunkhwa with cross-party support',
+    'opinion across parties in Gilgit-Baltistan, for which the unnamed status of the Northern ' +
+      'Areas is precisely what the 2009 Order and the 2020 provisional-province announcement were ' +
+      'meant to end',
+  ],
+  universe: 'drawn',
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the Province of West Pakistan (Dissolution) Order, 1970, and the first-level units of ' +
+      'Pakistan as they stood from 1 July 1970 until the 2018 FATA merger',
+  },
+  units: [
+    // Renamed, and smaller than Khyber Pakhtunkhwa is today by exactly the seven agencies.
+    {
+      id: 'nwfp',
+      name: 'North-West Frontier Province',
+      alsoKnownAs: ['NWFP'],
+      kind: 'proposed',
+      claims: remainderOf('Khyber Pakhtunkhwa', FATA.claims),
+    },
+    FATA,
+    // The Northern Areas, which is the same ground Gilgit-Baltistan covers and not the same name.
+    // `territory` rather than `proposed`, which is what it constitutionally was and is — and what
+    // lets it hold those ten districts at all under the current answer to open item 2b.
+    {
+      id: 'northern-areas',
+      name: 'Northern Areas',
+      alsoKnownAs: ['Gilgit-Baltistan'],
+      kind: 'territory',
+      claims: remainderOf('Gilgit-Baltistan'),
+    },
+    // 1970 Punjab already included Bahawalpur, 1970 Sindh already included Khairpur, and 1970
+    // Balochistan is the Quetta and Kalat divisions that were merged to constitute it. All three
+    // are today's provinces exactly, so they are carried through rather than restated.
+    intactProvince('Punjab'),
+    intactProvince('Sindh'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+  ],
+  footnotes: [
+    {
+      kind: 'omission',
+      text:
+        'FATA is drawn as the seven agencies and not as the six Frontier Regions besides them. ' +
+        'Each Frontier Region was a strip attached to a settled district — FR Peshawar, FR Kohat, ' +
+        'FR Bannu, FR Lakki Marwat, FR Tank and FR Dera Ismail Khan — and the 2018 merger ' +
+        'absorbed each into the district it was attached to. None is a district of the 2023 ' +
+        'census, so drawing them would mean inventing six boundaries inside districts this map ' +
+        'draws whole. They are named here instead.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The districts-moved figure reads 45, and only seven districts actually change hands. ' +
+        'This app decides what carries a first-level unit forward on the unit’s name, so a rename ' +
+        'counts as a move: the 28 districts of North-West Frontier Province are Khyber ' +
+        'Pakhtunkhwa’s under another name, and the 10 of the Northern Areas are ' +
+        'Gilgit-Baltistan’s under another name — 38 districts whose boundaries have not moved at ' +
+        'all. The seven that genuinely changed hands are the agencies, which the 25th Amendment ' +
+        'moved into Khyber Pakhtunkhwa in 2018. This variant is where that counting rule shows ' +
+        'its cost, so the cost is printed beside the figure rather than left to be inferred.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The Northern Areas and Gilgit-Baltistan are the same ground under two names, so this ' +
+        'variant draws the territory exactly where the current map draws it. It is still a ' +
+        'territory here and not a province — nothing in this app calls it one, on any variant.',
+    },
+  ],
+  sources: [
+    {
+      label:
+        'The Province of West Pakistan (Dissolution) Order, 1970 — the four provinces restored ' +
+        'with effect from 1 July 1970',
+    },
+    {
+      label:
+        'Constitution (Twenty-fifth Amendment) Act, 2018 — the Federally Administered Tribal ' +
+        'Areas merged into Khyber Pakhtunkhwa, the seven agencies becoming districts and the six ' +
+        'Frontier Regions absorbed into adjacent districts',
+    },
+    {
+      label:
+        'Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 — the Northern Areas ' +
+        'renamed Gilgit-Baltistan',
+    },
+    {
+      label:
+        'Constitution (Eighteenth Amendment) Act, 2010 — North-West Frontier Province renamed ' +
+        'Khyber Pakhtunkhwa',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
+/**
+ * Bahawalpur — the one restoration claim in this app that is a claim to something the claimant
+ * actually had.
+ *
+ * Bahawalpur Division, whole: three districts, unchanged since the census and unchanged since the
+ * state was absorbed. It collides with South Punjab (L1) and with the Seraiki claims behind it,
+ * and the collision is the point rather than an inconvenience — the two proposals want the same
+ * ground on incompatible terms, and D8 is why the app never draws a compromise between them.
+ */
+const BAHAWALPUR: Unit = {
+  id: 'bahawalpur',
+  name: 'Bahawalpur',
+  kind: 'proposed',
+  claims: [
+    // Bahawalpur Division, which is the former state's territory.
+    'Bahawalpur',
+    'Bahawalnagar',
+    'Rahim Yar Khan',
+  ],
+};
+
+/** H4 — Bahawalpur restored. */
+const H4: Variant = {
+  id: 'h4',
+  basis: 'historical',
+  name: 'Bahawalpur restored',
+  tagline: 'a province asking to be one again',
+  rationale:
+    'Bahawalpur Division leaves Punjab and becomes a province in its own right again. It is the ' +
+    'only claim in this app whose advocates are asking for something they held and lost: ' +
+    'Bahawalpur was a province from 1947 until 1955, when One Unit absorbed it, and it was never ' +
+    'restored when One Unit was dissolved. The restoration movement dates from 1970 and has been ' +
+    'winning seats on it ever since.',
+  status:
+    'Live and unimplemented. A province in its own right 1947–1955, before absorption into One ' +
+    'Unit. The restoration movement dates from 1970: Bahawalpur Muttahida Mahaz won 4 National ' +
+    'Assembly and 9 provincial seats on it in the 1970 election, and it remains close to ' +
+    'impossible to win a seat in the region while opposing the demand. PML-N’s stated position is ' +
+    'two provinces — Bahawalpur separate, and a South Punjab of Multan and Dera Ghazi Khan.',
+  advocacy: {
+    kind: 'advocated',
+    by: [
+      'Bahawalpur Muttahida Mahaz and the wider restoration movement, from 1970',
+      'Pakistan Muslim League (N), whose stated position is two southern provinces rather than one',
+    ],
+  },
+  opposedBy: [
+    'Seraiki nationalist opinion and the Saraikistan Qaumi Council, for whom Bahawalpur belongs ' +
+      'inside one Seraiki province rather than beside it',
+    'opponents of dividing Punjab at all, for whom the province’s size is its weight',
+  ],
+  universe: 'drawn',
+  composition: {
+    kind: 'transcribed',
+    from: 'the former state of Bahawalpur, which is Bahawalpur Division as PBS publishes it today',
+  },
+  units: [
+    BAHAWALPUR,
+    intactProvince('Punjab', BAHAWALPUR.claims),
+    intactProvince('Sindh'),
+    intactProvince('Khyber Pakhtunkhwa'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+    intactProvince('Azad Jammu & Kashmir'),
+    intactProvince('Gilgit-Baltistan'),
+  ],
+  footnotes: [
+    {
+      kind: 'note',
+      text:
+        'Bahawalpur Division’s three districts are the former state’s territory, and none of ' +
+        'their boundaries has moved since the census, so what is claimed and what is drawn are ' +
+        'the same three districts. The state itself extended further into what is now Cholistan ' +
+        'desert within Bahawalpur and Rahim Yar Khan; nothing here is smaller or larger than the ' +
+        'division.',
+    },
+  ],
+  notes: [
+    {
+      label: 'Collision with the Seraiki and South Punjab claims',
+      text:
+        'These three districts are also the eastern third of South Punjab (L1) and of the Seraiki ' +
+        'claims behind it. Bahawalpur’s advocates explicitly reject being folded into a single ' +
+        'southern province: the two demands want the same ground on terms that cannot both hold, ' +
+        'and PML-N’s own position — two provinces rather than one — exists because of it. The app ' +
+        'draws one variant at a time and never a compromise between two claims (D8), so the ' +
+        'disagreement is stated here rather than averaged on the map.',
+      // The other half of L1's note. Both directions are wired, and the validator checks that
+      // each id names a variant that exists.
+      relatedVariants: ['l1'],
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Instrument of Accession of the State of Bahawalpur, October 1947, under which the state ' +
+        'acceded to Pakistan retaining internal self-government',
+    },
+    {
+      label:
+        'Establishment of West Pakistan Act, 1955 — Bahawalpur absorbed into the province of West ' +
+        'Pakistan with effect from 14 October 1955, and not restored when West Pakistan was ' +
+        'dissolved in 1970',
+    },
+    {
+      label:
+        'Election Commission of Pakistan — 1970 general election results: Bahawalpur Muttahida ' +
+        'Mahaz, 4 National Assembly seats and 9 provincial seats',
+    },
+    {
+      label:
+        'Pakistan Muslim League (N) — stated position of two southern provinces: Bahawalpur ' +
+        'restored separately, and a South Punjab of the Multan and Dera Ghazi Khan divisions',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), which ' +
+        'is where the three-district composition of Bahawalpur Division is read from',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
+/**
+ * Order is the order the selectors offer them in, grouped by basis: a reader entering a basis
+ * lands on its first variant (D13), so the first of each group is a deliberate choice and not an
+ * accident of when it was written.
+ */
+export const VARIANTS: readonly Variant[] = [L1, L4, L5, H1, H3, H4];

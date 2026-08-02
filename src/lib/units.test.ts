@@ -29,13 +29,14 @@ const locArcs = arcsOf((geography as never as { objects: Record<string, never> }
 ] as never);
 
 /** A unit's geometry as the outline bundle stores it — arc indices, before any read. */
-const bundleGeometry = (unit: string): never => {
-  const found = bundle.objects['l1']?.geometries.find(
+const geometryOf = (variant: string, unit: string): never => {
+  const found = bundle.objects[variant]?.geometries.find(
     (g) => (g.properties as { unit?: string } | undefined)?.unit === unit,
   );
-  if (found === undefined) throw new Error(`${unit} is not a unit of l1`);
+  if (found === undefined) throw new Error(`${unit} is not a unit of ${variant}`);
   return found as never;
 };
+const bundleGeometry = (unit: string): never => geometryOf('l1', unit);
 
 describe('readUnitOutlines', () => {
   const units = readUnitOutlines(topology, bundle, 'l1');
@@ -126,6 +127,45 @@ describe('unitBoundaries', () => {
     const sindh = boundaries.find((b) => b.properties.unit === 'sindh');
     expect(sindh?.lines.geometry.coordinates.length).toBe(arcsOf(bundleGeometry('sindh')).size);
   });
+
+  it('holds the line out of every variant’s units, whatever those units are called', () => {
+    // The property above, asked of the whole shipped set rather than of L1, because the units the
+    // line runs along are not the same units from variant to variant. H3 calls Gilgit-Baltistan
+    // the Northern Areas, and H1 draws only three units in total — so a renderer that recognised
+    // the ceasefire line by unit *name* would put a solid stroke along it the moment a variant
+    // renamed a territory. Reported per unit, since the failure is one shape drawn wrong.
+    const drawnSolid = variants.flatMap((variant) =>
+      unitBoundaries(topology, bundle, variant.id, locArcs).flatMap((boundary) => {
+        const arcs = arcsOf(geometryOf(variant.id, boundary.properties.unit));
+        const shared = [...arcs].filter((arc) => locArcs.has(arc));
+        return boundary.lines.geometry.coordinates.length === arcs.size - shared.length
+          ? []
+          : [`${variant.id} "${boundary.properties.name}" strokes ${shared.length} ceasefire arcs`];
+      }),
+    );
+    expect(drawnSolid).toEqual([]);
+
+    // And it is held out of exactly two units of each variant — never none, which would make the
+    // check above vacuous, and never three.
+    const along = Object.fromEntries(
+      variants.map((variant) => [
+        variant.id,
+        variant.units
+          .filter((unit) =>
+            [...arcsOf(geometryOf(variant.id, unit.id))].some((arc) => locArcs.has(arc)),
+          )
+          .map((unit) => unit.name),
+      ]),
+    );
+    expect(along).toEqual({
+      l1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      l4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      l5: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      h3: ['Northern Areas', 'Azad Jammu & Kashmir'],
+      h4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+    });
+  });
 });
 
 describe('unitByDistrict', () => {
@@ -176,6 +216,14 @@ describe('unitLegend', () => {
       'unit-unchanged',
       'unit-territory',
     ]);
+
+    // And the same over a variant that really is short a kind rather than one edited to be:
+    // One Unit is a single province and the two territories, with nothing left unchanged, so the
+    // legend has no `unit-unchanged` row to key at all.
+    const h1 = variants.find((v) => v.id === 'h1');
+    if (h1 === undefined) throw new Error('h1 is not in the scenario bundle');
+    expect(h1.units.map((u) => u.kind)).toEqual(['proposed', 'territory', 'territory']);
+    expect(unitLegend(h1).map((e) => e.swatch)).toEqual(['unit-proposed', 'unit-territory']);
   });
 });
 
@@ -190,4 +238,20 @@ describe('the units on the ground', () => {
       .map((f) => f.properties.name);
     expect(outside).toEqual([]);
   });
+
+  it('anchors every unit of every variant inside itself, including the awkward shapes', () => {
+    // L1's eight are all compact. The set now contains shapes that are not: West Pakistan is 261
+    // polygons and a hole where nothing is, and North-West Frontier Province is a crescent around
+    // the tribal districts it does not contain. A crescent's centroid falls outside it, so this is
+    // where a naive anchor would put a province's name on ground belonging to another unit.
+    const misplaced = variants.flatMap((variant) =>
+      readUnitOutlines(topology, bundle, variant.id)
+        .features.filter((f) => !geoContains(f as never, labelAnchor(f as never)))
+        .map((f) => `${variant.id} "${f.properties.name}"`),
+    );
+    expect(misplaced).toEqual([]);
+    // Six variants' worth of pole-of-inaccessibility searches over 43 outlines, one of them the
+    // whole of the four provinces: slower than the 5s default, and worth the wall clock, because a
+    // unit name set outside its own shape is the one label error a reader reads as a fact.
+  }, 30_000);
 });
