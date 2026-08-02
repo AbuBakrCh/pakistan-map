@@ -1302,8 +1302,15 @@ describe('bundle scorecard', () => {
         { from: 'Gilgit-Baltistan', districts: 10 },
       ],
     });
-    const explains = h3.footnotes.filter((f) => f.text.includes('45')).map((f) => f.text);
+    // Selected on what the footnote is *about*, not on the digits it happens to contain: filtering
+    // for '45' matched any future footnote that mentioned a 45 of anything, and matched nothing at
+    // all the day the count changed — passing for the wrong reason and failing for the wrong one.
+    // The figure it quotes is then tied to the figure asserted above, so the two cannot drift.
+    const explains = h3.footnotes
+      .filter((f) => f.text.includes('districts-moved figure'))
+      .map((f) => f.text);
     expect(explains).toHaveLength(1);
+    expect(explains[0]).toContain(String(h3.scorecard.districtsMoved.count));
     expect(explains[0]).toContain('seven');
 
     // The Northern Areas is Gilgit-Baltistan's ten districts under another name, and it is still a

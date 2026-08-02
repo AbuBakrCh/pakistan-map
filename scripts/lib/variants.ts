@@ -202,8 +202,10 @@ const L4: Variant = {
     'Hazara Division leaves Khyber Pakhtunkhwa as a province of its own. It is the one Language ' +
     'variant whose boundary needs no interpretation at all: the claim is an existing ' +
     'administrative division, entire, and its advocates have never asked for more or less than ' +
-    'that. What makes it a language claim is what is inside the line — Hindko, not Pashto, is the ' +
-    'majority mother tongue across most of the division, and the movement’s case rests on it.',
+    'that. What makes it a language claim is what is inside the line — Hindko is the mother tongue ' +
+    'of 56% of the division’s people, and the movement’s case rests on it. It is a majority of the ' +
+    'population and not of the map: three of the eight districts drawn here shade Hindko, and five ' +
+    'do not.',
   status:
     'Live and unimplemented. The Hazara Qaumi Mahaz was founded in 1987; the demand became mass ' +
     'mobilisation in April 2010, when the 18th Amendment renamed North-West Frontier Province as ' +
@@ -247,9 +249,9 @@ const L4: Variant = {
       kind: 'district-count',
       text:
         'The movement states this claim as six districts — Haripur, Abbottabad, Mansehra, ' +
-        'Battagram, Kohistan and Torghar. That was the division’s composition when the demand was ' +
+        'Batagram, Kohistan and Torghar. That was the division’s composition when the demand was ' +
         'framed. Kohistan has since been split three ways, into Upper Kohistan, Lower Kohistan ' +
-        'and Kolai Pallas Kohistan, and Allai was carved out of Battagram: the same territory is ' +
+        'and Kolai Pallas Kohistan, and Allai was carved out of Batagram: the same territory is ' +
         'nine districts today. This map is pinned to the 2023 census, in which Allai has no ' +
         'population row, so it is drawn inside Batagram and the unit reads as eight. Six as ' +
         'claimed, nine today, eight drawn — one division, and not one boundary of it has moved.',
@@ -326,13 +328,13 @@ const L5: Variant = {
     'Karachi Division leaves Sindh as a province of its own. It is the only variant in this app ' +
     'whose drawn extent is smaller than the demand behind it: MQM-P frames the claim as urban ' +
     'Sindh — Karachi together with urban Hyderabad, Sukkur and Mirpur Khas — on the basis of ' +
-    'mother tongue and of the land exchanged at partition. The economic argument runs alongside ' +
-    'it: one segment of Karachi’s population generates the large majority of Sindh’s tax revenue ' +
-    'while control of the provincial budget sits elsewhere.',
+    'mother tongue and of the land exchanged at partition. Its advocates argue the case in revenue ' +
+    'as well as in language — that Karachi raises a large share of what Sindh collects while ' +
+    'control of the provincial budget sits elsewhere — and that argument is reported here as ' +
+    'theirs: this app carries no revenue data and does not adjudicate it.',
   status:
     'A long-standing demand, raised repeatedly by MQM and its successors and as recently as 2026. ' +
-    'No province has been created and no constitutional amendment to create one has passed. Sindh ' +
-    'has never had a provincial government that supported it.',
+    'No province has been created and no constitutional amendment to create one has passed.',
   advocacy: {
     kind: 'advocated',
     by: ['Muttahida Qaumi Movement – Pakistan (MQM-P)', 'historically the Muttahida Qaumi Movement'],
@@ -434,9 +436,9 @@ const H1: Variant = {
   rationale:
     'Every province and princely state west of India was merged into a single province of West ' +
     'Pakistan on 14 October 1955, to stand as one half of a two-province federation against East ' +
-    'Bengal. It lasted fifteen years and was dissolved on 1 July 1970. It is the most dramatic ' +
-    'map in this app and the only one that has actually been imposed: nothing else here has ever ' +
-    'been the law.',
+    'Bengal. It lasted fifteen years and was dissolved on 1 July 1970. It is the most dramatic map ' +
+    'in this app, and one of the few here that were once the law rather than a proposal — the ' +
+    'nearest of the others being the 1970 restoration that undid it.',
   status:
     'Historical, and reversed. West Pakistan was constituted by the Establishment of West ' +
     'Pakistan Act, 1955, with effect from 14 October 1955, and dissolved with effect from 1 July ' +
@@ -450,12 +452,15 @@ const H1: Variant = {
     note:
       'Nobody advocates One Unit. It is drawn here as a demarcation that existed, not as a ' +
       'proposal — the app carries it because every other map in this file is argued against a ' +
-      'past that includes it, and because it is the only arrangement on this list that was ever ' +
-      'actually in force.',
+      'past that includes it, and because it was actually in force, which is true of few of the ' +
+      'arrangements on this list.',
   },
+  // Written as what stood against the scheme while it ran, not as who caused its end. One Unit
+  // was dissolved by Yahya Khan's 1970 Order, and a card that handed that outcome to the movements
+  // opposing it would be this app settling a question of cause that its sources do not settle.
   opposedBy: [
-    'Sindhi, Baloch and Pashtun nationalist opinion, whose opposition to One Unit is what ended ' +
-      'it: the scheme was dissolved in 1970 after fifteen years of it',
+    'Sindhi, Baloch and Pashtun nationalist opinion, which opposed the merger throughout its ' +
+      'fifteen years and campaigned for the restoration of the provinces it had absorbed',
     'Bengali opinion in the eastern wing, for whom parity between two provinces meant a majority ' +
       'population held to half the seats',
   ],
@@ -575,12 +580,15 @@ const H3: Variant = {
       'from — the thing every variant in this app is implicitly compared against when someone ' +
       'says that Pakistan’s provinces have not changed since 1970.',
   },
+  // Nobody proposes this map, so nobody opposes it as a proposal either. The line is written as
+  // what restoring it would undo — which is checkable against the two instruments named in the
+  // status — rather than recruiting the parties behind those instruments into an argument they
+  // have never been asked to have.
   opposedBy: [
-    'every party that voted for the 25th Amendment in 2018, which merged FATA into Khyber ' +
-      'Pakhtunkhwa with cross-party support',
-    'opinion across parties in Gilgit-Baltistan, for which the unnamed status of the Northern ' +
-      'Areas is precisely what the 2009 Order and the 2020 provisional-province announcement were ' +
-      'meant to end',
+    'the cross-party majority that passed the 25th Amendment in 2018, whose merger of FATA into ' +
+      'Khyber Pakhtunkhwa this map would reverse',
+    'opinion across parties in Gilgit-Baltistan, for which returning to the name Northern Areas ' +
+      'would undo both the 2009 Order and the provisional provincial status announced in 2020',
   ],
   universe: 'drawn',
   composition: {
@@ -716,8 +724,8 @@ const H4: Variant = {
   status:
     'Live and unimplemented. A province in its own right 1947–1955, before absorption into One ' +
     'Unit. The restoration movement dates from 1970: Bahawalpur Muttahida Mahaz won 4 National ' +
-    'Assembly and 9 provincial seats on it in the 1970 election, and it remains close to ' +
-    'impossible to win a seat in the region while opposing the demand. PML-N’s stated position is ' +
+    'Assembly and 9 provincial seats on it in the 1970 election, and the restoration has been a ' +
+    'fixture of the region’s electoral politics since. PML-N’s stated position is ' +
     'two provinces — Bahawalpur separate, and a South Punjab of Multan and Dera Ghazi Khan.',
   advocacy: {
     kind: 'advocated',

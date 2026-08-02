@@ -85,7 +85,7 @@
 
 import { type AdjacencyGraph, contiguityOf } from './adjacency.ts';
 import { provinceOf } from './roster.ts';
-import type { NonEmpty, Unit } from './scenarios.ts';
+import { slug, type NonEmpty, type Unit } from './scenarios.ts';
 
 /** The stated rule. Three kinds, each of which determines a partition on its own. */
 export type PartitionRule =
@@ -143,12 +143,6 @@ export interface Generation {
 
 /** Digits grouped, the way the card sets a census figure — never rounded to a headline. */
 const group = (value: number): string => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-const slug = (name: string): string =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 
 /** A district named the way every failure in this repo names one: with where it is. */
 const named = (district: string): string => {
@@ -244,10 +238,17 @@ export function capitalsByDistance(
 
   const chosen: string[] = [first];
   const nearest = new Map<string, number>();
+  // A missing centroid is refused by name rather than defaulted, and the reason is specific to
+  // this rule: zero would make the district *maximally near* every capital, so farthest-point
+  // seeding would never pick it and it would drop out of the seeding silently — the one failure
+  // mode that looks exactly like a working answer. `partitionByRule` gates this already; these two
+  // seeding functions are exported and callable without it, so they carry their own refusal.
   const distanceFrom = (capital: string, district: string): number => {
     const a = centroids.get(capital);
     const b = centroids.get(district);
-    return a === undefined || b === undefined ? 0 : haversineKm(a, b);
+    if (a === undefined) throw new Error(`${named(capital)} has no centroid to measure from`);
+    if (b === undefined) throw new Error(`${named(district)} has no centroid to measure to`);
+    return haversineKm(a, b);
   };
   for (const district of scope) nearest.set(district, distanceFrom(first, district));
 
@@ -372,16 +373,28 @@ function unitsOf(
     .sort((a, b) => b.population - a.population || a.capital.localeCompare(b.capital));
 }
 
+/**
+ * The growth half of every rule statement, and it is spelled out to the tie-break on purpose.
+ *
+ * The ticket's premise is that the Administrative boundaries are the rule's and not ours, and a
+ * reader can only hold us to that if the sentence on the card is enough to redraw the map from.
+ * "The unit with the fewest people takes the next district" is half a rule — *which* district it
+ * takes is the other half, and it is the half that actually decides where a boundary lands. The
+ * name tie-breaks are here for the same reason: they are what makes the output the same map twice,
+ * and a reader who cannot see them has to take determinism on trust.
+ */
+const GROWTH_RULE =
+  'each unit grows outward from its capital across shared district borders; at each step the unit ' +
+  'with the fewest people takes the least populous district on its edge that the rule still ' +
+  'admits, ties going to the lower district name and, between units, to the lower capital name.';
+
 const CAPITAL_RULE_POPULATION =
   'Capitals are the most populous districts, no two of them sharing a border (relaxed in ' +
-  'population order where the map has no room for another); each unit grows outward from its ' +
-  'capital across shared district borders, the unit with the fewest people taking the next ' +
-  'district each time.';
+  `population order where the map has no room for another); ${GROWTH_RULE}`;
 
 const CAPITAL_RULE_DISTANCE =
   'Capitals are chosen as far as possible from the capitals already chosen, starting from the ' +
-  'most populous district; each unit grows outward from its capital across shared district ' +
-  'borders, the unit with the fewest people taking the next district each time.';
+  `most populous district; ${GROWTH_RULE}`;
 
 const CENSUS = 'Populations are the PBS 2023 census district rows.';
 

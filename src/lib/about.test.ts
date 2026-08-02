@@ -299,18 +299,26 @@ describe('the panel when a bundle is short of something', () => {
     expect(rows).toHaveLength(about.sources.items.length);
   });
 
-  it('falls back to the bundle’s own vintage for a basis baked before the field existed', () => {
-    // `vintage` on a basis is newer than the committed artifact. A panel that printed nothing
-    // there would report a gap in the data that is really a gap between two commits.
-    const bases = Object.fromEntries(
-      Object.entries(inputs.scenarios.bases).map(([id, basis]) => [
-        id,
-        { ...basis, vintage: undefined },
-      ]),
-    ) as unknown as ScenarioBundle['bases'];
-    const older = aboutTheData({ ...inputs, scenarios: { ...inputs.scenarios, bases } });
-    for (const basis of older.bases.items) {
-      expect(basis.vintage, basis.name).toBe(inputs.scenarios.provenance.vintage);
+  it('prints each basis’s own vintage rather than the bundle header’s, which is not the same string', () => {
+    // This replaced a test that asserted the opposite. `basis.vintage` was briefly optional with a
+    // fallback to `provenance.vintage`, and the fallback was a silent wrong answer rather than a
+    // graceful one: the header carries the *census* vintage, and Historical's boundaries are
+    // documented demarcations from 1947 onward, which is explicitly not the census. A basis short
+    // of the field now fails to typecheck against the bundle rather than rendering a confident
+    // date nobody baked. The panel exists so a reader can audit us; a guess defeats the whole
+    // surface.
+    const baked = new Map(
+      Object.values(inputs.scenarios.bases).map((basis) => [basis.name, basis.vintage]),
+    );
+    for (const basis of about.bases.items) {
+      expect(basis.vintage, basis.name).toBeTruthy();
+      expect(basis.vintage, basis.name).toBe(baked.get(basis.name));
     }
+
+    const historical = inputs.scenarios.bases['historical'];
+    expect(historical.vintage).not.toBe(inputs.scenarios.provenance.vintage);
+    expect(about.bases.items.find((basis) => basis.name === historical.name)?.vintage).toBe(
+      historical.vintage,
+    );
   });
 });

@@ -426,8 +426,14 @@ export function resolveClaimedDistrict(
   return null;
 }
 
-/** Slug for a unit id, so `intactProvince` need not be told one. */
-const slug = (name: string): string =>
+/**
+ * Slug for a unit id, so `intactProvince` need not be told one.
+ *
+ * Exported because the partitioner (#27) names generated units too, and two private copies of this
+ * is how a generated unit's id drifts from the id `intactProvince` gives the same name — silently,
+ * since both would still be valid slugs of something.
+ */
+export const slug = (name: string): string =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')

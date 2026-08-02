@@ -161,7 +161,7 @@ function basesOf(scenarios: ScenarioBundle): readonly AboutBasis[] {
   return Object.values(scenarios.bases).map((basis: BasisRecord) => ({
     name: basis.name,
     source: basis.source,
-    vintage: basis.vintage ?? scenarios.provenance.vintage,
+    vintage: basis.vintage,
     badges: basis.badges.map(badge),
   }));
 }
@@ -283,7 +283,11 @@ function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
     {
       what: `Proposed unit outlines — ${outlines.provenance.counts['units'] ?? 0} across ${outlines.provenance.counts['variants'] ?? 0} variant(s), drawn on top of everything`,
       source: `${outlines.provenance.sources['content'] ?? ''}; dissolved out of ${outlines.provenance.arcsFrom}`,
-      vintage: `The date of each proposal's own source — stated on its card, variant by variant`,
+      // Points at Sources on the card, which is a list that exists and carries the dates. It used
+      // to say the date was "stated on its card, variant by variant", which named no field the
+      // card actually prints — the audit surface sending a reader to a page that cannot answer is
+      // the one defect this panel must not have.
+      vintage: `The date of each proposal's own source, listed under Sources on that variant's card`,
       // The one drawn surface with no published line behind it: an outline is the merge of its
       // districts' arcs, computed here. Where the *claim* came from is the card's business, and
       // the row says so rather than answering for seventeen different documents.

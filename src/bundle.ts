@@ -166,12 +166,13 @@ export interface BasisRecord {
   /**
    * When the data this basis shades from was collected (#21).
    *
-   * Optional here and required in the build's schema, and the asymmetry is deliberate: the field
-   * was added after the committed bundle was baked, and a runtime that threw on a bundle built
-   * one commit earlier would turn a provenance improvement into a blank page. The About panel
-   * falls back to the bundle's own header, which carries the same string.
+   * Required, matching the build's schema. It was briefly optional with a fallback to the bundle
+   * header's vintage, which was worse than it looked: the header carries the *census* vintage, and
+   * the Historical basis's vintage is explicitly not that — so a bundle baked before the field
+   * existed rendered a confidently wrong date under Historical rather than failing. An audit panel
+   * that guesses is the one thing an audit panel may not do.
    */
-  readonly vintage?: string;
+  readonly vintage: string;
   readonly badges: readonly ProvenanceBadge[];
 }
 
