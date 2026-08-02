@@ -117,6 +117,15 @@ body {
   visibility: hidden;
 }
 
+/*
+ * Compare (#22) arrives and leaves with the outlines, like the card: at the baseline there is no
+ * proposal on screen, and the current map compared against itself is not a comparison (D17).
+ * Collapsed rather than removed for the same reason as the variant row above it.
+ */
+.controls[data-compare='none'] .control-compare {
+  visibility: hidden;
+}
+
 .control-label {
   color: var(--ink-faint);
   font-size: 0.72rem;
@@ -144,19 +153,40 @@ body {
 }
 
 /* Never the checked chip: its ink is the paper, and hovering it would set paper on paper. */
-.chip:hover:not(:disabled):not([aria-checked='true']) {
+.chip:hover:not(:disabled):not([aria-checked='true']):not([aria-pressed='true']) {
   border-color: var(--rule-province);
   color: var(--ink);
 }
 
 /*
  * The active chip is filled, not merely outlined: which basis is on decides what every colour on
- * the map means, so it has to be readable at a glance from across the page.
+ * the map means, so it has to be readable at a glance from across the page. Compare is filled on
+ * the same terms while it is held — including while it is held by the key rather than by the
+ * button, or a reader with a finger on Space would watch an unpressed control beside a map that
+ * was plainly comparing.
  */
-.chip[aria-checked='true'] {
+.chip[aria-checked='true'],
+.chip[aria-pressed='true'] {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--paper);
+}
+
+/*
+ * Compare is not one of a set: it does not choose what the map shows, it holds what the map shows
+ * out of the way. So it sits apart from both radio groups and is not given a group label — the
+ * word on the button is the whole of what it is.
+ */
+.chip-compare {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+/* The other half of the gesture, said rather than tucked into a `title` no phone can reach. */
+.control-hint {
+  color: var(--ink-faint);
+  font-size: 0.74rem;
+  font-style: italic;
 }
 
 /*

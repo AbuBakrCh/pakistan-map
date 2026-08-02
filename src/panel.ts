@@ -15,6 +15,7 @@
 import { select } from 'd3';
 import type { BasisId, ScenarioBundle } from './bundle.ts';
 import type { CardList, CardUnit, VariantCard } from './lib/card.ts';
+import { COMPARE_HINT, COMPARE_LABEL, COMPARE_TITLE } from './lib/compare.ts';
 import {
   BASELINE,
   refusalLines,
@@ -25,8 +26,12 @@ import {
 } from './lib/selection.ts';
 
 export interface PanelHandle {
-  /** Redraw the controls for a selection made elsewhere — a deep link, or a later ticket's undo. */
-  show(selection: Selection): void;
+  /**
+   * Redraw the controls for a selection made elsewhere — a deep link, or a later ticket's undo —
+   * and for the compare gesture, which is held by the key as often as by the button and must
+   * show the same state either way.
+   */
+  show(selection: Selection, comparing: boolean): void;
 }
 
 /** What a basis button offers, with the baseline folded in as the first of them. */
@@ -42,6 +47,8 @@ export function renderControls(
   scenarios: ScenarioBundle,
   choices: readonly BasisChoice[],
   onSelect: (selection: Selection) => void,
+  /** The button half of the compare gesture (#22). The key half is wired in `main.ts`. */
+  onCompare: () => void,
 ): PanelHandle {
   const options: BasisOption[] = [
     {
@@ -104,15 +111,43 @@ export function renderControls(
   variants.append('span').attr('class', 'control-label').text('Variant');
   const variantList = variants.append('div').attr('class', 'control-options');
 
-  function show(selection: Selection): void {
+  /*
+   * Compare (#22). Not a radio and not a member of either group: it does not choose what the map
+   * shows, it holds what the map shows out of the way. `aria-pressed` rather than `aria-checked`
+   * for exactly that reason — this is a control that is on or off, not one of a set of four.
+   *
+   * It arrives and leaves with the outlines, like the card: at the baseline there is no proposal
+   * on screen, and the current map compared against itself is not a comparison (D17). Hidden
+   * rather than removed, so entering a basis does not move the controls under the pointer — the
+   * same treatment the variant row already gets.
+   */
+  const compare = root.append('div').attr('class', 'control control-compare');
+  const compareButton = compare
+    .append('button')
+    .attr('type', 'button')
+    .attr('class', 'chip chip-compare')
+    .attr('title', COMPARE_TITLE)
+    .attr('aria-pressed', 'false')
+    .text(COMPARE_LABEL)
+    .on('click', () => onCompare());
+  // Printed beside the button, not tucked into its `title`: a `title` needs a hovering mouse, and
+  // the key is the faster half of the gesture for everyone who has one.
+  compare.append('span').attr('class', 'control-hint').text(COMPARE_HINT);
+
+  function show(selection: Selection, comparing: boolean): void {
     basisButtons.attr('aria-checked', (option) =>
       option.id === (selection?.basis ?? null) ? 'true' : 'false',
     );
+
+    // The button shows the state the key can put it in as well, or a reader who held Space would
+    // watch an unpressed button while the map beside it was plainly comparing.
+    compareButton.attr('aria-pressed', comparing ? 'true' : 'false');
 
     const active = choices.find((choice) => choice.basis.id === selection?.basis);
     // Empty at the baseline: an empty proposal row is not hidden but collapsed, so the controls
     // do not change height as a basis is chosen and the map below them does not jump.
     root.attr('data-variants', active === undefined ? 'none' : 'some');
+    root.attr('data-compare', selection === null ? 'none' : 'some');
     variantList
       .selectAll<HTMLButtonElement, { id: string; name: string; tagline: string | null }>('button')
       .data(active?.variants ?? [], (variant) => variant.id)
@@ -137,7 +172,7 @@ export function renderControls(
       });
   }
 
-  show(BASELINE);
+  show(BASELINE, false);
   return { show };
 }
 

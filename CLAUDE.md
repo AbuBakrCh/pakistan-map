@@ -5,8 +5,8 @@ Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 **Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
 module), pipeline and bundle built, the map built through its **three strata with the basis
 and variant selectors** (#18) over its **neighbour silhouettes and city dots** (#8), the
-**variant card** rendering beside it (#19), and the **adjacency graph** flagging each unit's
-contiguity (#16).
+**variant card** rendering beside it (#19), the **adjacency graph** flagging each unit's
+contiguity (#16), and the **compare gesture** holding a proposal off the map (#22).
 
 ---
 
@@ -284,6 +284,7 @@ What it holds:
 | Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
 | The variant card — an unadvocated variant saying so, and a missing **Opposed by** printed as a gap in our data rather than dropped; badges glossed on the card and refused outside the closed vocabulary, naming the variant *and* the word; both district counts wherever the claim and the drawing disagree, with the folds named; the discrepancy footnotes set above the asides; alternative names beside the advocates' own and never instead; the proposal listed ahead of the provinces it is carved out of; and Islamabad never called a province | `src/lib/card.test.ts` |
 | Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
+| The compare gesture — which presses are the app's and which belong to the page: an unmodified `Space` claimed, a modified one left to the browser and the system, and `Space` **never taken from a focused control**, which on this page means every button there is. The release named as the more forgiving of the two, and the reason; the auto-repeat reported as no change rather than as forty presses; the key and the button reaching one state that neither can quietly undo; and the sentence a screen reader is given, which says the proposal is held off the map rather than gone | `src/lib/compare.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
@@ -394,8 +395,44 @@ wins the tight frame and the qualified name returns with the room. The cost is p
 zoom by **Mardan**, which now gives way to `Peshawar Division` in the most crowded corner of KP —
 named in the suite, not absorbed into a count, and back on the first zoom step.
 
-**Compare** — hold `Space` (or tap Compare) to drop strata 1 and 3 and restore the real map
-at full strength. The *only* map comparison; no side-by-side, no cross-variant table.
+**Compare (#22)** — hold `Space` (or press Compare) to drop strata 1 and 3 and restore the real
+map at full strength. The *only* map comparison; no side-by-side, no cross-variant table (D17).
+
+It is **held, never toggled** (CONTEXT.md reserves the word): the key holds it while it is down,
+the button holds it until the button is pressed again, and the two reach *one* state — which is
+what makes the button the same gesture for a reader with no keyboard rather than a second feature
+that resembles it. Neither may quietly undo the other, so a key released over a comparison the
+button is holding changes nothing.
+
+**Releasing restores the view exactly, and that is a consequence rather than a feature.** The
+compared map is `viewFor(BASELINE)` assembled whole — so a fourth stratum added later is dropped
+by construction rather than by being remembered here — and the selection is never touched, so
+there is nothing to put back. Zoom and pan survive because `show` re-projects nothing and never
+reads the transform: the country does not move under the gesture, and the outlines return over
+exactly the ground they left. The animation is the same cross-fade a variant switch already uses,
+on the same `--switch` from the stylesheet, so reduced motion makes compare a straight swap for
+free and nothing here states a second duration.
+
+Three things it deliberately does not do. **It is absent at the baseline**, arriving and leaving
+with the outlines exactly as the card does — the current map compared against itself is not a
+comparison — and `Space` there is left to the page, where it scrolls. **The card, the legend and
+the colophon do not change**: the reader is looking at the map with a key down, and rewriting
+three blocks of prose underneath them would be the page changing rather than the map; the proposal
+is still selected while it is held off the screen. And **choosing a variant ends it**, because a
+reader who asks to see a proposal has asked to stop comparing.
+
+`Space` is **not taken from any control that already answers it.** Every control on this page is
+a `<button>` — the Compare button included — and a focused button fires its own click on `Space`;
+firing the hold as well would press the button *and* hold the key, the two cancelling, leaving a
+control that reads as dead. So the gesture is refused wherever focus is interactive and available
+everywhere else, the map included, which carries `tabindex="0"` and is where a reader stands to
+compare. The release is deliberately the more forgiving of the two — the key alone, whatever
+modifiers arrived mid-hold and wherever focus went, plus the window's own `blur`, since
+alt-tabbing with `Space` down delivers the `keyup` somewhere else entirely and a missed release
+strands the map on the baseline while the card beside it argues for boundaries that are not drawn.
+Auto-repeat is swallowed but not acted on: every repeat would scroll the page if its default were
+let through, and none of them may restart a cross-fade mid-fade. The full accessibility pass is
+#35's; this is the narrower obligation not to leave it a conflict to find.
 
 **Variant card (#19)** — name and tagline, the **basis** badge beside the **provenance** badges,
 unit count, the 2–3 sentence rationale, the proposal's real-world status, where the boundary came
