@@ -41,7 +41,12 @@ export interface BasisChoice {
   readonly variants: readonly VariantChoice[];
   /** Selectable: something to draw, and something to shade it against. */
   readonly available: boolean;
-  /** Why not, in the words the control puts on screen. Null when it is available. */
+  /**
+   * What it is short of, one clause per missing half. Empty when it is available. Written without
+   * a pronoun so the same clause reads whether it is said of one basis or of three.
+   */
+  readonly missing: readonly string[];
+  /** Why not, as one sentence about this basis alone. Null when it is available. */
   readonly unavailable: string | null;
 }
 
@@ -64,15 +69,40 @@ export function basisChoices(
       .map((variant) => ({ id: variant.id, name: variant.name, tagline: variant.tagline }));
 
     const missing: string[] = [];
-    if (variants.length === 0) missing.push('no variant is written for it yet');
-    if (!shadeable.has(id)) missing.push('the map cannot shade districts by it yet');
+    if (variants.length === 0) missing.push('no variant is written yet');
+    if (!shadeable.has(id)) missing.push('no shading is built yet');
 
     return {
       basis,
       variants,
+      missing,
       available: missing.length === 0,
       unavailable: missing.length === 0 ? null : `${basis.name}: ${missing.join(', and ')}.`,
     };
+  });
+}
+
+/**
+ * The refusals as sentences to print, one per distinct reason, naming the bases it applies to.
+ *
+ * On screen and not only in a `title`, because a `title` is reachable by a hovering mouse and by
+ * nothing else — and this app's hard bar is a 390px phone, where there is no hover and a disabled
+ * control takes no tap. A basis offered and silently inert is worse than one not offered at all.
+ * Grouped by reason so three bases short of the same two things are one line rather than three.
+ */
+export function refusalLines(choices: readonly BasisChoice[]): readonly string[] {
+  const byReason = new Map<string, string[]>();
+  for (const choice of choices) {
+    if (choice.available) continue;
+    const reason = choice.missing.join(', and ');
+    byReason.set(reason, [...(byReason.get(reason) ?? []), choice.basis.name]);
+  }
+  return [...byReason].map(([reason, names]) => {
+    const named =
+      names.length === 1
+        ? `${names[0]} is`
+        : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]} are`;
+    return `${named} not selectable yet — ${reason}.`;
   });
 }
 
@@ -136,8 +166,8 @@ export function mapDescription(scenarios: ScenarioBundle, selection: Selection):
       ? 'no new province'
       : `${proposed.map((unit) => unit.name).join(', ')} — proposed, not official`;
   return (
-    `Map of Pakistan under the proposal "${variant.name}", drawn over districts shaded by ` +
-    `${basis.name.toLowerCase()}. Current provinces and divisions are faded behind it. ` +
+    `Map of Pakistan drawn as the variant "${variant.name}" would draw it, over districts shaded ` +
+    `by ${basis.name.toLowerCase()}. Current provinces and divisions are faded behind it. ` +
     `${variant.counts.units} units, of which ${drawn}`
   );
 }

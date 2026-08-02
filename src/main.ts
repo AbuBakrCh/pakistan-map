@@ -100,7 +100,7 @@ function viewFor(selection: Selection): MapView {
 
 let selection: Selection = BASELINE;
 const map = renderMap(mount, geographyTopology, censusStatistics, viewFor(selection));
-const panel = renderControls(controlMount, choices, (next) => {
+const panel = renderControls(controlMount, scenarioBundle, choices, (next) => {
   selection = next;
   render();
 });

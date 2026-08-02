@@ -151,14 +151,25 @@ body {
 }
 
 /*
- * A basis with no variant written for it yet is offered and refused, not hidden — its `title`
- * says which half is missing. Dimmed rather than removed, because the four bases are the argument
- * this app makes about what a boundary can be argued from.
+ * A basis with no variant written for it yet is offered and refused, not hidden — the four bases
+ * are the argument this app makes about what a boundary can be argued from, and one quietly
+ * missing from the menu reads as one that does not exist. Dimmed, and the line beside them says
+ * which half is missing.
  */
 .chip:disabled {
   color: var(--ink-faint);
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.control-refusal {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+.control-refusal:empty {
+  display: none;
 }
 
 .chip-tagline {

@@ -694,36 +694,77 @@ export function renderMap(
    * Stratum 3: one cased outline per unit, joined on the unit's own id.
    *
    * Joining on the id rather than on position is what makes switching variants a change rather
-   * than a redraw — a unit both variants contain keeps its element and moves its edge, and only
-   * what actually differs fades in or out. `animate` is false whenever the frame or the
-   * projection moved, because a resize is not a change of proposal and should not look like one.
+   * than a redraw — a unit both variants contain keeps its element, and only what actually
+   * differs fades. `animate` is false whenever the frame or the projection moved, because a
+   * resize is not a change of variant and should not look like one.
    */
   function drawUnits(path: ReturnType<typeof geoPath>, animate: boolean): void {
     const boundaries = view.boundaries ?? [];
-    const duration = animate && !reducedMotion() ? 340 : 0;
+    const duration = animate ? switchDuration() : 0;
 
     for (const [layer, className] of [
       [unitCasingLayer, 'unit-casing'],
       [unitLayer, 'unit-line'],
     ] as const) {
+      const join = layer
+        .selectAll<SVGPathElement, UnitBoundary>('path')
+        .data(boundaries, (boundary) => boundary.properties.unit);
+
+      join
+        .exit()
+        .transition()
+        .duration(duration)
+        .attr('opacity', 0)
+        .remove();
+
+      join
+        .enter()
+        .append('path')
+        .attr('opacity', 0)
+        .attr('d', (b) => path(b.lines))
+        .transition()
+        .duration(duration)
+        .attr('opacity', 1);
+
       layer
         .selectAll<SVGPathElement, UnitBoundary>('path')
-        .data(boundaries, (boundary) => boundary.properties.unit)
-        .join(
-          (enter) =>
-            enter
-              .append('path')
-              .attr('opacity', 0)
-              .call((entered) => entered.transition().duration(duration).attr('opacity', 1)),
-          (update) => update,
-          (exit) =>
-            exit.call((exiting) =>
-              exiting.transition().duration(duration).attr('opacity', 0).remove(),
-            ),
-        )
-        .attr('class', (b) => `${className} ${className}-${b.properties.kind}`)
-        .attr('d', (b) => path(b.lines));
+        .attr('class', (b) => `${className} ${className}-${b.properties.kind}`);
+      join.each(function move(b) {
+        moveEdge(select(this), path(b.lines), duration);
+      });
     }
+  }
+
+  /**
+   * Move a unit's edge from where the last variant put it to where this one does.
+   *
+   * A path string is not interpolable — two outlines have different numbers of vertices, and
+   * tweening the text between them draws nonsense — so the swap is made at the *trough of a
+   * dissolve*: out, change, back in. Which is the criterion the ticket actually asks for, since
+   * what a reader needs to see is that this edge moved, not a rubber sheet pretending it slid.
+   *
+   * An edge that has not moved is left alone. A unit both variants contain unchanged must not
+   * flicker, or every switch would announce eight changes and mean one.
+   */
+  function moveEdge(
+    element: ReturnType<typeof select<SVGPathElement, UnitBoundary>>,
+    edge: string | null,
+    duration: number,
+  ): void {
+    if (duration === 0 || element.attr('d') === edge) {
+      element.interrupt().attr('d', edge).attr('opacity', 1);
+      return;
+    }
+    element
+      .transition()
+      .duration(duration / 2)
+      .attr('opacity', 0)
+      .transition()
+      .duration(duration / 2)
+      .on('start', function swap() {
+        select(this).attr('d', edge);
+      })
+      .attr('opacity', 1);
   }
 
   /**
@@ -748,11 +789,16 @@ export function renderMap(
   }
 
   /**
-   * A cross-fade is motion, and motion is not free for everyone. The check is made per switch
-   * rather than cached, so a reader who changes the setting mid-session is obeyed at once.
+   * How long a switch takes, asked of the stylesheet rather than typed here.
+   *
+   * The strata fade in CSS and the outlines fade in the renderer, and the two have to agree or a
+   * switch half-animates — so there is one number and the stylesheet owns it. It also settles
+   * reduced motion for free: `prefers-reduced-motion` sets `--switch` to `0ms`, and a zero
+   * duration here is a straight swap. Read per switch, so a reader who changes the setting
+   * mid-session is obeyed at once.
    */
-  const reducedMotion = (): boolean =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const switchDuration = (): number =>
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--switch')) || 0;
 
   /**
    * Switch views. No re-projection and no re-layout of anything the change did not touch: the

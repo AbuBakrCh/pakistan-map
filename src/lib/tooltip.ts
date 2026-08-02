@@ -56,15 +56,6 @@ export interface DistrictTooltip {
 }
 
 /**
- * What the active variant makes of this district — the third thing a hover names, after the
- * district and the province it is in today.
- *
- * The unit is passed as `null` where the variant assigns the district to nothing, which is not
- * the same as no variant being active: a `census`-universe variant partitions the 136 districts
- * PBS published and deliberately leaves AJK and Gilgit-Baltistan out of every unit, and a reader
- * hovering one of those twenty is owed *that sentence* rather than an empty line.
- */
-/**
  * The unit line, and what kind of thing it names. The kind is carried because it is a difference
  * in *standing* and the tooltip renders it as one: only a proposed province is set in the accent,
  * which is the same rule the map's outlines follow. Null where the variant claims no unit here.
@@ -73,6 +64,15 @@ export interface TooltipUnit extends TooltipFigure {
   readonly kind: UnitKind | null;
 }
 
+/**
+ * What the active variant makes of this district — the third thing a hover names, after the
+ * district and the province it is in today.
+ *
+ * `unit` is `null` where the variant assigns the district to nothing, which is not the same as no
+ * variant being active: a `census`-universe variant partitions the 136 districts PBS published
+ * and deliberately leaves AJK and Gilgit-Baltistan out of every unit, and a reader hovering one
+ * of those twenty is owed *that sentence* rather than an empty line.
+ */
 export interface UnitMembership {
   /** The variant's own name, so the line says whose proposal this is. */
   readonly variant: string;

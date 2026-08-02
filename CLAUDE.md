@@ -270,14 +270,25 @@ returning to the real map is the same kind of act as choosing one. **A basis is 
 its own** — selecting one selects its first variant (D13), so there is no state that means
 "shaded, with nothing proposed over it". All four bases are always offered, and the three that
 cannot yet be drawn are **refused out loud**: the control says whether the variants are missing,
-the shading is missing, or both. Which bases can be shaded is a property of the renderer, not of
+the shading is missing, or both — said on being pressed and not only on hover, since `disabled`
+takes no tap and the hard bar is a 390px phone. Which bases can be shaded is a property of the renderer, not of
 the bundle, and is stated once in `main.ts` so the menu and the map cannot disagree.
 
 Switching is a **cross-fade, never a cut**: outlines join on the unit's own id, so a unit both
-variants contain keeps its element and only what differs fades. Returning to the baseline
-restores the previous view exactly — asserted as a byte-identical screenshot, not by eye. The
-whole animation is dropped under `prefers-reduced-motion`, in the stylesheet *and* in the
-renderer, which have to agree or a switch half-animates.
+variants contain keeps its element, and an edge that moves is swapped at the *trough* of a
+dissolve rather than tweened — two outlines have different numbers of vertices, and interpolating
+the path text between them draws nonsense. An edge that has not moved is left alone, or every
+switch would announce eight changes and mean one. Returning to the baseline restores the previous
+view exactly; the renderer holds nothing back, and the check was made by hand against a
+screenshot, because the repo has no DOM seam to assert it in (see the test seam note).
+
+Duration is stated **once, in the stylesheet** (`--switch`) and read from there by the renderer,
+because the strata fade in CSS and the outlines fade in JS and the two have to agree or a switch
+half-animates. That settles `prefers-reduced-motion` for free: the media query sets `--switch` to
+`0ms` and both halves become a straight swap.
+
+**Deep links are #23's**, not this ticket's. The temporary `#/language` hash that stood in for a
+control is gone, and nothing reads the URL until #23 lands.
 
 **Three visual strata:**
 

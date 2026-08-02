@@ -14,6 +14,7 @@ import {
   BASIS_ORDER,
   basisChoices,
   mapDescription,
+  refusalLines,
   selectBasis,
   selectVariant,
   variantOf,
@@ -53,9 +54,26 @@ describe('basisChoices', () => {
     expect(refused.map((c) => c.basis.id)).toEqual(['administrative', 'historical', 'development']);
     for (const choice of refused) {
       expect(choice.unavailable).toContain(choice.basis.name);
-      expect(choice.unavailable).toContain('no variant is written for it yet');
-      expect(choice.unavailable).toContain('cannot shade districts by it yet');
+      expect(choice.missing).toEqual(['no variant is written yet', 'no shading is built yet']);
     }
+  });
+
+  it('prints the refusal on screen, grouped by reason and naming every basis it applies to', () => {
+    // On screen and not only in a `title`: a `title` needs a hovering mouse, a disabled control
+    // takes no tap, and the hard bar is a 390px phone. Grouped, because three bases short of the
+    // same two things are one sentence, not three.
+    expect(refusalLines(choices)).toEqual([
+      'Administrative, Historical and Development are not selectable yet — no variant is ' +
+        'written yet, and no shading is built yet.',
+    ]);
+  });
+
+  it('says "is" of a single refused basis, and nothing at all when none is refused', () => {
+    const oneShort = basisChoices(bundle, new Set<BasisId>(['administrative']));
+    expect(refusalLines(oneShort)).toContain(
+      'Language / dialect is not selectable yet — no shading is built yet.',
+    );
+    expect(refusalLines(choices.filter((c) => c.available))).toEqual([]);
   });
 
   it('would still refuse a basis whose variants exist but whose shading does not', () => {
@@ -66,7 +84,7 @@ describe('basisChoices', () => {
     const language = unshaded.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(false);
     expect(language?.variants).toHaveLength(1);
-    expect(language?.unavailable).toBe('Language / dialect: the map cannot shade districts by it yet.');
+    expect(language?.unavailable).toBe('Language / dialect: no shading is built yet.');
   });
 
   it('places every variant in the bundle under exactly one basis', () => {
