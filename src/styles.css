@@ -16,6 +16,15 @@
   --land: #ece4d5;
   --land-hatch: #d8ccb6;
 
+  /*
+   * The ground across the border. One step off the frame's own paper and two steps short of
+   * Pakistan's land, so it reads as *land, but not this map's subject* — enough to stop the
+   * dashed Line of Control floating against blank paper, not enough to be mistaken for a fill.
+   * Flat, never translucent: where two neighbours meet, a translucent tint would double and
+   * invent a third region out of an overlap.
+   */
+  --neighbour: #ece9df;
+
   --rule-division: #bfb29b;
   --rule-province: #8a7c65;
 
@@ -214,6 +223,28 @@ body {
 .map:focus-visible {
   outline: 1px solid var(--rule-province);
   outline-offset: -1px;
+}
+
+/*
+ * The neighbours (#8). Fill and nothing else — no stroke of any kind.
+ *
+ * A stroke would run along Pakistan's own boundary too, since each of these polygons ends where
+ * the country begins, and half of it would spill outside as a halo doubling a line already drawn.
+ * It would also compete: a rule around India is a rule at the same weight as a province's, saying
+ * a thing this map is not about. Without it the four are only told apart in the artifact and in
+ * the colophon, which is the right place for them — the brief is silhouettes, unlabelled.
+ *
+ * Never a hit target, and never a fill anyone reads as data (D14). Hover is put to the district
+ * polygons in lon/lat rather than to the DOM, so this is belt and braces — which is what it should
+ * be for the one layer on the map that is not Pakistan.
+ */
+.stratum-context {
+  pointer-events: none;
+}
+
+.neighbour {
+  fill: var(--neighbour);
+  stroke: none;
 }
 
 /* Strata. Hairlines keep their width through the zoom transform rather than thickening with it. */
@@ -419,6 +450,24 @@ body {
   fill-opacity: 0.11;
 }
 
+/*
+ * The city dots (#8), in screen space so the dot stays a dot at 24×.
+ *
+ * One weight for all seven and no accent anywhere near them: the accent belongs to a proposed
+ * province and to nothing else, and a capital drawn in it would read as part of the proposal. The
+ * federal capital is not drawn larger either — the dots are there to orient a reader, not to rank
+ * the cities, and this app has no sourced ranking to draw with.
+ */
+.stratum-cities {
+  pointer-events: none;
+}
+
+.city-dot {
+  fill: var(--ink-soft);
+  stroke: var(--paper-sunk);
+  stroke-width: 1.2;
+}
+
 .label {
   paint-order: stroke fill;
   pointer-events: none;
@@ -456,6 +505,16 @@ body {
 
 .label-unit-proposed {
   fill: var(--accent);
+}
+
+/*
+ * A city's name: smaller than a division's and set upright rather than italic, because it names a
+ * point and not an area. Roman against the divisions' italic is the atlas convention for exactly
+ * that distinction, and it is what keeps "Quetta" at a dot from reading as a second division.
+ */
+.label-city {
+  fill: var(--ink);
+  font-size: 9.5px;
 }
 
 /* Set along the line itself, the way an atlas names a river or a meridian. */

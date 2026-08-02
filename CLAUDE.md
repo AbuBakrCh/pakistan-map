@@ -4,7 +4,7 @@ Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
 **Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
 module), pipeline and bundle built, and the map built through its **three strata with the basis
-and variant selectors** (#18).
+and variant selectors** (#18), over its **neighbour silhouettes and city dots** (#8).
 
 ---
 
@@ -81,6 +81,8 @@ drawing something.*
 | District boundaries | OSM `admin_level=6` | Fetch returns ~170 current-day; dissolved to the 136-district 2023 census set (ADR-0001). **Not** geoBoundaries — its PD set is 2019/126 districts, ~40 short. **Names are never trusted alone.** Matching is normalized-name-plus-alias, with relation ids overriding it wherever a name lies or collides — Karachi's four renamed districts, and every AJK district, whose names recur across the Line of Control. Anything unmatched fails the build. PBS's own documents disagree with each other on spelling, and OSM's primary `name` on AJK districts is Urdu. Only the English name is carried into the bundle and only the English name is displayed — OSM's `name:ur` is deliberately not surfaced |
 | Coastline | OSM `natural=coastline` | A way network, not a relation: chained on shared node ids with direction preserved (**land lies to the LEFT**), the open coast closed against a lon/lat extent, islands added as land. District polygons are clipped to it where their bounding box meets the shoreline's — one rectangle over the whole coast, so it nominates ~23 of the 156 districts including a dozen plainly landlocked ones, which clip to a no-op. Biased that way deliberately: a false positive costs nothing, a false negative would leave sea drawn as land. Natural Earth was rejected — a second lineage at a different vintage, against ADR-0001; OSM keeps one of each |
 | Line of Control | OSM, derived — not traced | A *segment* of the boundary we already draw, named by identity rather than by geometry: a way that belongs both to a drawn AJK/GB district relation and to India's own `admin_level=4` Jammu and Kashmir or Ladakh (strays the bbox fetch already caches) is on the line. 69 such ways, chaining into one 940 km run, emitted into the **same topology as the polygons** so line and boundary share arcs. Two exclusions fall out of the rule rather than being applied on top of it: Sialkot's and Narowal's shared ways are the **Working Boundary**, not the ceasefire line, and are excluded because Punjab is a province; GB's Karakoram frontier is shared with nobody in the cache. Its northern end, beyond NJ9842 in the Siachen area, was never delimited even as a ceasefire line — stated in copy, not smoothed over |
+| Neighbour silhouettes | OSM `admin_level=2`, `ISO3166-1` in {AF, CN, IN, IR} | The four countries Pakistan borders, drawn faint and unlabelled so the outline — and the dashed ceasefire line above all — has ground on the far side of it rather than blank paper, which reads as a coast. Fetched **whole** and cut here, the opposite way round from the coastline and for the reason D12 gives: a country's silhouette is a closed polygon, and asking Overpass only for the ways near Pakistan returns an open run of boundary whose closure means choosing which side of it is the country — a decision with no source behind it. So the polygon comes from OSM closed and is intersected with a rectangle, and the rectangle is the only judgement. OSM draws these four **as administered, not as claimed**: India stops at the same Line of Control this app draws dashed, China covers Aksai Chin, and neither reaches over AJK or GB — checked against all 156 drawn districts rather than assumed, because a neighbour drawn over ground the map calls Pakistan-administered would be a claim made by accident |
+| City dots | OSM `admin_centre`, per first-level relation | **"Major" is answered administratively because it cannot be answered demographically.** PBS publishes the 2023 census by district and a city is not a district — Karachi is seven of them and Islamabad *is* one — so no city population exists at this vintage from this source, and the governing rule is that data we do not have is not used. Ranking by OSM's own `population` tags would put a second lineage at an unstated vintage under a dot. The criterion is therefore **the seat of a first-level unit**: four provincial capitals, the federal capital, and each territory's capital. Seven dots, badged `official`; the position is the node the unit's *own* boundary relation names as its `admin_centre`, so a dot joins a unit by identity and not by a matching name. The cost is stated rather than hidden — Faisalabad, Rawalpindi, Gujranwala and Multan are larger than three of the seven and are not drawn, because a set mixing "capital" with "large" would be two criteria wearing one badge |
 | District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against |
 | Population | PBS 2023 Digital Census | District level. Extracted from the `PakPC2023` `.RData` tables, committed as upstream bytes in `data/raw/pakpc2023-*.RData` and parsed by `scripts/lib/rdata.ts`, so the numbers trace to a published file rather than to a transcription. **Anchored outside the package** at exactly two tiers: the 5 province totals and the 241,499,431 national total, typed from PBS Census-2023 **Table 1 (national)** — both agree exactly. The **31 division totals** are checked against `pakpc2023-division.RData`, i.e. against another table of the same package whose district table is being validated: a cross-table consistency check, **not** an independent source. A division figure wrong in the package would agree with itself and pass. PBS publishes no division tier in Table 1 |
 | Mother tongue | PBS 2023 Census **Table 11** | The structured release carries **tehsil rows only** — no district tier — so districts are summed from the 591 units under them, keyed on the table's own 136 district names. Safe because the sums reconcile exactly against PBS's printed province figures in **all fifteen categories**, typed from `table_11_national.pdf`: column by column, because a tehsil summed into the wrong district inside a province moves whole languages and leaves the total intact. Categories are the census's own, unmerged, including its spelling `Kohiostani`; an unknown one fails the build rather than falling into `Others`. Table 11's universe is **240,458,089** — 1,041,342 below Table 1, a difference PBS shares with Table 10 and does not explain, so it is stated and not closed. Khowar has no column, so **Chitral has no dominant language** and says so. See `docs/research/mother-tongue-table-11.md` |
@@ -122,9 +124,10 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 
 | Script | npm script | Does |
 |---|---|---|
-| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6 and the coastline → `data/raw/`, retrying across four Overpass mirrors. Level 4 exists solely to source ICT |
+| `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6, the coastline, the four neighbour countries and the first-level `admin_centre` nodes → `data/raw/`, retrying across four Overpass mirrors. Level 4 sources ICT and, now, each unit's seat |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
 | `scripts/build-scenarios.ts` | `build:data:scenarios` | Validates every variant in `scripts/lib/variants.ts` as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json` |
+| `scripts/build-context.ts` | `build:data:context` | Stitches each neighbour relation into closed polygons with the districts' own stitcher → intersects them with `CONTEXT_EXTENT` → pairs each first-level unit with its `admin_centre` node → simplifies to 4% and quantizes → `data/bundle/context.topojson.json`. Fails on a country whose ISO code is not in the cache, a ring that will not stitch shut, a silhouette that clips to nothing, a shape that does not contain its own capital, or a unit with no seat — each named. **A separate artifact from the geography bundle, deliberately:** nothing here shares an edge with anything in there, and merging them would renumber every arc in the country to add a background and imply the two sides of a border are one line. Quantization comes *after* simplification, the opposite order from the geometry build, because `presimplify` restores absolute coordinates for arcs and not for **points** — quantized first, every city dot lands in the Bay of Bengal |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, or a total that does not add up. The emitted artifact records, per tier, which source the check was against |
 
 The fold table — post-census district → 2023 parent — is data, not code:
@@ -236,7 +239,12 @@ What it holds:
 | The dashed line is the **right stretch** — every arc of it belongs to AJK or GB and to no province, it is the whole of AJK's outer boundary, and it is only part of GB's, the remaining 3 arcs being the China and Afghanistan frontier. Endpoints named (Chenab, Karakoram), districts named, length agreeing with the provenance that states it. A set question on arc indices, exact, because line and boundary share arcs | `src/lib/line-of-control.test.ts` |
 | Palette — every census category coloured, colourblind separation re-derived from the hexes on the category pairs that actually share a border, the pairs it cannot separate named in the module | `src/lib/palette.test.ts` |
 | Fill = data — every drawn district decided, each category fill agreeing with the census figure, Chitral and the twenty AJK/GB districts as two different absences | `src/lib/mother-tongue.test.ts` |
-| Hover resolution — all 156 drawn districts reachable from inside themselves, nine cities standing in the district they actually stand in, the sea and the ground across the border resolving to nothing, and the shortlist a point costs bounded, which is the whole reason hover is not slow | `src/lib/hit-test.test.ts` |
+| Hover resolution — all 156 drawn districts reachable from inside themselves, nine cities standing in the district they actually stand in, the sea and the ground across the border resolving to nothing, the neighbour silhouettes answering nothing from anywhere on them, every city dot standing in the unit it is the seat of, and the shortlist a point costs bounded, which is the whole reason hover is not slow | `src/lib/hit-test.test.ts` |
+| The context (#8) — four countries drawn and named, each containing its own ground so the name on a faint blob is a claim rather than a caption; **no silhouette over any of the 156 drawn districts**, and none over another; seven dots, one seat per first-level unit, each standing on the unit it names; the criterion, why it is administrative and which larger cities it omits | `src/lib/context.test.ts` |
+| The Durand footnote — carried with Afghanistan's silhouette rather than typed into the renderer, naming 1893, saying no Afghan government has recognised it, and saying it is drawn *not dashed* because the dash belongs to the Line of Control. The only boundary note, because it is the only *ordinary* boundary in dispute | `src/lib/context.test.ts` |
+| The silhouette cut — a country inside the extent passed through untouched, one running off the edge cut rather than dropped, a ring that will not close reported; and the extent both wider than the widest frame at zoom 1 and inside 30° of the cone the map is projected on | `scripts/lib/neighbours.test.ts` |
+| What the seat resolver does when the cache is wrong — the unit named rather than six dots drawn quietly, a `label` node refused where an `admin_centre` is wanted, an unnamed node refused, and the area query's strays ignored without being reported | `scripts/lib/seats.test.ts` |
+| City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat handing its name to the dot instead of setting the same word twice | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
 | The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
@@ -290,7 +298,12 @@ half-animates. That settles `prefers-reduced-motion` for free: the media query s
 **Deep links are #23's**, not this ticket's. The temporary `#/language` hash that stood in for a
 control is gone, and nothing reads the URL until #23 lands.
 
-**Three visual strata:**
+**Three visual strata** — over a ground of context that is not one of them. The neighbour
+silhouettes and the city dots (#8) are furniture: they never change with a basis or a variant,
+they carry no data, and they sit outside the numbering because a stratum is something a selection
+switches. The silhouettes go beneath the land; the dots and their names go above everything, in
+screen space, because a circle has no `vector-effect` for its radius and a dot inside the zoomed
+group becomes a blot at 24×.
 
 1. **Fill = data** (dominant mother tongue, development band…) — *never* unit membership
 2. **Current boundaries** — thin, faded, once a basis is active
@@ -372,8 +385,28 @@ Contiguity is **flagged, never blocked**.
   and the colophon says so. Falls out of the derivation rule rather than being special-cased.
 - **"GB as 5th province" is content, not baseline** — a live proposal (provisional status
   announced Nov 2020; GBLA resolution), so it's a switchable variant.
-- **Durand Line** — normal boundary with a footnote.
-- Faint, unlabelled neighbour silhouettes for context.
+- **Durand Line — a normal boundary with a footnote, and the footnote is the whole treatment.**
+  Nothing in the renderer knows the Pakistan–Afghanistan stretch from any other part of the
+  outline: same solid rule, same province weight, no dash. That is the decision and not an
+  omission. **The dash means *ceasefire line*** and there is exactly one of those on this map;
+  spending it a second time on a disputed *international* boundary would tell a reader the two
+  are the same kind of line, and cost the dash the meaning D12 exists to give it. So the dispute
+  is carried in words — the 1893 agreement, the Loya Jirga of 1949 declaring it void, and that no
+  Afghan administration since has accepted it as an international border. The note ships **with
+  Afghanistan's silhouette**, exactly as the ceasefire line's note ships with its geometry, so it
+  cannot be lost while the line is still on screen. Pakistan administers up to it and it bounds
+  every figure in this app; what is disputed is its standing, not where it runs.
+- **Faint, unlabelled neighbour silhouettes for context** (#8) — fill and *nothing else*. No
+  stroke of any kind: each silhouette ends where the country begins, so a rule around India would
+  double a line already drawn and spill half its width outside as a halo, and it would compete at
+  province weight for something this map is not about. They are held subordinate **structurally**
+  and not only by styling — a separate bundle sharing no arc with the country's, drawn beneath the
+  land, and never asked a question, since hover is put to the district polygons in lon/lat
+  (`hit-test.ts`) rather than to the DOM. Consequences accepted out loud: the four are told apart
+  only in the artifact and the colophon, which is what *unlabelled* costs; and only the four
+  Pakistan borders are drawn, so the far corner of a very wide frame shows paper where Tajikistan,
+  Turkmenistan, Uzbekistan and Oman are — the silhouettes exist for the boundary, not for the
+  corner of the frame.
 - **PNG export bakes in** scenario name, legend, provenance badge, data vintage, source, and
   "proposed — not official". This content will travel as WhatsApp and X screenshots regardless;
   the sanctioned export exists so circulating copies carry their own disclaimer.
@@ -391,7 +424,10 @@ Contiguity is **flagged, never blocked**.
   basis, active variant, hovered district, compare-held); no routing, no async, no forms.
 - **Inline SVG, custom projection, no basemap.** Showing only Pakistan deletes the reason to
   use a mapping library. D3 owns the SVG *and* renders the panel lists.
-- Pan/zoom via `d3-zoom`. Sparse major-city dots instead of a basemap.
+- Pan/zoom via `d3-zoom`. Sparse major-city dots instead of a basemap — seven of them, and
+  "major" means *seat of a first-level unit*, because no city population exists at this vintage
+  from this source (#8). The dot is drawn whatever happens; it is the **name** that yields when
+  the frame is crowded, the same order the ceasefire line's name follows.
 - Deep-link URLs (`#/language/l2`).
 - **Visual direction: editorial atlas, light.** Warm off-white canvas, muted desaturated
   categorical fills, hairline strokes, serif headings, one accent reserved for unit outlines.

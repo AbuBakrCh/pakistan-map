@@ -15,6 +15,8 @@
 import './styles.css';
 import {
   censusStatistics,
+  contextProvenance,
+  contextTopology,
   geographyTopology,
   provenance,
   scenarioBundle,
@@ -22,6 +24,7 @@ import {
   type BasisId,
   type VariantRecord,
 } from './bundle.ts';
+import { boundaryNote } from './lib/context.ts';
 import { shortFormExpansions } from './lib/labels.ts';
 import { arcsOf, readLineOfControl } from './lib/line-of-control.ts';
 import {
@@ -99,7 +102,13 @@ function viewFor(selection: Selection): MapView {
 }
 
 let selection: Selection = BASELINE;
-const map = renderMap(mount, geographyTopology, censusStatistics, viewFor(selection));
+const map = renderMap(
+  mount,
+  geographyTopology,
+  contextTopology,
+  censusStatistics,
+  viewFor(selection),
+);
 const panel = renderControls(controlMount, scenarioBundle, choices, (next) => {
   selection = next;
   render();
@@ -190,6 +199,8 @@ function renderColophon(active: Selection, variant: VariantRecord | null): void 
       of boundary running along ${lineOfControl.alongDistricts.length} districts. South of its
       terminus on the Chenab, the Punjab–Jammu stretch is the Working Boundary and is a different
       line; it is not drawn dashed.</p>
+    ${durandFootnote()}
+    ${contextProvenanceLine()}
     <p><strong>Vintage</strong> ${vintage}. Administrative units created since are folded into
       their 2023 parent, so the map is knowingly not today's map: the Balochistan restructuring
       of 8 July 2026 is not drawn.</p>
@@ -200,6 +211,43 @@ function renderColophon(active: Selection, variant: VariantRecord | null): void 
     ${active?.basis === 'language' ? motherTongueProvenance() : ''}
     <p><strong>Sources</strong> ${sources['boundaries']} · roster: PBS.</p>
   `;
+}
+
+/**
+ * The Durand Line's footnote (#8).
+ *
+ * The line is drawn as an ordinary international boundary and nothing in the renderer knows it
+ * apart from any other stretch of Pakistan's outline — which is the decision, not an oversight.
+ * A dash means *ceasefire line* (D12), and there is exactly one of those on this map; using it a
+ * second time for a boundary of a different kind would cost the dash its meaning. So the dispute
+ * is carried in words, and the words come out of the bundle rather than out of this file, so they
+ * cannot be lost while the line is still on screen.
+ */
+function durandFootnote(): string {
+  const note = boundaryNote(contextProvenance, 'AF');
+  return note === null ? '' : `<p><strong>Durand Line</strong> ${note}</p>`;
+}
+
+/**
+ * What the furniture is, and what it is not.
+ *
+ * The silhouettes and the dots are the only things on this map that are not Pakistan, and the
+ * working agreement puts the same obligation on them as on everything else: a shape on screen
+ * says where it came from. The city criterion needs saying most of all, because "major city" is
+ * the kind of phrase a reader assumes means *largest* — here it means *seat*, and the four larger
+ * cities it leaves off are named so the omission reads as a rule and not as an oversight.
+ */
+function contextProvenanceLine(): string {
+  const { neighbours, cities } = contextProvenance;
+  return `
+    <p><strong>Context</strong> ${neighbours.countries.map((c) => c.name).join(', ')} are drawn
+      faint and unlabelled from their own OpenStreetMap boundary relations, cut to a rectangle
+      around the frame. They are background: nothing is shaded, measured or hovered on them, and
+      they sit beneath Pakistan's own land. ${neighbours.kashmir}</p>
+    <p><strong>Cities</strong> ${cities.count} dots, badged ${cities.badge}. ${cities.criterion}
+      ${cities.why} ${cities.omits} ${cities.join} Where a division is named after the city at its
+      seat — six of the seven are — the name is set at the dot rather than at the division's
+      centroid, because the dot is the more precise of the two claims.</p>`;
 }
 
 /**

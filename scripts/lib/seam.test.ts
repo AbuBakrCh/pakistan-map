@@ -106,6 +106,7 @@ describe('test seam isolation', () => {
       .filter(Boolean);
     for (const input of [
       'data/bundle/geography.topojson.json',
+      'data/bundle/context.topojson.json',
       'data/bundle/statistics.json',
       'data/bundle/scenarios.json',
       'data/bundle/unit-outlines.json',
@@ -125,6 +126,7 @@ describe('test seam isolation', () => {
     try {
       for (const artifact of [
         'data/bundle/geography.topojson.json',
+        'data/bundle/context.topojson.json',
         'data/bundle/statistics.json',
         'data/bundle/scenarios.json',
         'data/bundle/unit-outlines.json',
