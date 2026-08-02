@@ -374,6 +374,10 @@ function renderUnit(parent: HTMLElement, unit: CardUnit): void {
   }
   el(row, 'span', 'card-unit-standing', unit.standing);
   el(row, 'span', 'card-unit-districts', unit.districts);
+  // Area above the population line (#49), where there is one: a card carries areas exactly because
+  // it carries no populations, so the figure a reader can have comes before the sentence saying
+  // which one they cannot. `card.ts` decides which units have one; this file composes nothing.
+  if (unit.area !== null) el(row, 'span', 'card-unit-area', unit.area);
   el(row, 'span', 'card-unit-population', unit.population);
   if (unit.note !== null) el(row, 'span', 'card-unit-note', unit.note);
 }
@@ -409,11 +413,22 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
     container.hidden = card === null;
     if (card === null) return;
 
-    // Two columns on a wide screen, stacked on a narrow one, and the same order either way: the
-    // argument first, then what it is made of. A single 68ch measure inside a full-width well
-    // leaves half the box empty, and prose set the full width of the page is prose nobody reads.
+    /*
+     * Three columns, in one DOM order and never in two.
+     *
+     * The split is by *where the page puts them* and not by kind: on a wide screen the units and
+     * the scorecard sit beside the map, where a reader compares a figure against the ground it is
+     * about, and the argument and its small print go underneath, where there is a prose measure to
+     * set them at. On a narrow one all three stack inside the sheet in exactly this order — the
+     * argument, then what it is made of, then what qualifies it — which is the card's own order
+     * read top to bottom (#19) and the reason the placement is CSS's rather than this file's.
+     *
+     * `card-column-notes` is a column and not a footer for the same reason `card-column-detail` is
+     * one: the sheet holds the card whole, so nothing here may be a surface a phone does not get.
+     */
     const argument = el(node, 'div', 'card-column card-column-argument');
     const detail = el(node, 'div', 'card-column card-column-detail');
+    const notes = el(node, 'div', 'card-column card-column-notes');
 
     const head = el(argument, 'header', 'card-head');
     const heading = el(head, 'h2', 'card-name', card.name);
@@ -468,7 +483,7 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
     renderScorecard(detail, card.scorecard);
 
     if (card.footnotes.length > 0) {
-      const footnotes = el(detail, 'section', 'card-section');
+      const footnotes = el(notes, 'section', 'card-section');
       el(footnotes, 'h3', 'card-section-label', 'Footnotes');
       const items = el(footnotes, 'ul', 'card-footnotes');
       for (const footnote of card.footnotes) {
@@ -479,14 +494,14 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
     }
 
     for (const note of card.notes) {
-      const row = el(detail, 'section', 'card-section card-crossref');
+      const row = el(notes, 'section', 'card-section card-crossref');
       el(row, 'h3', 'card-section-label', note.label);
       el(row, 'p', 'card-crossref-text', note.text);
     }
 
     // No unsourced surface anywhere, the card least of all: it is the surface that states what a
     // movement wants and who is against it.
-    const sources = el(detail, 'section', 'card-section');
+    const sources = el(notes, 'section', 'card-section');
     el(sources, 'h3', 'card-section-label', 'Sources');
     const cited = el(sources, 'ul', 'card-sources');
     for (const source of card.sources) {

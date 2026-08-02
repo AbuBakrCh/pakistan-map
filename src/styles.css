@@ -1130,6 +1130,7 @@ body {
 .card-unit-standing,
 .card-unit-districts,
 .card-unit-population,
+.card-unit-area,
 .card-unit-note {
   color: var(--ink-soft);
   font-size: 0.75rem;
@@ -1861,5 +1862,184 @@ body {
 
   .about-stamp-value {
     margin: 0 0 0.3rem;
+  }
+}
+
+/*
+ * The three-region layout (wide screens only).
+ *
+ * The page stops being one column and becomes what a reader actually uses it as: the *controls*
+ * down the left, the *map* in the middle, the *units and the scorecard* down the right, and the
+ * argument with its small print underneath. The reason for the split is where a reader's eye has
+ * to travel — a unit's population is read against the ground it covers, so it belongs beside the
+ * map; the rationale, the opposition line, the footnotes and the sources are prose, and prose
+ * belongs at a measure rather than in a 20rem rail.
+ *
+ * It is placement and nothing else. The DOM order is the card's own order (#19) — the argument,
+ * then the units and the scorecard, then what qualifies them — and every one of the three columns
+ * is still rendered on every screen. Below this width the page is the single column it always was,
+ * and below `--sheet` it is the bottom sheet (#33), which holds the card whole for the reason that
+ * ticket gives: a card that hid its opposition line on a phone would read as an endorsement there.
+ *
+ * `display: contents` on the well and on the card rather than a second set of containers, so
+ * `panel.ts` still renders one card into one mount and knows nothing about where the page puts the
+ * pieces. `[hidden]` still wins over it — it is the more specific selector — so the baseline is a
+ * page with no card and three empty areas rather than three empty boxes.
+ */
+@media (min-width: 1000px) {
+  #app {
+    display: grid;
+    /* The rails are bounded on both sides: a chip list wider than its longest variant name is
+     * empty paper, and a units list narrower than a population figure wraps every row. */
+    grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr) minmax(17rem, 21rem);
+    grid-template-areas:
+      'masthead masthead masthead'
+      'controls frame    rail'
+      'argument argument notes'
+      'colophon colophon colophon'
+      'about    about    about';
+    /* The map row takes what the viewport has left; everything below it is below the fold, which
+     * is the point of moving it there. `min-height` rather than `height`, so the bottom block
+     * lengthens the page instead of being clipped by it. */
+    grid-template-rows: auto minmax(32rem, 1fr) auto auto auto;
+    height: auto;
+    /* Three columns want more than the near-square country did on its own. */
+    max-width: 1560px;
+    min-height: 100%;
+  }
+
+  .masthead {
+    grid-area: masthead;
+  }
+
+  .frame {
+    grid-area: frame;
+    /* The frame is a grid item in a sized row now, not a flex child of the page, so its floor is
+     * a floor and no longer also its height. */
+    min-height: 32rem;
+  }
+
+  /*
+   * The map takes the rail's column when there is no card in it — which is the baseline, where
+   * there is no proposal on screen and so nothing to list beside the country. A fifth of the page
+   * left as empty paper would read as a panel that failed to load, and the map is the thing the
+   * page is for. It gives the column back the moment a variant arrives, which is the same coming
+   * and going the card and the compare button already do (#19, #22).
+   */
+  #app:has(.card-well[hidden]) .frame {
+    grid-column: 2 / 4;
+  }
+
+  /*
+   * The variant group and Compare are still collapsed rather than removed at the baseline, but on
+   * a wide screen they are collapsed *away*. `visibility: hidden` is there so choosing a basis
+   * does not move the map under the pointer — and here the map is beside the controls rather than
+   * below them, so nothing it does can move it. Reserving the room instead leaves a hole in the
+   * rail the height of a control that is not there.
+   */
+  .controls[data-variants='none'] .control-variant,
+  .controls[data-compare='none'] .control-compare {
+    display: none;
+  }
+
+  /*
+   * The controls become a column. Same chips, same two radio groups, same order — a rail is a
+   * shape and not a different control, and `panel.ts` is not told which it is in.
+   */
+  .controls-well {
+    align-content: start;
+    grid-area: controls;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 1rem;
+  }
+
+  .control {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .control-options {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  /* Full-width in the rail, and left-set: a chip carrying a name over a tagline is two lines of
+   * text, and centring them on a 15rem column would leave the names on no common edge. */
+  .controls-well .chip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
+    text-align: left;
+    width: 100%;
+  }
+
+  /* The two actions stay a row: they are the only pair on the page that is one gesture and its
+   * button, and stacking them would read as two more choices about what the map shows. */
+  .control-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  /*
+   * The card, placed rather than boxed. Each column carries the well's own paper, so the three
+   * read as one surface in three places instead of as three panels.
+   */
+  .card-well {
+    display: contents;
+  }
+
+  .card {
+    display: contents;
+  }
+
+  .card-column {
+    background: var(--paper-sunk);
+    border: 1px solid var(--land-hatch);
+    padding: 0.8rem 1rem;
+  }
+
+  .card-column-detail {
+    grid-area: rail;
+    /*
+     * The rail scrolls; it never grows the row.
+     *
+     * Eighteen units is longer than Pakistan is tall, and a rail sized to its own content would
+     * take the map row with it — the map is what the page is for, and pushing it down to a
+     * thumbnail to show a list that scrolls perfectly well is the wrong way round. Against the
+     * viewport rather than against the row, because a percentage here resolves against the row it
+     * is trying not to set.
+     */
+    max-height: calc(100dvh - 11rem);
+    overflow-y: auto;
+  }
+
+  /*
+   * The two bottom boxes are each their own height. Stretched, the argument would be a short
+   * column inside a box as tall as the footnotes beside it, which reads as prose that stopped.
+   */
+  .card-column-argument,
+  .card-column-notes {
+    align-self: start;
+  }
+
+  .card-column-argument {
+    grid-area: argument;
+    /* The prose measure, inside a two-column-wide area: a sentence set across 900px is a sentence
+     * nobody reads, and the space to its right is what keeps the block from filling the fold. */
+    max-width: 68ch;
+  }
+
+  .card-column-notes {
+    grid-area: notes;
+  }
+
+  .colophon {
+    grid-area: colophon;
+  }
+
+  .about-well {
+    grid-area: about;
   }
 }

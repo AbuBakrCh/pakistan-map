@@ -136,7 +136,7 @@ drawing something.*
 | Line of Control | OSM, derived — not traced | A *segment* of the boundary we already draw, named by identity rather than by geometry: a way that belongs both to a drawn AJK/GB district relation and to India's own `admin_level=4` Jammu and Kashmir or Ladakh (strays the bbox fetch already caches) is on the line. 69 such ways, chaining into one 940 km run, emitted into the **same topology as the polygons** so line and boundary share arcs. Two exclusions fall out of the rule rather than being applied on top of it: Sialkot's and Narowal's shared ways are the **Working Boundary**, not the ceasefire line, and are excluded because Punjab is a province; GB's Karakoram frontier is shared with nobody in the cache. Its northern end, beyond NJ9842 in the Siachen area, was never delimited even as a ceasefire line — stated in copy, not smoothed over |
 | Neighbour silhouettes | OSM `admin_level=2`, `ISO3166-1` in {AF, CN, IN, IR} | The four countries Pakistan borders, drawn faint and unlabelled so the outline — and the dashed ceasefire line above all — has ground on the far side of it rather than blank paper, which reads as a coast. Fetched **whole** and cut here, the opposite way round from the coastline and for the reason D12 gives: a country's silhouette is a closed polygon, and asking Overpass only for the ways near Pakistan returns an open run of boundary whose closure means choosing which side of it is the country — a decision with no source behind it. So the polygon comes from OSM closed and is intersected with a rectangle, and the rectangle is the only judgement. OSM draws these four **as administered, not as claimed**: India stops at the same Line of Control this app draws dashed, China covers Aksai Chin, and neither reaches over AJK or GB — checked against all 156 drawn districts rather than assumed, because a neighbour drawn over ground the map calls Pakistan-administered would be a claim made by accident |
 | City dots | OSM `admin_centre`, per first-level relation | **"Major" is answered administratively because it cannot be answered demographically.** PBS publishes the 2023 census by district and a city is not a district — Karachi is seven of them and Islamabad *is* one — so no city population exists at this vintage from this source, and the governing rule is that data we do not have is not used. Ranking by OSM's own `population` tags would put a second lineage at an unstated vintage under a dot. The criterion is therefore **the seat of a first-level unit**: four provincial capitals, the federal capital, and each territory's capital. Seven dots, badged `official`; the position is the node the unit's *own* boundary relation names as its `admin_centre`, so a dot joins a unit by identity and not by a matching name. The cost is stated rather than hidden — Faisalabad, Rawalpindi, Gujranwala and Multan are larger than three of the seven and are not drawn, because a set mixing "capital" with "large" would be two criteria wearing one badge |
-| District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against |
+| District areas | PBS 2023 Census **Table 1** | Published per district, per province. What the clipped geometry is measured against — and, since #49, a figure the app itself prints. Area is the **one Table 1 column `PakPC2023` does not republish**: its district table carries households, population and growth rates and no area, so the 136 figures are transcribed from the five PDFs PBS publishes Table 1 as and committed to `data/reference/pbs-table-1-district-areas.json`. Same source, same table, same vintage as the population beside it, reached a different way because the structured release drops the column. **Published, never measured**: the drawn districts are clipped to OSM's coastline and knowingly disagree with these figures — Gwadar read 25,913 km² against a published 12,637 before the clip — so measuring the polygons would put a number of ours under a `census` badge. Anchored the way the populations are, and it has to be, since a person typed it: the 136 sum exactly to each of the **five published province areas** and to the **796,096 km²** Table 1 prints for Pakistan. And each row carries the population Table 1 prints **beside** the area, read into no artifact and existing only so a row can be *shown* to be the district it claims to be — two areas swapped between neighbours sum to their province exactly and would otherwise pass. 128 of the 136 agree with the package to the person; the **eight that do not are PBS's own two releases disagreeing**, in four cancelling pairs of neighbours (Jhang/Toba Tek Singh, Karachi East/Malir, Kalat/Surab, Kachhi/Nasirabad), pinned per district and on the About panel |
 | Population | PBS 2023 Digital Census | District level. Extracted from the `PakPC2023` `.RData` tables, committed as upstream bytes in `data/raw/pakpc2023-*.RData` and parsed by `scripts/lib/rdata.ts`, so the numbers trace to a published file rather than to a transcription. **Anchored outside the package** at exactly two tiers: the 5 province totals and the 241,499,431 national total, typed from PBS Census-2023 **Table 1 (national)** — both agree exactly. The **31 division totals** are checked against `pakpc2023-division.RData`, i.e. against another table of the same package whose district table is being validated: a cross-table consistency check, **not** an independent source. A division figure wrong in the package would agree with itself and pass. PBS publishes no division tier in Table 1 |
 | Mother tongue | PBS 2023 Census **Table 11** | The structured release carries **tehsil rows only** — no district tier — so districts are summed from the 591 units under them, keyed on the table's own 136 district names. Safe because the sums reconcile exactly against PBS's printed province figures in **all fifteen categories**, typed from `table_11_national.pdf`: column by column, because a tehsil summed into the wrong district inside a province moves whole languages and leaves the total intact. Categories are the census's own, unmerged, including its spelling `Kohiostani`; an unknown one fails the build rather than falling into `Others`. Table 11's universe is **240,458,089** — 1,041,342 below Table 1, a difference PBS shares with Table 10 and does not explain, so it is stated and not closed. Khowar has no column, so **Chitral has no dominant language** and says so. See `docs/research/mother-tongue-table-11.md` |
 | Development | PBS 2023 Census **Tables 12, 23 and 24** | Literacy (10+), improved drinking water, toilet facilities. Like Table 11 the structured release is **tehsil rows only**, so all three are summed from the 591 units and reconciled on **counts, not rates** — a province literacy rate is population-weighted and unrecoverable from district rates, so both halves of every rate are checked against the figures typed from the three `*_national.pdf` files. Seven of the eight counts reconcile exactly; **improved water does not** — PBS's tehsil rows count 6,374 more improved-water households than PBS's own printed province rows, a reclassification between sources that leaves the household totals exact. The deltas are pinned per province and any other value fails the build. **PBS publishes no improved-*sanitation* column:** it classifies water sources as improved or not, but for toilets prints only flush / non-flush / none, and a non-flush toilet may be improved or not. So the shaded share is **flush toilets, named as such**; combining them would be our definition wearing a `census` badge (that is #31, `synthesized`). Each rate keeps its own denominator — population 10+ for literacy, the **housing tables'** households for the other two, which are 48,010 below the district table's in all 136 districts. **Named *Development*, not *Poverty*:** the census sees service access, not income, consumption, child mortality or nutrition. MPI was dropped in favour of one source and one vintage. **The composite over the three is #31's**, is the unweighted mean of them, is badged `synthesized` and lives in an artifact of its own — see the Development composite note below. See `docs/research/development-indicators.md` |
@@ -304,6 +304,31 @@ so it is set aside from the spread **by name** and the total says how many units
 unit and the districts: a largest compared against a smallest that is missing people is worse than no
 comparison. A variant may also withhold modern figures itself (H2 draws 1947's map), in its own
 words. The scorecard carries a spread or a reason for having none, never both and never neither.
+
+**Where it carries no population it carries ground instead, and that substitution is the whole of
+#49.** #30 took the last modern figure off H2 — 2023 counts do not describe 1947 boundaries — and
+left the one scorecard in the app with nothing quantitative on it at all, which is not what that
+ticket asked for: its brief said *the card shows area and composition only*, and only the
+composition shipped. Area is the right figure and not merely an available one, because **a
+district's area is a fact about ground that has not moved since 1947** where its population is a
+count taken in 2023. It is **PBS's published figure and never a measurement of the drawn polygons**,
+for the reason the geometry build already records at length: those polygons are clipped to a
+coastline and disagree with PBS by thousands of km² on the Indus delta, so a measured area would be
+this project's own number wearing the census's badge. It is set aside on exactly the terms the
+population is — a unit reaching ground PBS published no area for carries **`null`** and never a
+partial sum, and the units left out of the total are *the same units* the spread leaves out, since
+Table 1 is the same census and there is one coverage rather than two lists.
+
+**Carried on every variant, printed only where the population lines are missing** — which is #49's
+open product call, settled here. Both halves are deliberate. The arithmetic is done for all
+seventeen because a figure derived for one card is a figure nothing else can check, and the suite
+re-derives every unit's area over every variant; the printing is conditional because the scorecard
+is a fixed column a reader compares straight down between two proposals, and a sixth line on all
+seventeen would be a change to that comparison surface no ticket has asked for. Area earns its place
+exactly where the lines above it are gone. The question is asked of the scorecard's own
+`population`, not of H2 by name, so all three ways a variant can end up without figures reach the
+substitute. Areas are printed **in full and grouped** — 796,096 km², never "796k" — for the reason
+populations are: PBS published the figure, and abbreviating it is this app interpolating.
 
 **"Districts moved" is measured against the district's current province**, keyed on the 2023 district
 the map draws rather than the one a claim names — South Punjab moves 11, not the 13 it states. A
@@ -748,6 +773,32 @@ is no build to guard.
 ## Interaction
 
 **Default:** current provinces and divisions, named. Nothing else.
+
+**Three regions on a wide screen.** Above 1000px the page is not one column but four areas: the
+**controls** down the left, the **map** in the middle, the **units and the scorecard** down the
+right, and the **argument with its footnotes and sources** underneath. The split is by where a
+reader's eye has to travel and not by what kind of thing each is — a unit's population is read
+against the ground it covers, so it belongs beside the map, while the rationale, the **Opposed by**
+line, the footnotes and the sources are prose and belong at a measure rather than in a 20rem rail.
+Below that width the page is the single column it always was, and below `--sheet` it is the bottom
+sheet (#33).
+
+It is **placement and nothing else**. `panel.ts` still renders one card into one mount and knows
+nothing about where the page puts the pieces: the card is three columns in one DOM order — the
+argument, then the units and the scorecard, then what qualifies them, which is the card's own order
+read top to bottom (#19) — and the stylesheet moves them with `display: contents` and named grid
+areas. So the sheet still holds the card **whole**, which is the rule that section states: a card
+that hid its opposition line on a phone would read as an endorsement on a phone. A prose field
+added to the card later lands in the bottom block by construction, because that is where the column
+it is appended to is put.
+
+Two things follow from the geometry rather than being decided again. The **rail scrolls, it never
+grows the map row** — eighteen units is longer than Pakistan is tall, and sizing the row to a list
+that scrolls perfectly well would push the country down to a thumbnail. And at the baseline the
+**map takes the rail's column**, since there is no proposal on screen and so nothing to list beside
+it; the variant group and Compare are collapsed *away* there rather than left as reserved space,
+because the reason they were reserved — not moving the map under the pointer — is a fact about
+controls sitting *above* the map, and here they sit beside it.
 
 **Selecting a basis:** current boundaries fade back, districts shade by that basis's data,
 the active variant's unit outlines draw prominently on top.
