@@ -484,8 +484,14 @@ describe('variantCard — the scorecard (#20)', () => {
     const punjab = h2.units.find((unit) => unit.id === 'punjab')?.population ?? '';
     const ajk = h2.units.find((unit) => unit.id === 'azad-jammu-kashmir')?.population ?? '';
     expect(punjab).not.toMatch(/census does not cover/);
-    expect(punjab).toMatch(/withholds|1947|does not attach/i);
-    expect(ajk).toMatch(/census does not cover/);
+    // The sentence itself, not a pattern loose enough to pass on prose it was not written for.
+    expect(punjab).toBe(
+      'No population figure — this variant does not attach 2023 census figures to its ' +
+        'boundaries, for the reason it gives above',
+    );
+    expect(ajk).toBe(
+      'The 2023 census does not cover its districts, so it carries no population figure',
+    );
     expect(punjab).not.toBe(ajk);
     // And no figure anywhere on it, which is the ticket's hard rule.
     for (const unit of h2.units) {

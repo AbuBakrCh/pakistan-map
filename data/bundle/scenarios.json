@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T13:37:07.891Z",
+    "generated": "2026-08-02T14:09:26.522Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -9244,7 +9244,7 @@
         },
         {
           "kind": "note",
-          "text": "Baltistan is drawn with the Gilgit Agency, which is right for most of this period and not for its start. Baltistan was part of the Ladakh wazarat of Jammu and Kashmir until 1948 and was administered with Gilgit afterwards, as the Northern Areas. Hunza and Nagar are drawn out of the Agency as the states they were until 1974."
+          "text": "Baltistan is drawn with the Gilgit Agency, which is right for most of this period and not for its start: Baltistan was part of the Ladakh wazarat of Jammu and Kashmir before the fighting of 1948 and was administered with Gilgit afterwards. Hunza and Nagar are drawn out of the Agency as the states they were, each of which kept its ruler and its internal self-government well past the period this map ends in."
         },
         {
           "kind": "note",
@@ -9285,6 +9285,15 @@
           "label": "Dir, Swat and Chitral (Merger) Regulation, 1969 — the three Malakand states merged into the North-West Frontier Province, the last of the accessions on this map to lose its separate status"
         },
         {
+          "label": "The Province of West Pakistan (Dissolution) Order, 1970 — West Pakistan dissolved and the four provinces restored with effect from 1 July 1970, restoring none of the states"
+        },
+        {
+          "label": "Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 — the Northern Areas, which is what the Gilgit Agency and Baltistan had become, renamed Gilgit-Baltistan"
+        },
+        {
+          "label": "Constitution (Eighteenth Amendment) Act, 2010 — North-West Frontier Province renamed Khyber Pakhtunkhwa, which is why this map’s name for it differs from today’s"
+        },
+        {
           "label": "Gwadar — transferred from Oman to Pakistan on 8 September 1958, after the period this map draws, which is why the footnote states it rather than the boundary showing it"
         },
         {
@@ -9292,7 +9301,7 @@
           "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
         },
         {
-          "label": "data/reference/post-census-district-folds.json — Wadh, Tump, Upper Swat, Central Dir and Hub, each created after the census and folded into its 2023 parent under ADR-0001"
+          "label": "data/reference/post-census-district-folds.json — Hub, notified out of Lasbela in 2022, and Wadh and Tump, notified in the Balochistan restructuring of 2026, together with Upper Swat and Central Dir: each created after the census and folded into its 2023 parent under ADR-0001"
         }
       ],
       "statistics": {
@@ -9306,14 +9315,14 @@
       },
       "counts": {
         "units": 17,
-        "proposedUnits": 12,
-        "claimedDistricts": 55,
-        "drawnDistricts": 50,
+        "proposedUnits": 13,
+        "claimedDistricts": 89,
+        "drawnDistricts": 84,
         "nonContiguousUnits": 1
       },
       "scorecard": {
         "units": 17,
-        "proposedUnits": 12,
+        "proposedUnits": 13,
         "districtsMoved": {
           "count": 59,
           "of": 156,
@@ -9777,8 +9786,8 @@
           "id": "punjab",
           "name": "Punjab",
           "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": "Smaller than today’s Punjab by Bahawalpur, and larger by the ground Islamabad Capital Territory now covers, which was part of Rawalpindi district until 1960.",
+          "kind": "proposed",
+          "note": "Smaller than today’s Punjab by Bahawalpur, and larger by the ground Islamabad Capital Territory now covers, which was part of Rawalpindi district inside Punjab throughout this period — so it is not the Punjab of the current map, and is not labelled as though it were.",
           "claimed": [
             "Attock",
             "Rawalpindi",
@@ -9866,7 +9875,7 @@
           "name": "Sindh",
           "alsoKnownAs": [],
           "kind": "unchanged",
-          "note": "Smaller than today’s Sindh by Khairpur.",
+          "note": "Smaller than today’s Sindh by Khairpur, and otherwise the same province.",
           "claimed": [
             "Jacobabad",
             "Kashmore",
@@ -9944,7 +9953,7 @@
           "name": "Balochistan",
           "alsoKnownAs": [],
           "kind": "unchanged",
-          "note": "The Chief Commissioner’s Province — British Balochistan — without the four states beside it, which were separately governed and from 1952 formed the Balochistan States Union.",
+          "note": "The Chief Commissioner’s Province — British Balochistan — without the four states beside it, which were separately governed and from 1952 formed the Balochistan States Union. It loses ground to them and gains none, so it is the province carried forward.",
           "claimed": [
             "Quetta",
             "Pishin",
@@ -10021,7 +10030,7 @@
             "Gilgit-Baltistan"
           ],
           "kind": "territory",
-          "note": "Administered directly by the federal government throughout, as the Northern Areas were until 2009. Hunza and Nagar are drawn out of it as the states they were.",
+          "note": "Administered directly by the federal government throughout, and named the Northern Areas until the Gilgit-Baltistan Order of 2009. Hunza and Nagar are drawn out of it as the states they were.",
           "claimed": [
             "Gilgit",
             "Ghizer",

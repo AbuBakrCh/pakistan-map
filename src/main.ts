@@ -118,6 +118,10 @@ function viewFor(selection: Selection): MapView {
         variant: variant.name,
         universe: variant.partition.universe,
         unit: unit === undefined ? null : { name: unit.name, kind: unit.kind },
+        // A variant that attaches no 2023 figures says so on every district it covers (H2, #30).
+        // Read off the bundle rather than decided here, so the tooltip and the card give one
+        // reason and not two.
+        withholds: variant.statistics.modernFigures ? null : variant.statistics.reason,
       };
     },
     description,

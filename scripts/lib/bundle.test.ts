@@ -796,6 +796,35 @@ describe('bundle scenarios', () => {
     expect(unexplained).toEqual([]);
   });
 
+  it('names the variants whose prose asserts a year their sources do not reach', () => {
+    /*
+     * The Durand check (`context.ts`) generalised from one footnote to every variant card, which
+     * is where #30's review pointed it: card copy asserting a dated fact is a sourced surface like
+     * any other, and a year nothing in the source list accounts for is an unsourced claim.
+     *
+     * Held as a **named list of known gaps** rather than as zero, because four of them predate #30
+     * and fixing them means editing content on five other variants — which is a ticket of its own
+     * and not this one's to take. The pattern is `UNNAMEABLE_AT_390`'s: an exact list fails the
+     * moment a new gap appears or an old one is closed without the list being updated, where a
+     * loosened check would let the next one through in silence.
+     *
+     * A1 to A3 date the current provincial map from 1970 in their rationale; H1 mentions Karachi
+     * ceasing to be federal territory in 1961. Each is true and each wants a source line.
+     */
+    const KNOWN_GAPS: Readonly<Record<string, readonly string[]>> = {
+      a1: ['1970'],
+      a2: ['1970'],
+      a3: ['1970'],
+      h1: ['1961'],
+    };
+    const found = Object.fromEntries(
+      variants
+        .map((variant) => [variant.id, unsourcedYears(variant)] as const)
+        .filter(([, gaps]) => gaps.length > 0),
+    );
+    expect(found).toEqual(KNOWN_GAPS);
+  });
+
   it('points every card cross-reference at a variant that is actually in the bundle', () => {
     // A note naming another proposal is a sentence on screen — "Bahawalpur's advocates reject
     // being folded into a single southern province" is only meaningful if the reader can reach
@@ -1303,34 +1332,100 @@ describe('bundle administrative variants', () => {
  * is true. Everything below is a consequence of that or of the fact that what it draws is older
  * than the districts it is drawn out of, so both are asserted rather than described.
  */
+/**
+ * Every year a variant's card copy asserts, less every year its sources account for.
+ *
+ * Shared by H2's own check and the whole-set one below, so the two cannot drift into asking
+ * slightly different questions of the same prose.
+ */
+const unsourcedYears = (variant: EmittedVariant): readonly string[] => {
+  const years = (text: string) => new Set(text.match(/\b(?:1[89]|20)\d{2}\b/g) ?? []);
+  const prose = [
+    variant.rationale,
+    variant.status,
+    ...variant.footnotes.map((note) => note.text),
+    ...variant.notes.map((note) => note.text),
+    ...variant.units.map((unit) => unit.note ?? ''),
+  ].join('\n');
+  const sourced = years(
+    [
+      ...variant.sources.map((source) => source.label),
+      variant.composition.from,
+      variant.vintage ?? '',
+    ].join('\n'),
+  );
+  return [...years(prose)].filter((year) => !sourced.has(year)).sort();
+};
+
 describe('bundle H2, the map with no figures on it', () => {
   const h2 = () => variants.find((v) => v.id === 'h2') as EmittedVariant;
 
-  it('draws each mappable princely state as its own unit, and nothing else as one', () => {
-    // The eleven the ticket names. Held as an exact list rather than a count, because a state added
-    // or lost is a change to what this map claims existed in 1947.
-    const states = h2()
+  /**
+   * The eleven states the ticket names, held as an exact list rather than a count: a state added or
+   * lost is a change to what this map claims existed in 1947.
+   *
+   * Kept apart from the two units that are `proposed` without being states, because `kind` answers
+   * "is this the current map" and not "is this a princely state", and reading the list off `kind`
+   * alone would quietly absorb a renamed province into the count of states.
+   */
+  const PRINCELY_STATES = [
+    'Bahawalpur',
+    'Khairpur',
+    'Kalat',
+    'Las Bela',
+    'Kharan',
+    'Makran',
+    'Swat',
+    'Dir',
+    'Chitral',
+    'Hunza',
+    'Nagar',
+  ] as const;
+
+  it('draws each mappable princely state as its own unit, beside two units that are not states', () => {
+    const proposed = h2()
       .units.filter((unit) => unit.kind === 'proposed')
       .map((unit) => unit.name);
-    expect(states).toEqual([
-      'Bahawalpur',
-      'Khairpur',
-      'Kalat',
-      'Las Bela',
-      'Kharan',
-      'Makran',
-      'Swat',
-      'Dir',
-      'Chitral',
-      'Hunza',
-      'Nagar',
-      // Not a state: the province under the name it carried until 2010, smaller than Khyber
-      // Pakhtunkhwa by the three Malakand states, exactly as H3 draws it.
+    expect(proposed).toEqual([
+      ...PRINCELY_STATES,
+      // Neither of these is a state, and both are `proposed` for the same reason: neither is the
+      // unit the current map carries forward. NWFP is Khyber Pakhtunkhwa under the name it held
+      // until 2010 and smaller by the three Malakand states; Punjab is short of Bahawalpur *and*
+      // holds the ground ICT now covers, and a unit that has gained is not one that merely lost.
       'North-West Frontier Province',
+      'Punjab',
     ]);
     // And it is a complete partition of everything drawn, like every other variant (D6).
     expect(h2().partition.universe).toBe('drawn');
     expect(h2().partition.districts).toBe(ROSTER_DISTRICT_COUNT);
+  });
+
+  it('calls a unit `unchanged` only where the current map really is carried forward', () => {
+    /*
+     * The distinction the review caught, asserted so it cannot drift back. `unchanged` prints one
+     * sentence — *Unchanged from the current map* — so it is a claim and not a default.
+     *
+     * Sindh and Balochistan only *lose* ground to the states, which is exactly what the rule
+     * forgives: the unit called Punjab is Punjab whatever it has lost. Punjab is the one unit here
+     * that also **gains** — the ground Islamabad Capital Territory now covers — so it is not the
+     * Punjab of the current map and is not labelled as though it were.
+     */
+    const byKind = (kind: string) =>
+      h2()
+        .units.filter((unit) => unit.kind === kind)
+        .map((unit) => unit.name);
+    expect(byKind('unchanged')).toEqual(['Sindh', 'Balochistan']);
+
+    const origins = new Map(
+      ROSTER.flatMap((province) => province.districts.map((d) => [d, province.name] as const)),
+    );
+    for (const name of byKind('unchanged')) {
+      const unit = h2().units.find((u) => u.name === name) as EmittedUnit;
+      const gained = unit.districts.filter((d) => origins.get(d) !== name);
+      expect(gained, `${name} gained`).toEqual([]);
+    }
+    const punjab = h2().units.find((u) => u.name === 'Punjab') as EmittedUnit;
+    expect(punjab.districts.filter((d) => origins.get(d) !== 'Punjab')).toEqual(['Islamabad']);
   });
 
   it('names Amb and Phulra as omitted, and says why rather than dropping them silently', () => {
@@ -1442,14 +1537,38 @@ describe('bundle H2, the map with no figures on it', () => {
     const variant = h2();
     const districtsOf = (name: string) =>
       variant.units.find((unit) => unit.name === name)?.districts.length ?? 0;
-    const states = variant.units
-      .filter((unit) => unit.kind === 'proposed' && unit.name !== 'North-West Frontier Province')
-      .reduce((n, unit) => n + unit.districts.length, 0);
+    const states = PRINCELY_STATES.reduce((n, name) => n + districtsOf(name), 0);
     expect(states).toBe(22);
     expect(districtsOf('North-West Frontier Province')).toBe(28);
     expect(districtsOf('Gilgit Agency and Baltistan')).toBe(8);
     expect(variant.scorecard.districtsMoved.count).toBe(states + 28 + 8 + 1);
     expect(variant.scorecard.districtsMoved.count).toBe(59);
+
+    /*
+     * Punjab is `proposed` and still carries its own 33 districts forward, which is the rule
+     * working rather than a gap in it. "Moved" is decided on a unit's **name** and never on its
+     * kind: the 33 districts still in a unit called Punjab have not gone anywhere, and counting
+     * them would be the alternative `scorecard.ts` rejects by name — "calls the twenty-five
+     * districts left in Punjab moved when it is the province that shrank".
+     *
+     * A5 is the proof that the independence is load-bearing rather than incidental: its
+     * Gilgit-Baltistan and Azad Jammu & Kashmir are `proposed` too, and move nought districts.
+     * Keying "moved" on `kind` would break that and report a promotion as a redraw.
+     */
+    expect(variant.units.find((u) => u.name === 'Punjab')?.kind).toBe('proposed');
+    expect(
+      variant.scorecard.districtsMoved.byOrigin.find((o) => o.from === 'Punjab')?.districts,
+    ).toBe(3);
+
+    // The whole decomposition, against the origins the bundle records rather than against itself.
+    expect(variant.scorecard.districtsMoved.byOrigin).toEqual([
+      { from: 'Khyber Pakhtunkhwa', districts: 35 },
+      { from: 'Gilgit-Baltistan', districts: 10 },
+      { from: 'Balochistan', districts: 9 },
+      { from: 'Punjab', districts: 3 },
+      { from: 'Islamabad Capital Territory', districts: 1 },
+      { from: 'Sindh', districts: 1 },
+    ]);
 
     // Azad Jammu & Kashmir keeps its own name and its own ten districts, so it moves nothing —
     // which is what makes the figure a statement about naming rather than about territory.
@@ -1471,6 +1590,20 @@ describe('bundle H2, the map with no figures on it', () => {
     expect(h2().opposedBy.length).toBeGreaterThan(1);
     // The accession of Kalat is itself disputed, and drawing the state states a settlement.
     expect(h2().opposedBy.join('\n')).toMatch(/Kalat/);
+  });
+
+  it('accounts in its sources for every year its prose asserts', () => {
+    /*
+     * The working agreement's "no unsourced surface", applied to card copy rather than to badges.
+     * A variant's prose asserts dated facts — a state acceded, a province was renamed, a district
+     * was notified — and a year on screen that nothing in the source list reaches is exactly the
+     * unsourced claim the agreement forbids. `context.ts` already holds the Durand footnote to
+     * this; H2 asserts more dates than any other variant in the app, so it is held to it here.
+     *
+     * The check extracts years from both sides rather than reading the sentence back at itself,
+     * which is the only version of it that can fail.
+     */
+    expect(unsourcedYears(h2())).toEqual([]);
   });
 
   it('wires its collision with the Bahawalpur restoration both ways', () => {

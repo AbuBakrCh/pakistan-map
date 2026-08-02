@@ -1113,28 +1113,42 @@ const H2: Variant = {
         'Renamed Khyber Pakhtunkhwa by the 18th Amendment in 2010. Smaller here than today by the ' +
         'three Malakand states, which it absorbed in 1969.',
     },
-    // The three provinces that kept their names. Each is smaller than it is today by the states
-    // drawn out of it, which is what `unchanged` means throughout this app — the unit carrying the
-    // province's name forward, whatever it has lost.
+    /*
+     * Punjab is `proposed` and not `unchanged`, and it is the one unit here where the two are a
+     * genuine question rather than a formality.
+     *
+     * `unchanged` says one sentence on the card and in the tooltip — *Unchanged from the current
+     * map* — and this Punjab is not. It is short of Bahawalpur, which `unchanged` would forgive:
+     * the rule this app states is that the unit called Punjab is Punjab **whatever it has lost**.
+     * But it also holds the ground Islamabad Capital Territory now covers, and gaining is not
+     * losing. A reader tapping Islamabad under this variant would have been told they were in a
+     * Punjab unchanged from today's, when today that ground is not Punjab at all.
+     *
+     * The geography is right and stays exactly as it is: the capital territory was carved out of
+     * Rawalpindi district in 1960 and did not exist in this period, so drawing it as its own unit
+     * would put a 1960s federal territory on a 1947 map. H1 made the same call. Only the word was
+     * wrong, and it is the same correction NWFP above already carries.
+     */
     {
       id: 'punjab',
       name: 'Punjab',
-      kind: 'unchanged',
-      // Islamabad is inside Punjab here, which is what the ground was: the capital territory was
-      // carved out of Rawalpindi district in 1960 and did not exist during this period at all.
-      // Drawing it as its own unit would put a 1960s federal territory on a 1947 map; H1 made the
-      // same call for the same reason, and the footnote below says so.
+      kind: 'proposed',
       claims: [...remainderOf('Punjab', PRINCELY_CLAIMS), 'Islamabad'],
       note:
         'Smaller than today’s Punjab by Bahawalpur, and larger by the ground Islamabad Capital ' +
-        'Territory now covers, which was part of Rawalpindi district until 1960.',
+        'Territory now covers, which was part of Rawalpindi district inside Punjab throughout this ' +
+        'period — so it is not the Punjab of the current map, and is not labelled as though it were.',
     },
+    // Sindh and Balochistan *only* lose ground, which is exactly what `unchanged` is written to
+    // forgive: the unit carrying the province's name forward, whatever it has lost. Neither gains a
+    // district, so neither has Punjab's problem, and calling either `proposed` would report a
+    // province that shrank as a proposal nobody made.
     {
       id: 'sindh',
       name: 'Sindh',
       kind: 'unchanged',
       claims: remainderOf('Sindh', PRINCELY_CLAIMS),
-      note: 'Smaller than today’s Sindh by Khairpur.',
+      note: 'Smaller than today’s Sindh by Khairpur, and otherwise the same province.',
     },
     {
       id: 'balochistan',
@@ -1143,7 +1157,8 @@ const H2: Variant = {
       claims: remainderOf('Balochistan', PRINCELY_CLAIMS),
       note:
         'The Chief Commissioner’s Province — British Balochistan — without the four states beside ' +
-        'it, which were separately governed and from 1952 formed the Balochistan States Union.',
+        'it, which were separately governed and from 1952 formed the Balochistan States Union. It ' +
+        'loses ground to them and gains none, so it is the province carried forward.',
     },
     // The Gilgit Agency, less the two states inside it. `territory` because that is what it was and
     // is: administered federally throughout this period, and not a province then or now.
@@ -1154,8 +1169,9 @@ const H2: Variant = {
       kind: 'territory',
       claims: remainderOf('Gilgit-Baltistan', PRINCELY_CLAIMS),
       note:
-        'Administered directly by the federal government throughout, as the Northern Areas were ' +
-        'until 2009. Hunza and Nagar are drawn out of it as the states they were.',
+        'Administered directly by the federal government throughout, and named the Northern Areas ' +
+        'until the Gilgit-Baltistan Order of 2009. Hunza and Nagar are drawn out of it as the ' +
+        'states they were.',
     },
     intactProvince('Azad Jammu & Kashmir'),
   ],
@@ -1226,9 +1242,10 @@ const H2: Variant = {
       kind: 'note',
       text:
         'Baltistan is drawn with the Gilgit Agency, which is right for most of this period and not ' +
-        'for its start. Baltistan was part of the Ladakh wazarat of Jammu and Kashmir until 1948 ' +
-        'and was administered with Gilgit afterwards, as the Northern Areas. Hunza and Nagar are ' +
-        'drawn out of the Agency as the states they were until 1974.',
+        'for its start: Baltistan was part of the Ladakh wazarat of Jammu and Kashmir before the ' +
+        'fighting of 1948 and was administered with Gilgit afterwards. Hunza and Nagar are drawn ' +
+        'out of the Agency as the states they were, each of which kept its ruler and its internal ' +
+        'self-government well past the period this map ends in.',
     },
     {
       kind: 'note',
@@ -1290,6 +1307,21 @@ const H2: Variant = {
     },
     {
       label:
+        'The Province of West Pakistan (Dissolution) Order, 1970 — West Pakistan dissolved and the ' +
+        'four provinces restored with effect from 1 July 1970, restoring none of the states',
+    },
+    {
+      label:
+        'Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 — the Northern Areas, ' +
+        'which is what the Gilgit Agency and Baltistan had become, renamed Gilgit-Baltistan',
+    },
+    {
+      label:
+        'Constitution (Eighteenth Amendment) Act, 2010 — North-West Frontier Province renamed ' +
+        'Khyber Pakhtunkhwa, which is why this map’s name for it differs from today’s',
+    },
+    {
+      label:
         'Gwadar — transferred from Oman to Pakistan on 8 September 1958, after the period this ' +
         'map draws, which is why the footnote states it rather than the boundary showing it',
     },
@@ -1301,8 +1333,10 @@ const H2: Variant = {
     },
     {
       label:
-        'data/reference/post-census-district-folds.json — Wadh, Tump, Upper Swat, Central Dir and ' +
-        'Hub, each created after the census and folded into its 2023 parent under ADR-0001',
+        'data/reference/post-census-district-folds.json — Hub, notified out of Lasbela in 2022, ' +
+        'and Wadh and Tump, notified in the Balochistan restructuring of 2026, together with ' +
+        'Upper Swat and Central Dir: each created after the census and folded into its 2023 ' +
+        'parent under ADR-0001',
     },
   ],
 };

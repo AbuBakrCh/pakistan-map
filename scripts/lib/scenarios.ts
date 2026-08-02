@@ -568,42 +568,6 @@ const TERRITORY_DISTRICT_SETS: readonly { readonly name: string; readonly distri
  *    tested; this narrows what counts as a *claim*, and says so out loud, rather than answering a
  *    constitutional question by widening a switch.
  */
-/**
- * Whether this variant publishes **no population figure at all** — the second case in which the
- * refusal above has nothing to protect (#30, H2).
- *
- * The reasoning is `promotedTerritoryOf`'s, applied one level up. `forbid` is answered for an
- * arithmetic reason and one only: a unit holding *some* of AJK's or Gilgit-Baltistan's districts
- * has a population short by an unknowable amount, and looks on the card exactly like a unit whose
- * population is right. A variant that suppresses modern figures outright has no such unit, because
- * it has no population figures — `scorecard.ts` voids the spread in the variant's own words, and
- * the build gives every one of its units a `null` population rather than a sum that would be short.
- * There is nothing left for the refusal to be protecting.
- *
- * H2 is why this exists. It draws the map of 1947–1955, when Hunza and Nagar were princely states
- * in their own right; both are Gilgit-Baltistan districts today, and neither is a whole territory
- * under its own name, so `promotedTerritoryOf` does not reach them and never should — a promotion
- * is a change of standing, and this is a demarcation that predates the territory it sits inside.
- *
- * **This is the wider of the two carve-outs, and the width is stated rather than discovered.** It
- * admits *any* shape of territory claim on a variant that withholds — not one whole territory, not
- * one named unit. What keeps it honest is that withholding is itself a loud, reviewed declaration
- * with a reason printed where the population lines would be, and that the reason is checked here:
- * a variant may not buy the exception with a blank field. What it is *not* is an answer to open
- * item 2b, which is about a variant that carries figures and reaches into ground the census does
- * not cover. That is still refused, and `TERRITORY_CLAIM_POLICY` is still `forbid`.
- */
-function withoutModernFigures(variant: Variant): boolean {
-  const statistics = variant.statistics;
-  if (statistics === undefined || statistics.modernFigures) return false;
-  // A withholding nobody explained is not a withholding. The reason is card copy — it is the
-  // sentence the scorecard sets where the figures would be — and the validator refuses a blank one
-  // a few lines above; refusing the claim as well is what stops a variant buying the exception
-  // with an empty string and failing on a message about a missing reason instead of about a
-  // district of Gilgit-Baltistan.
-  return statistics.reason.trim() !== '';
-}
-
 function promotedTerritoryOf(unit: Unit, districts: readonly string[]): string | null {
   if (unit.kind !== 'proposed') return null;
   const held = new Set(districts);
@@ -614,6 +578,44 @@ function promotedTerritoryOf(unit: Unit, districts: readonly string[]): string |
     return territory.name;
   }
   return null;
+}
+
+/**
+ * Whether this variant publishes **no population figure at all** — the second case in which the
+ * refusal has nothing to protect (#30, H2).
+ *
+ * The reasoning is `promotedTerritoryOf`'s above, applied one level up. `forbid` is answered for an
+ * arithmetic reason and one only: a unit holding *some* of AJK's or Gilgit-Baltistan's districts
+ * has a population short by an unknowable amount, and looks on the card exactly like a unit whose
+ * population is right. A variant that suppresses modern figures outright has no such unit, because
+ * it has no population figures — `scorecard.ts` voids the spread in the variant's own words, the
+ * build gives every one of its units a `null` population rather than a sum that would be short, and
+ * the tooltip prints the reason where the district's own figures would go. There is nothing left
+ * for the refusal to be protecting.
+ *
+ * H2 is why this exists. It draws the map of 1947–1955, when Hunza and Nagar were princely states
+ * in their own right; both are Gilgit-Baltistan districts today, and neither is a whole territory
+ * under its own name, so `promotedTerritoryOf` does not reach them and never should — a promotion
+ * is a change of standing, and this is a demarcation that predates the territory it sits inside.
+ *
+ * **This is the wider of the two carve-outs, and the width is stated rather than discovered.** It
+ * turns on the *variant* where the one above turns on the unit, so it admits any shape of territory
+ * claim on a variant that withholds — not one whole territory, not one named unit. What keeps it
+ * honest is that withholding is itself a loud, reviewed declaration with a reason printed where the
+ * population lines would be, and that the reason is checked here: a variant may not buy the
+ * exception with a blank field. What it is *not* is an answer to open item 2b, which is about a
+ * variant that carries figures and reaches into ground the census does not cover. That is still
+ * refused, and `TERRITORY_CLAIM_POLICY` is still `forbid`.
+ */
+function withoutModernFigures(variant: Variant): boolean {
+  const statistics = variant.statistics;
+  if (statistics === undefined || statistics.modernFigures) return false;
+  // A withholding nobody explained is not a withholding. The reason is card copy — it is the
+  // sentence the scorecard sets where the figures would be, and the sentence the tooltip prints on
+  // every district — and `validateVariant` refuses a blank one on its own account. Refusing the
+  // claim as well is what stops a variant buying the exception with an empty string and then
+  // failing on a message about a missing reason instead of about a district of Gilgit-Baltistan.
+  return statistics.reason.trim() !== '';
 }
 
 export function validateVariant(variant: Variant, options: ValidationOptions = {}): Validation {

@@ -48,7 +48,17 @@ export interface DistrictTooltip {
   readonly province: string;
   /** Province, capital territory, or territory-and-not-a-province (D12). */
   readonly standing: string;
-  readonly coverage: 'counted' | 'not-counted';
+  /**
+   * Which of three states this district's figures are in, kept three because they are three
+   * different claims and a reader owed one of them is not owed either other.
+   *
+   *  - `counted` — PBS published a 2023 row and the variant is showing it.
+   *  - `not-counted` — PBS published no row at all (AJK's ten and GB's ten, D25). A fact about the
+   *    census's coverage, true under every variant.
+   *  - `withheld` — PBS published a row and *this variant declines to attach it* (H2, #30), because
+   *    what it draws is older than the census. A fact about the variant, true of no other.
+   */
+  readonly coverage: 'counted' | 'not-counted' | 'withheld';
   readonly figures: readonly TooltipFigure[];
   /** The third of the three things a hover names (#18). Null while no variant is active. */
   readonly unit: TooltipUnit | null;
@@ -79,6 +89,14 @@ export interface UnitMembership {
   readonly variant: string;
   readonly universe: 'drawn' | 'census';
   readonly unit: { readonly name: string; readonly kind: UnitKind } | null;
+  /**
+   * The variant's own reason for attaching no 2023 figures, or `null` where it attaches them.
+   *
+   * Carried on the membership because it is a property of the *variant*, which is the only thing
+   * here that knows about one — and because the tooltip's figures are otherwise variant-blind,
+   * which is exactly how H2 came to print a 2023 population beside a princely state of 1947.
+   */
+  readonly withholds?: string | null;
 }
 
 /**
@@ -186,6 +204,30 @@ export function districtTooltip(
         coverage ??
         'PBS published no 2023 census row for this district, so no figures are shown. ' +
           'Absent, not zero.',
+    };
+  }
+
+  /*
+   * The variant declines to attach 2023 figures (H2, #30). Asked *after* the census-coverage
+   * branch above, deliberately and on the same reasoning `card.ts` uses: a district PBS never
+   * counted has no figure to withhold, and telling a reader the variant is declining one would
+   * describe the census as reaching ground it does not.
+   *
+   * **Both figures go, not only the population**, and that is a decision rather than an oversight.
+   * The obvious reading of the ticket is that it forbids population, and it does — but the
+   * mother-tongue line quotes a counted population inside its own note ("of the N the census
+   * counted"), so suppressing one and printing the other would leave a 2023 headcount on screen
+   * under the sentence saying there are none. There is also no principle that separates them:
+   * "2023 census numbers do not describe 1947 boundaries" is as true of Table 11 as of Table 1,
+   * and a dominant mother tongue set beside a princely state reads as a claim about that state.
+   */
+  const withholds = membership?.withholds ?? null;
+  if (withholds !== null) {
+    return {
+      ...common,
+      coverage: 'withheld',
+      figures: [],
+      absence: withholds,
     };
   }
 

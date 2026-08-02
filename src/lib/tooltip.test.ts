@@ -145,6 +145,82 @@ describe('districtTooltip — a district the census never reached', () => {
   });
 });
 
+describe('districtTooltip — a district under a variant that attaches no 2023 figures (#30)', () => {
+  /** H2's own reason, as `main.ts` reads it off the bundle and hands it to the tooltip. */
+  const REASON =
+    'This map is the boundaries of 1947 to 1955. The 2023 census counted people inside districts ' +
+    'that did not exist then, in states that had been abolished for sixty-eight years, so its ' +
+    'figures describe none of the units drawn here.';
+  const withholding = (name: string, kind: UnitKind = 'proposed'): UnitMembership => ({
+    variant: 'Provinces and princely states',
+    universe: 'drawn',
+    unit: { name, kind },
+    withholds: REASON,
+  });
+
+  const bahawalpur = tooltipFor('Bahawalpur', withholding('Bahawalpur'));
+
+  it('prints no population, which is the whole of what the ticket forbids', () => {
+    // The defect this exists to prevent: the tooltip's figures were variant-blind, so tapping a
+    // district under H2 printed its 2023 count with the 1947 unit named beside it.
+    expect(bahawalpur.figures).toEqual([]);
+    expect(bahawalpur.coverage).toBe('withheld');
+    expect(bahawalpur.absence).toBe(REASON);
+  });
+
+  it('drops the mother tongue with it, because that note quotes a headcount too', () => {
+    // Decided rather than inherited: Table 11 is as much a 2023 measurement as Table 1, and the
+    // dominant-tongue note states its share "of the N the census counted" — so printing it under
+    // the sentence saying there are no figures would leave a 2023 headcount on screen.
+    expect(figure(bahawalpur, 'Dominant mother tongue')).toBeUndefined();
+    expect(figure(bahawalpur, 'Population')).toBeUndefined();
+  });
+
+  it('still names the district, its address and its unit — it withholds figures, not facts', () => {
+    expect(bahawalpur.name).toBe('Bahawalpur');
+    expect(bahawalpur.province).toBe('Punjab');
+    expect(bahawalpur.unit?.value).toBe('Bahawalpur');
+    // And the sentence a screen reader gets carries both the reason and the unit.
+    const spoken = spokenTooltip(bahawalpur);
+    expect(spoken).toContain('1947');
+    expect(spoken).toContain('Bahawalpur');
+  });
+
+  it('is a third absence, worded apart from the two the tooltip already tells apart', () => {
+    /*
+     * The rule this module is built on: an absence is said in the words of whatever is missing it.
+     * Three of them now, and no two may share a sentence —
+     *   Muzaffarabad  the census never reached it (D25), true under every variant;
+     *   Upper Chitral it reached it and named no dominant tongue;
+     *   Bahawalpur    it reached it and *this variant* declines to attach the answer.
+     */
+    const muzaffarabad = tooltipFor('Muzaffarabad');
+    const chitral = figure(tooltipFor('Upper Chitral'), 'Dominant mother tongue')?.note;
+    expect(bahawalpur.absence).not.toBe(muzaffarabad.absence);
+    expect(bahawalpur.absence).not.toBe(chitral);
+    expect(bahawalpur.absence).not.toMatch(/does not cover|residual/);
+    expect(muzaffarabad.absence).not.toMatch(/1947/);
+  });
+
+  it('defers to the census where the census never reached, so the reason stays true', () => {
+    // Hunza is a unit of H2 *and* one of the twenty districts PBS published nothing for. There is
+    // no figure here for a variant to withhold, and saying one was withheld would describe the
+    // census as reaching ground it does not — the same order `card.ts` asks these two in.
+    const hunza = tooltipFor('Hunza', withholding('Hunza'));
+    expect(hunza.coverage).toBe('not-counted');
+    expect(hunza.absence).toMatch(/does not cover it/);
+    expect(hunza.figures).toEqual([]);
+  });
+
+  it('leaves every other variant’s tooltips exactly as they were', () => {
+    // The change is keyed on the variant's own policy, so a membership without one is untouched.
+    const underL1 = tooltipFor('Bahawalpur', inUnit('South Punjab', 'proposed'));
+    expect(underL1.coverage).toBe('counted');
+    expect(figure(underL1, 'Population')?.value).toBeTruthy();
+    expect(figure(underL1, 'Dominant mother tongue')?.value).toBeTruthy();
+  });
+});
+
 describe('districtTooltip — over the whole drawn set', () => {
   const all = districts.features.map((f) => tooltipFor(f.properties.name));
 
