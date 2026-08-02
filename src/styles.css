@@ -40,6 +40,18 @@
 
   /* One duration for every stratum, so a switch reads as one movement and not as three. */
   --switch: 340ms;
+
+  /*
+   * Whether the card is a bottom sheet (#33), stated here and read from here by `sheet.ts` — the
+   * same arrangement `--switch` already has, and for the same reason. The breakpoint is a fact
+   * about the layout, so the stylesheet owns it; a JS copy of `560px` would eventually disagree
+   * with this one, and a sheet whose script thinks it is a sheet while its CSS thinks it is a
+   * column would set a height on a box that is not positioned to have one.
+   */
+  --sheet: 0;
+  /* Set by `sheet.ts` while the sheet is live. The fallback is `PEEK_PX`, so the furniture that
+   * sits above the sheet is in the right place on the first frame, before any script has run. */
+  --sheet-h: 56px;
 }
 
 * {
@@ -1149,10 +1161,34 @@ body {
   }
 }
 
+/*
+ * The phone (#33). Pakistan's internet is overwhelmingly mobile-first, so this is not a graceful
+ * degradation of the desktop layout — it is where most readers will meet the app.
+ *
+ * Three things move. The card leaves the flow and becomes a sheet anchored to the bottom of the
+ * viewport, because a card of this length under the map means the map scrolls away the moment a
+ * reader reads what is drawn on it. The map takes a fixed share of the screen rather than
+ * competing for what is left, so the country is the same size whatever the card is doing. And
+ * Compare leaves the control row for the corner a thumb can actually reach.
+ *
+ * Nothing is dropped anywhere. A card that hid its opposition line on a phone would read as an
+ * endorsement on a phone, and the phone is the majority case.
+ */
 @media (max-width: 560px) {
+  :root {
+    --sheet: 1;
+  }
+
   #app {
     gap: 0.5rem;
-    padding: 0.75rem 0.6rem;
+    /*
+     * The page scrolls rather than fitting, and the sheet floats over the end of it. `height:
+     * 100%` here would trap the colophon and the audit panel behind a fixed sheet with no way to
+     * reach them — and the audit panel is the one surface whose whole purpose is being reachable.
+     */
+    height: auto;
+    min-height: 100%;
+    padding: 0.75rem 0.6rem calc(var(--sheet-h) + 1rem);
   }
 
   .dek {
@@ -1166,21 +1202,20 @@ body {
     padding: 0.45rem 0.6rem;
   }
 
+  /*
+   * A fixed share of the screen rather than a floor and a fight. Pakistan is very nearly square,
+   * so at 390px wide this is a frame the whole country fits in with room to spare — and it stays
+   * that frame whether the sheet is peeking or open, so expanding the card never resizes the map
+   * under the reader's own finger.
+   */
   .frame {
-    min-height: 26rem;
+    flex: 0 0 auto;
+    height: 52dvh;
+    min-height: 20rem;
   }
 
   .map-well {
-    min-height: 17rem;
-  }
-
-  /*
-   * The card at the hard bar. Still the whole card — nothing is dropped, because a card that
-   * hides its opposition line on a phone is a card that reads as an endorsement on a phone. The
-   * two party columns simply stack, and the full bottom-sheet adaptation is #33's.
-   */
-  .card-well {
-    padding: 0.7rem 0.75rem;
+    min-height: 0;
   }
 
   .card-parties {
@@ -1189,6 +1224,131 @@ body {
 
   .card-units {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * The sheet itself. Fixed to the bottom, its height set by `sheet.ts` from the detent the reader
+   * put it at, and animated on the one duration the stylesheet states — so `prefers-reduced-motion`
+   * turns the sheet into a straight swap for free, exactly as it does the map's cross-fade.
+   */
+  .card-well {
+    border: 0;
+    border-top: 1px solid var(--rule-province);
+    bottom: 0;
+    box-shadow: 0 -2px 14px rgb(51 41 29 / 14%);
+    display: flex;
+    flex-direction: column;
+    height: var(--sheet-h);
+    left: 0;
+    overflow: hidden;
+    padding: 0;
+    position: fixed;
+    right: 0;
+    transition: height var(--switch) ease;
+    z-index: 5;
+  }
+
+  /* Mid-drag the sheet is following a finger, and a finger is not something to ease towards. */
+  .card-well[data-dragging] {
+    transition: none;
+  }
+
+  .card {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    /* The card scrolls to its own end and stops, rather than handing the rest of the gesture to
+     * the page underneath and scrolling the map away behind the sheet. */
+    overscroll-behavior: contain;
+    padding: 0 0.75rem 1rem;
+  }
+
+  /*
+   * The grip. `min-height` is `PEEK_PX` from `lib/sheet.ts`, so the collapsed sheet is exactly the
+   * handle and shows no clipped half-line of the card beneath it. `touch-action: none` because the
+   * vertical drag is this control's own — without it the browser takes the gesture for a scroll
+   * and the sheet never moves.
+   */
+  .sheet-handle {
+    align-items: center;
+    background: var(--paper-sunk);
+    border: 0;
+    color: var(--ink-faint);
+    cursor: grab;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    font-family: inherit;
+    font-size: 0.68rem;
+    gap: 0.3rem;
+    justify-content: center;
+    letter-spacing: 0.09em;
+    min-height: 3.5rem;
+    padding: 0.5rem 0.75rem;
+    text-transform: uppercase;
+    touch-action: none;
+    width: 100%;
+  }
+
+  /* `display: flex` above would otherwise beat the attribute's own `display: none`, and a handle
+   * left visible past the breakpoint would sit on a card that is a column again. */
+  .sheet-handle[hidden] {
+    display: none;
+  }
+
+  .sheet-handle:active {
+    cursor: grabbing;
+  }
+
+  .sheet-grip {
+    background: var(--land-hatch);
+    border-radius: 999px;
+    display: block;
+    height: 0.25rem;
+    width: 2.5rem;
+  }
+
+  /*
+   * Compare, in the corner a thumb reaches (#33) — and still the same gesture it is on a desktop
+   * (#22). The button holds the comparison until it is pressed again, which is what it already did
+   * for a reader with no keyboard; nothing about the gesture changes here, only where it sits.
+   * It rides above the sheet, so opening the card carries it up rather than burying it.
+   */
+  .control-compare {
+    bottom: calc(var(--sheet-h) + 0.7rem);
+    position: fixed;
+    right: 0.7rem;
+    transition: bottom var(--switch) ease;
+    z-index: 6;
+  }
+
+  .chip-compare {
+    box-shadow: 0 1px 6px rgb(51 41 29 / 22%);
+  }
+}
+
+/*
+ * A finger is about 9mm across and cannot be aimed at a 24px chip. The 44px floor is the figure
+ * both platforms publish, and it is asked of the *pointer* rather than of the width: a touchscreen
+ * laptop past the breakpoint has the same finger.
+ *
+ * `min-height` and not `height`, so a chip with a tagline on two lines still grows.
+ */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+  }
+
+  /* The keyboard half of the compare gesture, offered to a device with no keyboard. The button
+   * beside it is the whole gesture there, and it says so itself. */
+  .control-compare .control-hint {
+    display: none;
+  }
+}
+
+/* The grip is drag-and-press on a touchscreen and press-only elsewhere, so the cursor says so. */
+@media (pointer: fine) {
+  .sheet-handle {
+    cursor: pointer;
   }
 }
 

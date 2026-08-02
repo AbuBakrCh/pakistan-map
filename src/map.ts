@@ -58,6 +58,7 @@ import {
   type PlacedLineLabel,
 } from './lib/line-of-control.ts';
 import { fitProjection } from './lib/projection.ts';
+import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
 
 /** Must match `--font-serif` in styles.css: the canvas measures what the browser will draw. */
 const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif';
@@ -367,16 +368,63 @@ export function renderMap(
    * stratum 1 is drawn or not, and the district paths keep `pointer-events: none`. Bound to the
    * SVG rather than to 156 paths: one listener, and the sea answers as clearly as the land.
    */
+  /** What is under a point on the SVG, asked in lon/lat rather than of the DOM. */
+  function districtAt(at: [number, number]): DistrictFeature | null {
+    const ground = project.invert?.(zoomTransformOf().invert(at));
+    return ground === undefined || ground === null ? null : locate.at(ground as [number, number]);
+  }
+
+  /*
+   * A finger is not a pointer that hovers (#33), so it is given the other gesture.
+   *
+   * Down and up are tracked rather than moves: on a touchscreen every pan across the country is a
+   * `pointermove`, and answering those would drag a tooltip along behind the thumb over the ground
+   * it covers. `pointerleave` arrives on the lift rather than on leaving anything, so it is left to
+   * the pointers that mean it — a finger's tooltip stays until another tap moves or dismisses it,
+   * which is the only way to put one away on a device with nowhere to move the pointer *to*.
+   *
+   * Both decisions — which pointer taps, and what a tap does — are `lib/touch.ts`'s and under test.
+   */
+  let touch: { readonly at: [number, number]; readonly began: number } | null = null;
+  /** The most fingers down at any moment of the gesture, so a pinch is never read as a tap. */
+  let fingers = 0;
+
   svg
     .on('pointermove', (event: PointerEvent) => {
+      if (selectsByTap(event.pointerType)) return;
       const at = pointer(event, svg.node()) as [number, number];
-      const ground = project.invert?.(zoomTransformOf().invert(at));
-      const found =
-        ground === undefined || ground === null ? null : locate.at(ground as [number, number]);
+      const found = districtAt(at);
       if (found === null) clearHover();
       else showDistrict(found, at);
     })
-    .on('pointerleave', clearHover);
+    .on('pointerleave', (event: PointerEvent) => {
+      if (selectsByTap(event.pointerType)) return;
+      clearHover();
+    })
+    .on('pointerdown', (event: PointerEvent) => {
+      if (!selectsByTap(event.pointerType)) return;
+      fingers = touch === null ? 1 : fingers + 1;
+      if (touch !== null) return;
+      touch = { at: pointer(event, svg.node()) as [number, number], began: event.timeStamp };
+    })
+    .on('pointerup pointercancel', (event: PointerEvent) => {
+      if (!selectsByTap(event.pointerType) || touch === null) return;
+      const at = pointer(event, svg.node()) as [number, number];
+      const candidate = {
+        downAt: touch.at,
+        upAt: at,
+        heldMs: event.timeStamp - touch.began,
+        pointers: fingers,
+      };
+      touch = null;
+      fingers = 0;
+      // A pan and a pinch are the map being moved, and the map has already answered them. Only a
+      // still, brief, single finger means "this one".
+      if (event.type === 'pointercancel' || !isTap(candidate)) return;
+      const found = districtAt(at);
+      if (tapResolves(found?.properties.name ?? null, hovered) === 'dismiss') clearHover();
+      else if (found !== null) showDistrict(found, at);
+    });
 
   let project = fitProjection(geography.provinces, { width: 1, height: 1, padding: 0 });
   let size = { width: 0, height: 0 };

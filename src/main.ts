@@ -60,6 +60,7 @@ import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
 import { renderMap, type MapView } from './map.ts';
 import { renderAbout, renderControls, renderVariantCard } from './panel.ts';
+import { attachSheet } from './sheet.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
@@ -154,6 +155,13 @@ const panel = renderControls(controlMount, scenarioBundle, choices, go, () => {
   render();
 });
 const card = renderVariantCard(cardMount);
+/*
+ * On a phone the card is a bottom sheet rather than a column (#33). Attached to the same element
+ * the card is rendered into and asked nothing about the card's contents: whether the page is
+ * narrow enough for a sheet is a question for the stylesheet, and everything the sheet decides is
+ * in `lib/sheet.ts`. On a wide screen it does nothing at all.
+ */
+const sheet = attachSheet(cardMount);
 
 /*
  * The audit surface (#21), rendered once and never again.
@@ -229,6 +237,9 @@ function render(): void {
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
   card.show(variant === null ? null : variantCard(scenarioBundle, variant));
+  // The sheet arrives and leaves with the card it holds, and resets to the height a proposal
+  // presents itself at when there is no longer one to hold.
+  sheet.show(variant !== null);
   // The card, the legend and the colophon are given the *selection*, and are not told about the
   // comparison. Compare is a gesture over the map — the reader is looking at the map and has one
   // key down — and rewriting three blocks of prose underneath it would be the page changing
