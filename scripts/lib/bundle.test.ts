@@ -816,13 +816,21 @@ describe('bundle scenarios', () => {
      *
      * Two things are held, because the draft asserted two kinds of thing. The **set** of variants,
      * since a proposal quietly dropped from `variants.ts` would take its opposition line and its
-     * sources with it and break nothing else. And the six places the draft marked
-     * `⚠ Footnote required` — each one a card that reads as a miscount, an invention or an
-     * unattributed line without it.
+     * sources with it and break nothing else. And the **six card obligations** the draft states —
+     * each one a card that reads as a miscount, an invention or an unattributed line without it.
+     *
+     * The six are counted here rather than described loosely, because the draft marks them three
+     * different ways and a round number would be the first thing to drift: three carry
+     * `⚠ Footnote required` (L1, L4, L5), two more carry a bare `⚠` (L6's *boundary is
+     * data-determined*, H2's *hard rule*), and one is stated in ordinary prose (H2's *Amb and
+     * Phulra are omitted, with a footnote on the card*). Five of the six are footnotes and are
+     * held below; the sixth is H2's withholding, which could not be a footnote.
      *
      * The footnotes are keyed on the **kind and on a phrase the draft demanded be said**, not on
      * the kind alone: a `district-count` footnote about something else would pass a kind check
-     * perfectly, which is the failure mode a migration actually has.
+     * perfectly, which is the failure mode a migration actually has. The phrases are quoted from
+     * the draft and not from the card — a regex copied off `variants.ts` asserts that the card
+     * says what the card says, which is the other failure mode.
      */
     const APPROVED_BY_THE_DRAFT = [
       'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7',
@@ -832,25 +840,31 @@ describe('bundle scenarios', () => {
     ];
     expect([...variants.map((v) => v.id)].sort()).toEqual([...APPROVED_BY_THE_DRAFT].sort());
 
-    const REQUIRED_BY_THE_DRAFT: readonly (readonly [string, string, RegExp])[] = [
+    const REQUIRED_BY_THE_DRAFT: readonly (readonly [string, string, readonly RegExp[]])[] = [
       // "sources say 11 districts — that was the pre-2022 count … the card must say so or it looks
       // like we miscounted."
-      ['l1', 'district-count', /\b11 districts\b/],
+      ['l1', 'district-count', [/\b11 districts\b/]],
       // "the movement names six districts … the same territory is 9 districts today."
-      ['l4', 'district-count', /\bsix districts\b/],
+      ['l4', 'district-count', [/\bsix districts\b/]],
       // "MQM-P's urban Sindh framing extends beyond Karachi Division … no published district list
       // exists for that wider claim."
-      ['l5', 'omission', /Hyderabad, Sukkur and Mirpur Khas/],
+      ['l5', 'omission', [/Hyderabad, Sukkur and Mirpur Khas/]],
       // "the card must say the line was drawn from census data rather than copied from a proposal."
-      ['l6', 'derived-boundary', /drawn from census data, not copied from a proposal/],
+      // Two phrases rather than one sentence, because the draft's connective is "rather than" and
+      // the card's is "not": pinning the card's sentence whole would key this on `variants.ts`
+      // instead of on the demand, and pass no matter what the draft had asked for.
+      ['l6', 'derived-boundary', [/drawn from census data\b/, /copied from a proposal\b/]],
       // "Amb and Phulra are omitted, with a footnote on the card naming them and stating why."
-      ['h2', 'omission', /Amb and Phulra are omitted/],
+      ['h2', 'omission', [/Amb and Phulra are omitted/]],
     ];
-    const missing = REQUIRED_BY_THE_DRAFT.filter(([id, kind, says]) => {
+    const unmet = REQUIRED_BY_THE_DRAFT.flatMap(([id, kind, phrases]) => {
       const variant = variants.find((v) => v.id === id) as EmittedVariant;
-      return !variant.footnotes.some((note) => note.kind === kind && says.test(note.text));
-    }).map(([id, kind, says]) => `${id} has no ${kind} footnote matching ${says}`);
-    expect(missing).toEqual([]);
+      const notes = variant.footnotes.filter((note) => note.kind === kind);
+      return phrases
+        .filter((says) => !notes.some((note) => says.test(note.text)))
+        .map((says) => `${id} has no ${kind} footnote saying ${says}`);
+    });
+    expect(unmet).toEqual([]);
 
     // The sixth is not a footnote and could not be: "attach no modern population figures" is a
     // rule about every figure on the variant, so it is the withholding itself — and the reason,
@@ -859,7 +873,10 @@ describe('bundle scenarios', () => {
     const h2 = variants.find((v) => v.id === 'h2') as EmittedVariant;
     const withholding = h2.statistics;
     expect(withholding.modernFigures).toBe(false);
-    expect(withholding.modernFigures === false && withholding.reason.trim() !== '').toBe(true);
+    // Named rather than asserted as a bare boolean: `expect(false).toBe(true)` reports nothing
+    // about which variant withheld what, and this file's rule is that a failure names its subject.
+    const blankReason = withholding.modernFigures === false && withholding.reason.trim() === '';
+    expect(blankReason ? ['h2 withholds its figures and gives no reason'] : []).toEqual([]);
   });
 
   it('names the variants whose prose asserts a year their sources do not reach', () => {
