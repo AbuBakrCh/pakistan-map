@@ -39,13 +39,16 @@ import {
 } from './lib/selection.ts';
 import type { UnitMembership } from './lib/tooltip.ts';
 import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
+import { variantCard } from './lib/card.ts';
 import { renderMap, type MapView } from './map.ts';
-import { renderControls } from './panel.ts';
+import { renderControls, renderVariantCard } from './panel.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
 const controlMount = document.getElementById('controls');
 if (controlMount === null) throw new Error('#controls is missing from index.html');
+const cardMount = document.getElementById('card');
+if (cardMount === null) throw new Error('#card is missing from index.html');
 
 /**
  * What each basis shades districts with — and, by being the same object, which bases may be
@@ -104,11 +107,15 @@ const panel = renderControls(controlMount, scenarioBundle, choices, (next) => {
   selection = next;
   render();
 });
+const card = renderVariantCard(cardMount);
 
 function render(): void {
   const variant = variantOf(scenarioBundle, selection);
   panel.show(selection);
   map.show(viewFor(selection));
+  // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
+  // baseline there is no proposal on screen and there is no card either (#19).
+  card.show(variant === null ? null : variantCard(scenarioBundle, variant));
   renderLegend(selection, variant);
   renderColophon(selection, variant);
 }

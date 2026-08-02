@@ -14,6 +14,7 @@
 
 import { select } from 'd3';
 import type { BasisId, ScenarioBundle } from './bundle.ts';
+import type { CardList, CardUnit, VariantCard } from './lib/card.ts';
 import {
   BASELINE,
   refusalLines,
@@ -137,5 +138,180 @@ export function renderControls(
   }
 
   show(BASELINE);
+  return { show };
+}
+
+/**
+ * The variant card (#19) — the one surface where a proposal is argued rather than drawn.
+ *
+ * Imperative D3 against the DOM, like everything else in this file: every word on the card is
+ * decided in `lib/card.ts`, under test, and nothing here composes a sentence. What is left is
+ * which element gets which class, and the ordering of the sections — which is itself the card's
+ * argument, read top to bottom:
+ *
+ *   what it is → what it covers → why → where it stands → where the boundary came from →
+ *   who is for it → **who is against it** → the units → [#20's scorecard] → footnotes → sources
+ *
+ * The opposition sits immediately under the advocacy and above everything else, rather than at
+ * the foot with the small print. A reader who stops halfway down a card has still read both.
+ *
+ * Not animated. The map cross-fades because a shape moves and the eye needs to follow it; the
+ * card is prose, and prose faded in over a third of a second is prose the reader waits for. It is
+ * replaced at once, which is why no duration is read here — there is only ever one, and the
+ * stylesheet owns it.
+ */
+export interface CardHandle {
+  /** `null` at the baseline: there is no proposal on screen, so there is no card. */
+  show(card: VariantCard | null): void;
+}
+
+/** Text node helper — content is set as text, never as markup, on every surface. */
+function el<K extends keyof HTMLElementTagNameMap>(
+  parent: HTMLElement,
+  tag: K,
+  className: string,
+  text?: string | null,
+): HTMLElementTagNameMap[K] {
+  const node = parent.appendChild(document.createElement(tag));
+  node.className = className;
+  if (text !== undefined && text !== null) node.textContent = text;
+  return node;
+}
+
+/** "Advocated by" / "Opposed by": a list where there is one, the sentence where there is not. */
+function renderList(parent: HTMLElement, list: CardList): void {
+  const block = el(parent, 'div', 'card-party');
+  el(block, 'h3', 'card-party-label', list.label);
+  if (list.items.length === 0) {
+    // Never an empty list, and never nothing: an absent opposition line reads as the app
+    // agreeing with whatever is on screen, which is the failure the line exists to prevent.
+    el(block, 'p', 'card-party-note', list.note);
+    return;
+  }
+  const items = el(block, 'ul', 'card-party-list');
+  for (const item of list.items) el(items, 'li', 'card-party-item', item);
+}
+
+function renderUnit(parent: HTMLElement, unit: CardUnit): void {
+  const row = el(parent, 'li', `card-unit card-unit-${unit.kind}`);
+  const name = el(row, 'span', 'card-unit-name', unit.name);
+  // Beside the advocates' own name, never in place of it: the app reports what people call
+  // things and adjudicates nothing.
+  if (unit.alsoKnownAs !== null) {
+    name.append(' ');
+    el(name, 'span', 'card-unit-aka', `(${unit.alsoKnownAs})`);
+  }
+  el(row, 'span', 'card-unit-standing', unit.standing);
+  el(row, 'span', 'card-unit-districts', unit.districts);
+  if (unit.note !== null) el(row, 'span', 'card-unit-note', unit.note);
+}
+
+export function renderVariantCard(container: HTMLElement): CardHandle {
+  const root = select(container).append('article').attr('class', 'card');
+
+  function show(card: VariantCard | null): void {
+    const node = root.node();
+    if (node === null) return;
+    node.replaceChildren();
+    // Hidden rather than emptied, so the baseline is a page with no card on it at all — an empty
+    // frame under the map would read as a card that failed to load.
+    container.hidden = card === null;
+    if (card === null) return;
+
+    // Two columns on a wide screen, stacked on a narrow one, and the same order either way: the
+    // argument first, then what it is made of. A single 68ch measure inside a full-width well
+    // leaves half the box empty, and prose set the full width of the page is prose nobody reads.
+    const argument = el(node, 'div', 'card-column card-column-argument');
+    const detail = el(node, 'div', 'card-column card-column-detail');
+
+    const head = el(argument, 'header', 'card-head');
+    const heading = el(head, 'h2', 'card-name', card.name);
+    if (card.tagline !== null) {
+      heading.append(' ');
+      el(heading, 'span', 'card-tagline', `— ${card.tagline}`);
+    }
+
+    // Two kinds of badge, kept visibly apart: the basis is what the shading argues from, the
+    // provenance is where this boundary came from, and one of L1's disagrees with the other.
+    const badges = el(head, 'p', 'card-badges');
+    el(badges, 'span', 'badge badge-basis', card.basis.label);
+    for (const provenance of card.provenance) {
+      el(badges, 'span', 'badge badge-provenance', provenance.label);
+    }
+    // Glossed on the card and not in a `title`: the hard bar is a 390px phone, which has no hover.
+    el(
+      head,
+      'p',
+      'card-gloss',
+      [card.basis.gloss, ...card.provenance.map((b) => b.gloss)].join(' · '),
+    );
+    if (card.provenanceNote !== null) el(head, 'p', 'card-note', card.provenanceNote);
+
+    el(argument, 'p', 'card-summary', card.summary);
+    el(argument, 'p', 'card-coverage', card.coverage);
+    el(argument, 'p', 'card-rationale', card.rationale);
+
+    const facts = el(argument, 'dl', 'card-facts');
+    for (const [term, value] of [
+      ['Status', card.status],
+      ['Boundary', card.composition],
+    ] as const) {
+      el(facts, 'dt', 'card-term', term);
+      el(facts, 'dd', 'card-detail', value);
+    }
+
+    const parties = el(argument, 'div', 'card-parties');
+    renderList(parties, card.advocacy);
+    renderList(parties, card.opposition);
+
+    if (card.figuresWithheld !== null) {
+      el(argument, 'p', 'card-withheld', card.figuresWithheld);
+    }
+
+    const units = el(detail, 'section', 'card-section');
+    el(units, 'h3', 'card-section-label', 'Units');
+    const list = el(units, 'ul', 'card-units');
+    for (const unit of card.units) renderUnit(list, unit);
+
+    // #20's scorecard slots in here — population spread, largest:smallest ratio, districts moved
+    // and non-contiguous units, between the units it summarises and the footnotes that qualify
+    // them. `card.scorecard` is its seam and is null until #16's adjacency graph exists.
+
+    if (card.footnotes.length > 0) {
+      const footnotes = el(detail, 'section', 'card-section');
+      el(footnotes, 'h3', 'card-section-label', 'Footnotes');
+      const items = el(footnotes, 'ul', 'card-footnotes');
+      for (const footnote of card.footnotes) {
+        const row = el(items, 'li', `card-footnote card-footnote-${footnote.kind}`);
+        el(row, 'span', 'card-footnote-label', footnote.label);
+        el(row, 'span', 'card-footnote-text', footnote.text);
+      }
+    }
+
+    for (const note of card.notes) {
+      const row = el(detail, 'section', 'card-section card-crossref');
+      el(row, 'h3', 'card-section-label', note.label);
+      el(row, 'p', 'card-crossref-text', note.text);
+    }
+
+    // No unsourced surface anywhere, the card least of all: it is the surface that states what a
+    // movement wants and who is against it.
+    const sources = el(detail, 'section', 'card-section');
+    el(sources, 'h3', 'card-section-label', 'Sources');
+    const cited = el(sources, 'ul', 'card-sources');
+    for (const source of card.sources) {
+      const row = el(cited, 'li', 'card-source');
+      if (source.url === null) {
+        row.textContent = source.label;
+        continue;
+      }
+      const link = el(row, 'a', 'card-source-link', source.label);
+      link.href = source.url;
+      link.rel = 'noreferrer';
+      link.target = '_blank';
+    }
+  }
+
+  show(null);
   return { show };
 }

@@ -702,6 +702,287 @@ body {
   height: 0;
 }
 
+/*
+ * The variant card (#19). The only surface in the app where a proposal is argued in words rather
+ * than drawn in lines, so it is set as an editorial sidebar and not as a dashboard panel: sunk
+ * paper, one hairline, serif throughout, and the accent spent on exactly one thing — the units
+ * that do not exist. Everything else on it is ink.
+ *
+ * Read top to bottom, the order is the argument: what it is, what it covers, why, where it
+ * stands, where the boundary came from, who is for it, who is against it. The opposition is not
+ * small print at the foot; a reader who stops halfway has still read both sides.
+ */
+.card-well {
+  border: 1px solid var(--land-hatch);
+  background: var(--paper-sunk);
+  padding: 0.9rem 1.1rem;
+}
+
+.card-well[hidden] {
+  display: none;
+}
+
+/*
+ * Two columns where there is room: the argument on the left, what it is made of on the right.
+ * They stack in the same order on a narrow screen, so the reading order is one order and not two.
+ * `auto-fit` rather than a breakpoint, because the column that matters is the prose measure — a
+ * sentence set the full width of a 1180px page is a sentence nobody reads.
+ */
+.card {
+  display: grid;
+  gap: 0.7rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr));
+}
+
+.card-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.card-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+.card-tagline {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.35rem 0 0;
+}
+
+/*
+ * A badge is a claim about where a boundary came from, so it is set as a label and not as a
+ * decoration — and the two kinds are told apart by their frames rather than by colour, which is
+ * spoken for: the accent belongs to proposed units.
+ */
+.badge {
+  border: 1px solid var(--rule-province);
+  color: var(--ink);
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  padding: 0.1rem 0.4rem;
+  text-transform: uppercase;
+}
+
+.badge-basis {
+  background: var(--land);
+}
+
+.badge-provenance {
+  border-style: dashed;
+}
+
+/* The vocabulary, in the reader's terms. On the card, because a 390px phone has no hover. */
+.card-gloss {
+  color: var(--ink-faint);
+  font-size: 0.74rem;
+  font-style: italic;
+  line-height: 1.45;
+  margin: 0.2rem 0 0;
+}
+
+/* Set at reading weight rather than as an aside: it explains a disagreement on screen. */
+.card-note {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin: 0.15rem 0 0;
+}
+
+.card-summary {
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.card-coverage,
+.card-rationale {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.card-rationale {
+  color: var(--ink);
+}
+
+.card-facts {
+  display: grid;
+  gap: 0.1rem 0.9rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+}
+
+.card-term {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  padding-top: 0.15rem;
+  text-transform: uppercase;
+}
+
+.card-detail {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/*
+ * Advocated by and Opposed by, side by side and at the same weight. Equal columns are the whole
+ * point: setting the opposition smaller, or below the fold, is how a card comes to read as an
+ * endorsement of whatever is on screen.
+ */
+.card-parties {
+  border-top: 1px solid var(--land-hatch);
+  display: grid;
+  gap: 0.5rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  padding-top: 0.55rem;
+}
+
+.card-party-label,
+.card-section-label {
+  color: var(--ink-faint);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.card-party-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.card-party-item {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* An unadvocated variant, or a missing opposition. Stated, never left as a blank column. */
+.card-party-note {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.card-withheld {
+  border-left: 2px solid var(--rule-province);
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 0.6rem;
+}
+
+.card-section {
+  border-top: 1px solid var(--land-hatch);
+  padding-top: 0.55rem;
+}
+
+.card-units {
+  display: grid;
+  gap: 0.35rem 1.2rem;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.card-unit {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-unit-name {
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+/* The one thing on the card that does not exist, wearing the one colour reserved for it. */
+.card-unit-proposed .card-unit-name {
+  color: var(--accent);
+}
+
+/* Shown beside the advocates' own name, never instead of it: the app adjudicates nothing. */
+.card-unit-aka {
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.card-unit-standing,
+.card-unit-districts,
+.card-unit-note {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.card-unit-standing {
+  color: var(--ink-faint);
+}
+
+.card-footnotes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * A footnote is the answer to a discrepancy a reader has already noticed on the map — the claim's
+ * count against the drawn one, most of all. Set at reading weight, not as small print.
+ */
+.card-footnote-label {
+  color: var(--ink);
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.card-footnote-text,
+.card-crossref-text {
+  color: var(--ink-soft);
+  display: block;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.card-sources {
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.card-source-link {
+  color: inherit;
+}
+
 .colophon {
   color: var(--ink-faint);
   font-size: 0.76rem;
@@ -755,5 +1036,22 @@ body {
 
   .map-well {
     min-height: 17rem;
+  }
+
+  /*
+   * The card at the hard bar. Still the whole card — nothing is dropped, because a card that
+   * hides its opposition line on a phone is a card that reads as an endorsement on a phone. The
+   * two party columns simply stack, and the full bottom-sheet adaptation is #33's.
+   */
+  .card-well {
+    padding: 0.7rem 0.75rem;
+  }
+
+  .card-parties {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-units {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
