@@ -257,14 +257,26 @@ function download(): void {
  * `#/language/l1` (D13) leaves one entry, not two, because there is no earlier view to go back to
  * — the intermediate state it would restore is the one state this app has decided cannot exist.
  */
-function go(next: Selection): void {
+function go(next: Selection, waypoint = false): void {
   selection = next;
   // A reader who asks to see a proposal has asked to stop comparing. Without this, choosing a
   // variant while the button holds compare would draw the country and leave the new card arguing
   // for boundaries that are not on screen.
   compare.interrupt();
   const hash = hashFor(next);
-  if (hash !== window.location.hash) window.history.pushState(null, '', hash);
+  if (hash !== window.location.hash) {
+    /*
+     * A click is a chosen view and takes an entry; an **arrow key inside a radio group is a
+     * way-station** and replaces one (#35).
+     *
+     * The rule is the one this function already follows — a hash the reader chose is history, a
+     * hash they merely passed through is not — and the reason is the one the push guard below was
+     * written for: an arrow key auto-repeats, and a reader scanning eight variants with a held key
+     * would have to press Back eight times to get out of a group they never meant to enter. The
+     * variant they stop on is still an entry, because stopping is the choosing.
+     */
+    window.history[waypoint ? 'replaceState' : 'pushState'](null, '', hash);
+  }
   render();
 }
 

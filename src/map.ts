@@ -43,6 +43,7 @@ import type { UnitBoundary, UnitTier } from './lib/units.ts';
 import {
   baselineLabelSites,
   districtLabelSites,
+  labelAnchor,
   DISTRICT_LABEL_ZOOM,
   labelKey,
   type CitySite,
@@ -61,6 +62,7 @@ import {
 } from './lib/line-of-control.ts';
 import { fitProjection, frameInset } from './lib/projection.ts';
 import { regionRoster } from './lib/regions.ts';
+import { leavesWalk, walkOrder, walkTarget } from './lib/walk.ts';
 import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
 import { isSheetLayout } from './sheet.ts';
 
@@ -853,6 +855,62 @@ export function renderMap(
     tooltipSize = { width, height };
   }
 
+  /*
+   * Walking the districts with the keyboard (#35).
+   *
+   * The readout is the only per-district surface a screen reader has, and until this the only thing
+   * that ever wrote to it was a pointer — so a reader with no pointer could focus the map and never
+   * make it say a word. Bound to the SVG, which already carries `tabindex="0"` and is where a
+   * reader stands to hold `Space`.
+   *
+   * The order and the keys are `lib/walk.ts`'s, under test. Two rules with teeth: only keys the
+   * walk claims have their default suppressed, so `Space` still reaches the compare gesture and
+   * `Tab` still leaves; and the district is shown through `showDistrict`, the same path the pointer
+   * uses, so the wash, the tooltip and the spoken sentence cannot drift apart from one another.
+   */
+  const walk = walkOrder(
+    districts.features.map((f) => ({
+      name: f.properties.name,
+      division: f.properties.division,
+      province: f.properties.province,
+    })),
+  );
+  const districtByName = new Map(
+    districts.features.map((f) => [f.properties.name, f] as const),
+  );
+  /** Where the keyboard walk is standing, or null before it has started. */
+  let walking: number | null = null;
+
+  svg.on('keydown', (event: KeyboardEvent) => {
+    if (leavesWalk(event.key)) {
+      if (walking === null) return;
+      event.preventDefault();
+      walking = null;
+      clearHover();
+      return;
+    }
+    const to = walkTarget(event.key, walking, walk.length);
+    if (to === null) return;
+    event.preventDefault();
+    walking = to;
+    const stop = walk[to];
+    const feature = stop === undefined ? undefined : districtByName.get(stop.name);
+    if (feature === undefined) return;
+    /*
+     * Placed at the district's own centre rather than at a pointer that does not exist. The
+     * tooltip is drawn as well as spoken, because a reader using a screen magnifier has a keyboard
+     * and eyes both, and a walk that said everything and showed nothing would leave them hunting.
+     */
+    const centre = project(labelAnchor(feature as never));
+    showDistrict(feature, centre === null ? [size.width / 2, size.height / 2] : centre);
+  });
+
+  // A walk that kept its place while the pointer moved elsewhere would resume somewhere the reader
+  // is no longer looking. Leaving the map ends it.
+  svg.on('blur', () => {
+    walking = null;
+  });
+
   /** The regions, renamed whenever the selection changes what is drawn. */
   function drawRoster(): void {
     const listed = regionRoster(
@@ -869,15 +927,14 @@ export function renderMap(
     );
     const node = roster.node() as HTMLElement;
     node.replaceChildren();
-    node.setAttribute('aria-label', listed.heading);
+    // A heading and no `aria-label`: with both, most screen readers announce the same words twice.
     const heading = node.appendChild(document.createElement('h2'));
     heading.textContent = listed.heading;
     const list = node.appendChild(document.createElement('ul'));
     for (const region of listed.items) {
-      const row = list.appendChild(document.createElement('li'));
-      // Name and standing in one item rather than two, so a reader stepping the list by item is
-      // never handed a name whose constitutional standing arrives separately.
-      row.textContent = `${region.name} — ${region.standing}`;
+      // Every word of it is `regions.ts`'s, including the join: this composes no sentence, exactly
+      // as `panel.ts` composes none.
+      list.appendChild(document.createElement('li')).textContent = region.spoken;
     }
   }
 

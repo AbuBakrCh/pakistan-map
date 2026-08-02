@@ -781,17 +781,7 @@ body {
  * take the content out of the accessibility tree as well as off the page and would leave the
  * regions unnamed for exactly the reader they are named for.
  */
-.regions {
-  border: 0;
-  clip-path: inset(50%);
-  height: 1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
-}
-
+.regions,
 .readout {
   clip-path: inset(50%);
   height: 1px;

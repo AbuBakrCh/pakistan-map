@@ -113,7 +113,7 @@ function unitFigure(membership: UnitMembership): TooltipUnit {
         kind: unit.kind,
         label: 'Proposed province',
         value: unit.name,
-        note: `${membership.variant} — proposed, not official`,
+        note: `${membership.variant} — ${PROPOSED_QUALIFIER}`,
         source: null,
       };
     case 'territory':
@@ -121,7 +121,7 @@ function unitFigure(membership: UnitMembership): TooltipUnit {
         kind: unit.kind,
         label: 'In this variant',
         value: unit.name,
-        note: 'Territory, unchanged — not constitutionally a province',
+        note: UNIT_STANDING.territory,
         source: null,
       };
     default:
@@ -129,11 +129,31 @@ function unitFigure(membership: UnitMembership): TooltipUnit {
         kind: unit.kind,
         label: 'In this variant',
         value: unit.name,
-        note: 'Unchanged from the current map',
+        note: UNIT_STANDING.unchanged,
         source: null,
       };
   }
 }
+
+/**
+ * What a variant makes of a unit, in words — **stated once, here, and read by every surface**.
+ *
+ * The tooltip owns this vocabulary because the tooltip is where a reader meets it first, and
+ * `describeKind` next door owns the constitutional standing of a *current* unit on the same terms.
+ * The map's spoken region list (#35) reads these rather than retyping them: a reader who hovers a
+ * district and then reads the region list must not be handed two different words for one fact, and
+ * two copies of a string are two copies that drift the first time one is edited.
+ *
+ * `proposed` is split, because the tooltip names the variant inside the sentence and the region
+ * list has no variant to name — so the *qualifier* is the shared part rather than the whole line.
+ */
+export const PROPOSED_QUALIFIER = 'proposed, not official';
+
+export const UNIT_STANDING: Readonly<Record<UnitKind, string>> = {
+  proposed: `Proposed province — ${PROPOSED_QUALIFIER}`,
+  territory: 'Territory, unchanged — not constitutionally a province',
+  unchanged: 'Unchanged from the current map',
+};
 
 const grouped = groupDigits;
 const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;

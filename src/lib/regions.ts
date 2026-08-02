@@ -12,45 +12,39 @@
  * rather than a pantomime of one — and it is a better answer than making 156 paths focusable, which
  * would give a keyboard reader a hundred and fifty-six stops and no way to skip them.
  *
- * Two rules it inherits rather than invents. The **standing words are the tooltip's own**, taken
- * from `describeKind` and from the unit vocabulary, because a reader who hovers a district and then
- * reads this list must not be given two different words for one constitutional fact. And a unit is
- * *said* to be unchanged rather than left to inference, for the reason the tooltip says it: the map
- * looks identical either way.
+ * Two rules it inherits rather than invents. The **standing words are not written here at all** —
+ * a current unit's comes from `describeKind` and a proposed one's from `UNIT_STANDING`, both next
+ * door, because a reader who hovers a district and then reads this list must not be given two
+ * different words for one constitutional fact, and two copies of a string drift the first time one
+ * is edited. And a unit is *said* to be unchanged rather than left to inference, for the reason the
+ * tooltip says it: the map looks identical either way.
  */
 
 import { describeKind, type ProvinceKind } from './geography.ts';
+import { UNIT_STANDING } from './tooltip.ts';
 import type { UnitKind } from '../bundle.ts';
 
 /** One region, named and placed in its constitutional standing. */
 export interface Region {
   readonly name: string;
   readonly standing: string;
+  /**
+   * The two joined, as the list actually reads them out.
+   *
+   * Composed here rather than in the renderer, for the reason `panel.ts` composes no sentence of
+   * its own: the dash is wording, and wording is decided where it can be tested. One item rather
+   * than two, so a reader stepping the list is never handed a name whose standing arrives
+   * separately.
+   */
+  readonly spoken: string;
 }
+
+const spoken = (name: string, standing: string): string => `${name} — ${standing}`;
 
 export interface RegionRoster {
   /** What the list is, said before it — a heading, not a caption. */
   readonly heading: string;
   readonly items: readonly Region[];
-}
-
-/**
- * What a unit's kind is, in the words the tooltip already uses for it.
- *
- * `unchanged` is spelled out rather than left blank, and `territory` keeps its constitutional
- * qualification inside a proposal exactly as it does outside one: a variant that carries AJK
- * through has not made it a province, and a list that dropped the qualification here would say it
- * had.
- */
-function unitStanding(kind: UnitKind): string {
-  switch (kind) {
-    case 'proposed':
-      return 'Proposed province — not official';
-    case 'territory':
-      return 'Territory, unchanged — not constitutionally a province';
-    default:
-      return 'Unchanged from the current map';
-  }
 }
 
 /**
@@ -67,7 +61,11 @@ export function regionRoster(
   if (units !== null) {
     return {
       heading: 'The units this proposal draws',
-      items: units.map((unit) => ({ name: unit.name, standing: unitStanding(unit.kind) })),
+      items: units.map((unit) => ({
+        name: unit.name,
+        standing: UNIT_STANDING[unit.kind],
+        spoken: spoken(unit.name, UNIT_STANDING[unit.kind]),
+      })),
     };
   }
   return {
@@ -75,6 +73,7 @@ export function regionRoster(
     items: provinces.map((province) => ({
       name: province.name,
       standing: describeKind(province.kind).status,
+      spoken: spoken(province.name, describeKind(province.kind).status),
     })),
   };
 }

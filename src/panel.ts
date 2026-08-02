@@ -57,7 +57,8 @@ export function renderControls(
   container: HTMLElement,
   scenarios: ScenarioBundle,
   choices: readonly BasisChoice[],
-  onSelect: (selection: Selection) => void,
+  /** `waypoint` is true for an arrow key inside a group — a view passed through, not chosen. */
+  onSelect: (selection: Selection, waypoint?: boolean) => void,
   /** The button half of the compare gesture (#22). The key half is wired in `main.ts`. */
   onCompare: () => void,
   /** Download the current view as a PNG with its provenance baked in (#32, D22). */
@@ -133,8 +134,12 @@ export function renderControls(
    * take focus — otherwise a group whose checked option is unavailable would have a tab stop the
    * browser refuses to enter, and the whole group would become unreachable.
    */
+  /** The options the browser will not give focus to. One computation, read by both helpers. */
+  const skipped = (buttons: readonly HTMLButtonElement[]): number[] =>
+    buttons.flatMap((button, index) => (button.disabled ? [index] : []));
+
   function rove(buttons: readonly HTMLButtonElement[], checked: number): void {
-    const skip = buttons.flatMap((button, index) => (button.disabled ? [index] : []));
+    const skip = skipped(buttons);
     const stop = tabStop({
       from: 0,
       count: buttons.length,
@@ -154,8 +159,11 @@ export function renderControls(
       const buttons = [...group.selectAll<HTMLButtonElement, unknown>('button').nodes()];
       const from = buttons.findIndex((button) => button === event.target);
       if (from === -1) return;
-      const skip = buttons.flatMap((button, index) => (button.disabled ? [index] : []));
-      const to = rovingTarget(event.key, { from, count: buttons.length, skip });
+      const to = rovingTarget(event.key, {
+        from,
+        count: buttons.length,
+        skip: skipped(buttons),
+      });
       if (to === null) return;
       event.preventDefault();
       buttons[to]?.focus();
@@ -166,7 +174,7 @@ export function renderControls(
   steerGroup(basisList, (index) => {
     const option = options[index];
     if (option === undefined || !option.available) return;
-    onSelect(option.id === null ? BASELINE : selectBasis(choices, option.id));
+    onSelect(option.id === null ? BASELINE : selectBasis(choices, option.id), true);
   });
 
   // Why the dimmed chips are dimmed, printed rather than left in their `title`. A `title` is
@@ -191,7 +199,7 @@ export function renderControls(
   steerGroup(variantList, (index) => {
     const list = active?.variants ?? [];
     const variant = list[index];
-    if (variant !== undefined) onSelect(selectVariant(scenarios, variant.id));
+    if (variant !== undefined) onSelect(selectVariant(scenarios, variant.id), true);
   });
 
   /*
