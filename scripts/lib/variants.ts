@@ -809,6 +809,14 @@ const H1: Variant = {
       'population held to half the seats',
   ],
   universe: 'drawn',
+  // The demarcation's own dates, which is what the Historical basis defers to a variant for: its
+  // declared vintage is the rule for finding a date ("stated per variant, not shared"), so a
+  // variant here that states none leaves every surface with a deferral where a date should be.
+  // These are the fifteen years the map drawn here was the law — not the vintage of the district
+  // set it is expressed in, which is 2023's under ADR-0001 and is a fact about how it is drawn
+  // rather than about when it was in force.
+  vintage:
+    '14 October 1955 to 30 June 1970 — the fifteen years the One Unit demarcation was in force',
   composition: {
     kind: 'transcribed',
     from:
@@ -935,6 +943,12 @@ const H3: Variant = {
       'would undo both the 2009 Order and the provisional provincial status announced in 2020',
   ],
   universe: 'drawn',
+  // Dated from the Order that restored the four provinces, not from the amendments that later
+  // superseded the arrangement: what is drawn is the map as it stood on that day, which is why
+  // this variant calls Gilgit-Baltistan the Northern Areas.
+  vintage:
+    '1 July 1970 — the four provinces as restored when One Unit was dissolved, before the 2009 ' +
+    'renaming of the Northern Areas and the 2018 merger of FATA superseded the arrangement',
   composition: {
     kind: 'transcribed',
     from:
@@ -1084,6 +1098,14 @@ const H4: Variant = {
     'opponents of dividing Punjab at all, for whom the province’s size is its weight',
   ],
   universe: 'drawn',
+  // The one Historical variant whose *boundary* is not historical, and the reason it is dated
+  // differently from H1 and H3. Bahawalpur was a province from 1947 to 1955, but what is drawn
+  // here is Bahawalpur Division as PBS publishes it today — so the vintage is the district set the
+  // line actually comes from. Dating this 1947 would say the app had drawn the 1947 state, which
+  // it has not: the princely state is the claim's history, and this is its geometry.
+  vintage:
+    '2023 census (as on 01-03-2023) — the boundary drawn is Bahawalpur Division as it stands ' +
+    'today; the 1947–1955 province is the claim’s history, not its geometry',
   composition: {
     kind: 'transcribed',
     from: 'the former state of Bahawalpur, which is Bahawalpur Division as PBS publishes it today',
