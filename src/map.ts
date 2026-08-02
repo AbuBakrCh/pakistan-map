@@ -1,6 +1,16 @@
 /**
- * The baseline map: current provinces and divisions, named, and nothing else (#4) — with
- * Kashmir drawn honestly (#7).
+ * The map, in its three strata (#18) — over the baseline of current provinces and divisions
+ * (#4), with Kashmir drawn honestly (#7).
+ *
+ * Stratum 1 is the fill, which is data and never unit membership (D14). Stratum 2 is the current
+ * boundaries, which fade back rather than disappear once a basis is active — a proposal is only
+ * legible against the map it wants to replace. Stratum 3 is the active variant's unit outlines,
+ * drawn heavy, cased so they survive a busy fill beneath them, and labelled in their own colour
+ * rather than filling the units they name (which would be stratum 1 saying something it must not).
+ *
+ * The strata are switched by `show`, which is the seam the selectors drive. Everything in it is
+ * a matter of attributes and a path join: the projection, the label anchors and the arc sets are
+ * all recomputed only when the view or the frame actually changes.
  *
  * Everything with a decision in it — where a name goes, which names survive a collision, how the
  * cone is cut, which stretch of border is the ceasefire line — lives in `lib/` behind pure
@@ -17,7 +27,7 @@
 
 import { geoContains, geoPath, pointer, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { Topology } from 'topojson-specification';
-import type { CensusStatistics } from './bundle.ts';
+import type { CensusStatistics, UnitKind } from './bundle.ts';
 import { linesFromArcs, readDistricts, readGeography, tierArcs } from './lib/geography.ts';
 import { districtLocator, type DistrictFeature } from './lib/hit-test.ts';
 import {
@@ -25,13 +35,17 @@ import {
   placeTooltip,
   spokenTooltip,
   type DistrictTooltip,
+  type UnitMembership,
 } from './lib/tooltip.ts';
 import type { DistrictFill } from './lib/mother-tongue.ts';
+import type { UnitBoundary, UnitTier } from './lib/units.ts';
 import {
   baselineLabelSites,
   labelKey,
   layoutLabels,
   measureLabel,
+  variantLabelSites,
+  type LabelSite,
   type LabelTier,
   type Measurer,
 } from './lib/labels.ts';
@@ -48,6 +62,10 @@ const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times
 
 /** Mirrors `.label-province` and `.label-division` in styles.css; the canvas measures from it. */
 const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }> = {
+  // A unit's name is set at the province size and in the province's manner, because that is what
+  // it claims to be. It is told apart by colour, which matches its own outline — not by being set
+  // larger, which would be this app putting a proposal above the country.
+  unit: { size: 13, tracking: 1.5, caps: true },
   // Province names are set larger and tracked out, the way an atlas sets a country's first-level
   // units. Tracking is added to the measured width by hand — canvas cannot measure letter-spacing.
   province: { size: 13, tracking: 1.5, caps: true },
@@ -103,25 +121,37 @@ const overlaps = (a: Rect, b: Rect): boolean =>
   a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
 /**
- * What the caller gets back, so a later ticket can switch strata on without reaching into the
- * DOM. #18 owns the basis selector and the fade-back; this is the seam it will drive.
+ * Everything the map draws that is not the baseline — the whole of what a selection changes.
+ *
+ * Passed in whole rather than assembled here: which basis shades, which variant draws and what a
+ * hover says about it are decisions made in `lib/`, under test, and the renderer is the one part
+ * of this app that carries none. A view is a complete answer, so there is no state in here that
+ * can be half-switched — the baseline is the view with every field empty.
  */
-export interface MapHandle {
-  /** Turn stratum 1 — fill = data — on or off. Off is the baseline, unchanged. */
-  setDataFill(on: boolean): void;
+export interface MapView {
+  /** Stratum 1, per district. Null for a map with no data stratum at all. */
+  readonly fill: ReadonlyMap<string, DistrictFill> | null;
+  /** Stratum 3's shapes, for label anchors. Null at the baseline. */
+  readonly units: UnitTier | null;
+  /** Stratum 3's line work, drawn by arc so the ceasefire line stays a dash. Null at the baseline. */
+  readonly boundaries: readonly UnitBoundary[] | null;
+  /** What the active variant makes of a district, for the tooltip's third line. */
+  readonly membershipOf: ((district: string) => UnitMembership | null) | null;
+  /** The one sentence a screen reader gets, since `role="img"` hides the shapes. */
+  readonly description: string;
 }
 
-export function renderBaselineMap(
+export interface MapHandle {
+  /** Draw a view. The transition between two views is a cross-fade, never a cut. */
+  show(view: MapView): void;
+}
+
+export function renderMap(
   container: HTMLElement,
   topology: Topology,
   /** The census join, for the hover tooltip. Read here, decided in `lib/tooltip.ts`. */
   statistics: CensusStatistics,
-  /**
-   * Stratum 1, per district, or null for a map with no data stratum at all. Passed in rather
-   * than computed here: which basis is being shaded is not the renderer's decision, and the
-   * renderer is the one part of this app with no tests.
-   */
-  dataFill: ReadonlyMap<string, DistrictFill> | null = null,
+  initial: MapView,
 ): MapHandle {
   const geography = readGeography(topology);
   const districts = readDistricts(topology);
@@ -129,11 +159,34 @@ export function renderBaselineMap(
   const provinceOf = new Map(
     geography.provinces.features.map((f) => [f.properties.name, f] as const),
   );
-  const sites = baselineLabelSites(geography);
-  const tierOf = new Map(sites.map((site) => [site.key, site.tier]));
   const kindOf = new Map(
     geography.provinces.features.map((f) => [f.properties.name, f.properties.kind]),
   );
+
+  let view = initial;
+  /**
+   * The names on screen, and what each is. Recomputed only when the view changes: the anchors are
+   * an interior search over 156-district unions, which is cheap once per variant and not once per
+   * zoom frame.
+   */
+  let sites: LabelSite[] = [];
+  let tierOf = new Map<string, LabelTier>();
+  /** Which kind of unit a unit label names, so the name can be set in its own outline's colour. */
+  let unitKindOf = new Map<string, UnitKind>();
+
+  function readSites(): void {
+    sites =
+      view.units === null
+        ? baselineLabelSites(geography)
+        : variantLabelSites(geography, view.units.features);
+    tierOf = new Map(sites.map((site) => [site.key, site.tier]));
+    unitKindOf = new Map(
+      (view.units?.features ?? []).map((f) => [
+        labelKey('unit', f.properties.name),
+        f.properties.kind,
+      ]),
+    );
+  }
 
   const lineOfControl = readLineOfControl(topology);
   const locArcs = arcsOf(topology.objects['lineOfControl'] as never);
@@ -227,6 +280,11 @@ export function renderBaselineMap(
   const hoverLayer = world.append('g').attr('class', 'stratum-hover');
   const divisionLayer = world.append('g').attr('class', 'stratum-divisions');
   const provinceLayer = world.append('g').attr('class', 'stratum-provinces');
+  // Stratum 3, in two layers that carry the same join: a casing in the paper's own colour under
+  // the outline itself. A single heavy stroke is legible over the unshaded land and disappears
+  // into a busy categorical fill, which is exactly the map where a proposal's edge matters most.
+  const unitCasingLayer = world.append('g').attr('class', 'stratum-units stratum-units-casing');
+  const unitLayer = world.append('g').attr('class', 'stratum-units stratum-units-line');
   const locLayer = world.append('g').attr('class', 'stratum-loc');
   // Labels live outside the zoomed group and are positioned in screen space, so type stays the
   // size it was designed at however far the reader zooms in.
@@ -388,7 +446,12 @@ export function renderBaselineMap(
       .selectAll<SVGTextElement, { key: string; x: number; y: number }>('text')
       .data(placed, (label) => label.key)
       .join('text')
-      .attr('class', (label) => `label label-${tierOf.get(label.key)}`)
+      // A unit's name is set in its own outline's colour, which is what ties the two together
+      // without filling the unit — the fill belongs to the data and to nothing else (D14).
+      .attr('class', (label) => {
+        const kind = unitKindOf.get(label.key);
+        return `label label-${tierOf.get(label.key)}${kind === undefined ? '' : ` label-unit-${kind}`}`;
+      })
       .attr('x', (label) => label.x)
       .attr('y', (label) => label.y)
       .text((label) => drawn.get(label.key) ?? '');
@@ -452,7 +515,12 @@ export function renderBaselineMap(
             `province in this bundle. The district and province tiers disagree.`,
         );
       }
-      const content = districtTooltip(feature.properties, kind, statistics);
+      const content = districtTooltip(
+        feature.properties,
+        kind,
+        statistics,
+        view.membershipOf?.(feature.properties.name) ?? null,
+      );
       renderTooltip(content);
       readout.text(spokenTooltip(content));
 
@@ -520,6 +588,16 @@ export function renderBaselineMap(
 
     if (content.absence !== null) line('tooltip-absence', content.absence);
 
+    // Last, and in its own block: the two lines above it are what the census recorded, and this
+    // one is what somebody proposes. A proposal set among the figures would read as one of them.
+    if (content.unit !== null) {
+      const row = node.appendChild(document.createElement('span'));
+      row.className = `tooltip-figure tooltip-unit tooltip-unit-${content.unit.kind ?? 'none'}`;
+      line('tooltip-label', content.unit.label, row);
+      if (content.unit.value !== null) line('tooltip-value', content.unit.value, row);
+      if (content.unit.note !== null) line('tooltip-note', content.unit.note, row);
+    }
+
     const { width, height } = node.getBoundingClientRect();
     tooltipSize = { width, height };
   }
@@ -550,19 +628,12 @@ export function renderBaselineMap(
       .attr('class', (f) => `land land-${f.properties.kind}`)
       .attr('d', (f) => path(f));
 
-    // `no-data` takes no fill and no stroke at all, so the unshaded baseline underneath shows
-    // through: AJK and GB keep their land tone and their territory hatch, and the basis visibly
-    // does not reach them. The stroke elsewhere is the fill's own colour — a hairline that closes
-    // the antialiasing seam between two districts that share a language, so a language region
-    // reads as one shape rather than as a grid of tiles.
     fillLayer
       .selectAll('path')
       .data(districts.features)
       .join('path')
-      .attr('class', (f) => `district district-${dataFill?.get(f.properties.name)?.kind ?? 'none'}`)
-      .attr('fill', (f) => fillPaint(dataFill?.get(f.properties.name)))
-      .attr('stroke', (f) => strokePaint(dataFill?.get(f.properties.name)))
       .attr('d', (f) => path(f));
+    paintDistricts();
 
     divisionLayer
       .selectAll('path')
@@ -581,6 +652,8 @@ export function renderBaselineMap(
       .attr('class', (d) => `province province-${d.kind}`)
       .attr('d', (d) => path(d.lines));
 
+    drawUnits(path, false);
+
     // Drawn last of the boundary strata and alone along its own stretch, so nothing is beneath
     // it filling the gaps back in. A dash with a solid line under it is a solid line.
     locLayer
@@ -590,16 +663,7 @@ export function renderBaselineMap(
       .attr('class', 'line-of-control')
       .attr('d', (f) => path(f));
 
-    shapeWidth.clear();
-    for (const [tier, features] of [
-      ['province', geography.provinces.features],
-      ['division', geography.divisions.features],
-    ] as const) {
-      for (const f of features) {
-        const [[west], [east]] = path.bounds(f);
-        shapeWidth.set(labelKey(tier, f.properties.name), east - west);
-      }
-    }
+    measureShapes(path);
 
     // Panning is bounded by the frame, so the country cannot be dragged off screen and lost.
     zoomBehaviour.translateExtent([
@@ -609,24 +673,163 @@ export function renderBaselineMap(
     drawLabels(zoomTransformOf());
   }
 
+  /**
+   * Stratum 1's paint, which is the only thing about a district that a change of basis changes.
+   *
+   * `no-data` takes no fill and no stroke at all, so the unshaded baseline underneath shows
+   * through: AJK and GB keep their land tone and their territory hatch, and the basis visibly
+   * does not reach them. The stroke elsewhere is the fill's own colour — a hairline that closes
+   * the antialiasing seam between two districts that share a language, so a language region
+   * reads as one shape rather than as a grid of tiles.
+   */
+  function paintDistricts(): void {
+    fillLayer
+      .selectAll<SVGPathElement, (typeof districts.features)[number]>('path')
+      .attr('class', (f) => `district district-${view.fill?.get(f.properties.name)?.kind ?? 'none'}`)
+      .attr('fill', (f) => fillPaint(view.fill?.get(f.properties.name)))
+      .attr('stroke', (f) => strokePaint(view.fill?.get(f.properties.name)));
+  }
+
+  /**
+   * Stratum 3: one cased outline per unit, joined on the unit's own id.
+   *
+   * Joining on the id rather than on position is what makes switching variants a change rather
+   * than a redraw — a unit both variants contain keeps its element, and only what actually
+   * differs fades. `animate` is false whenever the frame or the projection moved, because a
+   * resize is not a change of variant and should not look like one.
+   */
+  function drawUnits(path: ReturnType<typeof geoPath>, animate: boolean): void {
+    const boundaries = view.boundaries ?? [];
+    const duration = animate ? switchDuration() : 0;
+
+    for (const [layer, className] of [
+      [unitCasingLayer, 'unit-casing'],
+      [unitLayer, 'unit-line'],
+    ] as const) {
+      const join = layer
+        .selectAll<SVGPathElement, UnitBoundary>('path')
+        .data(boundaries, (boundary) => boundary.properties.unit);
+
+      join
+        .exit()
+        .transition()
+        .duration(duration)
+        .attr('opacity', 0)
+        .remove();
+
+      join
+        .enter()
+        .append('path')
+        .attr('opacity', 0)
+        .attr('d', (b) => path(b.lines))
+        .transition()
+        .duration(duration)
+        .attr('opacity', 1);
+
+      layer
+        .selectAll<SVGPathElement, UnitBoundary>('path')
+        .attr('class', (b) => `${className} ${className}-${b.properties.kind}`);
+      join.each(function move(b) {
+        moveEdge(select(this), path(b.lines), duration);
+      });
+    }
+  }
+
+  /**
+   * Move a unit's edge from where the last variant put it to where this one does.
+   *
+   * A path string is not interpolable — two outlines have different numbers of vertices, and
+   * tweening the text between them draws nonsense — so the swap is made at the *trough of a
+   * dissolve*: out, change, back in. Which is the criterion the ticket actually asks for, since
+   * what a reader needs to see is that this edge moved, not a rubber sheet pretending it slid.
+   *
+   * An edge that has not moved is left alone. A unit both variants contain unchanged must not
+   * flicker, or every switch would announce eight changes and mean one.
+   */
+  function moveEdge(
+    element: ReturnType<typeof select<SVGPathElement, UnitBoundary>>,
+    edge: string | null,
+    duration: number,
+  ): void {
+    if (duration === 0 || element.attr('d') === edge) {
+      element.interrupt().attr('d', edge).attr('opacity', 1);
+      return;
+    }
+    element
+      .transition()
+      .duration(duration / 2)
+      .attr('opacity', 0)
+      .transition()
+      .duration(duration / 2)
+      .on('start', function swap() {
+        select(this).attr('d', edge);
+      })
+      .attr('opacity', 1);
+  }
+
+  /**
+   * How wide each named shape is on screen, which is what decides whether its own name fits
+   * inside it. Units are measured alongside the tiers because they are named on the same terms:
+   * an abbreviation fires for "Khyber Pakhtunkhwa" whether it is a province or a unit.
+   */
+  function measureShapes(path: ReturnType<typeof geoPath>): void {
+    shapeWidth.clear();
+    const measured: readonly (readonly [LabelTier, readonly { properties: { name: string } }[]])[] =
+      [
+        ['province', geography.provinces.features],
+        ['division', geography.divisions.features],
+        ['unit', view.units?.features ?? []],
+      ];
+    for (const [tier, features] of measured) {
+      for (const f of features) {
+        const [[west], [east]] = path.bounds(f as never);
+        shapeWidth.set(labelKey(tier, f.properties.name), east - west);
+      }
+    }
+  }
+
+  /**
+   * How long a switch takes, asked of the stylesheet rather than typed here.
+   *
+   * The strata fade in CSS and the outlines fade in the renderer, and the two have to agree or a
+   * switch half-animates — so there is one number and the stylesheet owns it. It also settles
+   * reduced motion for free: `prefers-reduced-motion` sets `--switch` to `0ms`, and a zero
+   * duration here is a straight swap. Read per switch, so a reader who changes the setting
+   * mid-session is obeyed at once.
+   */
+  const switchDuration = (): number =>
+    Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--switch')) || 0;
+
+  /**
+   * Switch views. No re-projection and no re-layout of anything the change did not touch: the
+   * district paths are already drawn, so a basis is a repaint, and a variant is one path join.
+   */
+  function show(next: MapView): void {
+    view = next;
+    // The tooltip on screen was answered for the previous view, and one of its three lines is
+    // about the variant. Clearing is what stops it standing there saying the wrong proposal.
+    clearHover();
+    readSites();
+
+    svg
+      .attr('data-fill', view.fill === null ? null : 'on')
+      .attr('data-variant', view.boundaries === null ? null : 'on')
+      .attr(
+        'aria-label',
+        // Whichever strata are on, the ceasefire line is still drawn, so the sentence that says
+        // so belongs on every label. `role="img"` means this is the only place it can be said.
+        `${view.description}, with the Line of Control drawn dashed. ${lineOfControl.properties.note}`,
+      );
+
+    paintDistricts();
+    measureShapes(geoPath(project));
+    drawUnits(geoPath(project), true);
+    drawLabels(zoomTransformOf());
+  }
+
+  readSites();
   draw();
   new ResizeObserver(draw).observe(container);
-
-  // The whole of stratum 1 is one attribute on the root, so switching it on costs no re-layout
-  // and no re-projection — the paths are already drawn and already coloured.
-  const setDataFill = (on: boolean): void => {
-    const active = on && dataFill !== null;
-    svg.attr('data-data-fill', active ? 'on' : null);
-    svg.attr(
-      'aria-label',
-      // Whichever stratum is on, the ceasefire line is still drawn, so the sentence that says so
-      // belongs on both labels. `role="img"` means this is the only place it can be said.
-      (active
-        ? 'Map of Pakistan, districts shaded by dominant mother tongue at the 2023 census'
-        : 'Map of Pakistan showing current provinces, territories and divisions') +
-        `, with the Line of Control drawn dashed. ${lineOfControl.properties.note}`,
-    );
-  };
-  setDataFill(false);
-  return { setDataFill };
+  show(initial);
+  return { show };
 }

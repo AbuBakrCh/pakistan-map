@@ -23,8 +23,14 @@
   --ink-soft: #6d604d;
   --ink-faint: #948773;
 
-  /* Reserved for unit outlines in a later ticket. Nothing on the baseline may use it. */
+  /* Stratum 3's own colour, and nothing else's: a proposed province, and its name. */
   --accent: #9c3b2b;
+  /* A unit carried through unchanged is drawn at unit weight in the map's own ink, not in the
+   * accent — the accent means "proposed", and spending it on Sindh would say Sindh is one. */
+  --rule-unit: #4a3d2c;
+
+  /* One duration for every stratum, so a switch reads as one movement and not as three. */
+  --switch: 340ms;
 }
 
 * {
@@ -48,6 +54,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /*
+   * The page fits the viewport where it can, and scrolls where it cannot. Everything below has a
+   * floor of its own — the frame, the map inside it, and the legend's cap — so on a narrow screen
+   * the boxes overflow this height in order rather than collapsing into one another, which is
+   * what a fifteen-category key over a 390px frame did before those floors existed.
+   */
   height: 100%;
   margin: 0 auto;
   /* Pakistan is very nearly square, so a page much wider than this is just empty margin. */
@@ -69,6 +81,103 @@ body {
   margin: 0.15rem 0 0;
 }
 
+/*
+ * The two selectors (#18). Chips rather than dropdowns: a basis and a variant are each one-of-N,
+ * and the alternatives are the product — hiding them behind a click hides the argument.
+ */
+.controls-well {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+}
+
+.controls {
+  display: contents;
+}
+
+.control {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  min-height: 1.9rem;
+}
+
+/* Collapsed rather than removed, so choosing a basis does not move the map under the pointer. */
+.controls[data-variants='none'] .control-variant {
+  visibility: hidden;
+}
+
+.control-label {
+  color: var(--ink-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.control-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+}
+
+.chip {
+  align-items: baseline;
+  background: var(--paper-sunk);
+  border: 1px solid var(--land-hatch);
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: 0.82rem;
+  gap: 0.4rem;
+  padding: 0.22rem 0.6rem;
+}
+
+/* Never the checked chip: its ink is the paper, and hovering it would set paper on paper. */
+.chip:hover:not(:disabled):not([aria-checked='true']) {
+  border-color: var(--rule-province);
+  color: var(--ink);
+}
+
+/*
+ * The active chip is filled, not merely outlined: which basis is on decides what every colour on
+ * the map means, so it has to be readable at a glance from across the page.
+ */
+.chip[aria-checked='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/*
+ * A basis with no variant written for it yet is offered and refused, not hidden — the four bases
+ * are the argument this app makes about what a boundary can be argued from, and one quietly
+ * missing from the menu reads as one that does not exist. Dimmed, and the line beside them says
+ * which half is missing.
+ */
+.chip:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.control-refusal {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+.control-refusal:empty {
+  display: none;
+}
+
+.chip-tagline {
+  font-size: 0.9em;
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .frame {
   border: 1px solid var(--land-hatch);
   background: var(--paper-sunk);
@@ -76,12 +185,17 @@ body {
   flex: 1 1 auto;
   flex-direction: column;
   margin: 0;
-  min-height: 0;
+  min-height: 36rem;
 }
 
+/*
+ * The map's own floor. It is the thing the page is for, and the legend is what explains it — so
+ * when the two compete for a short frame, the legend gives way and scrolls rather than pushing
+ * the country down to a thumbnail.
+ */
 .map-well {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 26rem;
   position: relative;
 }
 
@@ -123,14 +237,81 @@ body {
 
 /*
  * Stratum 1 — fill = data (D14). Off unless the root says otherwise: the baseline is provinces
- * and divisions and nothing else, and #18 owns the control that turns this on.
+ * and divisions and nothing else.
+ *
+ * Faded in rather than switched on. `display` cannot be transitioned, and a shading that appears
+ * between two frames reads as a different map having loaded rather than as the same map being
+ * asked a question. The paths stay in the DOM at zero opacity, which costs nothing to keep and is
+ * what lets the next switch be a fade too.
  */
 .stratum-fill {
-  display: none;
+  opacity: 0;
+  transition: opacity var(--switch) ease;
 }
 
-.map[data-data-fill='on'] .stratum-fill {
-  display: block;
+.map[data-fill='on'] .stratum-fill {
+  opacity: 1;
+}
+
+/*
+ * Stratum 2 fades *back*, never out. The current boundaries are what every proposal argues
+ * against, so they stay legible under it — a unit outline over blank ground says nothing about
+ * what it changes. Compare (#22) is what restores them to full strength.
+ */
+.map[data-variant='on'] .stratum-divisions {
+  opacity: 0.35;
+}
+
+.map[data-variant='on'] .stratum-provinces {
+  opacity: 0.5;
+}
+
+.stratum-divisions,
+.stratum-provinces {
+  transition: opacity var(--switch) ease;
+}
+
+/*
+ * Stratum 3 — the active variant's units, drawn heavy and on top.
+ *
+ * Two paths per unit: a casing in the paper's own colour, then the outline over it. Without the
+ * casing a dark hairline over a mid-tone categorical fill loses its edge exactly where the reader
+ * is looking hardest — at the boundary between a proposal and the data underneath it.
+ *
+ * Drawn by arc rather than by shape (see `unitBoundaries`), so the ceasefire line is not among
+ * them: a solid unit outline over the dash would fill its gaps in and leave a border.
+ */
+.stratum-units {
+  pointer-events: none;
+}
+
+.unit-casing,
+.unit-line {
+  fill: none;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.unit-casing {
+  stroke: var(--paper);
+  stroke-opacity: 0.85;
+  stroke-width: 4.4;
+}
+
+.unit-casing-unchanged,
+.unit-casing-territory {
+  stroke-width: 3.6;
+}
+
+.unit-line {
+  stroke: var(--rule-unit);
+  stroke-width: 1.6;
+}
+
+/* The one thing on screen that does not exist. It is the only thing wearing the accent. */
+.unit-line-proposed {
+  stroke: var(--accent);
+  stroke-width: 2.4;
 }
 
 /*
@@ -261,6 +442,22 @@ body {
   font-style: italic;
 }
 
+/*
+ * A unit's name, set as a province's is and coloured as its own outline is. Matching the outline
+ * is what ties a name to a shape without filling the shape — the fill belongs to the data (D14),
+ * so a unit is never tinted, and colour on the *name* is the whole of what is left.
+ */
+.label-unit {
+  fill: var(--rule-unit);
+  font-size: 13px;
+  letter-spacing: 0.115em;
+  text-transform: uppercase;
+}
+
+.label-unit-proposed {
+  fill: var(--accent);
+}
+
 /* Set along the line itself, the way an atlas names a river or a meridian. */
 .label-loc {
   fill: var(--ink);
@@ -374,6 +571,15 @@ body {
 }
 
 /*
+ * The unit line. Set apart from the figures above it because it is a different kind of statement:
+ * those are what the census counted, this is what somebody proposes.
+ */
+.tooltip-unit-proposed .tooltip-value,
+.tooltip-unit-proposed .tooltip-label {
+  color: var(--accent);
+}
+
+/*
  * The same words, spoken. `role="img"` on the map means assistive technology never reaches the
  * paths, so this live region is the only way a hover says anything at all; it is not drawn
  * because the tooltip is already saying it on screen.
@@ -390,9 +596,13 @@ body {
 .legend {
   border-top: 1px solid var(--land-hatch);
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
   font-size: 0.8rem;
+  /* Fifteen categories, three unit strokes and two absences: capped, and scrolled past the cap. */
+  max-height: 10rem;
+  overflow-y: auto;
   padding: 0.6rem 0.9rem;
 }
 
@@ -465,6 +675,20 @@ body {
   font-style: italic;
 }
 
+/* The three unit strokes, at the weights the map draws them and in the same order. */
+.swatch-unit-proposed {
+  border: 0;
+  border-top: 2.4px solid var(--accent);
+  height: 0;
+}
+
+.swatch-unit-unchanged,
+.swatch-unit-territory {
+  border: 0;
+  border-top: 1.6px solid var(--rule-unit);
+  height: 0;
+}
+
 .swatch-rule {
   border: 0;
   border-top: 1px solid var(--rule-division);
@@ -493,6 +717,21 @@ body {
   font-weight: 600;
 }
 
+/*
+ * A cross-fade is how a switch says the map changed rather than reloaded. For a reader who has
+ * asked for less motion it says nothing worth the cost, so it is taken away entirely — the
+ * renderer drops its own transitions to match, and the two must agree or a switch half-animates.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --switch: 0ms;
+  }
+
+  * {
+    transition-duration: 0ms !important;
+  }
+}
+
 @media (max-width: 560px) {
   #app {
     gap: 0.5rem;
@@ -506,6 +745,15 @@ body {
   .legend {
     font-size: 0.72rem;
     gap: 0.35rem 0.9rem;
+    max-height: 8rem;
     padding: 0.45rem 0.6rem;
+  }
+
+  .frame {
+    min-height: 26rem;
+  }
+
+  .map-well {
+    min-height: 17rem;
   }
 }

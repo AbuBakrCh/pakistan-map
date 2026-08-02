@@ -2,7 +2,9 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, scenario content in draft, **no application code written yet.**
+**Status:** design agreed, scenario content in draft (1 of 17 variants migrated into the typed
+module), pipeline and bundle built, and the map built through its **three strata with the basis
+and variant selectors** (#18).
 
 ---
 
@@ -211,7 +213,7 @@ this app is a property of that artifact: if a unit's population is wrong, we hav
 false figure about Pakistani provinces.
 
 The renderer is tested at its **pure seams only** — projection, tier extraction, label layout.
-`src/map.ts` is imperative D3 against the DOM and carries no tests of its own; the repo has no
+`src/map.ts` and `src/panel.ts` are imperative D3 against the DOM and carry no tests; the repo has no
 jsdom, deliberately. Where a rendering criterion is worth holding, it is held over the real
 bundle through the real projection instead — which is why the label tests name the divisions
 that go unlabelled at default zoom rather than counting them.
@@ -236,6 +238,10 @@ What it holds:
 | Fill = data — every drawn district decided, each category fill agreeing with the census figure, Chitral and the twenty AJK/GB districts as two different absences | `src/lib/mother-tongue.test.ts` |
 | Hover resolution — all 156 drawn districts reachable from inside themselves, nine cities standing in the district they actually stand in, the sea and the ground across the border resolving to nothing, and the shortlist a point costs bounded, which is the whole reason hover is not slow | `src/lib/hit-test.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
+| Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
+| The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
+| Unit names replacing province names rather than doubling them, units outranking divisions, South Punjab anchored inside South Punjab and not inside the Punjab it leaves | `src/lib/labels.test.ts` |
+| Tooltip's third line — proposed said twice over, unchanged *said* rather than left to inference, a territory still a territory inside a variant, and the two ways a district can be in no unit worded apart; spoken last, and spoken even where there are no figures at all | `src/lib/tooltip.test.ts` |
 | No network, and one entry point | `seam.test.ts` |
 
 Failures name the offending district or unit, never only a count. `seam.test.ts` enforces the
@@ -258,11 +264,43 @@ is no build to guard.
 **Selecting a basis:** current boundaries fade back, districts shade by that basis's data,
 the active variant's unit outlines draw prominently on top.
 
+**The selectors (#18).** Two radio groups, never dropdowns: a basis and a variant are each
+one-of-N and the alternatives *are* the product. The baseline sits first among the bases, because
+returning to the real map is the same kind of act as choosing one. **A basis is never active on
+its own** — selecting one selects its first variant (D13), so there is no state that means
+"shaded, with nothing proposed over it". All four bases are always offered, and the three that
+cannot yet be drawn are **refused out loud**: the control says whether the variants are missing,
+the shading is missing, or both — said on being pressed and not only on hover, since `disabled`
+takes no tap and the hard bar is a 390px phone. Which bases can be shaded is a property of the renderer, not of
+the bundle, and is stated once in `main.ts` so the menu and the map cannot disagree.
+
+Switching is a **cross-fade, never a cut**: outlines join on the unit's own id, so a unit both
+variants contain keeps its element, and an edge that moves is swapped at the *trough* of a
+dissolve rather than tweened — two outlines have different numbers of vertices, and interpolating
+the path text between them draws nonsense. An edge that has not moved is left alone, or every
+switch would announce eight changes and mean one. Returning to the baseline restores the previous
+view exactly; the renderer holds nothing back, and the check was made by hand against a
+screenshot, because the repo has no DOM seam to assert it in (see the test seam note).
+
+Duration is stated **once, in the stylesheet** (`--switch`) and read from there by the renderer,
+because the strata fade in CSS and the outlines fade in JS and the two have to agree or a switch
+half-animates. That settles `prefers-reduced-motion` for free: the media query sets `--switch` to
+`0ms` and both halves become a straight swap.
+
+**Deep links are #23's**, not this ticket's. The temporary `#/language` hash that stood in for a
+control is gone, and nothing reads the URL until #23 lands.
+
 **Three visual strata:**
 
 1. **Fill = data** (dominant mother tongue, development band…) — *never* unit membership
 2. **Current boundaries** — thin, faded, once a basis is active
-3. **Unit outlines** — heavy, labelled, on top
+3. **Unit outlines** — heavy, labelled, on top. **Drawn by arc, never by shape**: Azad Jammu &
+   Kashmir is a unit in every variant and the Line of Control is part of its outline, so a solid
+   stroke over the dash would fill its gaps in and leave a border (D12). The ceasefire line's arcs
+   are held out of every unit, exactly as the province stratum already holds them out. Each
+   outline is **cased** in the paper's own colour so it survives a busy fill beneath it; a unit's
+   name is set at the province size and coloured to match its own outline — the accent belongs to
+   `proposed` units and to nothing else, and a unit is **never filled**, because fill is data
 
 Fill shows data so each proposal is displayed *against its own evidence*. Where a unit outline
 disagrees with the shading beneath it, that disagreement is the most informative thing on the
@@ -277,11 +315,21 @@ here, and a single grey for both would say the map knows less than it does. Neit
 — a residual is not a language, and the pipeline already refuses to let it win a dominance.
 
 **Hover** — highlights district, current province, and proposed unit at once; tooltip names
-all three. Resolution follows the active scenario's atom. **Two of the three are built** (#13):
-the district and its province are washed and named, with population, dominant mother tongue and
-a source per figure. The unit arrives with the variant selector (#18) — there is no active
-variant to name until then. The tooltip is also the *only* hover surface a screen reader gets,
-since `role="img"` on the map hides the shapes, so the live region carries the same sentence.
+all three (#13, #18). The district and its province are washed and named, with population,
+dominant mother tongue and a source per figure; the unit line arrives with the variant and says
+which of four things it is — a proposed province (named as proposed, in the accent), a province
+the variant leaves alone (*said* to be unchanged, because the map looks identical either way), a
+territory kept as itself, or **no unit at all**, which a `census`-universe variant means
+deliberately and a `drawn` one can only mean as a gap. The tooltip is also the *only* hover
+surface a screen reader gets, since `role="img"` on the map hides the shapes, so the live region
+carries the same sentence — the unit included, and included even for the twenty districts with no
+figures, which are exactly the ones a reader checks a proposal's edge against.
+
+**Unit names replace province names, rather than joining them.** Seven of L1's eight units *are*
+current provinces carried through, so drawing both tiers would set "Sindh" twice a few pixels
+apart in two colours — and beside South Punjab it would set the proposal's name next to the name
+of the province it is carved out of. The faded province *boundaries* stay; only the names hand
+over.
 
 **Compare** — hold `Space` (or tap Compare) to drop strata 1 and 3 and restore the real map
 at full strength. The *only* map comparison; no side-by-side, no cross-variant table.

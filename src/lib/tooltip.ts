@@ -21,7 +21,7 @@
  * by whether the artifact has a row for it, which is the question actually being asked.
  */
 
-import type { CensusStatistics } from '../bundle.ts';
+import type { CensusStatistics, UnitKind } from '../bundle.ts';
 import { describeKind, type DistrictProperties, type ProvinceKind } from './geography.ts';
 
 /**
@@ -49,8 +49,89 @@ export interface DistrictTooltip {
   readonly standing: string;
   readonly coverage: 'counted' | 'not-counted';
   readonly figures: readonly TooltipFigure[];
+  /** The third of the three things a hover names (#18). Null while no variant is active. */
+  readonly unit: TooltipUnit | null;
   /** Why there are no figures. Set only when there are none. */
   readonly absence: string | null;
+}
+
+/**
+ * The unit line, and what kind of thing it names. The kind is carried because it is a difference
+ * in *standing* and the tooltip renders it as one: only a proposed province is set in the accent,
+ * which is the same rule the map's outlines follow. Null where the variant claims no unit here.
+ */
+export interface TooltipUnit extends TooltipFigure {
+  readonly kind: UnitKind | null;
+}
+
+/**
+ * What the active variant makes of this district — the third thing a hover names, after the
+ * district and the province it is in today.
+ *
+ * `unit` is `null` where the variant assigns the district to nothing, which is not the same as no
+ * variant being active: a `census`-universe variant partitions the 136 districts PBS published
+ * and deliberately leaves AJK and Gilgit-Baltistan out of every unit, and a reader hovering one
+ * of those twenty is owed *that sentence* rather than an empty line.
+ */
+export interface UnitMembership {
+  /** The variant's own name, so the line says whose proposal this is. */
+  readonly variant: string;
+  readonly universe: 'drawn' | 'census';
+  readonly unit: { readonly name: string; readonly kind: UnitKind } | null;
+}
+
+/**
+ * The unit line.
+ *
+ * A proposed unit is labelled as proposed and says so again in its note, because this line is the
+ * one place in the app where a boundary that does not exist is named in the same box as two that
+ * do. An unchanged province says it is unchanged — without that, a reader hovering Sindh under an
+ * active variant cannot tell whether the proposal moved it or left it alone, and the map looks
+ * the same either way.
+ */
+function unitFigure(membership: UnitMembership): TooltipUnit {
+  const { unit } = membership;
+  if (unit === null) {
+    return {
+      kind: null,
+      label: 'In this variant',
+      value: null,
+      note:
+        membership.universe === 'census'
+          ? `In no unit. ${membership.variant} partitions the 136 districts the 2023 census ` +
+            `covers, and leaves Azad Jammu & Kashmir and Gilgit-Baltistan outside it, drawn and ` +
+            `named and in no province.`
+          : `In no unit, though ${membership.variant} claims to cover every drawn district — a ` +
+            `gap in the partition rather than a statement about this ground.`,
+      source: null,
+    };
+  }
+  switch (unit.kind) {
+    case 'proposed':
+      return {
+        kind: unit.kind,
+        label: 'Proposed province',
+        value: unit.name,
+        note: `${membership.variant} — proposed, not official`,
+        source: null,
+      };
+    case 'territory':
+      return {
+        kind: unit.kind,
+        label: 'In this variant',
+        value: unit.name,
+        note: 'Territory, unchanged — not constitutionally a province',
+        source: null,
+      };
+    default:
+      return {
+        kind: unit.kind,
+        label: 'In this variant',
+        value: unit.name,
+        note: 'Unchanged from the current map',
+        source: null,
+      };
+  }
 }
 
 const grouped = (value: number): string => value.toLocaleString('en-GB');
@@ -60,6 +141,8 @@ export function districtTooltip(
   district: DistrictProperties,
   kind: ProvinceKind,
   statistics: CensusStatistics,
+  /** The active variant's answer for this district. Absent at the baseline, where there is none. */
+  membership: UnitMembership | null = null,
 ): DistrictTooltip {
   const { status, coverage } = describeKind(kind);
   const record = statistics.districts[district.name];
@@ -68,6 +151,7 @@ export function districtTooltip(
     division: district.division,
     province: district.province,
     standing: status,
+    unit: membership === null ? null : unitFigure(membership),
   } as const;
 
   if (record === undefined) {
@@ -130,10 +214,18 @@ export function districtTooltip(
  */
 export function spokenTooltip(content: DistrictTooltip): string {
   const where = `${content.name}, ${content.division} division, ${content.province}. ${content.standing}.`;
-  if (content.absence !== null) return `${where} ${content.absence}`;
-  const figures = content.figures
-    .map((figure) => (figure.value === null ? figure.note : `${figure.label} ${figure.value}`))
-    .filter((line): line is string => line !== null);
+  // Spoken last, and spoken whether or not there are figures: the twenty districts with no census
+  // row are exactly the ones a reader is most likely to be checking a proposal's edge against.
+  const said = (figure: TooltipFigure): string | null =>
+    figure.value === null ? figure.note : `${figure.label} ${figure.value}`;
+  const unit = content.unit === null ? [] : [said(content.unit)];
+  if (content.absence !== null) {
+    const spoken = unit.filter((line): line is string => line !== null);
+    return `${where} ${content.absence}${spoken.length === 0 ? '' : ` ${spoken.join('. ')}.`}`;
+  }
+  const figures = [...content.figures.map(said), ...unit].filter(
+    (line): line is string => line !== null,
+  );
   return `${where} ${figures.join('. ')}.`;
 }
 
