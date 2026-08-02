@@ -194,11 +194,19 @@ const sentenceList = (items: readonly string[]): string =>
     ? (items[0] ?? '')
     : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 
-function badge(variantId: string, name: ProvenanceBadge): CardBadge {
+/**
+ * One badge, glossed — and the closed vocabulary enforced at the point of use.
+ *
+ * Exported because the card is no longer the only surface that badges a boundary: the PNG band
+ * (#32) badges the same claim in an image that travels without its page, and a second copy of this
+ * check would be a second vocabulary that could quietly drift from this one. `subject` is whatever
+ * carries the badge — a variant id, or the baseline map — so the message names it either way.
+ */
+export function provenanceBadge(subject: string, name: ProvenanceBadge): CardBadge {
   const gloss = (PROVENANCE_GLOSS as Readonly<Record<string, string | undefined>>)[name];
   if (gloss === undefined) {
     throw new Error(
-      `${variantId} carries the provenance badge "${name}", which is not one of ` +
+      `${subject} carries the provenance badge "${name}", which is not one of ` +
         `${Object.keys(PROVENANCE_GLOSS).join(', ')}. The vocabulary is closed because a badge is ` +
         `a claim about where a boundary came from; an unglossed one on screen is a claim a ` +
         `reader cannot check.`,
@@ -529,7 +537,7 @@ export function variantCard(scenarios: ScenarioBundle, variant: VariantRecord): 
     );
   }
 
-  const provenance = variant.badges.map((name) => badge(variant.id, name));
+  const provenance = variant.badges.map((name) => provenanceBadge(variant.id, name));
   const differs =
     variant.badges.length !== basis.badges.length ||
     variant.badges.some((name) => !basis.badges.includes(name));
