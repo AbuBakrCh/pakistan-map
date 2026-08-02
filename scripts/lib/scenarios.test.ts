@@ -272,6 +272,81 @@ describe('whether a variant may claim AJK or Gilgit-Baltistan territory', () => 
   });
 });
 
+describe('a territory promoted, which is a change of standing and not a claim (#28, A5)', () => {
+  /** Gilgit-Baltistan as a province: the same ten districts, the same name, `proposed`. */
+  const promotion = (overrides: Partial<Unit> = {}): Unit => ({
+    id: 'gilgit-baltistan',
+    name: 'Gilgit-Baltistan',
+    kind: 'proposed',
+    claims: remainderOf('Gilgit-Baltistan'),
+    ...overrides,
+  });
+
+  const around = (unit: Unit): Unit[] => [
+    unit,
+    ...everythingElse([]).filter((u) => u.id !== 'gilgit-baltistan'),
+  ];
+
+  it('is admitted under `forbid`, because no ground changes hands and nothing is short', () => {
+    // The reason 2b answers `forbid` is that a unit holding *some* uncounted districts has a
+    // population short by an unknowable amount. A unit that is one whole territory has no such
+    // population: it has none at all, which `scorecard.ts` sets aside by name. So the refusal
+    // does not reach it, and A5 draws GB and AJK as provinces without the policy moving.
+    const { partition, problems } = validateVariant(variantOf(around(promotion())));
+    expect(problems).toEqual([]);
+    expect(partition?.units.find((u) => u.id === 'gilgit-baltistan')?.districts).toHaveLength(10);
+  });
+
+  it('still refuses a unit that takes only part of a territory, naming the district', () => {
+    // The case 2b is actually about, and the one the carve-out must not let through: nine of ten
+    // is reaching in, and the tenth district is left to some other unit.
+    const partial = promotion({
+      id: 'nearly',
+      name: 'Gilgit-Baltistan',
+      claims: remainderOf('Gilgit-Baltistan', ['Skardu']),
+    });
+    const { problems } = validateVariant(
+      variantOf([
+        partial,
+        {
+          id: 'skardu-remainder',
+          name: 'Gilgit-Baltistan remainder',
+          kind: 'territory',
+          claims: ['Skardu'],
+        },
+        ...everythingElse([]).filter((u) => u.id !== 'gilgit-baltistan'),
+      ]),
+    );
+    expect(problems.join('\n')).toMatch(/Astore|Ghanche|Ghizer|Gilgit/);
+    expect(problems.join('\n')).toMatch(/open product decision/);
+  });
+
+  it('still refuses a whole territory taken together with ground the census does count', () => {
+    // Ten uncounted districts plus one counted one is exactly the arithmetic 2b refuses: the
+    // unit's population would be Chitral's and would read as the province's.
+    const swollen = promotion({
+      id: 'greater-gilgit',
+      name: 'Gilgit-Baltistan',
+      claims: [...remainderOf('Gilgit-Baltistan'), 'Upper Chitral'],
+    });
+    const { problems } = validateVariant(
+      variantOf([swollen, ...everythingElse(['Upper Chitral']).filter((u) => u.id !== 'gilgit-baltistan')]),
+    );
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+  });
+
+  it('refuses a whole territory renamed, because the scorecard would report ten districts moved', () => {
+    // The third condition, and the one that is easiest to think unnecessary. "Districts moved" is
+    // decided on the unit's name, so a territory promoted *and* renamed reads as its whole ground
+    // changing hands when none of it has. Refused rather than counted wrongly — a variant meaning
+    // both has to say so.
+    const renamed = promotion({ id: 'northern-province', name: 'Northern Province' });
+    const { problems } = validateVariant(variantOf(around(renamed)));
+    expect(problems.join('\n')).toMatch(/Northern Province/);
+    expect(problems.join('\n')).toMatch(/a district of Gilgit-Baltistan/);
+  });
+});
+
 describe('the fields a variant card renders', () => {
   it('refuses a variant with no opposition line', () => {
     // Also refused by the type — `opposedBy` is a non-empty tuple — but a JSON edit or a cast

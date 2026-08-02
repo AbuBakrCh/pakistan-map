@@ -295,6 +295,11 @@ export interface Variant {
  * project: a build that fails naming the district is a question asked out loud, whereas `allow`
  * would let the first variant that needs it answer a live constitutional question on its own and
  * publish a province drawn across a ceasefire line with a population nobody can source.
+ *
+ * One case is not a claim at all and is admitted under `forbid`: a unit that is **one territory's
+ * whole district set under that territory's own name**, which is a change of standing rather than
+ * a change of ground (A5, #28). See `promotedTerritoryOf` for why the reason above does not reach
+ * it, and for the three conditions it has to meet.
  */
 export type TerritoryClaimPolicy = 'forbid' | 'allow';
 export const TERRITORY_CLAIM_POLICY: TerritoryClaimPolicy = 'forbid';
@@ -510,6 +515,55 @@ const TERRITORY_DISTRICTS = new Map<string, string>(
   ),
 );
 
+/** Each territory's district set entire, which is what a promotion has to be exactly equal to. */
+const TERRITORY_DISTRICT_SETS: readonly { readonly name: string; readonly districts: Set<string> }[] =
+  ROSTER.filter((p) => p.kind === 'territory').map((p) => ({
+    name: p.name,
+    districts: new Set(p.districts),
+  }));
+
+/**
+ * Whether this unit is a **promotion** rather than a claim on territory — the distinction A5 (#28)
+ * turns on, and the reason it does not need `TERRITORY_CLAIM_POLICY` moved.
+ *
+ * Open item 2b asks whether a province may take ground in Azad Jammu & Kashmir or
+ * Gilgit-Baltistan, and the stated reason for answering `forbid` is arithmetic: those districts
+ * carry no PBS statistic, so a unit holding *some* of them has a population short by an unknowable
+ * amount and looks exactly like a unit whose population is right. That reason does not reach the
+ * case where a unit is one territory's whole district set under that territory's own name. Nothing
+ * is taken from anybody, no boundary moves, the population is not short but **absent** — and
+ * `scorecard.ts` already sets a unit wholly outside the census aside by name rather than voiding
+ * the variant, exactly as it does for a `territory` unit. What changes is the unit's *standing*,
+ * which is the whole content of the "GB as a fifth province" proposal this app carries as content
+ * rather than as baseline.
+ *
+ * Three conditions, and each is load-bearing:
+ *
+ *  - **Exactly one territory, whole.** A unit taking nine of Gilgit-Baltistan's ten is reaching
+ *    in; a unit taking ten of them and Muzaffargarh besides has a population that is short. Both
+ *    are refused, naming the district, as before.
+ *  - **Under that territory's own name.** "Districts moved" is decided on the unit's name
+ *    (`scorecard.ts`), so a whole territory renamed reads as ten districts changing hands when
+ *    none has. Requiring the name is what keeps the scorecard's answer true rather than
+ *    coincidental. The cost is stated: H3's *Northern Areas* would not qualify as a promotion —
+ *    it does not need to, being a `territory`, but a variant that promoted the territory *and*
+ *    renamed it would be refused and would have to say which of the two it meant.
+ *  - **`forbid` is unchanged.** The policy is still the answer to 2b and both settings are still
+ *    tested; this narrows what counts as a *claim*, and says so out loud, rather than answering a
+ *    constitutional question by widening a switch.
+ */
+function promotedTerritoryOf(unit: Unit, districts: readonly string[]): string | null {
+  if (unit.kind === 'territory') return null;
+  const held = new Set(districts);
+  for (const territory of TERRITORY_DISTRICT_SETS) {
+    if (held.size !== territory.districts.size) continue;
+    if (![...held].every((district) => territory.districts.has(district))) continue;
+    if (normalizeName(unit.name) !== normalizeName(territory.name)) continue;
+    return territory.name;
+  }
+  return null;
+}
+
 export function validateVariant(variant: Variant, options: ValidationOptions = {}): Validation {
   const policy = options.territoryClaims ?? TERRITORY_CLAIM_POLICY;
   const problems: string[] = [];
@@ -689,6 +743,11 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
     };
     resolved.push(resolvedUnit);
 
+    // Asked once for the unit rather than once per district: a promotion is a property of the
+    // whole claim — one territory, entire, under its own name — and a per-district test cannot
+    // see it. See `promotedTerritoryOf`.
+    const promoted = promotedTerritoryOf(unit, districts);
+
     for (const district of districts) {
       const taken = owner.get(district);
       if (taken !== undefined) {
@@ -708,7 +767,12 @@ export function validateVariant(variant: Variant, options: ValidationOptions = {
       }
 
       const territory = TERRITORY_DISTRICTS.get(district);
-      if (territory !== undefined && resolvedUnit.kind !== 'territory' && policy === 'forbid') {
+      if (
+        territory !== undefined &&
+        resolvedUnit.kind !== 'territory' &&
+        promoted === null &&
+        policy === 'forbid'
+      ) {
         problems.push(
           `${at} unit "${resolvedUnit.name}" claims ${district}, a district of ${territory}. ` +
             `Whether a variant may claim territory is an open product decision (CLAUDE.md open ` +

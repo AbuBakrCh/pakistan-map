@@ -70,6 +70,7 @@ import {
   type DistrictOrigins,
 } from './lib/scorecard.ts';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
+import { districtCentroids } from './lib/centroids.ts';
 import { dominantTongues, variantsFrom } from './lib/variants.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -406,13 +407,22 @@ function main(): void {
   console.log('Validating the scenario set as partitions of the 2023 district set');
   let VARIANTS: readonly Variant[];
   try {
-    VARIANTS = variantsFrom({ graph, dominant, populations });
+    VARIANTS = variantsFrom({
+      graph,
+      dominant,
+      populations,
+      // Taken from the geometry read above rather than from a table of our own: A4's rule is a
+      // distance to a capital, and a centroid derived anywhere but from the drawn district would
+      // measure a map this build does not publish.
+      centroids: districtCentroids(geography),
+    });
   } catch (error) {
     fail(
-      `a variant could not be derived from the committed census and district borders. The two ` +
-        `Language variants with no published district list are drawn from Table 11's dominant ` +
-        `mother tongue, so a change to the census can leave one of them undrawable:\n    ` +
-        `${error instanceof Error ? error.message : String(error)}`,
+      `a variant could not be derived from the committed census and district borders. Six ` +
+        `variants have no published district list and are drawn here — two Language ones from ` +
+        `Table 11's dominant mother tongue (#26) and four Administrative ones from the rule ` +
+        `engine (#27) — so a change to the census or to the borders can leave one of them ` +
+        `undrawable:\n    ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 

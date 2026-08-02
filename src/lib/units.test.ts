@@ -172,6 +172,17 @@ describe('unitBoundaries', () => {
       // L7 replaces every province with a language region and still leaves the two territories as
       // themselves, because the census reaches neither and the rule has nothing to sort them by.
       l7: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      a1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      a2: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      a3: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      a4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      // A5 is the variant this assertion was waiting for. It draws both territories as *proposed
+      // provinces* — the whole content of the proposal — and the ceasefire line is held out of
+      // their outlines exactly as it is everywhere else. A renderer that decided what to stroke
+      // solid from a unit's `kind` rather than from the arcs would draw an international border
+      // along the Line of Control the moment a variant argued for provincial status, which is the
+      // single thing #28 asked to be sure of.
+      a5: ['Gilgit-Baltistan', 'Azad Jammu & Kashmir'],
       h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       h3: ['Northern Areas', 'Azad Jammu & Kashmir'],
       h4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
@@ -261,8 +272,11 @@ describe('the units on the ground', () => {
         .map((f) => `${variant.id} "${f.properties.name}"`),
     );
     expect(misplaced).toEqual([]);
-    // Six variants' worth of pole-of-inaccessibility searches over 43 outlines, one of them the
-    // whole of the four provinces: slower than the 5s default, and worth the wall clock, because a
-    // unit name set outside its own shape is the one label error a reader reads as a fact.
-  }, 30_000);
+    // Fifteen variants' worth of pole-of-inaccessibility searches over 149 outlines, one of them
+    // the whole of the four provinces: slower than the 5s default, and worth the wall clock,
+    // because a unit name set outside its own shape is the one label error a reader reads as a
+    // fact. The rule-drawn administrative units (#28) are the awkward ones now — a unit grown
+    // outward from a capital takes whatever shape the arithmetic leaves it, and several are long
+    // and bent in ways no proposal would draw on purpose.
+  }, 120_000);
 });

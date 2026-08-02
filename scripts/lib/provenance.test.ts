@@ -43,6 +43,7 @@ import {
   type Variant,
 } from './scenarios.ts';
 import { ROSTER } from './roster.ts';
+import { districtCentroids } from './centroids.ts';
 import { dominantTongues, variantsFrom } from './variants.ts';
 
 /**
@@ -63,6 +64,7 @@ const VARIANTS = variantsFrom({
   populations: new Map(
     Object.entries(districtStatistics).map(([district, record]) => [district, record.population]),
   ),
+  centroids: districtCentroids(geography as never),
 });
 
 const basisEntries = Object.entries(BASES) as [BasisId, Basis][];

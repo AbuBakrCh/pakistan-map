@@ -59,20 +59,22 @@ describe('basisChoices', () => {
 
   it('refuses the other three, and says which half of each is missing rather than one reason for all', () => {
     // "Coming soon" is the one answer that tells a reader nothing, and one reason for three bases
-    // is nearly as bad now that they are not short of the same things. Historical has three
-    // variants written and no fill behind them; the other two have neither. Both halves are real
-    // and separate, so the control says which applies to which.
+    // is nearly as bad now that they are not short of the same things. Administrative and
+    // Historical both have their variants written and no fill behind them; Development has
+    // neither. Both halves are real and separate, so the control says which applies to which.
     const refused = choices.filter((c) => !c.available);
     expect(refused.map((c) => c.basis.id)).toEqual(['administrative', 'historical', 'development']);
     for (const choice of refused) expect(choice.unavailable).toContain(choice.basis.name);
 
     const missing = Object.fromEntries(refused.map((c) => [c.basis.id, c.missing]));
     expect(missing['historical']).toEqual(['no shading is built yet']);
-    expect(missing['administrative']).toEqual([
+    // #28 moved Administrative from the second group to the first: A1 to A5 are written and
+    // dissolved, and what is still missing is the fill.
+    expect(missing['administrative']).toEqual(['no shading is built yet']);
+    expect(missing['development']).toEqual([
       'no variant is written yet',
       'no shading is built yet',
     ]);
-    expect(missing['development']).toEqual(missing['administrative']);
   });
 
   it('prints the refusal on screen, grouped by reason and naming every basis it applies to', () => {
@@ -81,17 +83,16 @@ describe('basisChoices', () => {
     // Historical — which is only short of its fill — is not filed under a sentence saying nobody
     // has written its variants.
     expect(refusalLines(choices)).toEqual([
-      'Administrative and Development are not selectable yet — no variant is written yet, and no ' +
-        'shading is built yet.',
-      'Historical is not selectable yet — no shading is built yet.',
+      'Administrative and Historical are not selectable yet — no shading is built yet.',
+      'Development is not selectable yet — no variant is written yet, and no shading is built yet.',
     ]);
   });
 
   it('says "is" of a single refused basis, and nothing at all when none is refused', () => {
-    // Historical is the one basis short of exactly one thing, so it stands alone in its group and
-    // the sentence has to agree with itself in number.
+    // Development is the one basis short of both halves, so it stands alone in its group and the
+    // sentence has to agree with itself in number.
     expect(refusalLines(choices)).toContain(
-      'Historical is not selectable yet — no shading is built yet.',
+      'Development is not selectable yet — no variant is written yet, and no shading is built yet.',
     );
     expect(refusalLines(choices.filter((c) => c.available))).toEqual([]);
   });
@@ -105,6 +106,15 @@ describe('basisChoices', () => {
     expect(historical?.available).toBe(false);
     expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h3', 'h4']);
     expect(historical?.unavailable).toBe('Historical: no shading is built yet.');
+
+    // And the same for Administrative, which #28 put in exactly this position: five complete
+    // partitions, four of them boundaries this build computed, and no fill to argue any of them
+    // against. The order is the order the module writes them in — the rule-drawn maps first and
+    // the one sourced proposal last.
+    const administrative = choices.find((c) => c.basis.id === 'administrative');
+    expect(administrative?.available).toBe(false);
+    expect(administrative?.variants.map((v) => v.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
+    expect(administrative?.unavailable).toBe('Administrative: no shading is built yet.');
 
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     const language = unshaded.find((c) => c.basis.id === 'language');
@@ -131,14 +141,14 @@ describe('selectBasis', () => {
 
   it('refuses a basis with nothing to draw, naming it and saying why', () => {
     // Louder than a silent baseline, which would look like a dead control. Two bases, refused for
-    // different reasons and each saying its own: Administrative has neither half, Historical has
-    // its variants and not its fill.
+    // different reasons and each saying its own: Development has neither half, Administrative has
+    // its five variants and not its fill.
+    expect(() => selectBasis(choices, 'development')).toThrow(/development cannot be selected/);
+    expect(() => selectBasis(choices, 'development')).toThrow(/no variant is written/);
     expect(() => selectBasis(choices, 'administrative')).toThrow(
       /administrative cannot be selected/,
     );
-    expect(() => selectBasis(choices, 'administrative')).toThrow(/no variant is written/);
-    expect(() => selectBasis(choices, 'historical')).toThrow(/historical cannot be selected/);
-    expect(() => selectBasis(choices, 'historical')).toThrow(/no shading is built/);
+    expect(() => selectBasis(choices, 'administrative')).toThrow(/no shading is built/);
   });
 });
 

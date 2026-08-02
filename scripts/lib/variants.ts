@@ -7,9 +7,10 @@
  * rendered card content, not documentation: rationale, status, advocacy, opposition, footnotes
  * and per-unit district lists all appear on screen.
  *
- * Eight variants are expressed so far — L1, L2, L3, L4 and L5 on the Language basis, H1, H3 and H4
- * on the Historical one. The remaining nine arrive under #26–#31, each as a diff against this file
- * that the partition validator has to accept before it can be committed.
+ * Fifteen variants are expressed so far — the whole Language basis (L1 to L7), the whole
+ * Administrative one (A1 to A5), and H1, H3 and H4 on the Historical. The remaining two, H2 and
+ * D1, arrive under #30 and #31, each as a diff against this file that the partition validator has
+ * to accept before it can be committed.
  *
  * L1, L2 and L3 are one claim read three ways, and they are written to stay that way: each builds
  * its district list out of the one before it rather than restating it. A reading that differed by
@@ -23,13 +24,24 @@
  */
 
 import type { AdjacencyGraph } from './adjacency.ts';
+import { groupDigits as group } from './digits.ts';
 import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-partition.ts';
+import {
+  partitionByRule,
+  proposedUnits,
+  type Centroid,
+  type GeneratedPartition,
+  type PartitionRule,
+} from './partitioner.ts';
 import { CENSUS_DISTRICTS, ROSTER } from './roster.ts';
 import {
   intactProvince,
   nonEmpty,
   remainderOf,
   slug,
+  type Footnote,
+  type NonEmpty,
+  type Source,
   type Unit,
   type Variant,
 } from './scenarios.ts';
@@ -1218,6 +1230,15 @@ export interface DerivationContext {
   readonly graph: AdjacencyGraph;
   readonly dominant: ReadonlyMap<string, string | null>;
   readonly populations: ReadonlyMap<string, number>;
+  /**
+   * District centroids from the geometry the map is drawn with, which A4's distance rule measures
+   * against. Longitude then latitude, as `d3.geoCentroid` returns it.
+   *
+   * Required rather than optional, though only one variant reads it: an absent centroid map would
+   * make A4 undrawable at exactly the moment a caller forgot to supply one, and the failure would
+   * arrive as "a variant could not be derived" rather than as a missing argument.
+   */
+  readonly centroids: ReadonlyMap<string, Centroid>;
 }
 
 /**
@@ -1593,6 +1614,641 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
   };
 }
 
+// ---------------------------------------------------------------------------------------------
+// The Administrative basis (#28) — four maps drawn by a stated rule, and one change of standing.
+//
+// A1 to A4 are the rule engine's (#27), and they are here for the reason L6 and L7 are: nobody
+// publishes a district list for "no province above 25 million people", and a partition somebody
+// has to take on trust is an editorial opinion wearing a `derived` badge. So each states its rule
+// in words a reader can redraw the map from, the arithmetic is re-run by the suite against the
+// committed census and the committed borders, and the card says the line was computed.
+//
+// A5 is not the engine's and does not pretend to be: it is a live proposal with a date, a document
+// and a government behind it, and it changes no boundary at all.
+// ---------------------------------------------------------------------------------------------
+
+/** The rule engine, run over the 136 districts PBS published 2023 results for. */
+function drawnByRule(id: string, rule: PartitionRule, context: DerivationContext): GeneratedPartition {
+  const { partition, problems } = partitionByRule(rule, {
+    // The census districts and no others. The twenty AJK and Gilgit-Baltistan districts carry no
+    // PBS figure, so a rule stated in people cannot see them and the engine refuses them by name
+    // (D25); they are carried through below as themselves.
+    scope: CENSUS_DISTRICTS,
+    neighbours: context.graph,
+    populations: context.populations,
+    centroids: context.centroids,
+  });
+  if (partition === null) {
+    throw new Error(`${id.toUpperCase()} cannot be drawn from the census:\n  ${problems.join('\n  ')}`);
+  }
+  return partition;
+}
+
+/** The generated units, with the two territories carried through as what they are. */
+const withTerritories = (partition: GeneratedPartition): Variant['units'] =>
+  nonEmpty(
+    [
+      ...proposedUnits(partition),
+      // Outside the rule because they are outside the census, exactly as in L7. Their standing is
+      // A5's subject; here nothing about them changes.
+      intactProvince('Azad Jammu & Kashmir'),
+      intactProvince('Gilgit-Baltistan'),
+    ],
+    'the units of an administrative partition',
+  );
+
+/** Largest, smallest and the spread between them, in the words a footnote sets them in. */
+function spreadOf(partition: GeneratedPartition): string {
+  const ranked = [...partition.units].sort((a, b) => b.population - a.population);
+  const largest = ranked[0];
+  const smallest = ranked[ranked.length - 1];
+  if (largest === undefined || smallest === undefined) return '';
+  const ratio = (largest.population / smallest.population).toFixed(1);
+  return (
+    `${partition.units.length} units, the largest seated at ${largest.name} with ` +
+    `${group(largest.population)} people and the smallest at ${smallest.name} with ` +
+    `${group(smallest.population)} — a spread of ${ratio} to 1`
+  );
+}
+
+/**
+ * The three things every rule-drawn card has to say, and says the same way.
+ *
+ * Written once because they are properties of the *engine* rather than of any one rule, and a
+ * reader comparing A1 against A4 should not have to work out whether a difference in the wording
+ * is a difference in the method. Only the first carries the rule's own numbers.
+ */
+function ruleFootnotes(partition: GeneratedPartition): readonly Footnote[] {
+  return [
+    {
+      kind: 'derived-boundary',
+      text:
+        'This boundary was computed, not copied from a proposal. Nobody publishes a district list ' +
+        `for this rule, so the rule stands in for one — ${partition.statement} It produces ` +
+        `${spreadOf(partition)}. Change the census and these lines move; nobody whose argument ` +
+        'this is chose where they run.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Each unit is named for the district its capital sits in, which is a description of an ' +
+        'output and not a name anybody uses for a province. The engine has no source for a name, ' +
+        'and inventing one is the editorial voice the rule exists to keep out — the more so ' +
+        'because a unit is not the same unit from rule to rule: the one seated at Lahore is two ' +
+        'districts under one of these variants and seventeen under another, so a reviewed name ' +
+        'would be a conclusion drawn about a shape that changes.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Every district the census covers changes hands here, because not one of them stays ' +
+        'inside a unit carrying the name of the province it is in today. That is what redrawing ' +
+        'the whole country means and not an artefact of how the figure is counted. Islamabad is ' +
+        'inside a generated unit for the same reason: the rule partitions the 136 districts PBS ' +
+        'published results for and the capital is one of them, so nothing here preserves it as a ' +
+        'federal territory. Azad Jammu & Kashmir and Gilgit-Baltistan are outside the rule ' +
+        'entirely — the census does not reach their twenty districts, so a rule stated in people ' +
+        'cannot see them — and are drawn and named exactly as they are today.',
+    },
+  ];
+}
+
+/** What every rule-drawn card cites, since all four read the same three files. */
+const RULE_SOURCES: NonEmpty<Source> = [
+  {
+    label:
+      'PBS 2023 Digital Census, district table — the population of every district, which is the ' +
+      'only quantity any of these rules is stated in',
+  },
+  {
+    label:
+      'data/bundle/adjacency.json — the district adjacency graph this build derives from the arcs ' +
+      'the map is drawn with, across which every unit is grown and by which every unit is ' +
+      'contiguous by construction',
+  },
+  {
+    label:
+      'scripts/lib/partitioner.ts — the engine that draws these boundaries, whose rule statement ' +
+      'is quoted on this card in full',
+  },
+  {
+    label:
+      'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+      'district set this partition is expressed in',
+    url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+  },
+];
+
+/** The opposition every rule-drawn map runs into, which is the same opposition each time. */
+const RULE_OPPOSITION: Variant['opposedBy'] = [
+  'those for whom a province is a people and not a population — the Seraiki, Hazara, Karachi and ' +
+    'Pashtun Balochistan claims elsewhere in this app are all arguments a rule stated in ' +
+    'district populations cannot see, and every one of them is cut across here',
+  'Sindhi nationalist opinion broadly, which rejects any division of Sindh, and Baloch ' +
+    'nationalist parties, for whom Balochistan’s territorial integrity is foundational',
+  'opponents of dividing Punjab at all, for whom the province’s size is its weight',
+  'those who argue that new provinces are an administrative expense before they are anything ' +
+    'else — a secretariat, a high court bench, a public service commission and a share of the ' +
+    'divisible pool for each',
+];
+
+/** A1 — a ceiling on how many people one province may hold. */
+function populationCeiling(context: DerivationContext): Variant {
+  const partition = drawnByRule('a1', { kind: 'population-ceiling', ceiling: 25_000_000 }, context);
+  return {
+    id: 'a1',
+    basis: 'administrative',
+    name: 'No province above 25 million',
+    tagline: 'a ceiling, and the number of provinces it turns out to take',
+    rationale:
+      'No unit holding more than 25 million people, in the fewest units for which that holds — ' +
+      `which the 2023 census makes ${partition.units.length}. The ceiling is the whole argument, ` +
+      'and it is an argument about size rather than about who lives where: Punjab alone is ' +
+      '127,688,922 people governed from Lahore, more than all but a dozen countries on earth, ' +
+      'while Balochistan, the largest province in the country by area, is 14,894,402. The number ' +
+      'of units is a finding here and not an input — it is whatever the ceiling costs.',
+    status:
+      'Not a proposal, and not a demarcation that has ever existed. The argument that Pakistan’s ' +
+      'provinces are too large to administer is made widely and across parties; no party has ' +
+      'published a boundary for it, and no constitutional amendment creating any province has ' +
+      'passed since 1970.',
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map. The case behind it is real and is argued across Pakistani ' +
+        'politics — that four provinces and a capital territory are too few administrative units ' +
+        'for 241,499,431 people — but that case is made about the size of a province and not ' +
+        'about where any particular line should run, and this partition is the arithmetic that ' +
+        'follows from stating it as a ceiling. It is drawn so the attributed claims elsewhere in ' +
+        'this app can be read against what population alone would say.',
+    },
+    opposedBy: RULE_OPPOSITION,
+    universe: 'drawn',
+    composition: {
+      kind: 'derived',
+      rule: partition.statement,
+      from:
+        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
+        'data/bundle/adjacency.json',
+    },
+    units: withTerritories(partition),
+    footnotes: [
+      ...ruleFootnotes(partition),
+      {
+        kind: 'note',
+        text:
+          'A ceiling and a count are not the same instruction, and this app carries both so the ' +
+          'difference can be seen. Stating the rule as a ceiling produces a more even map than ' +
+          'stating it as a number of provinces does, at a comparable number of units, because a ' +
+          'ceiling binds the largest unit directly and a count only bounds the average.',
+      },
+    ],
+    notes: [
+      {
+        label: 'The other administrative rules',
+        text:
+          'The same engine draws three more maps from three more rules: twelve units, fourteen ' +
+          'units, and a limit on how far a district may be from the seat that administers it. ' +
+          'They are different maps because they are different questions, and the app draws one ' +
+          'at a time.',
+        relatedVariants: ['a2', 'a3', 'a4'],
+      },
+    ],
+    sources: [
+      ...RULE_SOURCES,
+      {
+        label:
+          'PBS Census-2023 Table 1 (national) — 241,499,431 people, and the province totals this ' +
+          'card quotes for Punjab and Balochistan',
+      },
+    ],
+  };
+}
+
+/** A2 — twelve, the low end of the published administrative argument. */
+function twelveUnits(context: DerivationContext): Variant {
+  const partition = drawnByRule('a2', { kind: 'unit-count', units: 12 }, context);
+  return {
+    id: 'a2',
+    basis: 'administrative',
+    name: 'Twelve provinces',
+    tagline: 'the number stated, and the map that follows from it',
+    rationale:
+      'Twelve units, as evenly populated as growing them outward from twelve capitals allows. ' +
+      'Where A1 states a ceiling and lets the count fall out of it, this states the count and ' +
+      'lets the spread fall out of that — the two orderings of the same argument, and they do not ' +
+      'produce the same map. Twelve is the low end of the figure usually named when Pakistanis ' +
+      'argue that the federation has too few units for its size.',
+    status:
+      'Not a proposal. Twelve is a number people say; it is not a boundary anybody has published. ' +
+      'No constitutional amendment creating a province has passed since 1970.',
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map. What is argued for is the number — that a federation of 241 ' +
+        'million people administered as four provinces and a capital territory should have ' +
+        'something closer to a dozen units — and a number is not a map. The districts each unit ' +
+        'is made of here were chosen by a rule and by nobody.',
+    },
+    opposedBy: RULE_OPPOSITION,
+    universe: 'drawn',
+    composition: {
+      kind: 'derived',
+      rule: partition.statement,
+      from:
+        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
+        'data/bundle/adjacency.json',
+    },
+    units: withTerritories(partition),
+    footnotes: ruleFootnotes(partition),
+    notes: [
+      {
+        label: 'Twelve against fourteen',
+        text:
+          'The same rule at fourteen units is a separate variant, and the pair is worth reading ' +
+          'together: adding two provinces does not make the map more even. Where the extra ' +
+          'capitals are seated decides that, and the capitals are the one choice the engine ' +
+          'makes.',
+        relatedVariants: ['a3'],
+      },
+      {
+        label: 'The other administrative rules',
+        text:
+          'A ceiling on a province’s population and a limit on the distance to its capital are ' +
+          'the two rules that state a constraint rather than a count, and for both the number of ' +
+          'units is a finding.',
+        relatedVariants: ['a1', 'a4'],
+      },
+    ],
+    sources: RULE_SOURCES,
+  };
+}
+
+/** A3 — fourteen, the high end of the same argument. */
+function fourteenUnits(context: DerivationContext): Variant {
+  const partition = drawnByRule('a3', { kind: 'unit-count', units: 14 }, context);
+  return {
+    id: 'a3',
+    basis: 'administrative',
+    name: 'Fourteen provinces',
+    tagline: 'two more than twelve, and less even for it',
+    rationale:
+      'Fourteen units, drawn by the same rule as the twelve. It is here because the pair says ' +
+      'something neither says alone: two more provinces do not make a more even country. The ' +
+      'capitals are the most populous districts no two of which share a border, so the ' +
+      'thirteenth and fourteenth are seated where the population is thinnest, so the units they ' +
+      'seed come out smaller than anything twelve produced while the largest gives up much less ' +
+      'than they take.',
+    status:
+      'Not a proposal. Fourteen is the upper end of the number usually named in the ' +
+      'administrative argument; no party has published a boundary for it, and no constitutional ' +
+      'amendment creating a province has passed since 1970.',
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map, for the same reason nobody advocates the twelve-unit one: ' +
+        'the argument is about how many provinces a country of this size should have, and this ' +
+        'is what a rule does with that number. The districts are the rule’s and the politics are ' +
+        'somebody else’s.',
+    },
+    opposedBy: RULE_OPPOSITION,
+    universe: 'drawn',
+    composition: {
+      kind: 'derived',
+      rule: partition.statement,
+      from:
+        'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
+        'data/bundle/adjacency.json',
+    },
+    units: withTerritories(partition),
+    footnotes: [
+      ...ruleFootnotes(partition),
+      {
+        kind: 'note',
+        text:
+          'This is the least even of the three population maps in this app, and it is not the ' +
+          'one with the fewest units — the ceiling rule reaches sixteen and is the most even of ' +
+          'the three. That is not a defect in the arithmetic: a count says how many provinces ' +
+          'there are and says nothing about how big any of them may be, so where the extra ' +
+          'capitals land decides everything, and only a ceiling binds the largest unit directly.',
+      },
+    ],
+    notes: [
+      {
+        label: 'Twelve against fourteen',
+        text:
+          'The twelve-unit map is the same rule with a smaller number, and comparing the two ' +
+          'scorecards is the point of carrying both.',
+        relatedVariants: ['a2'],
+      },
+      {
+        label: 'The other administrative rules',
+        text:
+          'The two rules that state a constraint rather than a count — a population ceiling and ' +
+          'a distance to the capital — find their own number of units.',
+        relatedVariants: ['a1', 'a4'],
+      },
+    ],
+    sources: RULE_SOURCES,
+  };
+}
+
+/** A4 — the rule that is not about population at all. */
+function distanceToCapital(context: DerivationContext): Variant {
+  const partition = drawnByRule('a4', { kind: 'distance-to-capital', km: 300 }, context);
+  return {
+    id: 'a4',
+    basis: 'administrative',
+    name: 'No district more than 300 km from its capital',
+    tagline: 'what a province costs when distance is the argument',
+    rationale:
+      'No district further than 300 kilometres from the seat that administers it, in the fewest ' +
+      `units for which that holds — which is ${partition.units.length}. Population says nothing ` +
+      'about Balochistan: 14,894,402 people over the largest province in the country by area, ' +
+      'where every argument about governability is ' +
+      'about the journey rather than the crowd — a citizen in Gwadar is 635 kilometres from ' +
+      'Quetta on this map’s own geometry. So this rule seats its capitals as far apart as it can ' +
+      'rather than where the people are, and the map it draws is by a long way the most uneven ' +
+      'the Administrative basis produces.',
+    status:
+      'Not a proposal. Distance to the provincial capital is a real strand of the administrative ' +
+      'argument, particularly in Balochistan and southern Khyber Pakhtunkhwa; nobody has ' +
+      'published a boundary stated in kilometres.',
+    advocacy: {
+      kind: 'unadvocated',
+      note:
+        'Nobody advocates this map. The argument it comes from is made — that a province a day’s ' +
+        'travel across is not administered from its capital in any sense a citizen would ' +
+        'recognise — but it is made as a complaint rather than as a boundary, and 300 kilometres ' +
+        'is a round number chosen here to state it, not a threshold anybody has published.',
+    },
+    opposedBy: [
+      ...RULE_OPPOSITION,
+      'anyone for whom a federation’s units should be comparable in weight — this rule produces ' +
+        'the widest population spread of the four rule-drawn maps here, and a legislature ' +
+        'apportioned across these units would be a different country from one apportioned across ' +
+        'the 25 million ceiling’s',
+    ],
+    universe: 'drawn',
+    composition: {
+      kind: 'derived',
+      rule: partition.statement,
+      from:
+        'PBS 2023 Digital Census district populations, the district adjacency graph in ' +
+        'data/bundle/adjacency.json, and district centroids taken from the geometry in ' +
+        'data/bundle/geography.topojson.json',
+    },
+    units: withTerritories(partition),
+    footnotes: [
+      ...ruleFootnotes(partition),
+      {
+        kind: 'note',
+        text:
+          'The distance is measured centroid to centroid on a sphere, which is an approximation ' +
+          'and is stated rather than dressed up: a centroid is not where anybody lives, and 300 ' +
+          'kilometres of Balochistan is not 300 kilometres of central Punjab. What the rule ' +
+          'answers exactly is how far one district’s middle is from another’s; what it stands in ' +
+          'for is a journey it cannot see.',
+      },
+      {
+        kind: 'note',
+        text:
+          'This is the trade-off the Administrative basis exists to show. Contiguity costs ' +
+          'nothing under any of these rules — every unit is grown outward across shared district ' +
+          'borders and cannot be in two pieces — so what a rule actually trades away is ' +
+          'population parity, and a rule that binds distance abandons it entirely. Read this ' +
+          'scorecard against A1’s: the same country, the same census, and two maps that could ' +
+          'not be apportioned by the same formula.',
+      },
+    ],
+    notes: [
+      {
+        label: 'The other administrative rules',
+        text:
+          'The three population rules — a 25 million ceiling, twelve units and fourteen — are ' +
+          'the same engine asked a different question, and they seat their capitals differently ' +
+          'because of it: by population, rather than as far apart as possible.',
+        relatedVariants: ['a1', 'a2', 'a3'],
+      },
+    ],
+    sources: [
+      ...RULE_SOURCES,
+      {
+        label:
+          'data/bundle/geography.topojson.json — the district geometry this build draws, from ' +
+          'which every centroid the distance rule measures is taken',
+      },
+    ],
+  };
+}
+
+/**
+ * A5 — the one variant in this app that moves no district at all.
+ *
+ * Gilgit-Baltistan and Azad Jammu & Kashmir become provinces. Nothing is carved, nothing is
+ * merged, and every boundary on screen is where it already is; what changes is the standing of two
+ * first-level units, which is why the scorecard reads nought districts moved and why both units
+ * still have no population figure — PBS published the 2023 census for the four provinces and
+ * Islamabad and for neither of these (D25).
+ *
+ * They are drawn as `proposed` and not as `territory`, which is the whole content of the variant:
+ * a card that argued for provincial status while the map went on hatching the ground as a
+ * territory would be arguing with itself. That is admitted under `TERRITORY_CLAIM_POLICY` at
+ * `forbid` because it is not a claim on territory — see `promotedTerritoryOf` in `scenarios.ts`.
+ *
+ * The two halves are **not equally sourced** and the card says so rather than levelling them. GB
+ * has a dated announcement, a drafted amendment and a resolution of its own assembly; AJK has
+ * none of those.
+ */
+const A5: Variant = {
+  id: 'a5',
+  basis: 'administrative',
+  name: 'Constitutional regularisation',
+  tagline: 'the only map here on which no district changes hands',
+  rationale:
+    'Gilgit-Baltistan and Azad Jammu & Kashmir become full provinces. It is the only variant in ' +
+    'this app that redraws nothing: every boundary stays exactly where it is, the ceasefire line ' +
+    'included, and what changes is the constitutional standing of two units that Pakistan ' +
+    'administers and does not call provinces. It is also the only administrative variant with a ' +
+    'document behind it — the other four are boundaries this build computed, and this one is a ' +
+    'proposal with a date.',
+  status:
+    'Live for Gilgit-Baltistan and not for Azad Jammu & Kashmir. Provisional provincial status ' +
+    'for Gilgit-Baltistan was announced by Prime Minister Imran Khan on 1 November 2020, a draft ' +
+    'constitutional amendment was prepared, and the Gilgit-Baltistan Legislative Assembly passed ' +
+    'a resolution for it. No amendment has been laid before Parliament and passed, so the status ' +
+    'remains what the Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the ' +
+    'Government of Gilgit-Baltistan Order, 2018 make it. Azad Jammu & Kashmir has had no ' +
+    'equivalent announcement; it is governed under its own Interim Constitution Act, 1974 and ' +
+    'provincial status for it is not government policy.',
+  advocacy: {
+    kind: 'advocated',
+    by: [
+      'the Government of Pakistan as of November 2020, which announced provisional provincial ' +
+        'status for Gilgit-Baltistan',
+      'the Gilgit-Baltistan Legislative Assembly, which passed a resolution for provincial status',
+      'opinion across parties within Gilgit-Baltistan, for which the absence of representation in ' +
+        'Parliament is the grievance the demand is made from',
+    ],
+  },
+  opposedBy: [
+    'India, which rejects any change to the status of these territories and treats both as ' +
+      'territory under dispute',
+    'Kashmiri nationalist opinion on both sides of the ceasefire line, and the All Parties ' +
+      'Hurriyat Conference, for which absorbing Gilgit-Baltistan into Pakistan as a province ' +
+      'prejudices the plebiscite the dispute has never had',
+    'opinion within Pakistan that provincial status would weaken the country’s own position at ' +
+      'the United Nations, which rests on the whole of the former princely state being disputed ' +
+      'rather than settled',
+  ],
+  universe: 'drawn',
+  // Not the basis's `census · derived`, and the reason is the reason L1 and L4 carry their own
+  // badges. Nothing here was computed: the boundaries are the ones already on the map and the
+  // proposal is somebody's, with a date on it. A `derived` badge would credit a government's
+  // announcement to this build's arithmetic, which the validator refuses in so many words.
+  badges: ['documented'],
+  composition: {
+    kind: 'transcribed',
+    from:
+      'the announcement of 1 November 2020 and the Gilgit-Baltistan Legislative Assembly’s own ' +
+      'resolution — no boundary of which is new, the units being Gilgit-Baltistan and Azad Jammu ' +
+      '& Kashmir exactly as this map already draws them',
+  },
+  units: [
+    // Named exactly as the current map names them, and holding exactly the districts they already
+    // hold. Both are load-bearing: the districts-moved figure is decided on a unit's name, so a
+    // renaming here would report twenty districts changing hands when none does — and the
+    // validator refuses a renamed territory for that reason (`promotedTerritoryOf`).
+    {
+      id: 'gilgit-baltistan',
+      name: 'Gilgit-Baltistan',
+      kind: 'proposed',
+      claims: remainderOf('Gilgit-Baltistan'),
+      note:
+        'Proposed as Pakistan’s fifth province. The ten districts, the boundaries and the ' +
+        'ceasefire line along the eastern edge are exactly as the current map draws them; the ' +
+        'proposal is about standing and representation, not about ground.',
+    },
+    {
+      id: 'azad-jammu-kashmir',
+      name: 'Azad Jammu & Kashmir',
+      kind: 'proposed',
+      claims: remainderOf('Azad Jammu & Kashmir'),
+      note:
+        'Proposed as a province on the same reasoning, and on markedly weaker evidence — there ' +
+        'is no announcement, no drafted amendment and no assembly resolution for it. See the ' +
+        'footnote below, which says so at length rather than letting the two halves of this ' +
+        'variant look equally sourced.',
+    },
+    intactProvince('Punjab'),
+    intactProvince('Sindh'),
+    intactProvince('Khyber Pakhtunkhwa'),
+    intactProvince('Balochistan'),
+    intactProvince('Islamabad Capital Territory'),
+  ],
+  footnotes: [
+    {
+      kind: 'contested-edge',
+      text:
+        'The two halves of this variant are not equally sourced, and flattening them would be the ' +
+        'easiest mistake on this card. Gilgit-Baltistan has a dated announcement from a sitting ' +
+        'Prime Minister, a drafted constitutional amendment and a unanimous resolution of its own ' +
+        'legislative assembly. Azad Jammu & Kashmir has none of the three: it is governed under ' +
+        'its own Interim Constitution Act of 1974, its provincial status is not government ' +
+        'policy, and opinion within it is substantially against absorption on the grounds that ' +
+        'the territory’s claim is to the whole of the former princely state. It is drawn here ' +
+        'because the argument for regularising one is made about both — but the claim for it is ' +
+        'weaker, and this app does not adjudicate that by drawing them the same and saying ' +
+        'nothing.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Nothing moves. Not one of the 156 districts this map draws changes the unit it belongs ' +
+        'to, and the scorecard reads nought districts moved for that reason rather than because a ' +
+        'figure is missing. It is the only variant in this app of which that is true, and it is ' +
+        'what makes the point the variant exists to make: the whole of the change here is a word ' +
+        'in the Constitution.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Both units still carry no population, and that is the census’s coverage rather than a ' +
+        'gap this variant introduces. PBS published the 2023 census for 136 districts — the four ' +
+        'provinces and Islamabad — and for none of Azad Jammu & Kashmir’s ten or ' +
+        'Gilgit-Baltistan’s ten, so calling them provinces here does not conjure a figure for ' +
+        'them. They are set aside from the population spread by name, exactly as they are under ' +
+        'every other variant. Population for Azad Jammu & Kashmir exists only relayed via the AJK ' +
+        'Bureau of Statistics and never direct from PBS, and this app does not mix the two.',
+    },
+    {
+      kind: 'note',
+      text:
+        'The Line of Control is drawn dashed and labelled here as it is everywhere else in this ' +
+        'app, and that is deliberate rather than an omission. It is a ceasefire line and not an ' +
+        'international border, and a variant that made these two units provinces and then drew a ' +
+        'solid province boundary along it would be settling by rendering the question the ' +
+        'proposal itself leaves open. The northern end of the line, beyond NJ9842 in the Siachen ' +
+        'area, was never delimited even as a ceasefire line.',
+    },
+  ],
+  notes: [
+    {
+      label: 'Relationship to the 1970 restoration',
+      text:
+        'The Historical basis draws the same ground under its earlier name: until the 2009 Order, ' +
+        'Gilgit-Baltistan was the Northern Areas, administered federally and named after nobody. ' +
+        'Reading the two together is reading the whole of what has changed about this territory’s ' +
+        'standing in fifty years, which is a name and a provisional promise.',
+      relatedVariants: ['h3'],
+    },
+    {
+      label: 'The rule-drawn administrative maps',
+      text:
+        'The other four variants on this basis are boundaries this build computed from the census ' +
+        'under a stated rule. This one is the opposite kind of thing — somebody’s proposal, with ' +
+        'a date — and it is on the same basis because the argument for it is administrative and ' +
+        'constitutional rather than about language or history.',
+      relatedVariants: ['a1', 'a2', 'a3', 'a4'],
+    },
+  ],
+  sources: [
+    {
+      label:
+        'Announcement of provisional provincial status for Gilgit-Baltistan by Prime Minister ' +
+        'Imran Khan, 1 November 2020, and the drafted constitutional amendment prepared for it',
+    },
+    {
+      label:
+        'Gilgit-Baltistan Legislative Assembly — resolution seeking provincial status for ' +
+        'Gilgit-Baltistan',
+    },
+    {
+      label:
+        'Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the Government of ' +
+        'Gilgit-Baltistan Order, 2018 — the instruments that set the territory’s standing as it ' +
+        'is today',
+    },
+    {
+      label:
+        'Azad Jammu and Kashmir Interim Constitution Act, 1974 — the instrument under which Azad ' +
+        'Jammu & Kashmir is governed, and which no comparable proposal has sought to replace',
+    },
+    {
+      label:
+        'Ministry of External Affairs, India — the standing Indian position rejecting any change ' +
+        'to the status of these territories, which is this card’s opposition line',
+    },
+    {
+      label:
+        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
+        'district set this partition is expressed in, and which lists Azad Jammu & Kashmir’s ten ' +
+        'districts and Gilgit-Baltistan’s ten without 2023 census results for either',
+      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
+    },
+  ],
+};
+
 /**
  * Every variant, in the order the selectors offer them in.
  *
@@ -1603,5 +2259,26 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
  * it is being asked about are on the table.
  */
 export function variantsFrom(context: DerivationContext): readonly Variant[] {
-  return [L1, L2, L3, L4, L5, pashtunBalochistan(context), motherTongueEverywhere(context), H1, H3, H4];
+  return [
+    L1,
+    L2,
+    L3,
+    L4,
+    L5,
+    pashtunBalochistan(context),
+    motherTongueEverywhere(context),
+    // The Administrative group, rule-drawn first and in the order the rules escalate: a ceiling,
+    // then the two counts, then the one rule that is not about population at all. A5 is last
+    // because it is a different kind of thing — a proposal with a date, on a basis whose other
+    // four variants are arithmetic — and because it is the only one that redraws nothing, which
+    // reads as the answer to the four rather than as the introduction to them.
+    populationCeiling(context),
+    twelveUnits(context),
+    fourteenUnits(context),
+    distanceToCapital(context),
+    A5,
+    H1,
+    H3,
+    H4,
+  ];
 }

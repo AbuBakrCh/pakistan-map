@@ -13,9 +13,22 @@ import { fileURLToPath } from 'node:url';
 import { geoArea } from 'd3';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
-import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './roster.ts';
+import type { Topology } from 'topojson-specification';
+import {
+  CENSUS_DISTRICTS,
+  CENSUS_DISTRICT_COUNT,
+  ROSTER,
+  ROSTER_DISTRICT_COUNT,
+} from './roster.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
+import { districtCentroids } from './centroids.ts';
+import {
+  haversineKm,
+  partitionByRule,
+  type Centroid,
+  type PartitionRule,
+} from './partitioner.ts';
 import { dominantTongues, variantsFrom } from './variants.ts';
 import {
   districtsMoved,
@@ -71,6 +84,9 @@ const VARIANTS = variantsFrom({
       ([district, record]) => [district, record.population],
     ),
   ),
+  // The distance rule A4 states (#28) is measured on the drawn map, so the centroids come from the
+  // committed geometry rather than from a table beside it.
+  centroids: districtCentroids(bundle as Topology),
 });
 
 const layer = (name: string) =>
@@ -679,9 +695,27 @@ describe('bundle scenarios', () => {
     // takes an AJK district arrives with the decision made, not by drifting past this test.
     expect(scenarios.provenance.territoryClaims.policy).toBe(TERRITORY_CLAIM_POLICY);
     if (TERRITORY_CLAIM_POLICY !== 'forbid') return;
+
+    /**
+     * One territory, entire, under its own name — a promotion rather than a claim (#28, A5).
+     *
+     * The carve-out is `scenarios.ts`'s and is tested at its own seam there; what is held here is
+     * that the *artifact* contains no unit exercising it other than by being exactly that. A unit
+     * holding nine of Gilgit-Baltistan's ten districts, or ten of them plus a Punjab one, or ten
+     * of them under another name, is a claim on territory and would be named below.
+     */
+    const territories = ROSTER.filter((province) => province.kind === 'territory');
+    const promotes = (unit: { name: string; districts: readonly string[] }): boolean =>
+      territories.some(
+        (territory) =>
+          territory.name === unit.name &&
+          territory.districts.length === unit.districts.length &&
+          territory.districts.every((district) => unit.districts.includes(district)),
+      );
+
     const claimed = variants.flatMap((variant) =>
       variant.units
-        .filter((unit) => unit.kind !== 'territory')
+        .filter((unit) => unit.kind !== 'territory' && !promotes(unit))
         .flatMap((unit) =>
           unit.districts
             .filter((d) => territoryDistricts.has(d))
@@ -689,6 +723,16 @@ describe('bundle scenarios', () => {
         ),
     );
     expect(claimed).toEqual([]);
+
+    // And the carve-out is not vacuous: A5 is the one variant that uses it, and it uses it for
+    // exactly the two units the ticket is about. A test that only ever proves an exclusion never
+    // fires is a test that would pass with the exclusion written wrongly.
+    const promoted = variants.flatMap((variant) =>
+      variant.units
+        .filter((unit) => unit.kind === 'proposed' && promotes(unit))
+        .map((unit) => `${variant.id} ${unit.name}`),
+    );
+    expect(promoted).toEqual(['a5 Gilgit-Baltistan', 'a5 Azad Jammu & Kashmir']);
   });
 
   it('records what a claim says alongside what this map draws it as', () => {
@@ -930,9 +974,16 @@ describe('bundle scenarios', () => {
       )
       .map((v) => v.id);
     expect(unexplained).toEqual([]);
+    // Named rather than counted: the six boundaries in this bundle that nobody published. Two are
+    // the mother-tongue rule's (#26) and four are the administrative engine's (#27, #28), and a
+    // seventh appearing here without the sentence and the badge would be caught above.
     expect(variants.filter((v) => v.composition.kind === 'derived').map((v) => v.id)).toEqual([
       'l6',
       'l7',
+      'a1',
+      'a2',
+      'a3',
+      'a4',
     ]);
 
     // L6 names both readings of its claim, because the territory is the same either way and a
@@ -1017,6 +1068,211 @@ describe('bundle scenarios', () => {
       const unitIds = variant.units.map((u) => u.id);
       expect(new Set(unitIds).size, variant.id).toBe(unitIds.length);
     }
+  });
+});
+
+/**
+ * The Administrative basis (#28), held to the two things it claims about itself.
+ *
+ * A1 to A4 are boundaries this build computed, so the check that replaces "look it up in their
+ * document" is the same one L6 and L7 get: the rule is re-run here from the committed census, the
+ * committed borders and the committed geometry, and compared unit by unit against what shipped. A
+ * derived line nothing re-derives is an editorial opinion wearing a `derived` badge.
+ *
+ * A5 is the opposite kind of variant and gets the opposite kind of test: it is asserted to have
+ * changed *nothing* — no district in a different unit, no boundary redrawn, both territories
+ * still uncounted — because that is the entire content of the proposal.
+ */
+describe('bundle administrative variants', () => {
+  const graph: AdjacencyGraph = new Map(
+    Object.entries(adjacency.neighbours as Record<string, string[]>),
+  );
+  const populations = new Map<string, number>(
+    Object.entries(statistics.districts as Record<string, { population: number }>).map(
+      ([district, record]) => [district, record.population],
+    ),
+  );
+  const centroids = districtCentroids(bundle as Topology);
+  const rerun = (rule: PartitionRule) => {
+    const { partition, problems } = partitionByRule(rule, {
+      scope: CENSUS_DISTRICTS,
+      neighbours: graph,
+      populations,
+      centroids,
+    });
+    expect(problems).toEqual([]);
+    if (partition === null) throw new Error(`${rule.kind} drew nothing`);
+    return partition;
+  };
+
+  /** Each rule-drawn variant, against the rule it says it was drawn by. */
+  const RULES: readonly (readonly [string, PartitionRule])[] = [
+    ['a1', { kind: 'population-ceiling', ceiling: 25_000_000 }],
+    ['a2', { kind: 'unit-count', units: 12 }],
+    ['a3', { kind: 'unit-count', units: 14 }],
+    ['a4', { kind: 'distance-to-capital', km: 300 }],
+  ];
+
+  it('re-draws all four rule-drawn maps and finds the districts that shipped', () => {
+    for (const [id, rule] of RULES) {
+      const variant = variants.find((v) => v.id === id) as EmittedVariant;
+      const partition = rerun(rule);
+      const shipped = new Map(
+        variant.units.filter((u) => u.kind === 'proposed').map((u) => [u.name, [...u.districts].sort()]),
+      );
+      const derived = new Map(partition.units.map((u) => [u.name, [...u.districts].sort()]));
+      expect([...shipped.keys()].sort(), id).toEqual([...derived.keys()].sort());
+      for (const [name, districts] of shipped) {
+        expect(districts, `${id} ${name}`).toEqual(derived.get(name));
+      }
+      // And the rule statement on the card is the engine's own, not a paraphrase of it that can
+      // drift away from the arithmetic it describes.
+      expect(variant.composition.kind, id).toBe('derived');
+      if (variant.composition.kind === 'derived') {
+        expect(variant.composition.rule, id).toBe(partition.statement);
+      }
+    }
+  });
+
+  it('states the number of units, and states it as a finding where it is one', () => {
+    // Two of the four rules are given a count and two find one. A card that printed "12 units"
+    // under a ceiling would present an outcome as an instruction, which is the whole difference
+    // between a rule a reader can check and a number they have to take.
+    const rule = (id: string): string => {
+      const variant = variants.find((v) => v.id === id) as EmittedVariant;
+      return variant.composition.kind === 'derived' ? variant.composition.rule : '';
+    };
+    expect(rule('a1')).toContain('No unit above 25,000,000 people; 16 units is the fewest');
+    expect(rule('a4')).toContain('10 units is the fewest');
+    expect(rule('a2')).toContain('12 units.');
+    expect(rule('a3')).toContain('14 units.');
+    // The two seedings are named apart, because they answer different questions and the choice of
+    // capital is the one choice the engine makes.
+    expect(rule('a1')).toContain('no two of them sharing a border');
+    expect(rule('a4')).toContain('as far as possible from the capitals already chosen');
+  });
+
+  it('trades population parity away and never contiguity, which is what the four are for', () => {
+    // The finding, asserted rather than described. Contiguity costs nothing under any of these
+    // rules — a unit is grown across shared borders and cannot be in two pieces — so the number
+    // that actually moves between them is the spread, and it moves by a factor of thirty.
+    const ratio = (id: string): number => {
+      const found = (variants.find((v) => v.id === id) as EmittedVariant).scorecard.population;
+      if (found?.ratio == null) throw new Error(`${id} has no ratio`);
+      return found.ratio;
+    };
+    for (const [id] of RULES) {
+      expect((variants.find((v) => v.id === id) as EmittedVariant).counts['nonContiguousUnits'], id).toBe(0);
+    }
+    // A ceiling binds the largest unit directly and is the most even; a count only bounds the
+    // average, and fourteen is less even than twelve; a distance rule abandons parity outright.
+    expect(ratio('a1')).toBeLessThan(ratio('a2'));
+    expect(ratio('a2')).toBeLessThan(ratio('a3'));
+    expect(ratio('a4')).toBeGreaterThan(20 * ratio('a1'));
+  });
+
+  it('measures A4’s limit again from the committed geometry, district by district', () => {
+    const a4 = variants.find((v) => v.id === 'a4') as EmittedVariant;
+    const capitals = new Map(rerun(RULES[3]?.[1] as PartitionRule).units.map((u) => [u.name, u.capital]));
+    const far = a4.units
+      .filter((unit) => unit.kind === 'proposed')
+      .flatMap((unit) => {
+        const capital = capitals.get(unit.name) as string;
+        return unit.districts
+          .map((district) => ({
+            district,
+            km: haversineKm(
+              centroids.get(capital) as Centroid,
+              centroids.get(district) as Centroid,
+            ),
+          }))
+          .filter((found) => found.km > 300)
+          .map((found) => `${found.district} is ${Math.round(found.km)} km from ${capital}`);
+      });
+    expect(far).toEqual([]);
+    // The figure the card quotes, checked against the geometry it is quoted from rather than
+    // against itself: Gwadar to Quetta is what the rule is arguing about.
+    expect(
+      Math.round(
+        haversineKm(centroids.get('Gwadar') as Centroid, centroids.get('Quetta') as Centroid),
+      ),
+    ).toBe(635);
+    expect(a4.rationale).toContain('635 kilometres from Quetta');
+  });
+
+  it('leaves every district exactly where it was in A5, which is the whole proposal', () => {
+    // The one variant in the app of which this is true. Nothing is carved, nothing merged, and
+    // both territories are still outside the census — so what the card argues for is a word in
+    // the Constitution, and the scorecard has to say so rather than reporting a redraw.
+    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
+    expect(a5.scorecard.districtsMoved.count).toBe(0);
+    expect(a5.scorecard.districtsMoved.byOrigin).toEqual([]);
+    expect(a5.scorecard.districtsMoved.of).toBe(ROSTER_DISTRICT_COUNT);
+    expect(variants.filter((v) => v.scorecard.districtsMoved.count === 0).map((v) => v.id)).toEqual([
+      'a5',
+    ]);
+
+    // Every unit is exactly one of today's first-level entities, holding exactly its districts.
+    const today = new Map(ROSTER.map((province) => [province.name, [...province.districts].sort()]));
+    for (const unit of a5.units) {
+      expect([...unit.districts].sort(), unit.name).toEqual(today.get(unit.name));
+    }
+    expect(a5.units.map((u) => u.name).sort()).toEqual([...today.keys()].sort());
+  });
+
+  it('draws the two territories as proposed provinces and still gives them no population', () => {
+    // The two halves of A5 that have to hold together. They are `proposed`, because a card
+    // arguing for provincial status over a map that went on calling them territories would be
+    // arguing with itself — and they still carry no figure, because PBS published none (D25) and
+    // calling a territory a province does not conjure one. Set aside by name, never as a zero.
+    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
+    const promoted = a5.units.filter((u) => u.kind === 'proposed');
+    expect(promoted.map((u) => u.name)).toEqual(['Gilgit-Baltistan', 'Azad Jammu & Kashmir']);
+    for (const unit of promoted) {
+      expect(unit.population, unit.name).toBeNull();
+      expect(unit.uncounted, unit.name).toHaveLength(10);
+    }
+    expect(a5.scorecard.outsideTheCensus.map((u) => u.name)).toEqual([
+      'Gilgit-Baltistan',
+      'Azad Jammu & Kashmir',
+    ]);
+    // A gap in a unit voids a variant's figures; the census's own coverage does not. A5 is the
+    // second kind, so the spread is over the five units that are inside the census.
+    expect(a5.scorecard.populationWithheld).toBeNull();
+    expect(a5.scorecard.population?.units).toBe(5);
+  });
+
+  it('says on A5’s card that the two halves are not equally sourced', () => {
+    // The thing this card could most easily get wrong. Gilgit-Baltistan has a dated announcement,
+    // a drafted amendment and a resolution of its own assembly; Azad Jammu & Kashmir has none of
+    // the three, and drawing the two the same and saying nothing would report a weaker claim as
+    // an equal one.
+    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
+    const words = `${a5.status}\n${a5.footnotes.map((f) => f.text).join('\n')}`;
+    expect(words).toContain('1 November 2020');
+    expect(words).toMatch(/Legislative Assembly/);
+    expect(words).toMatch(/Interim Constitution Act/);
+    expect(words).toMatch(/none of the three/);
+    // India's rejection is the opposition line the ticket names, and it is not the only one.
+    expect(a5.opposedBy.join('\n')).toMatch(/^India, which rejects/m);
+    expect(a5.opposedBy.length).toBeGreaterThan(1);
+    // And the ceasefire line is unchanged here, said on the card as well as held in `units.test.ts`
+    // against the arcs: a variant that promoted these two and then drew a solid province boundary
+    // along the Line of Control would settle by rendering the question the proposal leaves open.
+    expect(a5.footnotes.map((f) => f.text).join('\n')).toMatch(/dashed and labelled/);
+    // Transcribed, not derived — this boundary is nobody's arithmetic, least of all ours.
+    expect(a5.composition.kind).toBe('transcribed');
+    expect(a5.badges).toEqual(['documented']);
+  });
+
+  it('carries the whole basis, and every variant of it argues at the census’s vintage', () => {
+    const administrative = variants.filter((v) => v.basis === 'administrative');
+    expect(administrative.map((v) => v.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
+    // None of the five dates its own boundary: the four rule-drawn ones read the 2023 census and
+    // the fifth draws the district set as it stands, so all five are argued at the basis's vintage
+    // and none prints a date of its own.
+    expect(administrative.filter((v) => v.vintage !== undefined)).toEqual([]);
+    expect(scenarios.bases.administrative.vintage).toBe(scenarios.provenance.vintage);
   });
 });
 
