@@ -89,20 +89,63 @@ describe('baselineLabelSites, with the city dots on the map', () => {
     ]);
   });
 
-  it('hands a division’s name to the dot where the division is named after its own seat', () => {
-    // Six of the seven are: Karachi, Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad each name
-    // a division as well as a city. Drawing both would set the same word twice inside one
-    // division, once on a dot and once floating in the middle of the ground around it. The dot
-    // wins because it is the more precise of the two claims — the division is named *after* it.
-    const handed = ['Gilgit', 'Karachi', 'Lahore', 'Muzaffarabad', 'Peshawar', 'Quetta'];
-    for (const name of handed) {
+  it('qualifies a division named after its own seat, rather than dropping either name', () => {
+    // Six of the seven collide: Karachi, Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad each
+    // name a division as well as a city. Setting the bare word twice inside one division leaves a
+    // reader unable to tell which of the two is being named; dropping the division name costs the
+    // default view the administrative structure it is there to show. So both are drawn and the
+    // division says which it is — its own full official style, not a coinage of ours.
+    const collide = ['Gilgit', 'Karachi', 'Lahore', 'Muzaffarabad', 'Peshawar', 'Quetta'];
+    for (const name of collide) {
       expect(divisions.features.map((d) => d.properties.name)).toContain(name);
-      expect(sites.map((s) => s.key)).not.toContain(`division:${name}`);
-      expect(sites.map((s) => s.key)).toContain(`city:${name}`);
+      // Keyed on the division's own name — the renderer looks a shape's width up by this key, so
+      // keying it on the drawn text would cost exactly these six their width data.
+      const site = sites.find((s) => s.key === `division:${name}`);
+      expect(site?.text).toBe(`${name} Division`);
+      expect(sites.find((s) => s.key === `city:${name}`)?.text).toBe(name);
     }
-    // Islamabad is the seventh seat and its division is the injected pseudo-division, which was
-    // already unnamed — so the handover costs the map no division name it was drawing.
-    expect(keysOf('division')).toHaveLength(36 - handed.length);
+    // Every division still has a name, which is the point: none was traded away. Islamabad is the
+    // seventh seat and its division is the injected pseudo-division, skipped for its own reason.
+    expect(keysOf('division')).toHaveLength(36);
+  });
+
+  it('leaves the other divisions unqualified, since they have nothing to be confused with', () => {
+    // The suffix is a disambiguation, not a house style. Applied to all 37 it would be shouting a
+    // distinction that matters six times, and "Sukkur Division" competes for pixels "Sukkur" wins.
+    const qualified = sites.filter((s) => s.tier === 'division' && s.text.endsWith(' Division'));
+    expect(qualified).toHaveLength(6);
+  });
+
+  it('lets the dot win a crowded frame and the division name return with the room', () => {
+    // This is the whole behaviour, and it is the layout's, not a rule of its own: the dot outranks
+    // the division, layoutLabels drops what will not fit, and it is recomputed on every zoom. So
+    // in a frame too tight for both, "Lahore" survives and "Lahore Division" does not — and the
+    // qualified name comes back as soon as zooming makes room for it.
+    const lahore = sites.find((s) => s.key === 'division:Lahore');
+    const dot = sites.find((s) => s.key === 'city:Lahore');
+    expect(dot?.priority).toBeGreaterThan(lahore?.priority ?? Infinity);
+
+    const box = (key: string, x: number, width: number, priority: number) => ({
+      key,
+      x,
+      y: 100,
+      width,
+      height: 10,
+      priority,
+    });
+    // Both names wanting the same few pixels.
+    const tight = layoutLabels(
+      [box('city:Lahore', 100, 40, 5), box('division:Lahore', 110, 90, 0.001)],
+      { bounds: { width: 300, height: 200 }, gap: 2, nudges: [[0, 0]] },
+    );
+    expect(tight.map((p) => p.key)).toEqual(['city:Lahore']);
+
+    // The same two with room between them — which is what zooming in produces.
+    const roomy = layoutLabels(
+      [box('city:Lahore', 60, 40, 5), box('division:Lahore', 220, 90, 0.001)],
+      { bounds: { width: 300, height: 200 }, gap: 2, nudges: [[0, 0]] },
+    );
+    expect(roomy.map((p) => p.key).sort()).toEqual(['city:Lahore', 'division:Lahore']);
   });
 
   it('ranks the dots under the provinces and over the divisions', () => {
@@ -226,10 +269,16 @@ describe('the baseline map at default zoom', () => {
     // because the name returns on zoom, so a change in this list is a change in what the
     // opening view of the country says, and belongs in a diff.
     //
-    // A division named after its own seat is not counted as dropped: its name is on the map, at
-    // the dot. It is drawn under `city:` rather than `division:`, which is the handover and not
-    // a loss — so the test asks for the *name*, at either key, and Poonch is still the one
-    // division whose name is nowhere.
+    // A division named after its own seat is not counted as dropped while the dot carries the
+    // word: the name is on the map, under `city:` rather than `division:`. So the test asks for
+    // the *name*, at either key.
+    //
+    // **Mardan is the price of qualifying the six rather than dropping them.** Restoring
+    // "Peshawar Division" to the map puts a second name into the most crowded corner of KP, and
+    // at default zoom Mardan is what gives way. That is the trade taken deliberately — the
+    // default view now states the administrative structure it is there to state, and Mardan's
+    // name returns on the first zoom step, as Poonch's does. Named here rather than absorbed into
+    // a count, because if this list grows the opening view of the country has changed.
     const drawn = new Set(keys(result));
     const dropped = divisions.features
       .filter((d) => d.properties.pseudo !== true)
@@ -238,7 +287,34 @@ describe('the baseline map at default zoom', () => {
         (name) =>
           !drawn.has(labelKey('division', name)) && !drawn.has(labelKey('city', name)),
       );
-    expect(dropped.sort()).toEqual(['Poonch']);
+    expect(dropped.sort()).toEqual(['Mardan', 'Poonch']);
+  });
+
+  it('brings the qualified names and Mardan back as the map is zoomed', () => {
+    // The drop above is only defensible because it is temporary, so that is asserted rather than
+    // asserted-about-in-a-comment. At 3× there is room for the six qualified division names *and*
+    // for Mardan, so nothing the default view gave up is lost for good.
+    const zoomed = { width: viewport.width * 3, height: viewport.height * 3 };
+    const scaled = baselineLabelSites({ provinces, divisions }, cities).flatMap((site) => {
+      const point = project(site.anchor);
+      if (point === null) return [];
+      const [x, y] = point;
+      return [
+        measureLabel(
+          site,
+          [x * 3, y * 3],
+          (shapeWidth.get(site.key) ?? Infinity) * 3,
+          measure,
+        ),
+      ];
+    });
+    const drawn = new Set(keys(layoutLabels(scaled.map((m) => m.box), { bounds: zoomed, gap: 3 })));
+
+    expect(drawn.has(labelKey('division', 'Mardan'))).toBe(true);
+    for (const name of ['Gilgit', 'Karachi', 'Lahore', 'Muzaffarabad', 'Peshawar', 'Quetta']) {
+      expect(drawn.has(labelKey('division', name))).toBe(true);
+      expect(drawn.has(labelKey('city', name))).toBe(true);
+    }
   });
 
   it('names every seat, since a dot with no name is a landmark a reader cannot use', () => {

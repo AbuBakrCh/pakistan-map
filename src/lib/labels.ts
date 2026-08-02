@@ -229,32 +229,48 @@ const citySites = (cities: readonly CitySite[]): LabelSite[] =>
   }));
 
 /**
- * The divisions, minus any named after a city that is already on the map.
+ * The divisions — including the six named after a city already on the map, which say so.
  *
- * Almost every provincial capital shares its name with the division it administers — Karachi,
- * Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad are all six of them — so drawing both would
- * set the same word twice within one division, once on a dot and once floating in the middle of
- * the ground around it. The name goes to the dot, which is the more precise of the two claims:
- * the division *is* named after the city, and a reader who finds "Quetta" at a dot has learnt
- * where Quetta is, while a reader who finds it at a centroid has learnt neither.
+ * Almost every provincial capital shares its name with the division it administers: Karachi,
+ * Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad are six of the seven. Drawing both as the
+ * bare word would set it twice within one division, once on a dot and once floating in the ground
+ * around it, and a reader cannot tell which of the two things is being named. Dropping the
+ * division name instead costs the default view the administrative structure it exists to show.
  *
- * The division's boundary is untouched; it is only its name that hands over — the same trade
- * `variantLabelSites` makes between a unit and the province it replaces.
+ * So the division keeps its name and is qualified: **Lahore Division** beside **Lahore**. That is
+ * the unit's own full official style rather than something invented here, which is why it can be
+ * set without inventing a source — and it is applied *only* where the collision is real, because
+ * a map that suffixed all 37 would be shouting a distinction that matters six times.
+ *
+ * What happens when there is no room for both is not decided here. The dot already outranks the
+ * division (`citySites`), and `layoutLabels` drops what does not fit and is recomputed on every
+ * zoom — so the city wins the crowded frame, and the qualified division name reappears as soon as
+ * zooming makes room. One mechanism, not a second one bolted alongside.
+ *
+ * ICT's pseudo-division is still skipped, for its own unrelated reason — see `baselineLabelSites`.
  */
+const DIVISION_SUFFIX = ' Division';
+
 const divisionSites = (
   geography: { divisions: { features: readonly Shape[] } },
   cities: readonly CitySite[],
 ): LabelSite[] => {
   const named = new Set(cities.map((city) => city.name));
-  return sitesOf(
-    geography.divisions.features.filter(
-      (f) =>
-        (f.properties as { pseudo?: boolean }).pseudo !== true &&
-        !named.has((f.properties as { name: string }).name),
-    ),
-    'division',
-    0,
-  );
+  return geography.divisions.features
+    .filter((f) => (f.properties as { pseudo?: boolean }).pseudo !== true)
+    .map((f) => {
+      const name = (f.properties as { name: string }).name;
+      return {
+        // Keyed on the division's own name, never on the qualified text. The key is what the
+        // renderer looks a shape's width up by; keying it on what happens to be drawn would mean
+        // the six that collide silently miss that lookup and lose their width data.
+        key: labelKey('division', name),
+        text: named.has(name) ? `${name}${DIVISION_SUFFIX}` : name,
+        tier: 'division' as const,
+        anchor: labelAnchor(f),
+        priority: geoArea(f as never),
+      };
+    });
 };
 
 /** A name measured for the page: anchor in px, the box the text will occupy, and how much it matters. */

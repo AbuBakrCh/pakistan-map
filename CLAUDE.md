@@ -276,7 +276,8 @@ What it holds:
 | The silhouette cut — a country inside the extent passed through untouched, one running off the edge cut rather than dropped, a ring that will not close reported; and the extent both wider than the widest frame at zoom 1 and inside 30° of the cone the map is projected on | `scripts/lib/neighbours.test.ts` |
 | What the seat resolver does when the cache is wrong — the unit named rather than six dots drawn quietly, a `label` node refused where an `admin_centre` is wanted, and the area query's strays ignored without being reported. A seat the cache **lacks** and a seat it holds under an Urdu **name** are reported apart, with the node id on the second: one is a query to change and the other an alias to add, and one message for both sends a maintainer to the wrong file | `scripts/lib/seats.test.ts` |
 | The simplification threshold — the fraction is of *points* and counted across every arc, the weights sorted however they arrive, both ends of the range meaning what they say, and unweighted ring endpoints ignored rather than counted as zero. Shared by both geometry builds instead of copied into each, which is what makes it reachable from here at all | `scripts/lib/simplify.test.ts` |
-| City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat handing its name to the dot instead of setting the same word twice | `src/lib/labels.test.ts` |
+| City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat **qualified** (`Lahore Division` beside `Lahore`) rather than dropped — the other 31 left unqualified, the dot winning the frame too tight for both, and both names plus Mardan returning at 3× | `src/lib/labels.test.ts` |
+| Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along, every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names | `src/lib/units.test.ts` |
 | The selectors — all four bases offered in the spec's order, the three that cannot be drawn refused with *which half* is missing, a basis entered on its first variant and never alone, a variant taking its basis from itself; and the sentence a screen reader is given, which names a proposal as a proposal | `src/lib/selection.test.ts` |
@@ -376,6 +377,22 @@ current provinces carried through, so drawing both tiers would set "Sindh" twice
 apart in two colours — and beside South Punjab it would set the proposal's name next to the name
 of the province it is carved out of. The faded province *boundaries* stay; only the names hand
 over.
+
+**A division named after its own seat is qualified, not surrendered.** Six of the seven city dots
+share a name with the division they administer — Karachi, Lahore, Peshawar, Quetta, Gilgit,
+Muzaffarabad. Setting the bare word twice inside one division leaves a reader unable to tell which
+of the two is being named; dropping the division name — which is what #8 first did — costs the
+default view the administrative structure it exists to show, against the base map's rule that
+provinces and divisions are drawn and named *always*. So both are set and the division says which
+it is: **Lahore Division** beside **Lahore**. That is the unit's own full official style rather
+than a coinage of ours, so it needs no source it does not have, and it is applied **only** to the
+six that actually collide — suffixing all 37 would shout a distinction that matters six times.
+
+Crowding is left to the layout rather than given a rule of its own: the dot already outranks the
+division, `layoutLabels` drops what will not fit, and it is recomputed on every zoom, so the city
+wins the tight frame and the qualified name returns with the room. The cost is paid at default
+zoom by **Mardan**, which now gives way to `Peshawar Division` in the most crowded corner of KP —
+named in the suite, not absorbed into a count, and back on the first zoom step.
 
 **Compare** — hold `Space` (or tap Compare) to drop strata 1 and 3 and restore the real map
 at full strength. The *only* map comparison; no side-by-side, no cross-variant table.
