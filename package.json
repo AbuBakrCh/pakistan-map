@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "build:data:normalize": "tsx scripts/normalize-geometry.ts",
     "build:data:census": "tsx scripts/join-census.ts",
-    "build:data:scenarios": "tsx scripts/build-scenarios.ts"
+    "build:data:scenarios": "tsx scripts/build-scenarios.ts",
+    "build:data:context": "tsx scripts/build-context.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",

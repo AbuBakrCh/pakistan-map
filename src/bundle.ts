@@ -8,9 +8,11 @@
 
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import topology from '../data/bundle/geography.topojson.json';
+import context from '../data/bundle/context.topojson.json';
 import statistics from '../data/bundle/statistics.json';
 import scenarios from '../data/bundle/scenarios.json';
 import outlines from '../data/bundle/unit-outlines.json';
+import type { ContextProvenance } from './lib/context.ts';
 
 /** The subset of the bundle's provenance block the baseline map puts on screen. */
 export interface Provenance {
@@ -29,6 +31,18 @@ export interface Provenance {
 
 export const geographyTopology = topology as unknown as Topology;
 export const provenance = (topology as { provenance: unknown }).provenance as Provenance;
+
+/**
+ * The context bundle (#8): neighbour silhouettes and city dots, kept in a file of its own.
+ *
+ * Separate from the geography deliberately. That topology's integrity is arc sharing between its
+ * three tiers and the ceasefire line, and nothing here shares an edge with any of it — Afghanistan
+ * is OSM's Afghan relation, not Pakistan's. Merging them would renumber every arc in the country
+ * to add a background, and would imply the two sides of a border are one line.
+ */
+export const contextTopology = context as unknown as Topology;
+export const contextProvenance = (context as { provenance: unknown })
+  .provenance as ContextProvenance;
 
 /**
  * The census join, on the same terms as the geometry: a committed artifact, imported.

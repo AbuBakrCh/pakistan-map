@@ -1,8 +1,10 @@
 import { geoContains, geoPath } from 'd3';
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
+import context from '../../data/bundle/context.topojson.json';
 import outlines from '../../data/bundle/unit-outlines.json';
 import type { UnitOutlineBundle } from '../bundle.ts';
+import { readCities } from './context.ts';
 import { readGeography } from './geography.ts';
 import { readUnitOutlines } from './units.ts';
 import { fitProjection } from './projection.ts';
@@ -19,6 +21,11 @@ import {
 } from './labels.ts';
 
 const { provinces, divisions } = readGeography(bundle as never);
+/** The city dots, on the same terms the renderer reads them: a name and the point it stands at. */
+const cities = readCities(context as never).features.map((f) => ({
+  name: f.properties.name,
+  anchor: f.geometry.coordinates as [number, number],
+}));
 
 describe('labelAnchor', () => {
   it('puts every division label inside the division it names', () => {
@@ -66,6 +73,61 @@ describe('baselineLabelSites', () => {
   });
 });
 
+describe('baselineLabelSites, with the city dots on the map', () => {
+  const sites = baselineLabelSites({ provinces, divisions }, cities);
+  const keysOf = (tier: string) => sites.filter((s) => s.tier === tier).map((s) => s.text);
+
+  it('names all seven seats', () => {
+    expect(keysOf('city').sort()).toEqual([
+      'Gilgit',
+      'Islamabad',
+      'Karachi',
+      'Lahore',
+      'Muzaffarabad',
+      'Peshawar',
+      'Quetta',
+    ]);
+  });
+
+  it('hands a division’s name to the dot where the division is named after its own seat', () => {
+    // Six of the seven are: Karachi, Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad each name
+    // a division as well as a city. Drawing both would set the same word twice inside one
+    // division, once on a dot and once floating in the middle of the ground around it. The dot
+    // wins because it is the more precise of the two claims — the division is named *after* it.
+    const handed = ['Gilgit', 'Karachi', 'Lahore', 'Muzaffarabad', 'Peshawar', 'Quetta'];
+    for (const name of handed) {
+      expect(divisions.features.map((d) => d.properties.name)).toContain(name);
+      expect(sites.map((s) => s.key)).not.toContain(`division:${name}`);
+      expect(sites.map((s) => s.key)).toContain(`city:${name}`);
+    }
+    // Islamabad is the seventh seat and its division is the injected pseudo-division, which was
+    // already unnamed — so the handover costs the map no division name it was drawing.
+    expect(keysOf('division')).toHaveLength(36 - handed.length);
+  });
+
+  it('ranks the dots under the provinces and over the divisions', () => {
+    // A dot is where it says it is and a division name floats at a centroid, so between those two
+    // the precise one should win the pixels. Between a dot and a province it should not: a map
+    // that has lost "Balochistan" and kept "Quetta" is disorienting in a way the reverse is not.
+    const range = (tier: string) => {
+      const priorities = sites.filter((s) => s.tier === tier).map((s) => s.priority);
+      return { low: Math.min(...priorities), high: Math.max(...priorities) };
+    };
+    expect(range('province').low).toBeGreaterThan(range('city').high);
+    expect(range('city').low).toBeGreaterThan(range('division').high);
+  });
+
+  it('sets a city’s name off its own dot rather than on top of it', () => {
+    const city = sites.find((s) => s.tier === 'city');
+    expect(city?.offset).toBeDefined();
+    expect(measureLabel(city as never, [100, 100], Infinity, () => ({ width: 20, height: 10 })).box)
+      .toMatchObject({ x: 100, y: 109 });
+    // A shape's name goes in the middle of the shape, so it takes no offset at all.
+    const province = sites.find((s) => s.tier === 'province');
+    expect(province?.offset).toBeUndefined();
+  });
+});
+
 describe('labelText', () => {
   // Width in "characters" so the test says what it means: 1 unit of width per character.
   const measure = (text: string) => text.length;
@@ -102,10 +164,10 @@ describe('the baseline map at default zoom', () => {
   // Units are set as provinces are — same size, same tracking, told apart by colour and not by
   // scale — so they measure the same way here.
   const measure = (text: string, tier: LabelTier) => {
-    const size = tier === 'division' ? 10.5 : 13;
-    return tier === 'division'
-      ? { width: text.length * size * 0.5, height: size }
-      : { width: text.length * (size * 0.68 + 1.5), height: size };
+    if (tier === 'division') return { width: text.length * 10.5 * 0.5, height: 10.5 };
+    // A city name is set roman and smaller than a division's — it names a point, not an area.
+    if (tier === 'city') return { width: text.length * 9.5 * 0.5, height: 9.5 };
+    return { width: text.length * (13 * 0.68 + 1.5), height: 13 };
   };
   const width = (f: { geometry: unknown }) => {
     const [[west], [east]] = path.bounds(f as never);
@@ -123,7 +185,7 @@ describe('the baseline map at default zoom', () => {
     ),
   ]);
 
-  const measured = baselineLabelSites({ provinces, divisions }).flatMap((site) => {
+  const measured = baselineLabelSites({ provinces, divisions }, cities).flatMap((site) => {
     const point = project(site.anchor);
     if (point === null) return [];
     return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
@@ -163,12 +225,30 @@ describe('the baseline map at default zoom', () => {
     // silently unnamed and never says which — and which ones matter: a drop is only acceptable
     // because the name returns on zoom, so a change in this list is a change in what the
     // opening view of the country says, and belongs in a diff.
+    //
+    // A division named after its own seat is not counted as dropped: its name is on the map, at
+    // the dot. It is drawn under `city:` rather than `division:`, which is the handover and not
+    // a loss — so the test asks for the *name*, at either key, and Poonch is still the one
+    // division whose name is nowhere.
     const drawn = new Set(keys(result));
     const dropped = divisions.features
       .filter((d) => d.properties.pseudo !== true)
       .map((d) => d.properties.name)
-      .filter((name) => !drawn.has(labelKey('division', name)));
+      .filter(
+        (name) =>
+          !drawn.has(labelKey('division', name)) && !drawn.has(labelKey('city', name)),
+      );
     expect(dropped.sort()).toEqual(['Poonch']);
+  });
+
+  it('names every seat, since a dot with no name is a landmark a reader cannot use', () => {
+    // The dots are drawn whatever happens; it is the names that take part in the layout. Seven of
+    // them at default zoom is what the whole point of the tier being sparse buys.
+    const drawn = new Set(keys(result));
+    const unnamed = cities
+      .map((city) => city.name)
+      .filter((name) => !drawn.has(labelKey('city', name)));
+    expect(unnamed).toEqual([]);
   });
 });
 

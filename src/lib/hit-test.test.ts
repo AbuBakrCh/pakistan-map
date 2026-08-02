@@ -1,6 +1,8 @@
 import { geoBounds, geoContains } from 'd3';
 import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
+import context from '../../data/bundle/context.topojson.json';
+import { readCities } from './context.ts';
 import { readDistricts } from './geography.ts';
 import { districtLocator } from './hit-test.ts';
 
@@ -45,6 +47,46 @@ describe('districtLocator', () => {
     expect(nameAt([66.6, 23.8])).toBeNull();
     expect(nameAt([77.209, 28.6139])).toBeNull();
     expect(nameAt([69.1723, 34.5281])).toBeNull();
+  });
+
+  it('leaves the neighbour silhouettes unreachable, wherever the pointer lands on one', () => {
+    // The silhouettes are drawn ground (#8) and the only drawn ground on this map that is not
+    // Pakistan. They must answer nothing: a tooltip over Kandahar naming a Pakistani district
+    // would be this app claiming ground, and it would look exactly like a hover that worked.
+    // Held here rather than in the stylesheet because that is where it is actually true — hover
+    // is put to the district polygons in lon/lat, so `pointer-events` never enters into it.
+    const abroad: readonly [string, [number, number]][] = [
+      ['Kandahar', [65.7372, 31.6133]],
+      ['Kabul', [69.1723, 34.5281]],
+      ['Kashgar', [75.9877, 39.4704]],
+      ['Zahedan', [60.8629, 29.4963]],
+      ['Srinagar', [74.7973, 34.0837]],
+      ['Amritsar', [74.8723, 31.634]],
+    ];
+    const answered = abroad.flatMap(([place, point]) => {
+      const found = nameAt(point);
+      return found === null ? [] : [`${place} resolves to ${found}`];
+    });
+    expect(answered).toEqual([]);
+  });
+
+  it('stands every city dot on Pakistani ground, in the unit it is the seat of', () => {
+    // A dot in the sea or across a border would be a landmark pointing at nothing. Asked of the
+    // hit test rather than of the province polygons because this is the question a reader asks by
+    // pointing at it: the district under the dot is what the tooltip would name.
+    const cities = readCities(context as never);
+    const adrift = cities.features.flatMap((city) => {
+      const district = locate.at(city.geometry.coordinates as [number, number]);
+      if (district === null) return [`${city.properties.name} stands on no drawn district`];
+      return district.properties.province === city.properties.of
+        ? []
+        : [
+            `${city.properties.name} stands in ${district.properties.province}, ` +
+              `not in ${city.properties.of}`,
+          ];
+    });
+    expect(adrift).toEqual([]);
+    expect(cities.features).toHaveLength(7);
   });
 
   it('shortlists at most a handful of districts for any point, which is why hover is not slow', () => {

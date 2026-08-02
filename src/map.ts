@@ -28,6 +28,7 @@
 import { geoContains, geoPath, pointer, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { Topology } from 'topojson-specification';
 import type { CensusStatistics, UnitKind } from './bundle.ts';
+import { readCities, readSilhouettes } from './lib/context.ts';
 import { linesFromArcs, readDistricts, readGeography, tierArcs } from './lib/geography.ts';
 import { districtLocator, type DistrictFeature } from './lib/hit-test.ts';
 import {
@@ -42,6 +43,7 @@ import type { UnitBoundary, UnitTier } from './lib/units.ts';
 import {
   baselineLabelSites,
   labelKey,
+  type CitySite,
   layoutLabels,
   measureLabel,
   variantLabelSites,
@@ -66,6 +68,9 @@ const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }>
   // it claims to be. It is told apart by colour, which matches its own outline — not by being set
   // larger, which would be this app putting a proposal above the country.
   unit: { size: 13, tracking: 1.5, caps: true },
+  // A city is not a tier of the administrative hierarchy and is not set as one: smaller than a
+  // division name, in lower case, so it reads as a place on the map rather than as a unit of it.
+  city: { size: 9.5, tracking: 0, caps: false },
   // Province names are set larger and tracked out, the way an atlas sets a country's first-level
   // units. Tracking is added to the measured width by hand — canvas cannot measure letter-spacing.
   province: { size: 13, tracking: 1.5, caps: true },
@@ -149,12 +154,24 @@ export interface MapHandle {
 export function renderMap(
   container: HTMLElement,
   topology: Topology,
+  /**
+   * The context bundle (#8) — neighbour silhouettes and city dots. A second topology and not a
+   * second tier: nothing in it shares an arc with anything in `topology`, nothing in it is ever
+   * asked a question, and it is drawn beneath everything.
+   */
+  context: Topology,
   /** The census join, for the hover tooltip. Read here, decided in `lib/tooltip.ts`. */
   statistics: CensusStatistics,
   initial: MapView,
 ): MapHandle {
   const geography = readGeography(topology);
   const districts = readDistricts(topology);
+  const silhouettes = readSilhouettes(context);
+  const cities = readCities(context);
+  const citySites: CitySite[] = cities.features.map((f) => ({
+    name: f.properties.name,
+    anchor: f.geometry.coordinates as [number, number],
+  }));
   const locate = districtLocator(districts);
   const provinceOf = new Map(
     geography.provinces.features.map((f) => [f.properties.name, f] as const),
@@ -177,8 +194,8 @@ export function renderMap(
   function readSites(): void {
     sites =
       view.units === null
-        ? baselineLabelSites(geography)
-        : variantLabelSites(geography, view.units.features);
+        ? baselineLabelSites(geography, citySites)
+        : variantLabelSites(geography, view.units.features, citySites);
     tierOf = new Map(sites.map((site) => [site.key, site.tier]));
     unitKindOf = new Map(
       (view.units?.features ?? []).map((f) => [
@@ -270,6 +287,10 @@ export function renderMap(
     });
 
   const world = svg.append('g').attr('class', 'world');
+  // Below everything, including the land: OSM draws these four as they are administered, so none
+  // of them reaches over ground Pakistan administers — but drawing them underneath means that
+  // even if upstream changed its mind, no silhouette could appear over a Pakistani district.
+  const contextLayer = world.append('g').attr('class', 'stratum-context');
   const landLayer = world.append('g').attr('class', 'stratum-land');
   // Stratum 1 — fill = data, never unit membership (D14). Above the land so it replaces it, below
   // the boundary rules so those keep reading over the top of it.
@@ -287,7 +308,10 @@ export function renderMap(
   const unitLayer = world.append('g').attr('class', 'stratum-units stratum-units-line');
   const locLayer = world.append('g').attr('class', 'stratum-loc');
   // Labels live outside the zoomed group and are positioned in screen space, so type stays the
-  // size it was designed at however far the reader zooms in.
+  // size it was designed at however far the reader zooms in. The city dots are in screen space for
+  // the same reason and drawn from the same pass: a circle has no `vector-effect` for its radius,
+  // so a dot inside the zoomed group would grow into a blot at 24×.
+  const cityLayer = svg.append('g').attr('class', 'stratum-cities');
   const labelLayer = svg.append('g').attr('class', 'stratum-labels');
   const locLabelLayer = svg.append('g').attr('class', 'stratum-labels');
 
@@ -429,6 +453,25 @@ export function renderMap(
   }
 
   function drawLabels(transform: ZoomTransform): void {
+    // The dots are drawn unconditionally; only their names take part in the layout below. That is
+    // the yielding rule the ceasefire line's name already follows, applied to a point: the datum
+    // is the position, and the name is what gives way when the frame is crowded — a dot with no
+    // name still tells a reader where a place is relative to a boundary, which is what it is for.
+    const dots = cities.features.flatMap((f) => {
+      const point = project(f.geometry.coordinates as [number, number]);
+      if (point === null) return [];
+      const [x, y] = transform.apply(point);
+      return [{ name: f.properties.name, kind: f.properties.kind, x, y }];
+    });
+    cityLayer
+      .selectAll<SVGCircleElement, (typeof dots)[number]>('circle')
+      .data(dots, (dot) => dot.name)
+      .join('circle')
+      .attr('class', (dot) => `city-dot city-dot-${dot.kind}`)
+      .attr('r', 2.2)
+      .attr('cx', (dot) => dot.x)
+      .attr('cy', (dot) => dot.y);
+
     const drawn = new Map<string, string>();
     const boxes = sites.flatMap((site) => {
       const point = project(site.anchor);
@@ -620,6 +663,13 @@ export function renderMap(
     project = fitProjection(geography.provinces, { width, height, padding: padding(width) });
     const path = geoPath(project);
     interior = path.centroid(geography.provinces as never) as [number, number];
+
+    contextLayer
+      .selectAll<SVGPathElement, (typeof silhouettes.features)[number]>('path')
+      .data(silhouettes.features, (f) => f.properties.iso)
+      .join('path')
+      .attr('class', 'neighbour')
+      .attr('d', (f) => path(f));
 
     landLayer
       .selectAll<SVGPathElement, (typeof geography.provinces.features)[number]>('path')

@@ -1,5 +1,6 @@
 /**
- * Fetch Pakistan's boundaries and coastline from OSM Overpass into a committed raw cache.
+ * Fetch Pakistan's boundaries, its coastline, its neighbours and its administrative seats from
+ * OSM Overpass into a committed raw cache.
  *
  * Scope: network only. No filtering, no ICT injection, no geometry work, no census join —
  * those belong downstream. What lands in `data/raw/` is exactly what Overpass returned,
@@ -50,8 +51,11 @@ export interface SourceSpec {
   readonly name: string;
   readonly file: string;
   readonly query: string;
-  /** Which OSM primitive carries the geometry — relations for boundaries, ways for coastline. */
-  readonly elementType: 'relation' | 'way';
+  /**
+   * Which OSM primitive carries the geometry — relations for boundaries, ways for coastline,
+   * nodes for the seats the city dots are placed at.
+   */
+  readonly elementType: 'relation' | 'way' | 'node';
   readonly expectedMin: number;
 }
 
@@ -127,6 +131,46 @@ const SOURCES: readonly SourceSpec[] = [
     elementType: 'way',
     expectedMin: 500,
   },
+  // The four countries Pakistan borders, whole. They are never drawn whole — the geometry step
+  // clips them to a context extent — but they are fetched whole because a country's silhouette
+  // is a closed polygon and Overpass cannot hand back a closed polygon for part of one. Asking
+  // only for the member ways near Pakistan would return an open run of boundary, and closing it
+  // into a shape means deciding which side of that run is the country, which is this build
+  // drawing a border rather than reporting one. Selected on `ISO3166-1` rather than on relation
+  // id or on name, for the same reason every other join here is on an identifier: Afghanistan's
+  // relation is not "the relation called Afghanistan", it is the one carrying AF.
+  {
+    key: 'neighbours',
+    name: 'neighbour country',
+    file: 'osm-neighbours.json',
+    query: [
+      '[out:json][timeout:280];',
+      'relation["boundary"="administrative"]["admin_level"="2"]' +
+        '["ISO3166-1"~"^(AF|CN|IN|IR)$"];',
+      'out geom;',
+    ].join('\n'),
+    elementType: 'relation',
+    expectedMin: 4,
+  },
+  // The seat of each first-level unit — the node OSM's own relation names as its `admin_centre`.
+  // That is the whole of the city-dot criterion (see `scripts/lib/seats.ts`): no city population
+  // exists at this project's vintage and from this project's sources, so "major" is answered
+  // administratively or not at all. The area filter pulls in Kandahar, Jalalabad, Srinagar, Jammu
+  // and Leh as strays, exactly as the boundary queries do; discarding them is downstream's job.
+  {
+    key: 'seats',
+    name: 'administrative seat',
+    file: 'osm-admin-centres.json',
+    query: [
+      '[out:json][timeout:280];',
+      'area["ISO3166-1"="PK"]["admin_level"="2"]->.pk;',
+      'relation(area.pk)["boundary"="administrative"]["admin_level"="4"]->.first;',
+      'node(r.first:"admin_centre");',
+      'out;',
+    ].join('\n'),
+    elementType: 'node',
+    expectedMin: 7,
+  },
 ];
 
 /** Shape of an Overpass JSON response, to the extent we depend on it. */
@@ -141,11 +185,17 @@ interface OverpassResponse {
 class FetchFailure extends Error {}
 
 /**
- * Does this element carry coordinates? A way holds them directly; a relation holds them on
- * its way members.
+ * Does this element carry coordinates? A node holds one position on itself, a way holds them
+ * directly, and a relation holds them on its way members.
  */
 function hasGeometry(element: unknown): boolean {
-  const { geometry, members } = element as { geometry?: unknown; members?: unknown };
+  const { geometry, members, lat, lon } = element as {
+    geometry?: unknown;
+    members?: unknown;
+    lat?: unknown;
+    lon?: unknown;
+  };
+  if (typeof lat === 'number' && typeof lon === 'number') return true;
   if (Array.isArray(geometry)) return true;
   return (
     Array.isArray(members) &&

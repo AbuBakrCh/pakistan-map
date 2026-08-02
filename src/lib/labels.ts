@@ -102,7 +102,7 @@ export function labelText(
   return short !== undefined && measure(name) > shapeWidth ? short : name;
 }
 
-export type LabelTier = 'unit' | 'province' | 'division';
+export type LabelTier = 'unit' | 'province' | 'city' | 'division';
 
 /**
  * What identifies a name across the tiers.
@@ -123,6 +123,14 @@ export interface LabelSite {
   /** Anchor in lon/lat, so the site survives zooming and the projection changing under it. */
   readonly anchor: [number, number];
   readonly priority: number;
+  /**
+   * Where the text sits relative to the anchor, in screen px. Zero for a shape, whose name goes
+   * in the middle of it; non-zero for a city, whose anchor is a dot the name must sit *beside*
+   * rather than on. Carried on the site rather than applied by the renderer so that the box the
+   * layout competes over is the box the page draws, which is the whole reason `measureLabel` is
+   * shared between the two.
+   */
+  readonly offset?: readonly [number, number];
 }
 
 /**
@@ -140,11 +148,18 @@ export interface LabelSite {
  * Anchors are geographic and computed once. Reprojecting 43 points on every zoom frame is free;
  * re-running the interior search is not.
  */
-export function baselineLabelSites(geography: {
-  provinces: { features: readonly Shape[] };
-  divisions: { features: readonly Shape[] };
-}): LabelSite[] {
-  return [...sitesOf(geography.provinces.features, 'province', 10), ...divisionSites(geography)];
+export function baselineLabelSites(
+  geography: {
+    provinces: { features: readonly Shape[] };
+    divisions: { features: readonly Shape[] };
+  },
+  cities: readonly CitySite[] = [],
+): LabelSite[] {
+  return [
+    ...sitesOf(geography.provinces.features, 'province', 10),
+    ...citySites(cities),
+    ...divisionSites(geography, cities),
+  ];
 }
 
 /**
@@ -164,8 +179,9 @@ export function baselineLabelSites(geography: {
 export function variantLabelSites(
   geography: { divisions: { features: readonly Shape[] } },
   units: readonly Shape[],
+  cities: readonly CitySite[] = [],
 ): LabelSite[] {
-  return [...sitesOf(units, 'unit', 20), ...divisionSites(geography)];
+  return [...sitesOf(units, 'unit', 20), ...citySites(cities), ...divisionSites(geography, cities)];
 }
 
 const sitesOf = (features: readonly Shape[], tier: LabelTier, floor: number): LabelSite[] =>
@@ -177,14 +193,69 @@ const sitesOf = (features: readonly Shape[], tier: LabelTier, floor: number): La
     priority: floor + geoArea(f as never),
   }));
 
-const divisionSites = (geography: { divisions: { features: readonly Shape[] } }): LabelSite[] =>
-  sitesOf(
+/** A city dot, before anything is known about the page: a name and the point it stands at. */
+export interface CitySite {
+  readonly name: string;
+  readonly anchor: [number, number];
+}
+
+/**
+ * How far a city's name sits from its own dot, in px. Below the dot rather than beside it: a name
+ * set to one side reads as pointing at whatever is on that side, and half the seven have a border
+ * within a few pixels.
+ */
+export const CITY_LABEL_OFFSET: readonly [number, number] = [0, 9];
+
+/**
+ * The dots' names, ranked between the provinces and the divisions.
+ *
+ * Above the divisions because a dot is a *place* and a division name floats at a centroid: where
+ * the two compete for the same few pixels, the one that is exactly where it says it is should
+ * win. Below the provinces for the reason provinces already outrank divisions — a map that has
+ * lost "Balochistan" and kept "Quetta" is disorienting in a way the reverse is not.
+ *
+ * They rank equally among themselves, which costs nothing: no two of the seven are within a
+ * hundred kilometres of each other, so they never compete, and `layoutLabels` breaks the tie on
+ * the key so the same map never renders two ways.
+ */
+const citySites = (cities: readonly CitySite[]): LabelSite[] =>
+  cities.map((city) => ({
+    key: labelKey('city', city.name),
+    text: city.name,
+    tier: 'city' as const,
+    anchor: city.anchor,
+    priority: 5,
+    offset: CITY_LABEL_OFFSET,
+  }));
+
+/**
+ * The divisions, minus any named after a city that is already on the map.
+ *
+ * Almost every provincial capital shares its name with the division it administers — Karachi,
+ * Lahore, Peshawar, Quetta, Gilgit and Muzaffarabad are all six of them — so drawing both would
+ * set the same word twice within one division, once on a dot and once floating in the middle of
+ * the ground around it. The name goes to the dot, which is the more precise of the two claims:
+ * the division *is* named after the city, and a reader who finds "Quetta" at a dot has learnt
+ * where Quetta is, while a reader who finds it at a centroid has learnt neither.
+ *
+ * The division's boundary is untouched; it is only its name that hands over — the same trade
+ * `variantLabelSites` makes between a unit and the province it replaces.
+ */
+const divisionSites = (
+  geography: { divisions: { features: readonly Shape[] } },
+  cities: readonly CitySite[],
+): LabelSite[] => {
+  const named = new Set(cities.map((city) => city.name));
+  return sitesOf(
     geography.divisions.features.filter(
-      (f) => (f.properties as { pseudo?: boolean }).pseudo !== true,
+      (f) =>
+        (f.properties as { pseudo?: boolean }).pseudo !== true &&
+        !named.has((f.properties as { name: string }).name),
     ),
     'division',
     0,
   );
+};
 
 /** A name measured for the page: anchor in px, the box the text will occupy, and how much it matters. */
 export interface LabelBox {
@@ -223,8 +294,16 @@ export function measureLabel(
 ): { box: LabelBox; text: string } {
   const text = labelText(site.text, shapeWidth, (candidate) => measure(candidate, site.tier).width);
   const { width, height } = measure(text, site.tier);
+  const [dx, dy] = site.offset ?? [0, 0];
   return {
-    box: { key: site.key, x: point[0], y: point[1], width, height, priority: site.priority },
+    box: {
+      key: site.key,
+      x: point[0] + dx,
+      y: point[1] + dy,
+      width,
+      height,
+      priority: site.priority,
+    },
     text,
   };
 }
