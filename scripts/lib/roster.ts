@@ -88,8 +88,11 @@ export const ROSTER: readonly Province[] = [
     code: 'AJK',
     name: 'Azad Jammu & Kashmir',
     kind: 'territory',
+    // Names as the AJ&K Bureau of Statistics prints them — the territory's own government is
+    // the authority on what its districts are called, and OSM disagrees with it on two of the
+    // ten. Official name for display, OSM name for the join: `docs/research/ajk-district-set.md`.
     districts: [
-      'Hattian Bala', 'Muzaffarabad', 'Neelum', 'Bagh', 'Haveli', 'Sudhnoti', 'Poonch',
+      'Jhelum Valley', 'Muzaffarabad', 'Neelum', 'Bagh', 'Haveli', 'Sudhnoti', 'Poonch',
       'Bhimber', 'Mirpur', 'Kotli',
     ],
   },
@@ -222,7 +225,9 @@ export const PINNED_RELATION_IDS: Readonly<Record<string, number>> = {
   Muzaffarabad: 8191414,
   Neelum: 8191217,
   Sudhnoti: 8198049,
-  'Hattian Bala': 8192278,
+  // OSM calls this one "Hattian Bala District", after the headquarters town. The id is what
+  // joins it, so the roster is free to display the official name — ajk-district-set.md.
+  'Jhelum Valley': 8192278,
 };
 
 /**
@@ -246,9 +251,34 @@ export const RELATION_OVERRIDES: Readonly<Record<number, string>> = {
 /**
  * OSM `name:en` -> PBS roster name, where the two genuinely differ. Spelling-only differences
  * are handled by `normalizeName`; this table is for real naming disagreements.
+ *
+ * The direction is load-bearing and is asserted in both halves by `reconcile.test.ts`: the
+ * **value** is the name every rendered surface prints, and the **key** is only ever a spelling
+ * somebody else uses to find it. Inverting a pair leaves every join passing while the map
+ * displays the wrong name, which is what happened to Jhelum Valley until #46.
+ *
+ * Two checks guard it and they catch different things, which is worth knowing before trusting
+ * either. The **general** one — no alias key may normalize to a name the roster displays —
+ * catches a *half* inversion, where the roster is edited and the alias left behind, and names
+ * the offending pair. It does **not** catch a clean full inversion of both sides at once: that
+ * is a well-formed table saying the wrong thing, and no structural rule can tell which of two
+ * names a government uses. What catches that is the **pair-specific** assertion naming Jhelum
+ * Valley as displayed and Hattian Bala as not, which is why the named pair is asserted rather
+ * than left to the general rule.
+ *
+ * The three AJK entries are ruled on in `docs/research/ajk-district-set.md` — official name for
+ * display, OSM name for the geometry join:
+ *   - **Jhelum Valley** is the AJ&K Bureau of Statistics' name; `Hattian Bala` is the
+ *     headquarters town and the tehsil, and is what OSM tags the district with.
+ *   - **Neelum** is the AJK BoS name; OSM has `Neelam Valley` and the AJK Election Commission
+ *     `District Neelum Valley`, so both are carried — the canonical name being right is not
+ *     evidence that either alias exists.
+ *   - **Sudhnoti** is the AJK BoS name; OSM has `Sudhanoti`.
  */
 export const NAME_ALIASES: Readonly<Record<string, string>> = {
   'neelam valley': 'Neelum',
+  'neelum valley': 'Neelum',
+  'hattian bala': 'Jhelum Valley',
   sudhanoti: 'Sudhnoti',
   qalat: 'Kalat',
   bolan: 'Kachhi (Bolan)',
@@ -266,7 +296,6 @@ export const NAME_ALIASES: Readonly<Record<string, string>> = {
   kiamari: 'Keamari',
   diamer: 'Diamir',
   kharmang: 'Kharmaung',
-  'jhelum valley': 'Hattian Bala',
   'tando muhammad khan': 'Tando Mohammad Khan',
   'tando allahyar': 'Tando Allah Yar',
   battagram: 'Batagram',
