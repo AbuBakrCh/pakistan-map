@@ -1516,6 +1516,15 @@ const H3: Variant = {
         'Constitution (Eighteenth Amendment) Act, 2010 — North-West Frontier Province renamed ' +
         'Khyber Pakhtunkhwa',
     },
+    // The opposition line says that restoring the name Northern Areas would undo the provisional
+    // provincial status "announced in 2020", which is a dated claim and was carried here with
+    // nothing in this list reaching the year (#47). A5 already states the sourced form of exactly
+    // that fact, so the same line is cited rather than a second wording invented for it.
+    {
+      label:
+        'Announcement of provisional provincial status for Gilgit-Baltistan by Prime Minister ' +
+        'Imran Khan, 1 November 2020, and the drafted constitutional amendment prepared for it',
+    },
     {
       label:
         'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
