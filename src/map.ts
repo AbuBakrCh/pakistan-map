@@ -42,6 +42,8 @@ import type { DistrictFill } from './lib/mother-tongue.ts';
 import type { UnitBoundary, UnitTier } from './lib/units.ts';
 import {
   baselineLabelSites,
+  districtLabelSites,
+  DISTRICT_LABEL_ZOOM,
   labelKey,
   type CitySite,
   layoutLabels,
@@ -57,7 +59,7 @@ import {
   readLineOfControl,
   type PlacedLineLabel,
 } from './lib/line-of-control.ts';
-import { fitProjection } from './lib/projection.ts';
+import { fitProjection, frameInset } from './lib/projection.ts';
 import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
 import { isSheetLayout } from './sheet.ts';
 
@@ -77,6 +79,9 @@ const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }>
   // it claims to be. It is told apart by colour, which matches its own outline — not by being set
   // larger, which would be this app putting a proposal above the country.
   unit: { size: 13, tracking: 1.5, caps: true },
+  // The building block, named only once the reader has zoomed in far enough for the names to be
+  // readable (#34). Smaller than a division and roman, because it sits under one.
+  district: { size: 8.5, tracking: 0, caps: false },
   // A city is not a tier of the administrative hierarchy and is not set as one: smaller than a
   // division name, in lower case, so it reads as a place on the map rather than as a unit of it.
   city: { size: 9.5, tracking: 0, caps: false },
@@ -85,12 +90,6 @@ const TYPE: Record<LabelTier, { size: number; tracking: number; caps: boolean }>
   province: { size: 13, tracking: 1.5, caps: true },
   division: { size: 10.5, tracking: 0, caps: false },
 };
-
-/**
- * Frame inset, in px. Proportional, but capped at both ends: a fixed 36px inset would cost a
- * 390px phone a fifth of its map, and a fixed 12px would crowd a desktop frame.
- */
-const padding = (width: number) => Math.max(12, Math.min(36, width * 0.05));
 
 /** SVG fill for one district. `none` leaves the unshaded baseline showing through. */
 const fillPaint = (fill: DistrictFill | undefined): string => {
@@ -230,6 +229,17 @@ export function renderMap(
   let tierOf = new Map<string, LabelTier>();
   /** Which kind of unit a unit label names, so the name can be set in its own outline's colour. */
   let unitKindOf = new Map<string, UnitKind>();
+
+  /**
+   * District names, built once and only if a reader ever zooms far enough to want them (#34).
+   *
+   * Lazy because it is not free — `labelAnchor` runs an interior search on any district whose
+   * centroid falls outside itself — and because most readers never cross the threshold. Built from
+   * the drawn set, so it follows the bundle rather than a second list.
+   */
+  let districtSites: LabelSite[] | null = null;
+  const districtNames = (): LabelSite[] =>
+    (districtSites ??= districtLabelSites(districts.features as never));
 
   function readSites(): void {
     sites =
@@ -594,7 +604,18 @@ export function renderMap(
       .attr('cy', (dot) => dot.y);
 
     const drawn = new Map<string, string>();
-    const boxes = sites.flatMap((site) => {
+    /*
+     * The districts join the contest only past the threshold, and they join it *last* — ranked
+     * under every other tier, so a district name can never take the frame from the province it
+     * sits in. Below the threshold they are not measured at all, which is what keeps 156 extra
+     * boxes off the layout on the phone frame that cannot afford them.
+     */
+    const named =
+      transform.k >= DISTRICT_LABEL_ZOOM ? [...sites, ...districtNames()] : sites;
+    // Built from what is actually being laid out, not from the view's own tier map: the districts
+    // are not in that one, and a name whose tier does not resolve is set with no class at all.
+    const tierByKey = new Map(named.map((site) => [site.key, site.tier]));
+    const boxes = named.flatMap((site) => {
       const point = project(site.anchor);
       if (point === null) return [];
       // How wide the shape is on screen right now, which is what decides whether its name fits
@@ -614,7 +635,8 @@ export function renderMap(
       // without filling the unit — the fill belongs to the data and to nothing else (D14).
       .attr('class', (label) => {
         const kind = unitKindOf.get(label.key);
-        return `label label-${tierOf.get(label.key)}${kind === undefined ? '' : ` label-unit-${kind}`}`;
+        const tier = tierByKey.get(label.key) ?? tierOf.get(label.key);
+        return `label label-${tier}${kind === undefined ? '' : ` label-unit-${kind}`}`;
       })
       .attr('x', (label) => label.x)
       .attr('y', (label) => label.y)
@@ -839,7 +861,7 @@ export function renderMap(
 
     // The whole country, not one province, decides the cone: the frame must hold every variant
     // that will later be drawn into it, and all of them cover the same ground.
-    project = fitProjection(geography.provinces, { width, height, padding: padding(width) });
+    project = fitProjection(geography.provinces, { width, height, padding: frameInset(width) });
     const path = geoPath(project);
     interior = path.centroid(geography.provinces as never) as [number, number];
 

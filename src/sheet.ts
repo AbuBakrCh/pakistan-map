@@ -77,16 +77,21 @@ function frame(): SheetFrame {
 
 export interface SheetHandle {
   /**
-   * A card arrived, or left.
+   * There is a proposal on screen, so the sheet holds one: it takes up room and offers its grip.
    *
-   * Two things follow from it. The sheet **takes up no room at all** when there is no card —
-   * `panel.ts` hides the container at the baseline, and a reserved height left standing behind it
-   * would float the furniture that rides above the sheet into the middle of a map with no sheet
-   * under it. And a card that leaves takes the reader's detent with it: the next proposal is a
-   * different argument and presents itself the way the first one did, rather than opening at
-   * `full` because somebody dragged it there two variants ago.
+   * Idempotent, because `main.ts` redraws on every selection and most redraws do not change this.
    */
-  cardChanged(present: boolean): void;
+  holdCard(): void;
+  /**
+   * There is none, so the sheet **takes up no room at all**.
+   *
+   * `panel.ts` hides the container at the baseline, and a reserved height left standing behind it
+   * would float the furniture that rides above the sheet — the compare and export buttons — into
+   * the middle of a map with no sheet under it. Releasing also forgets the reader's detent: the
+   * next proposal is a different argument and presents itself the way the first one did, rather
+   * than opening at `full` because somebody dragged it there two variants ago.
+   */
+  releaseCard(): void;
 }
 
 /** Where a proposal first presents itself: the ticket's own 40%. */
@@ -227,12 +232,17 @@ export function attachSheet(container: HTMLElement): SheetHandle {
   // fractions of it either way.
   window.addEventListener('resize', paint);
 
-  function cardChanged(present: boolean): void {
-    if (!present) detent = OPENS_AT;
-    hasCard = present;
+  function holdCard(): void {
+    hasCard = true;
+    paint();
+  }
+
+  function releaseCard(): void {
+    detent = OPENS_AT;
+    hasCard = false;
     paint();
   }
 
   paint();
-  return { cardChanged };
+  return { holdCard, releaseCard };
 }

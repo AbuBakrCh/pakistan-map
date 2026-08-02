@@ -3,13 +3,16 @@ import { describe, expect, it } from 'vitest';
 import bundle from '../../data/bundle/geography.topojson.json';
 import context from '../../data/bundle/context.topojson.json';
 import outlines from '../../data/bundle/unit-outlines.json';
+import scenarios from '../../data/bundle/scenarios.json';
 import type { UnitOutlineBundle } from '../bundle.ts';
 import { readCities } from './context.ts';
-import { readGeography } from './geography.ts';
+import { readDistricts, readGeography } from './geography.ts';
 import { readUnitOutlines } from './units.ts';
-import { fitProjection } from './projection.ts';
+import { fitProjection, frameInset } from './projection.ts';
 import {
   baselineLabelSites,
+  districtLabelSites,
+  DISTRICT_LABEL_ZOOM,
   labelAnchor,
   labelKey,
   labelText,
@@ -256,6 +259,47 @@ function baselineAt(viewport: { width: number; height: number; padding: number }
   };
 }
 
+/**
+ * The map's own box on a 390px phone, measured in a real browser rather than guessed, with the
+ * renderer's own inset applied by importing it rather than by copying the formula.
+ */
+const BAR_390 = { width: 369, height: 336 };
+
+const framed = (frame: { width: number; height: number }) => ({
+  ...frame,
+  padding: frameInset(frame.width),
+});
+
+/** The variant layout at one frame: which unit names the page would actually set. */
+function variantAt(id: string, frame: { width: number; height: number }) {
+  const viewport = framed(frame);
+  const project = fitProjection(provinces, viewport);
+  const path = geoPath(project);
+  const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, id);
+  const width = (f: { geometry: unknown }) => {
+    const [[west], [east]] = path.bounds(f as never);
+    return east - west;
+  };
+  const shapeWidth = new Map([
+    ...units.features.map((f) => [labelKey('unit', f.properties.name), width(f)] as const),
+    ...divisions.features.map((f) => [labelKey('division', f.properties.name), width(f)] as const),
+  ]);
+  const measured = variantLabelSites({ divisions }, units.features, cities).flatMap((site) => {
+    const point = project(site.anchor);
+    if (point === null) return [];
+    return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
+  });
+  return {
+    units: units.features.map((f) => f.properties.name),
+    placed: new Set(
+      layoutLabels(
+        measured.map((m) => m.box),
+        { bounds: viewport, gap: 3 },
+      ).map((l) => l.key),
+    ),
+  };
+}
+
 describe('the baseline map at default zoom', () => {
   const viewport = { width: 1200, height: 800, padding: 32 };
   const { project, shapeWidth, result, sized } = baselineAt(viewport);
@@ -359,11 +403,7 @@ describe('the baseline map at default zoom', () => {
  * draws a territory with no name on it.
  */
 describe('the baseline map at the 390px bar', () => {
-  const frame = { width: 369, height: 336 };
-  // `padding` in `map.ts`: proportional, capped at both ends, so a phone does not lose a fifth of
-  // its map to a desktop's inset.
-  const viewport = { ...frame, padding: Math.max(12, Math.min(36, frame.width * 0.05)) };
-  const { result, sized, drawnText } = baselineAt(viewport);
+  const { result, sized, drawnText } = baselineAt(framed(BAR_390));
 
   it('names every province and both territories, Gilgit-Baltistan included', () => {
     /*
@@ -471,41 +511,88 @@ describe('the baseline map at the 390px bar', () => {
  * Unit labels persist at the 390px bar (#34) — the criterion that a proposal stays legible.
  *
  * Stratum 3 is what a variant view is *for*: a reader on a phone who cannot see what the proposed
- * provinces are called is looking at coloured shapes. Units outrank divisions in the layout, so
- * this is a claim the ranking should already deliver — which is exactly why it is worth pinning at
- * the size where the ranking is under most pressure.
+ * provinces are called is looking at coloured shapes.
+ *
+ * Asked of **every variant**, not of one, for the reason `units.test.ts` gives about the same
+ * ground — "those two units are not always called the same thing". Held over L1 alone this passed
+ * while H3 left three units unnamed, including the Northern Areas, which is Gilgit-Baltistan under
+ * the name that variant gives it: the very territory #34 was raised to stop going anonymous.
  */
 describe('a variant at the 390px bar', () => {
-  const frame = { width: 369, height: 336 };
-  const viewport = { ...frame, padding: Math.max(12, Math.min(36, frame.width * 0.05)) };
-  const project = fitProjection(provinces, viewport);
-  const path = geoPath(project);
-  const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, 'l1');
-  const width = (f: { geometry: unknown }) => {
-    const [[west], [east]] = path.bounds(f as never);
-    return east - west;
-  };
-  const shapeWidth = new Map([
-    ...units.features.map((f) => [labelKey('unit', f.properties.name), width(f)] as const),
-    ...divisions.features.map((f) => [labelKey('division', f.properties.name), width(f)] as const),
-  ]);
-  const measured = variantLabelSites({ divisions }, units.features, cities).flatMap((site) => {
-    const point = project(site.anchor);
-    if (point === null) return [];
-    return [measureLabel(site, point, shapeWidth.get(site.key) ?? Infinity, measure)];
-  });
-  const drawn = new Set(
-    layoutLabels(
-      measured.map((m) => m.box),
-      { bounds: viewport, gap: 3 },
-    ).map((l) => l.key),
-  );
+  /**
+   * The one unit this build cannot name at 390px, and why it is a name rather than a number.
+   *
+   * H3's *Northern Areas* is thirteen characters set at province size over ground about a fifth
+   * that wide on a phone. Every other long name in the app has an attested abbreviation to fall
+   * back to — AJK, ICT, KP, GB, and H3's own NWFP and FATA. This one has none, and `SHORT_FORMS`
+   * forbids inventing one: a coinage would be a name for Pakistani-administered territory that no
+   * source uses, which is a worse thing to put on this map than a missing label.
+   *
+   * So it keeps its full name, loses the layout, and goes unnamed at this size — stated here
+   * rather than smoothed over, and raised as open item 5 because what a proposal's advocates call
+   * their own units short is content, and content is the owner's call.
+   */
+  const UNNAMEABLE_AT_390 = { variant: 'h3', unit: 'Northern Areas' };
 
-  it('names every unit of the variant, so no proposed province is an unlabelled shape', () => {
-    const unnamed = units.features
-      .map((f) => f.properties.name)
-      .filter((name) => !drawn.has(labelKey('unit', name)));
-    expect(unnamed).toEqual([]);
+  for (const variant of scenarios.variants) {
+    it(`names every unit of ${variant.id}, so no proposed province is an unlabelled shape`, () => {
+      const drawn = variantAt(variant.id, BAR_390);
+      const unnamed = drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
+      const expected =
+        variant.id === UNNAMEABLE_AT_390.variant ? [UNNAMEABLE_AT_390.unit] : [];
+      expect(unnamed).toEqual(expected);
+    });
+  }
+
+  it('names the one it cannot name as soon as there is room, so nothing is lost for good', () => {
+    // The gap above is only defensible because it is a matter of pixels rather than of policy.
+    const drawn = variantAt(UNNAMEABLE_AT_390.variant, { width: 1200, height: 800 });
+    expect(drawn.placed.has(labelKey('unit', UNNAMEABLE_AT_390.unit))).toBe(true);
+  });
+});
+
+describe('districtLabelSites', () => {
+  const districts = readDistricts(bundle as never);
+  const sites = districtLabelSites(districts.features as never);
+
+  it('names every drawn district exactly once', () => {
+    expect(sites).toHaveLength(districts.features.length);
+    expect(new Set(sites.map((s) => s.key)).size).toBe(sites.length);
+    expect(sites.every((s) => s.tier === 'district')).toBe(true);
+  });
+
+  it('ranks every district below every division, so it can never take a division´s frame', () => {
+    // The floor is negative and `geoArea` is a fraction of the sphere, so this holds for the
+    // largest district against the smallest division rather than merely on average — which is the
+    // property that matters, since Chagai is bigger than several divisions.
+    const highestDistrict = Math.max(...sites.map((s) => s.priority));
+    const lowestDivision = Math.min(
+      ...baselineLabelSites({ provinces, divisions }, cities)
+        .filter((s) => s.tier === 'division')
+        .map((s) => s.priority),
+    );
+    expect(highestDistrict).toBeLessThan(lowestDivision);
+  });
+
+  it('puts every district name inside the district it names', () => {
+    const outside = districts.features
+      .filter((f) => !geoContains(f as never, labelAnchor(f as never)))
+      .map((f) => f.properties.name);
+    expect(outside).toEqual([]);
+  });
+
+  it('is offered only above a zoom threshold, and the threshold is past the 390px frame', () => {
+    /*
+     * The criterion is that district names *drop below a zoom threshold and appear on tap
+     * instead* (#34). The threshold is what makes both halves true: 156 names over a 369px frame
+     * is a word search rather than a map, so below it they are never laid out and the reader gets
+     * a district by tapping it (#33) — which answers with the division, the province, the
+     * population and the dominant tongue, not a name alone.
+     */
+    expect(DISTRICT_LABEL_ZOOM).toBeGreaterThan(1);
+    // Past the zoom the district *lines* come in at, because a line has only to be seen and a
+    // name has to be read.
+    expect(DISTRICT_LABEL_ZOOM).toBeGreaterThanOrEqual(4);
   });
 });
 

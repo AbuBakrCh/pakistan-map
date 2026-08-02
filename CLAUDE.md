@@ -361,7 +361,8 @@ What it holds:
 | The simplification threshold — the fraction is of *points* and counted across every arc, the weights sorted however they arrive, both ends of the range meaning what they say, and unweighted ring endpoints ignored rather than counted as zero. Shared by both geometry builds instead of copied into each, which is what makes it reachable from here at all | `scripts/lib/simplify.test.ts` |
 | City names — all seven seats named at default zoom, set off their own dots rather than on them, ranked under the provinces and over the divisions, and a division named after its own seat **qualified** (`Lahore Division` beside `Lahore`) rather than dropped — the other 31 left unqualified, the dot winning the frame too tight for both, and both names plus Mardan returning at 3× | `src/lib/labels.test.ts` |
 | **The 390px bar** (#34), held over a second viewport rather than a second assertion: every province and *both territories* named — **Gilgit-Baltistan included**, which is what this ticket exists for, since the layout dropped it and a territory drawn but anonymous is the one failure the politically sensitive section is written to prevent; `GB` set only because the ground is too small for the name, checked against the same layout at 1200px still setting it in full, so the abbreviation is a fit and not a rename; the expansion present in the table the colophon prints from, so a short form added without a gloss fails here rather than appearing unexplained; no two names overlapping at the size where they least fit; and which divisions and which seats give way — **named, not counted**, Peshawar among them, whose division name goes too, so at this size the word is nowhere on the map and only the dot marks the place | `src/lib/labels.test.ts` |
-| Unit labels persist at 390px (#34) — every unit of a variant named at the bar, because stratum 3 is what a variant view is *for* and a reader who cannot see what the proposed provinces are called is looking at coloured shapes | `src/lib/labels.test.ts` |
+| Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The one this build cannot name is named and explained rather than counted, and shown to come back as soon as there is room | `src/lib/labels.test.ts` |
+| District names (#34) — every drawn district named exactly once and each anchor inside its own district; ranked **below every division**, checked against the largest district and the smallest division rather than on average, since Chagai is bigger than several divisions; and offered only past a zoom threshold that is itself past the one the district *lines* come in at | `src/lib/labels.test.ts` |
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along — asked of **every variant**, because those two units are not always called the same thing: H3 calls Gilgit-Baltistan the *Northern Areas*, so a renderer recognising the line by unit name would stroke it solid the moment a variant renamed a territory. Every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names; every unit's name anchored inside its own shape across all six variants, which is where a crescent (North-West Frontier Province around the tribal districts) and a 261-polygon province (West Pakistan) would put a name on someone else's ground; and the legend keying only the kinds a variant contains, over H1, which genuinely has no `unchanged` unit rather than an edited one | `src/lib/units.test.ts` |
@@ -570,19 +571,33 @@ let through, and none of them may restart a cross-fade mid-fade. The full access
 province and both territories are named, **Gilgit-Baltistan included** — it was being dropped, and
 the cause was that it had no abbreviation to fall back on where AJK, ICT and KP did: fifteen
 characters at province size is far wider than the ground it names on a phone. So `GB` joins the
-short forms, at the style its own legislature uses (the GBLA, which this app's copy already cites),
-fired **only** where the full name will not fit its ground and expanded in the colophon like the
-other three. Units are named at this size too, since a proposal nobody can read the names of is a
+short forms, fired **only** where the full name will not fit its ground and expanded in the colophon
+like the others. It is the **weakest-sourced entry in that table and is flagged as such** (open item
+5): the others each name a publishing agency, and "GB" is in general use by the territory's own
+government without this project having yet checked it against a published document the way AJK's
+district names were checked. It is there rather than absent because the alternative — leaving the
+territory unnamed — breaks a harder rule. H3's `NWFP` and `FATA` were added with it, and are the
+forms those units were administered under; H3's **Northern Areas** has no attested initialism, so it
+keeps its full name, loses the layout and goes **unnamed at 390px** — stated in the suite by name,
+because a coinage would be a name for Pakistani-administered ground that no source uses. Units are named at this size too, since a proposal nobody can read the names of is a
 set of coloured shapes. What gives way is the division tier and two of the seven seats, which is
 the ranking working as written — and the price is stated rather than counted: **Peshawar** loses
 its division name *and* its seat name, so at 390px the word is nowhere on the map and only the dot
 marks the place. It returns on the first zoom step.
 
-**District names are never set as labels, at any size** — there is no district label tier and there
-is not meant to be one. 156 names over a 369px frame is not a map, and the district is the building
-block rather than a tier the base map draws (D23). A reader gets a district by **tapping** it, which
-is #33's gesture and gives them the name, the division, the province, the population, the dominant
-mother tongue and the unit — rather than a name alone.
+**District names are the one tier with a zoom threshold** (#34). 156 names over a 369px frame is a
+word search rather than a map, and the district is the building block every proposal is stated in
+(D23) rather than a tier the base map draws — so below **6×** they are not laid out at all, and a
+reader gets a district by **tapping** it, which is #33's gesture and answers with the name, the
+division, the province, the population, the dominant mother tongue and the unit rather than with a
+name alone. Above it they come in ranked under every other tier, so a district name can never take
+the frame from the province it sits in. The threshold is past the 4× the district *lines* appear at,
+because a line only has to be seen and a name has to be read.
+
+**Stratum 3's line work is thinned at the bar**, and only its absolute weights are. The strokes are
+`non-scaling-stroke`, so they are the same screen px on a 369px-wide country as on a 1200px one —
+three times heavier relative to the ground they describe. The *ratios* are kept, casing to line and
+proposed to unchanged, because those are what say which line is a proposal and which is the country.
 
 **On a phone (#33)** — the card is a **bottom sheet**, hover is a **tap**, and Compare moves to the
 corner a thumb reaches — as one row with the PNG export (#32), because the two are the same kind of
@@ -938,6 +953,15 @@ Numbered by the grilling question that settled each.
    and L7, the five Administrative variants, H2, and D1. Until then the two coexist and
    the module wins — every field in the markdown (rationale, advocacy, opposition, footnotes) is
    rendered variant-card content, not documentation. Keeping both would be two sources of truth.
+
+5. **`GB` as Gilgit-Baltistan's short form is unconfirmed.** Added for #34, where the alternative
+   was leaving the territory drawn and anonymous at 390px — the one thing the politically sensitive
+   rendering section forbids. Every other entry in `SHORT_FORMS` names a publishing agency; this one
+   rests on general usage by the territory's own government and assembly. It wants the treatment
+   open item 1 gave AJK's district names: a check against a published document, recorded in
+   `docs/research/`. Related, and the owner's call rather than the build's: **what H3's advocates
+   call the *Northern Areas* short**, since without an attested form that unit cannot be named at
+   the 390px bar at all.
 
 **Scenario content: 17 variants approved** — Language 7, Administrative 5, Historical 4,
 Development 1. H2 omits Amb and Phulra (sub-district, cannot be drawn without inventing a
