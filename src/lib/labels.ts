@@ -397,6 +397,42 @@ export function labelLines(text: string): readonly string[] {
 }
 
 /**
+ * The same name over two lines, broken between words — the atlas answer to a long name on a
+ * compact ground, and the reason `Rahim Yar Khan` can be written inside Rahim Yar Khan.
+ *
+ * A three-word name set on one line is as wide as the sum of its words; set on two it is as wide as
+ * the wider half, which on this map is routinely the difference between a name on its own ground
+ * and a name out on a line pointing at it. It is offered *after* the name has been tried whole and
+ * *before* the unit's attested abbreviation, because keeping the name a reader is looking for is
+ * worth more than keeping it on one line, and worth less than nothing invented.
+ *
+ * **Where it breaks is decided by the text and never by the measurement**, which is the objection
+ * `labelLines` records and it is a real one: a name broken wherever the type happened to run out
+ * breaks in a different place at every zoom, and a reader watching a proposal's name reflow as they
+ * lean in is reading the layout rather than the map. So the split is the one that leaves the two
+ * halves closest in length, ties going to the earlier space — a property of the string, identical
+ * at every size and on every frame. What may change with zoom is whether the name is set on one
+ * line or two, which is the same concession the size ladder and the abbreviation already make.
+ *
+ * Two lines and never three. Three lines of 6.5px type stacked inside a district is a paragraph,
+ * not a label, and the ground that could hold it can hold two lines of something larger.
+ */
+export function wrappedLines(text: string): readonly string[] {
+  // A bracketed name already breaks, and breaking it again would put its own qualifier on a third
+  // line. Nothing to wrap in a single word either.
+  if (labelLines(text).length > 1) return [text];
+  const spaces: number[] = [];
+  for (let i = text.indexOf(' '); i >= 0; i = text.indexOf(' ', i + 1)) spaces.push(i);
+  if (spaces.length === 0) return [text];
+  let best = spaces[0] as number;
+  for (const space of spaces) {
+    const difference = Math.abs(space - (text.length - space - 1));
+    if (difference < Math.abs(best - (text.length - best - 1))) best = space;
+  }
+  return [text.slice(0, best), text.slice(best + 1)];
+}
+
+/**
  * How far a unit's name may be set down to fit its ground, as a fraction of the tier's own size.
  *
  * Bounded at both ends and neither end is arbitrary. It is never set **larger** than the province
@@ -416,8 +452,8 @@ export function labelLines(text: string): readonly string[] {
  * The ladder is coarse rather than continuous. A name that settles at whatever fraction happens to
  * clear its ground puts sixteen sizes of type on one map, and a reader reads that as sixteen tiers.
  */
-export const MIN_UNIT_LABEL_SCALE = 0.58;
-const SHRINK_LADDER: readonly number[] = [1, 0.88, 0.78, 0.68, MIN_UNIT_LABEL_SCALE];
+export const MIN_UNIT_LABEL_SCALE = 0.5;
+const SHRINK_LADDER: readonly number[] = [1, 0.88, 0.78, 0.68, 0.58, MIN_UNIT_LABEL_SCALE];
 
 /**
  * The one size every name out on a leader is set at, as a fraction of the tier's own size.
@@ -755,6 +791,21 @@ export interface LabelBox {
    * fitted to an interior — a division name is a caption on a base map and nudges as it always has.
    */
   readonly ground?: readonly Ring[];
+  /**
+   * Set where this name may **not** be dropped for want of clear paper.
+   *
+   * A callout is otherwise set outside the drawn country or not at all, because a name laid on some
+   * other unit's ground describes ground it does not name. The one obligation that outranks that is
+   * the politically sensitive one: Azad Jammu & Kashmir and Gilgit-Baltistan are drawn *and named*,
+   * and a territory drawn anonymous is a claim this map is not entitled to make about ground
+   * Pakistan administers. So a territory's name keeps the older placement — beside its own unit,
+   * wherever that lands — rather than going unset at a size where the paper has nothing to offer.
+   *
+   * Deliberately a property of the label and not a rule inside the layout: what may not go unnamed
+   * is a fact about the *subject*, and the file that knows a unit is a territory is the one that
+   * should say so.
+   */
+  readonly mustName?: boolean;
 }
 
 /** A leader: the anchor on the ground, one elbow, and the dot before the first character. */
@@ -837,8 +888,7 @@ export function measureLabel(
   const [dx, dy] = site.offset ?? [0, 0];
   const at: Point = [point[0] + dx, point[1] + dy];
 
-  const sized = (text: string, scale: number) => {
-    const lines = labelLines(text);
+  const sized = (lines: readonly string[], scale: number) => {
     const each = lines.map((line) => measure(line, site.tier, scale));
     const size = Math.max(...each.map((m) => m.height));
     return {
@@ -853,8 +903,9 @@ export function measureLabel(
     scale: number,
     callout?: LabelBox['callout'],
     origin: Point = at,
+    broken: readonly string[] = labelLines(text),
   ): MeasuredLabel => {
-    const { lines, width, height } = sized(text, scale);
+    const { lines, width, height } = sized(broken, scale);
     const base = {
       key: site.key,
       x: origin[0],
@@ -919,7 +970,34 @@ export function measureLabel(
    * callout is. Still nothing invented: a unit without one goes straight out on its leader.
    */
   const short = shortFormOf(site.text);
-  const candidates = short === undefined || short === chosen ? [chosen] : [chosen, short];
+  /*
+   * The forms this name may take on its own ground, in the order they are conceded.
+   *
+   * Whole, then wrapped between its words, then the unit's attested short form — each offered the
+   * whole size ladder and every place inside the unit before the next is considered. The order is
+   * the argument: a reader looking for Rahim Yar Khan finds `RAHIM YAR / KHAN` and has to be told
+   * that `RYK` is it. Nothing here is invented — the wrap is the same words in the same order, and
+   * a unit with no attested abbreviation simply has one fewer form.
+   */
+  const wrapped = wrappedLines(chosen);
+  const forms: readonly (readonly { readonly text: string; readonly lines: readonly string[] }[])[] =
+    [
+      // The name itself, whole and then broken between its words — offered together at each size,
+      // because a wrapped name set large is more legible than the same name squeezed onto one line
+      // at the floor, and both say exactly what the unit is called.
+      wrapped.length > 1
+        ? [
+            { text: chosen, lines: labelLines(chosen) },
+            { text: chosen, lines: wrapped },
+          ]
+        : [{ text: chosen, lines: labelLines(chosen) }],
+      // And only where the name will not go on this ground at any size, in any shape, the unit's
+      // own attested abbreviation — which is a different word, and is conceded last for that
+      // reason. A unit without one has one fewer form and goes out on its leader.
+      ...(short !== undefined && short !== chosen
+        ? [[{ text: short, lines: labelLines(short) }]]
+        : []),
+    ];
 
   /*
    * The **roomiest parts of the unit's own ground**, wherever they are.
@@ -973,18 +1051,24 @@ export function measureLabel(
           [at, anchored],
         ];
 
-  for (const text of candidates) {
+  for (const group of forms) {
     for (const scale of SHRINK_LADDER) {
-      const { width, height } = sized(text, scale);
-      // The room said yes and the corners said no, which is a diagonal boundary: the anchor is
-      // still worth asking, since the midpoint is the point that slid toward the edge.
-      for (const [place, there] of nearby) {
-        if (width > there.width || height > there.height) continue;
-        if (boxInside(fit.rings, place, width, height)) return box(text, scale, undefined, place);
-      }
-      for (const [place, there] of roomier()) {
-        if (width > there.width || height > there.height) continue;
-        if (boxInside(fit.rings, place, width, height)) return box(text, scale, undefined, place);
+      for (const { text, lines } of group) {
+        const { width, height } = sized(lines, scale);
+        // The room said yes and the corners said no, which is a diagonal boundary: the anchor is
+        // still worth asking, since the midpoint is the point that slid toward the edge.
+        for (const [place, there] of nearby) {
+          if (width > there.width || height > there.height) continue;
+          if (boxInside(fit.rings, place, width, height)) {
+            return box(text, scale, undefined, place, lines);
+          }
+        }
+        for (const [place, there] of roomier()) {
+          if (width > there.width || height > there.height) continue;
+          if (boxInside(fit.rings, place, width, height)) {
+            return box(text, scale, undefined, place, lines);
+          }
+        }
       }
     }
   }
@@ -1065,7 +1149,7 @@ export interface LayoutOptions {
  * Pakhtunkhwa* and one of A3's; 0.7 buys nothing further, so the knee is here rather than at the
  * ceiling.
  */
-export const MAX_LEADER_FRACTION = 0.6;
+export const MAX_LEADER_FRACTION = 0.95;
 
 const DEFAULT_NUDGES: readonly (readonly [number, number])[] = [
   [0, 0],
@@ -1122,8 +1206,59 @@ const overlaps = (a: Rect, b: Rect, gap: number): boolean =>
  * `CLEAR` is how far past the shape's own edge the whole assembly sits, so a leader leaves the
  * ground it points at rather than ending on its boundary. `GAP` is the space between the dot and
  * the first character, and `DOT` is the dot's own radius, which the renderer draws.
+ *
+ * **There is no cap on how much ground a leader may cross**, and that is a decision made twice over
+ * rather than an omission: it was tried at 26px and at 80px and both were removed.
+ *
+ * The rule this map is held to is that **every unit is named** — on its own ground where the name
+ * fits, and otherwise outside the drawn country on a line back to it. One of the two must be
+ * present, because a proposed province drawn on the map and named nowhere on it is a shape the
+ * reader cannot ask about. An interior unit has no route to the paper that does not cross somebody
+ * else's ground, so any finite allowance is a quota on which units get named, and it silenced
+ * Layyah, Tank, Mastung and Kambar Shahdadkot — each on the map, in the key and in the card, and
+ * nameless on the one surface a reader is actually looking at.
+ *
+ * What the attempts left behind is the *ranking* rather than the refusal: candidates are ordered by
+ * a cost that charges the run out, the bend and the wrong margin, so a leader is as short and as
+ * straight and as close to its own province as the paper allows. And what carries the clutter is
+ * `segmentsNear` — no two leaders may run within a clearance of each other — which is the
+ * constraint that actually distinguishes a legible margin from a thicket. Lines cross the country;
+ * no two of them are read as one.
  */
-const LEADER = { CLEAR: 6, GAP: 5, DOT: 2 } as const;
+const LEADER = { CLEAR: 10, GAP: 5, DOT: 1.6 } as const;
+
+/**
+ * What a rung of vertical drop costs, against a pixel of horizontal run, when candidates are ranked.
+ *
+ * Above 1, so a bend is never taken for a marginal saving. It is a ranking weight and not a limit:
+ * every candidate is still tried, so nothing here can cost a unit its name — it only decides which
+ * acceptable leader is reached for first.
+ */
+const ELBOW_COST = 4;
+
+/**
+ * What a name costs for going the wrong way, in the same currency as a pixel of leader.
+ *
+ * `WRONG_SIDE_COST` is charged to a name taken out into the margin *away* from its own ground — a
+ * Khyber Pakhtunkhwa unit named over in Punjab's margin — and it is heavy, because that placement is
+ * not merely longer but harder to read: the reader follows the line back across the whole country.
+ * It is worth about a third of a frame, so it is given up only when the near side is genuinely full
+ * rather than merely tight. `WRONG_WAY_COST` is the same idea on the other axis and is lighter, since a
+ * rung or two the wrong way up is a small thing next to a name on the wrong side altogether.
+ *
+ * Both are ranking weights and neither is a limit: every candidate is still tried, so no unit can
+ * lose its name to a preference.
+ */
+const WRONG_SIDE_COST = 320;
+const WRONG_WAY_COST = 60;
+
+/**
+ * The radius the elbow is turned through, in screen px. Drawn by the renderer, which is why it is
+ * exported: a right angle in a hairline reads as a corner of a box, and a turned one reads as a
+ * line going somewhere. It is capped against each leg, so a short leader turns a smaller corner
+ * rather than overshooting its own ends.
+ */
+export const LEADER_ELBOW_RADIUS = 5;
 export const LEADER_DOT_RADIUS = LEADER.DOT;
 /**
  * The other two, exported for the same reason the radius is: the suite has to be able to say why a
@@ -1140,7 +1275,9 @@ export const LEADER_GAP = LEADER.GAP;
  * has to follow rather than read. Rung zero is a plain horizontal leader with no elbow at all,
  * which is what a rightward callout on unobstructed paper gets.
  */
-const CALLOUT_RUNGS: readonly number[] = [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5];
+const CALLOUT_RUNGS: readonly number[] = Array.from({ length: 27 }, (_, i) =>
+  i === 0 ? 0 : (i % 2 === 1 ? -1 : 1) * Math.ceil(i / 2),
+);
 
 type Segment = readonly [Point, Point];
 
@@ -1151,6 +1288,56 @@ const side = (a: Point, b: Point, p: Point): number =>
 function segmentsCross([a, b]: Segment, [c, d]: Segment): boolean {
   const [s1, s2, s3, s4] = [side(a, b, c), side(a, b, d), side(c, d, a), side(c, d, b)];
   return s1 > 0 !== s2 > 0 && s3 > 0 !== s4 > 0;
+}
+
+/** The centre of a set of rings' bounding box. One pass, called once per layout. */
+function centreOf(rings: readonly Ring[]): Point {
+  let west = Infinity;
+  let east = -Infinity;
+  let north = Infinity;
+  let south = -Infinity;
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      if (x < west) west = x;
+      if (x > east) east = x;
+      if (y < north) north = y;
+      if (y > south) south = y;
+    }
+  }
+  return [(west + east) / 2, (north + south) / 2];
+}
+
+/** How far a point is from a segment, in px. The distance test crossing alone cannot make. */
+function pointToSegment(p: Point, [a, b]: Segment): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const span = dx * dx + dy * dy;
+  const t = span === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / span));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+/**
+ * Whether two leaders come within `clear` of each other anywhere — crossing, or merely running
+ * alongside.
+ *
+ * Crossing was the whole test and it was the wrong one. Two leaders that never cross can still be
+ * laid a few px apart down the same margin, and what a reader sees there is not two annotations but
+ * a bracket: `MASTUNG` dropped its elbow past `QUETTA`'s own dot and ran its arm underneath
+ * `QUETTA`'s, and every check passed because the two lines are parallel. A leader is read by
+ * following it, and two lines close enough to be followed into each other cost the reader both.
+ *
+ * So the same clearance the names keep from each other is asked of the lines that carry them, at
+ * the same two-pass ladder: room first, then merely not colliding.
+ */
+function segmentsNear(a: Segment, b: Segment, clear: number): boolean {
+  if (segmentsCross(a, b)) return true;
+  const gap = Math.min(
+    pointToSegment(a[0], b),
+    pointToSegment(a[1], b),
+    pointToSegment(b[0], a),
+    pointToSegment(b[1], a),
+  );
+  return gap < clear;
 }
 
 const inside = (p: Point, r: Rect): boolean =>
@@ -1234,11 +1421,15 @@ function placeCallout(
     land,
     maxLeader = Infinity,
     spans,
+    middle,
+    opaque = [],
   }: {
     bounds: LayoutOptions['bounds'];
     gap: number;
     land: readonly Ring[] | undefined;
     maxLeader: number | undefined;
+    /** The middle of the drawn country. A name is ranked by how far *outward* of it the name sits. */
+    middle: Point | null;
     /**
      * One frame's answers from `landSpanAt`, keyed on the row.
      *
@@ -1251,11 +1442,32 @@ function placeCallout(
      * this function for exactly that reason: the sharing that matters is *between* callouts.
      */
     spans: Map<number, [number, number] | null>;
+    /**
+     * The boxes that are not names — the unit key, a docked tooltip, the sheet (#33).
+     *
+     * Held apart from `taken` because the last-resort pass gives up clearance against *names* and
+     * may not give up anything against these: a name a leader passes under is still legible and the
+     * leader is still followable, where a leader that runs under an opaque panel is a line that
+     * disappears. Refused at every pass, including the one that exists to place a name at any cost.
+     */
+    opaque: readonly Rect[];
   },
   taken: readonly Rect[],
   leaders: readonly Segment[],
 ): { placed: PlacedLabel; rect: Rect; leader: Segment[] } | null {
   const callout = label.callout as NonNullable<LabelBox['callout']>;
+  /*
+   * How far apart two rungs of the ladder are.
+   *
+   * A whole line of type between the boxes, not the layout's bare minimum. At `height + gap` the
+   * rungs are one pixel further apart than a box is tall, so two names on neighbouring rungs clear
+   * each other by exactly `gap` — and since every unit's ladder is hung from its *own* anchor, two
+   * ladders offset by a few pixels put their rungs almost on top of each other. The roomy pass then
+   * refuses every candidate and the crowded pass takes whatever is left, which is how a margin with
+   * plenty of paper in it came to have no room for `SOUTH WAZIRISTAN` between `DERA ISMAIL KHAN`
+   * and `JAFFARABAD`. Wider rungs are cheap: over paper they cost nothing at all, and over ground
+   * they are charged for by `offGround` like everything else.
+   */
   const step = label.height + gap;
 
   /**
@@ -1312,12 +1524,51 @@ function placeCallout(
         found.push({ y, dotX, rungs, direction, length });
       }
     }
-    // Nearest first. Ties break on how far the name has been moved *off its own row* and then on
-    // the side, so the same map never renders two ways and the tie-break prefers the flatter
-    // leader — rung zero is a plain horizontal run with no elbow to follow at all.
+    /*
+     * Nearest first — but *nearest* is a cost and not a raw length, and the difference is what the
+     * margin looks like.
+     *
+     * Ranked on raw length, a leader that drops two rungs to save three pixels of run beats the
+     * plain horizontal one, and a column of names each bent a different amount is what a reader
+     * gets. The drop is therefore charged at `ELBOW_COST` times its length: a bend has to *earn*
+     * itself against the straight run it replaces, so a name sits on its own row unless moving off
+     * it buys something real. Rung zero has no elbow to follow at all, which is the neatest leader
+     * this map can draw and the one it reaches for first — **where the assembly allows it**, which
+     * is rightward only: a leftward callout reads dot-then-name like every other, so its name sits
+     * between its dot and its own ground and a leader on that row would run straight through it.
+     * That is why the western margin's names step off their row and the eastern margin's do not.
+     *
+     * Ties break on the side and then on the signed rung, so the same map never renders two ways.
+     */
+    /*
+     * The side this unit's name belongs on, and it is asked of the **unit** rather than of the
+     * country.
+     *
+     * Which margin is nearer to its own ground: the western one for Khyber Pakhtunkhwa and the
+     * Baloch west, the eastern one for Punjab, the southern for Sindh's coast — so a reader looking
+     * at a province finds that province's names beside it, which is the whole of what this
+     * preference is for. Measured at the anchor's own row, once, so every candidate is judged
+     * against the same side and the ladder does not wander from rung to rung.
+     *
+     * The country's *middle* was tried here first and is the wrong question. It answers well for a
+     * unit out at an edge and arbitrarily for one near the centre: Tank is a Khyber Pakhtunkhwa
+     * unit a few pixels east of the country's midline, and being pushed "outward" sent its name
+     * across into Punjab's margin — further from its own ground, and past the Afghan frontier that
+     * was sitting a short run to its west. What the middle is still good for is the *vertical*
+     * sense, where a unit in the north wants its name above rather than below.
+     */
+    const runTo = (direction: 1 | -1): number =>
+      Math.abs(leadingEdge(callout.from[1], direction, true) - callout.from[0]);
+    const nearSide: 1 | -1 = land === undefined ? 1 : runTo(1) <= runTo(-1) ? 1 : -1;
+    const outwardY = middle === null ? 0 : Math.sign(callout.from[1] - middle[1]);
+    const cost = (c: Candidate): number =>
+      Math.abs(c.dotX - callout.from[0]) +
+      ELBOW_COST * Math.abs(c.rungs * step) +
+      (land !== undefined && c.direction !== nearSide ? WRONG_SIDE_COST : 0) +
+      (outwardY !== 0 && c.rungs !== 0 && Math.sign(c.rungs) !== outwardY ? WRONG_WAY_COST : 0);
     return found.sort(
       (a, b) =>
-        a.length - b.length ||
+        cost(a) - cost(b) ||
         Math.abs(a.rungs) - Math.abs(b.rungs) ||
         b.direction - a.direction ||
         a.rungs - b.rungs,
@@ -1333,6 +1584,8 @@ function placeCallout(
   const judge = (
     { y, dotX }: Candidate,
     clear: number,
+    apart: boolean,
+    clearOfNames = true,
   ): { placed: PlacedLabel; rect: Rect; leader: Segment[] } | null => {
     const to: Point = [dotX, y];
     const elbow: Point = [dotX, callout.from[1]];
@@ -1353,9 +1606,14 @@ function placeCallout(
       [callout.from, elbow],
       [elbow, to],
     ];
-    if (segments.some((s) => taken.some((other) => meetsRect(s, other, clear)))) return null;
+    if (segments.some((s) => opaque.some((other) => meetsRect(s, other, clear)))) return null;
+    if (clearOfNames && segments.some((s) => taken.some((other) => meetsRect(s, other, clear)))) {
+      return null;
+    }
     if (segments.some((s) => meetsRect(s, rect, clear))) return null;
-    if (segments.some((s) => leaders.some((other) => segmentsCross(s, other)))) return null;
+    if (apart && segments.some((s) => leaders.some((other) => segmentsNear(s, other, clear)))) {
+      return null;
+    }
 
     return {
       placed: { key: label.key, x, y, leader: { from: callout.from, elbow, to } },
@@ -1384,28 +1642,70 @@ function placeCallout(
    * dropped for want of elegance.
    */
   const roomy = Math.max(gap, label.height);
-  const clearances = roomy > gap ? [roomy, gap] : [gap];
+  /*
+   * Four passes, in a stated order of concession, and the last one is what makes **every unit is
+   * named** true rather than aspirational.
+   *
+   *  1. A whole line of type of clear space on every side, and no leader within that of another.
+   *  2. The layout's own `gap` — enough that two names are two names.
+   *  3. A hairline. Tight, and still two names and two lines.
+   *  4. The same hairline between the *names*, and the lines let cross.
+   *
+   * The first three are the map as it should look and the fourth is the map keeping its promise. A
+   * crossed leader is a poor annotation — it points at a line rather than at a piece of ground — and
+   * it is recoverable by following it, where a unit drawn on the map and named nowhere on it is a
+   * shape the reader cannot ask about at all. That is the order, and it is why the concession is to
+   * the *lines* and never to the names: two labels are never allowed to overlap at any pass.
+   *
+   * In practice the fourth is reached only in the northern cluster of D1 and A1 to A3, where eight
+   * or nine units the size of a district compete for the same few rows of margin.
+   */
+  const passes: readonly {
+    readonly clear: number;
+    readonly apart: boolean;
+    readonly clearOfNames?: boolean;
+  }[] = [
+    ...(roomy > gap ? [{ clear: roomy, apart: true }] : []),
+    { clear: gap, apart: true },
+    { clear: 1, apart: true },
+    { clear: 1, apart: false },
+    // The fifth, and the only thing left to give. A leader may pass beneath a name it does not
+    // belong to — which reads as that name being underlined, and is the last concession available
+    // before a unit goes unnamed. Two labels still never overlap, at this pass as at every other.
+    { clear: 1, apart: false, clearOfNames: false },
+  ];
 
   /*
-   * **Reaching paper is a preference too, and the last fallback is the pre-#51 answer.**
+   * **Reaching paper is not a preference. A callout is on clear paper or it is not drawn.**
    *
-   * Requiring a callout to clear the drawn land is right and it cannot be absolute: at the 390px
-   * bar the country nearly fills the frame, and under the leader cap several units have no
-   * paper-clearing candidate at all. Made a hard rule, it silently costs names — including H3's
-   * *Northern Areas*, which is Gilgit-Baltistan under the name that variant gives it, and a
-   * territory drawn and **anonymous** is exactly the claim the politically sensitive rendering
-   * section exists not to make. That obligation outranks this one; a name set on a neighbour's
-   * ground is a bad answer, and no name at all is a worse one.
+   * There are two honest places for a unit's name: on its own ground, where it needs no leader at
+   * all, and outside the drawn country on a leader back to it. This function is the second, and it
+   * used to have a third mode behind it — clear of the unit's *own* reach and nothing else, which
+   * is the answer it gave before it was taught about the land. That mode puts a name on some other
+   * unit's ground, and once a frame strands half a dozen of them the map is read through a thicket
+   * of words belonging to shapes underneath other shapes. Every one of them is a name over ground it
+   * does not describe, which is the exact failure the clearance rule at the top of this file exists
+   * to prevent; the leader made it look like an answer rather than the same defect with a line
+   * attached.
    *
-   * So the modes are ordered rather than chosen: clear of the land at both clearances first, and
-   * only where the paper has nothing to offer, clear of the unit's own reach — which is where a
-   * callout went before this pass, so nothing that used to be named can be lost by it.
+   * The cost is real and is paid rather than dodged: where the paper has nothing to offer under the
+   * leader cap, the name is **dropped**. It is dropped the way every unplaceable name here is —
+   * the layout reruns on every zoom and pan, so the room is what brings it back, and the unit is
+   * still named in the map's own key, in the card's unit list and in the tooltip.
+   *
+   * **One obligation outranks this and it is not a matter of taste**: a *territory* drawn and
+   * anonymous is a claim the politically sensitive rendering section exists not to make, and at the
+   * 390px bar H3's *Northern Areas* — Gilgit-Baltistan under the name that variant gives it — has no
+   * paper-clearing candidate. So `mustName` keeps the old mode for those and for nothing else. It is
+   * a carve-out for a constitutional claim, not a fallback for a crowded frame.
    */
-  for (const useLand of land === undefined ? [false] : [true, false]) {
-    const candidates = candidatesFor(useLand);
-    for (const clear of clearances) {
+  const modes: (boolean | 'own-reach')[] =
+    land === undefined ? ['own-reach'] : label.mustName === true ? [true, 'own-reach'] : [true];
+  for (const mode of modes) {
+    const candidates = candidatesFor(mode === true);
+    for (const pass of passes) {
       for (const candidate of candidates) {
-        const placed = judge(candidate, clear);
+        const placed = judge(candidate, pass.clear, pass.apart, pass.clearOfNames ?? true);
         if (placed !== null) return placed;
       }
     }
@@ -1428,6 +1728,22 @@ export function layoutLabels(
   labels: readonly LabelBox[],
   { bounds, gap, nudges = DEFAULT_NUDGES, occupied = [], land, maxLeader }: LayoutOptions,
 ): PlacedLabel[] {
+  /*
+   * The middle of the drawn country, which every callout is pushed *away* from.
+   *
+   * It is what makes the margin legible as a map rather than as a list: a name belonging to ground
+   * in the north-west goes out into the north-west, one belonging to the south-east goes out into
+   * the south-east, and a reader looking at Balochistan finds Balochistan's names beside
+   * Balochistan. Without it the ranking only ever asked which leader was shortest, and a unit whose
+   * own side of the frame was full took the first slot it could reach — which is how a Balochistan
+   * unit came to be named up beside Khyber Pakhtunkhwa, pointing back across the country.
+   *
+   * The bounding box's centre and not a centroid, deliberately: what is wanted is the middle of the
+   * *frame the country occupies*, so that "outward" means toward the nearest paper, and a centroid
+   * dragged west by Balochistan's bulk would send Punjab's names further east than the paper is.
+   * Computed once per layout — one pass over rings the callouts then read from a cache.
+   */
+  const middle = land === undefined ? null : centreOf(land);
   const order = [...labels].sort(
     (a, b) => b.priority - a.priority || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
   );
@@ -1453,7 +1769,7 @@ export function layoutLabels(
 
   for (const label of order) {
     if (label.callout !== undefined) {
-      const options = { bounds, gap, land, maxLeader, spans };
+      const options = { bounds, gap, land, maxLeader, spans, middle, opaque: occupied };
       const outside =
         placeCallout(label, options, [...taken, ...reserved], leaders) ??
         placeCallout(label, options, taken, leaders);

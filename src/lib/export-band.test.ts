@@ -91,6 +91,7 @@ const palette: BandPalette = {
   accent: '#9c3b2b',
   ruleUnit: '#4a3d2c',
   ruleProvince: '#8a7c65',
+  ruleBoundary: '#6e7175',
   ruleDivision: '#bfb29b',
 };
 
@@ -405,7 +406,7 @@ describe('the legend is derived from the map, never transcribed beside it', () =
 describe('the swatches are the map’s own ink', () => {
   it('spends the accent on proposed units and on nothing else', () => {
     const proposed = swatchInk({ kind: 'unit', unit: 'proposed' }, palette);
-    expect(proposed).toEqual({ shape: 'rule', stroke: palette.accent, width: 2.4, dash: null });
+    expect(proposed).toEqual({ shape: 'rule', stroke: palette.accent, width: 1.4, dash: null });
     for (const unit of ['unchanged', 'territory'] as const) {
       const ink = swatchInk({ kind: 'unit', unit }, palette);
       expect(ink, unit).toMatchObject({ stroke: palette.ruleUnit });
@@ -414,7 +415,7 @@ describe('the swatches are the map’s own ink', () => {
 
   it('draws the ceasefire line’s swatch dashed, or it keys a line nobody can find', () => {
     const ink = swatchInk({ kind: 'rule', rule: 'dashed' }, palette);
-    expect(ink).toMatchObject({ shape: 'rule', dash: '4 3' });
+    expect(ink).toMatchObject({ shape: 'rule', dash: '6.5 3.5' });
   });
 
   it('paints the two absences as the map paints them — a stipple and a hatch, never one grey', () => {

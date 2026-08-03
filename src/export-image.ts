@@ -122,6 +122,7 @@ function readPalette(): BandPalette {
     accent: cssVariable('--accent'),
     ruleUnit: cssVariable('--rule-unit'),
     ruleProvince: cssVariable('--rule-province'),
+    ruleBoundary: cssVariable('--rule-boundary'),
     ruleDivision: cssVariable('--rule-division'),
   };
 }

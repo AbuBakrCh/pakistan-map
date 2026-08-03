@@ -207,14 +207,23 @@ screen space, because a circle has no `vector-effect` for its radius and a dot i
 group becomes a blot at 24×.
 
 1. **Fill = data** (dominant mother tongue, development band…) — *never* unit membership
-2. **Current boundaries** — thin, faded, once a basis is active
-3. **Unit outlines** — heavy, labelled, on top. **Drawn by arc, never by shape**: Azad Jammu &
-   Kashmir is a unit in every variant and the Line of Control is part of its outline, so a solid
-   stroke over the dash would fill its gaps in and leave a border (D12). The ceasefire line's arcs
-   are held out of every unit, exactly as the province stratum already holds them out. Each
-   outline is **cased** in the paper's own colour so it survives a busy fill beneath it; a unit's
-   name is set at the province size and coloured to match its own outline — the accent belongs to
-   `proposed` units and to nothing else, and a unit is **never filled**, because fill is data
+2. **Current boundaries** — the **bold** line, and held near full strength under a variant rather
+   than faded back to half. It is the heaviest rule on the map and drawn in a neutral cool grey
+   (`--rule-boundary`), which is the only unsaturated tone in a warm palette and is not the
+   interface's own hairline: every unit outline in stratum 3 sits *inside* it, and on an unchanged
+   province the two are the same geometry drawn twice
+3. **Unit outlines** — **thin**, labelled, on top, and in a different colour from the boundary
+   beneath them: the accent where a unit is proposed, the map's ink where it is carried through.
+   Weight says which map a line belongs to and hue says which claim. **Drawn by arc, never by
+   shape**: Azad Jammu & Kashmir is a unit in every variant and the Line of Control is part of its
+   outline, so a solid stroke over the dash would fill its gaps in and leave a border (D12). The
+   ceasefire line's arcs are held out of every unit, exactly as the province stratum already holds
+   them out. Each outline is **cased** in the paper's own colour so it survives a busy fill beneath
+   it — and the casing is now **narrower than the boundary underneath**, which is load-bearing
+   rather than cosmetic: at 4.4px it laid enough paper along a shared border to paint the province
+   out and leave the two maps looking like one line. A unit's name is set at the province size and
+   coloured to match its own outline — the accent belongs to `proposed` units and to nothing else,
+   and a unit is **never filled**, because fill is data
 
 Fill shows data so each proposal is displayed *against its own evidence*. Where a unit outline
 disagrees with the shading beneath it, that disagreement is the most informative thing on the
@@ -342,24 +351,39 @@ proposal is carved out of. On a map whose whole subject is which district belong
 crowding or crossing a boundary is a claim nobody wrote — and it is the one claim a footnote cannot
 take back, because the reader has already read it off the picture.
 
-So the name is now fitted in four steps, in order, and the first of them is the one that was already
-here. The unit's **own attested abbreviation** is tried first and **nothing is ever invented**. The
-name is then **broken on its bracket** — L7's regions are `Balochi (Kech)` and `Pushto (Keamari)`,
-and set on two lines a box is as wide as its wider line rather than as wide as the sum; broken there
-and nowhere else, since hyphenating would coin a spelling no source uses and wrapping on measurement
-would break the same name in different places at different zooms, so a reader zooming in would watch
-a proposal's name reflow. It is then **set down a short ladder** until it clears the room, bounded at
-both ends: never larger than the province size, because a unit is told apart from a province by
-colour and not by scale, and never below **7.5px**, which is the smallest type this map will set.
-And where even the floor will not fit, the name goes **outside the shape on a leader**.
+So the name is fitted in steps, in a stated order of concession. It is **broken on its bracket** —
+L7's regions are `Balochi (Kech)` and `Pushto (Keamari)`, and set on two lines a box is as wide as
+its wider line rather than as wide as the sum. It is then **wrapped between its words** where it has
+more than one: `RAHIM YAR KHAN` set on one line is as wide as the sum of three words and on two is
+as wide as its wider half, which is routinely the difference between a name on its own ground and a
+name out on a line pointing at it. Whole and wrapped are offered **together at each size**, because
+a wrapped name set large is more legible than the same name squeezed onto one line at the floor and
+both say exactly what the unit is called. The pair is then **set down a short ladder** until it
+clears the room, bounded at both ends: never larger than the province size, because a unit is told
+apart from a province by colour and not by scale, and never below **6.5px**, which is the smallest
+type this map will set. Only where none of that fits on this ground at any size, in any shape, is
+the unit's **own attested abbreviation** offered — a different word, and conceded last for that
+reason — and **nothing is ever invented**. And where even that will not fit, the name goes
+**outside the shape on a leader**.
 
-**The floor was the district tier's 8.5px until #51 and is not any more**, because that bound was
-defending a collision that cannot happen: district names are not laid out at all below
+**Where the wrap breaks is decided by the text and never by the measurement**, which is the
+objection the bracket rule records and it is a real one: a name broken wherever the type ran out
+breaks somewhere different at every zoom, and a reader watching a proposal's name reflow as they
+lean in is reading the layout rather than the map. The split is the one leaving the two halves
+closest in length, ties to the earlier space — a property of the string, identical at every size and
+on every frame. Two lines and never three: three lines of 6.5px type stacked inside a district is a
+paragraph, and ground that could hold it can hold two lines of something larger. Hyphenation is
+still refused, since it would coin a spelling no source uses.
+
+**The floor was the district tier's 8.5px until #51, then 7.5px, and is 6.5px now.** The first
+bound was defending a collision that cannot happen: district names are not laid out at all below
 `DISTRICT_LABEL_ZOOM`, and at 6× a unit has room to spare and is nowhere near the floor, so the two
 tiers never co-occur at a size where a reader could compare them. What is left is the absolute
-legibility floor, which is the half of the rule that was ever load-bearing. It buys ~12% of width
-and is honestly a **trim rather than a rescue** — the names badly over their ground are over by
-multiples, and those still go out on a leader.
+legibility floor, and each step down buys about a tenth of the width. It is a **trim rather than a
+rescue** either way — the names badly over their ground are over by multiples, and the wrap and the
+leader are what answer those — but it is the trim that puts `LAYYAH` inside Layyah, which is a
+single district and one word and has nothing else to give. 5.5px was tried and taken back out: at
+that size the name stops being read and becomes a mark.
 
 **The room is measured, not assumed.** `interiorRoom` casts a ray each way along both axes from the
 anchor and keeps the nearest crossing, so a hole, a neighbour's bite out of a crescent and the outer
@@ -468,44 +492,75 @@ The cost is real and is the point: a division or a city name that would have fit
 is now dropped or nudged instead. A base-map caption that gives way comes back on the first zoom
 step; an unreadable proposal name does not.
 
-**Nearest first, and bounded.** Candidates are ranked by the length of the leader they need, so a
-name sits as close to its ground as the paper allows, and any leader longer than **0.6 of the
-frame's shorter side** is refused and the name dropped. Against the shorter side because that is the
-axis with the least paper on it — the projection fits the country to the tighter of the two — so a
-cap measured on the roomy axis would be no cap at all on a phone; at the 390px bar it is ~202px.
+**Nearest first, straightest next, and toward its own province.** Candidates are ranked by a **cost**
+rather than by a raw length, and the three terms it adds are the three things that make a margin
+legible. The **run out** is charged directly, so a name sits as close to its ground as the paper
+allows. The **bend** is charged at four times its length, because ranked on raw length a leader that
+drops two rungs to save three pixels of run beats the plain horizontal one, and a column of names
+each bent a different amount is what a reader gets; rung zero has no elbow to follow at all and is
+what an uncontested name reaches for. And the **wrong margin** is charged about a third of a frame,
+so a Khyber Pakhtunkhwa unit's name goes out into the north-west and a Sindh unit's into the south,
+and a reader looking at a province finds that province's names beside it.
 
-**0.6 is measured rather than argued**, and it was 0.4 on argument alone for one round. 0.4 silently
-drops H3's *Northern Areas* — which is Gilgit-Baltistan under the name that variant gives it, so a
-number picked for tidiness was leaving a territory drawn and **anonymous**, the one thing the
-politically sensitive rendering section exists to prevent. That name is anchored 298px into a 369px
-frame and is 113px wide, so it has to travel left across the country: 202px of leader where 0.4
-allowed 134. 0.55 is where it returns, 0.6 also recovers L6's *Southern Pakhtunkhwa* and one of
-A3's, and 0.7 buys nothing further. Uncapped, A1 to A3 — which strand four to six rule-drawn units in central Punjab —
-would fan five or six leaders the width of the country into one margin, and the map's subject would
-be overdrawn by its own furniture. A cap on the *number* of callouts was the alternative and was
-refused: it silences units by quota, and a reader cannot tell why this one and not that one.
+**The side is asked of the unit and never of the country's middle**, which is the correction that
+made it right. The middle answers well for a unit out at an edge and arbitrarily for one near the
+centre: Tank is a Khyber Pakhtunkhwa unit a few pixels east of the country's midline, and being
+pushed "outward" sent its name across into Punjab's margin — further from its own ground, and past
+the Afghan frontier a short run to its west. Which margin is *nearer to its own anchor* is the
+question, measured once at its own row so the ladder does not wander from rung to rung. The
+country's middle is still good for the vertical sense, where a unit in the north wants its name
+above rather than below.
+
+Two things it will not do, and one it now will. There is **no cap on how much ground a leader may
+cross**: it was tried at 26px and then at 80px, and a finite allowance is a quota deciding which
+units get named — it silenced Layyah, Tank, Mastung and Kambar Shahdadkot, each on the map, in the
+key and in the card, and nameless on the one surface a reader is actually looking at. A cap on the
+*number* of callouts was the other alternative and is refused for the same reason. What remains is
+the **reach**: a leader longer than 0.95 of the frame's shorter side is refused, which is a bound on
+the frame rather than a ration.
 
 **A name on paper is set one step down from a name on its ground** (#51) — one fixed 0.78, the same
 for every callout. It used to be set at full size, on the reasoning that outside the shape there is
 no ground constraining the type and a name shrunk to fit a room it is no longer in pays twice. That
 was sound while the floor was 8.6px and callouts were rare, and it is not sound now: an in-ground
-name may be set at 7.5px, so a full-size callout made the **loudest type on the map** belong to the
+name may be set at 6.5px, so a full-size callout made the **loudest type on the map** belong to the
 units that fit worst, at nearly twice the size of a name sitting honestly on its own ground. One
 size rather than a ladder, because out on the margin there is no ground to explain why one callout
 is smaller than the next. It bends "told apart by colour, not by scale" (D14), which is a rule about
 a unit against a province — and every callout is already marked as the exception by the line
 attached to it.
 
-Four things the leader will not do. It takes the unit's **own outline colour**, so the accent still
-means *a proposed province* and nothing else (D14). It is **furniture and stays in screen px** at
-every zoom, like the type it carries and like the city dots. It may **never cross another label or
-another leader**, nor anything already standing on the paper, nor the name it is carrying — a leader
-that crosses points at a word rather than at a piece of ground, and two that cross swap the units
-they name, which is the one mistake a callout could make that is worse than no callout. It **may**
-cross other units' land, and has to: that is the only way to reach the margin, and a line over
-ground is not a name over ground. And where no candidate is clear the name is **dropped**, exactly
-as an unplaceable name is dropped today; the layout is recomputed on every zoom, and the room is
-what brings it back.
+The leader takes the unit's **own outline colour**, so the accent still means *a proposed province*
+and nothing else (D14), and it is **furniture and stays in screen px** at every zoom, like the type
+it carries and like the city dots. It is **drawn as furniture too**: a hairline under the unit
+outline's own weight and a little short of full strength, its corner **turned** rather than squared,
+since a right angle in a 0.8px line reads as the corner of a box and a turned one reads as a line
+going somewhere; and **cased in paper**, so that where two leaders cross the later leaves a clean
+break in the earlier and the pair reads as one line hopping over another rather than as a bundle of
+wires. In a corner where eight units share a margin that is the difference between a set of
+annotations and a tangle, and it costs a second stroke.
+
+ It **may** cross other units' land, and has to: that is the only
+way to reach the margin, and a line over ground is not a name over ground.
+
+**What it may do to another name and to another line is a ladder of five passes, and the last of
+them is what makes "every unit is named" a property rather than an aspiration.** In order: a whole
+line of type of clear space with no leader within that of another; the layout's own gap; a hairline;
+the same hairline with **the lines let cross**; and finally a leader allowed to **pass beneath a
+name it does not belong to**. The concession is always to the *lines* and never to the names — two
+labels are not allowed to overlap at any pass — because a crossed or underlined leader is a poor
+annotation and a recoverable one, where a unit drawn on the map and named nowhere on it is a shape
+the reader cannot ask about at all. The last two rungs are reached only in D1's northern cluster,
+where eight units the size of a district compete for the same few rows of margin.
+
+Two things are refused at **every** pass. A leader may not run under an **opaque box** — the unit
+key, a docked tooltip, the sheet — because a leader under a name is still followable and a leader
+under a panel is gone. And **two leaders must stay a clearance apart rather than merely not cross**:
+crossing was the whole test and it was the wrong one, since two lines laid a few px apart down the
+same margin never cross and are read as a bracket, which is how `MASTUNG` came to drop its elbow
+past `QUETTA`'s own dot and run its arm underneath it. Where the frame itself cannot hold the name —
+a name wider than the paper, which no clearance concession reaches — it is **dropped**; the layout is
+recomputed on every zoom, and the room is what brings it back.
 
 Two consequences elsewhere, both stated because both were wrong first. The **crop** the PNG export
 takes is the union of the drawn land and every name, dot **and leader** over it — a callout is
@@ -541,15 +596,28 @@ drawn is now honestly inside the unit it names or attached to it by a line.
 a leader long enough to reach the margin from the middle of the country. Fourteen units left the
 list, H3's and L4's *Islamabad Capital Territory*, L6's *Southern Pakhtunkhwa*, A4's *Killa
 Abdullah*, H2's *Las Bela* and *Nagar* and all three of L7's among them; two joined it, A1's and
-A3's *Rahim Yar Khan*, which used to be named and now wants paper its neighbours reach first. The
-currency is still the currency, and it is stated rather than netted off.
+A3's *Rahim Yar Khan*, which used to be named and now wants paper its neighbours reach first.
 
-One territory is left. H2's **Gilgit Agency and Baltistan** — the same ground under the name it
-carried in 1947, and at 279px the longest unit name in the app (#30) — has no attested initialism,
-so 279px of type plus its dot and its clearance does not fit either side of an anchor that far east
-in a 369px frame. Stated in the suite by assertion rather than in prose, and shown to return at
-desktop size, because a coinage would be a name for Pakistani-administered ground that no source
-uses. What otherwise gives way is
+**And the pass after it took the list to six names on one variant, which is where it stands.** Four
+levers again, and each a different one: the **word wrap**, so a three-word name is as wide as its
+wider half; the **6.5px floor**; the **removal of the cap** on ground a leader may cross, which had
+been a quota on which units got named; and the **five-pass ladder** ending in one that lets leaders
+cross rather than lose a name. Sixteen of the seventeen variants now name every unit at the bar —
+A1 to A3 among them, and H2, both of which had been this section's standing examples — and what is
+left is **D1 and only D1**: 35 units, eleven of them a single district, on a 369px-wide country.
+*South Waziristan*, *Torghar*, *Lower Chitral*, *Upper Chitral*, *Hyderabad* and *Karachi East* go
+unnamed there, four of them in the northern cluster and two around the delta, and each is listed in
+the suite and shown to return at desktop size.
+
+**H2's *Gilgit Agency and Baltistan* left that list**, and it is the one departure worth reading on
+its own, because it was the last **territory** on it. The same ground under the name it carried in
+1947, at 279px the longest unit name in the app (#30) and anchored in eastern Baltistan because
+Hunza and Nagar are drawn out of its western end: the arithmetic that excused it — every row of the
+frame either too narrow for the name or too far from it to reach — was honest and stopped being true
+when the transit cap went and `mustName` was added, which says out loud that a territory's name may
+not be dropped for want of clear paper. There is now **no size or selection at which a territory is
+drawn anonymous**, and the suite asserts that as an emptiness rather than as a shrinking list. What
+otherwise gives way is
 the division tier and two of the seven seats, which is the ranking working as written — and the
 price is stated rather than counted: **Peshawar** loses its division name *and* its seat name, so
 at 390px the word is nowhere on the map and only the dot marks the place. It returns on the first
@@ -571,32 +639,36 @@ bundle records and never on the name** — H3 calls Gilgit-Baltistan the *Northe
 it the *Gilgit Agency and Baltistan*, and a rule
 reading names would stop protecting a territory the moment a variant renamed one, which is the
 failure #34's own review found in the criterion it was asserting. Two things it does not buy, both
-stated because both are real: it cannot rescue a name that has nowhere to go, which since #50 is a
-*third* failure again and is told apart from the other two by assertion — H2's *Gilgit Agency and
-Baltistan* does not fit its own ground, so it is marked for a callout, and there is then no paper
-either side of it wide enough to take one. A name **outranked** is what #28 fixed; a name **spilled
-over its ground** is what #50 fixed; this is neither. H3's *Northern Areas* was in this paragraph
-until #50 and is not any more: a callout does not have to be over the ground it names, which is what
-a ranking could never buy. And it is not free — A1 had been
+stated because both are real: it cannot rescue a name that has nowhere to go, which is a *third*
+failure told apart from the other two by assertion. A name **outranked** is what #28 fixed; a name
+**spilled over its ground** is what #50 fixed; a name with no paper to be called out onto is
+neither, and both territories that stood here — H3's *Northern Areas* and H2's *Gilgit Agency and
+Baltistan* — have left the paragraph, the first when a callout stopped having to sit over the ground
+it names and the second when the leader stopped being rationed. What answers that third failure is
+`mustName` rather than a ranking, since no priority reaches it. And it is not free — A1 had been
 naming AJK by nudging it clear, and giving it the corner outright is part of why *Rawalpindi* and
 its neighbours are the last names on that variant's map to find room. A5 is the deliberate exception,
 its AJK and GB being *promotions*, recorded as `proposed`, argued as provinces and ranked as the
 proposals they are.
 
-**The bar is not met by A1, A2 and A3, and this says so rather than leaving it to the table.** Those
-three are not transcribed proposals whose author chose the names — they are what the rule engine
-draws (#27), and a rule stated as "no province above 25 million" produces fourteen to sixteen units,
-most of them packed into Punjab and upper Sindh and each named after its capital district. At the
-bar the country is 369px across and central Punjab about 120px of it, while *Bahawalnagar* alone is
-124px of type. There is no packing of six such names into that ground, no attested abbreviation for
-any of them, and inventing one is the thing the short-form table exists to refuse. Since #50 most of
-those units are out on **leaders** into the paper beside the country, and what is left over is what
-the paper could not take: since #51 **six units across the three go unnamed at 390px** — A1's *Rahim
-Yar Khan* and *Bahawalnagar*, A2's *Lahore* and *Faisalabad*, A3's *Rahim Yar Khan* and
-*Bahawalnagar* — listed one by one in the suite, since a floor that said "most of them" would let the
-next variant quietly lose another. It was thirteen across the three before #51, and five more
-outside them; the only unit still unnamed outside A1 to A3 is H2's *Gilgit Agency and Baltistan*,
-which is the territory case below rather than this one.
+**The bar is met by A1, A2 and A3 now, and was not for three passes.** They are not transcribed
+proposals whose author chose the names — they are what the rule engine draws (#27), and a rule stated
+as "no province above 25 million" produces fourteen to sixteen units, most of them packed into
+Punjab and upper Sindh and each named after its capital district. At the bar the country is 369px
+across and central Punjab about 120px of it, while *Bahawalnagar* alone is 124px of type; there is
+no packing of six such names into that ground, no attested abbreviation for any of them, and
+inventing one is the thing the short-form table exists to refuse. It was thirteen names across the
+three, then six, and it is **none**: the units are out on leaders into the paper beside the country,
+and what closed the last six was the leader being allowed to travel and the ladder being allowed to
+let two lines cross rather than lose a name.
+
+**D1 is where it is not met**, and it is a different problem rather than the same one moved. A1
+strands six rule-drawn units in central Punjab; D1 draws **35 units**, eleven of them a single
+district, and eight of those are packed into northern Khyber Pakhtunkhwa where the country is at its
+narrowest. Six go unnamed at 390px — *South Waziristan*, *Torghar*, *Lower Chitral*, *Upper
+Chitral*, *Hyderabad* and *Karachi East* — listed one by one in the suite, since a floor that said
+"most of them" would let the next variant quietly lose another, and each shown to return at desktop
+size.
 
 The property the lists exist to protect is stronger than it was: a unit name on this map is inside
 its own ground, or on paper attached to its ground by a line, or absent — there is no fourth case,
@@ -619,12 +691,14 @@ named with the width each wants rather than allowed to raise the frame for every
 three of the four is the engine's doing rather than a coincidence — the ceiling and the count rules
 each seat a capital there, and the unit around it is small because the population is not.
 
-**D1 adds none to that list, and the reason is the shape of the map rather than luck** (#31). It is
-also rule-drawn and its units are also named for a district, but it draws **eleven** where A1 draws
-eighteen, and each of the eight is half a province rather than one of six units packed into central
-Punjab — so its *Rahim Yar Khan* and *Karachi East* have room where A1's unit of the same name does
-not. Every one of its units is named at the bar, which the suite asserts along with every other
-variant's rather than by name, because the general check is what would catch an eighth.
+**D1 was the variant that added none to that list, and it is now the only one on it** (#31). It cut
+each province in two and drew eleven units, each half a province, so its *Rahim Yar Khan* and
+*Karachi East* had room where A1's units of the same names did not. Under the band rule it draws
+**35**, and the arithmetic reverses with it: the same paper, three times the names, eleven of them
+a district wide. That the list is now one variant long rather than four is a straight consequence of
+the labelling work, and that the one variant on it is D1 is a straight consequence of the content
+change — the two happened in the same pass and are worth keeping apart, since neither caused the
+other.
 
 **District names are the one tier with a zoom threshold** (#34). 156 names over a 369px frame is a
 word search rather than a map, and the district is the building block every proposal is stated in

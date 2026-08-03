@@ -26,7 +26,22 @@
   --neighbour: #ece9df;
 
   --rule-division: #bfb29b;
+  /* The hairline this interface is ruled with — panel borders, table rules, swatch outlines. A
+   * property of the page's chrome, and no longer the colour of anything drawn on the map. */
   --rule-province: #8a7c65;
+
+  /*
+   * The drawn provincial boundary, and the one line on this map that is bold.
+   *
+   * The only cool, unsaturated tone in a warm palette, and that is the whole of the choice. It is
+   * read against two other line colours and must not be mistaken for either: the unit outlines are
+   * warm — dark ink for a boundary carried through, brick red for one that is proposed — and a
+   * fourth warm brown separated from them only by width is what the last two attempts at this were.
+   * A neutral grey belongs to no categorical fill's family either, so it stays itself over the
+   * language palette's blues and the development ramp alike. Weight says *this is the standing
+   * boundary*; hue says *and it is not part of the proposal drawn over it*.
+   */
+  --rule-boundary: #6e7175;
 
   --ink: #33291d;
   --ink-soft: #6d604d;
@@ -413,8 +428,14 @@ body {
   opacity: 0.35;
 }
 
+/*
+ * Held near full strength, where it used to fade to half. The tier is the bold rule the proposal is
+ * read against, and a bold line at 0.5 is a mid-tone line — which put it back at the weight the
+ * unit outlines were already drawn at and undid the distinction on exactly the view that needs it.
+ * It still fades a little, because stratum 3 is what the reader asked for.
+ */
 .map[data-variant='on'] .stratum-provinces {
-  opacity: 0.5;
+  opacity: 0.85;
 }
 
 .stratum-divisions,
@@ -593,26 +614,38 @@ body {
   vector-effect: non-scaling-stroke;
 }
 
+/*
+ * The casing is now narrower than the provincial rule beneath it, and that ordering is load-bearing.
+ * Its job is to lift a hairline off a busy categorical fill, and it did that by laying 4.4px of
+ * paper along the line — which on an unchanged boundary painted out the province underneath and
+ * left the two maps looking like one. Narrower than the boundary, it still separates the unit from
+ * the fill and leaves the bold rule showing on both sides of it.
+ */
 .unit-casing {
   stroke: var(--paper);
-  stroke-opacity: 0.85;
-  stroke-width: 4.4;
+  stroke-opacity: 0.7;
+  stroke-width: 1.8;
 }
 
 .unit-casing-unchanged,
 .unit-casing-territory {
-  stroke-width: 3.6;
+  stroke-width: 1.6;
 }
 
 .unit-line {
   stroke: var(--rule-unit);
-  stroke-width: 1.6;
+  stroke-width: 1;
 }
 
-/* The one thing on screen that does not exist. It is the only thing wearing the accent. */
+/*
+ * The one thing on screen that does not exist. It is the only thing wearing the accent — which is
+ * what tells a proposed line from the boundary it is drawn inside, now that weight says something
+ * else. Thinner than the province rule and a different colour from it: the two never merge, and the
+ * proposal is the line a reader can follow *through* the country's own.
+ */
 .unit-line-proposed {
   stroke: var(--accent);
-  stroke-width: 2.4;
+  stroke-width: 1.4;
 }
 
 /*
@@ -660,10 +693,19 @@ body {
   vector-effect: non-scaling-stroke;
 }
 
+/*
+ * The current provincial boundary, drawn bold and drawn as a line of its own.
+ *
+ * It is the heaviest rule on the map, and that is the point: every unit outline in stratum 3 sits
+ * *inside* it, and on an unchanged province the two are the same geometry drawn twice. At the old
+ * weights the unit line was the wider of the pair, so a reader saw one line and could not tell
+ * which of the two maps it belonged to. Bold underneath and thin on top, in two colours, means both
+ * are legible at once — the country as it is, and the proposal drawn within it.
+ */
 .province {
   fill: none;
-  stroke: var(--rule-province);
-  stroke-width: 1.1;
+  stroke: var(--rule-boundary);
+  stroke-width: 3.2;
   vector-effect: non-scaling-stroke;
 }
 
@@ -676,8 +718,8 @@ body {
  * carries none of it.
  */
 .province-territory {
-  stroke: var(--rule-province);
-  stroke-width: 1.1;
+  stroke: var(--rule-boundary);
+  stroke-width: 3.2;
 }
 
 /*
@@ -692,8 +734,15 @@ body {
 .line-of-control {
   fill: none;
   stroke: var(--ink);
-  stroke-width: 1.35;
-  stroke-dasharray: 4.5 3;
+  /*
+   * Kept a step above the provincial rule, whatever that rule weighs. The relationship above is the
+   * decision — a caveat set fainter than the thing it qualifies is a caveat nobody reads — so when
+   * the boundary went bold this went with it rather than being left as the lightest line on the
+   * most sensitive geometry in the app. The dash grows in proportion, or a heavier stroke closes
+   * the gaps up and leaves a line that reads solid and means the opposite (D12).
+   */
+  stroke-width: 3.4;
+  stroke-dasharray: 6.5 3.5;
   stroke-linecap: butt;
   vector-effect: non-scaling-stroke;
 }
@@ -793,17 +842,40 @@ body {
  */
 .leader path {
   fill: none;
-  stroke: var(--rule-unit);
-  stroke-width: 0.9;
+  stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/*
+ * The line, and it is furniture rather than a boundary: a hairline under the unit outline's own
+ * weight, and set a little short of full strength. A leader that competes with the lines it is
+ * pointing between is a leader read instead of the map.
+ */
+.leader-line {
+  stroke: var(--rule-unit);
+  stroke-opacity: 0.8;
+  stroke-width: 0.8;
+}
+
+/*
+ * The casing: paper laid under the line so that where two leaders cross, the later of the two
+ * leaves a gap in the earlier and the pair reads as one line hopping over another. Wide enough to
+ * make a visible break and no wider — at the unit outlines' 4.4px it would have gone from a hop to
+ * a gouge across the neighbouring line.
+ */
+.leader-casing {
+  stroke: var(--paper);
+  stroke-opacity: 0.92;
+  stroke-width: 2.6;
 }
 
 .leader circle {
   fill: var(--rule-unit);
+  fill-opacity: 0.85;
   stroke: none;
 }
 
-.leader-proposed path {
+.leader-proposed .leader-line {
   stroke: var(--accent);
 }
 
@@ -1004,7 +1076,10 @@ body {
   width: 1.3rem;
 }
 
+/* Keyed in the boundary's own colour, not the interface's hairline: a swatch that does not match
+ * the line it stands for keys nothing. */
 .swatch-province {
+  border-color: var(--rule-boundary);
   background: var(--land);
 }
 
@@ -1850,20 +1925,35 @@ body {
    * which line is a proposal and which is the country. Only the absolute weights come down.
    */
   .unit-casing {
-    stroke-width: 3;
+    stroke-width: 1.4;
   }
 
   .unit-casing-unchanged,
   .unit-casing-territory {
-    stroke-width: 2.4;
+    stroke-width: 1.2;
   }
 
   .unit-line {
-    stroke-width: 1.1;
+    stroke-width: 0.8;
   }
 
   .unit-line-proposed {
-    stroke-width: 1.7;
+    stroke-width: 1.1;
+  }
+
+  /*
+   * The boundary comes down with them, and stays the widest of the three. The ordering is what the
+   * whole treatment is — bold country, thin proposal — and it has to survive the bar, where the same
+   * screen px describe a third as much ground.
+   */
+  .province,
+  .province-territory {
+    stroke-width: 2.4;
+  }
+
+  .line-of-control {
+    stroke-width: 2.6;
+    stroke-dasharray: 5.5 3;
   }
 }
 

@@ -49,6 +49,7 @@ import {
   DISTRICT_LABEL_ZOOM,
   labelKey,
   LEADER_DOT_RADIUS,
+  LEADER_ELBOW_RADIUS,
   LINE_SPACING,
   MAX_LEADER_FRACTION,
   calloutReserve,
@@ -254,6 +255,18 @@ export function renderMap(
   );
   const kindOf = new Map(
     geography.provinces.features.map((f) => [f.properties.name, f.properties.kind]),
+  );
+  /*
+   * The baseline names that may not be dropped for want of clear paper (`LabelBox.mustName`).
+   *
+   * Azad Jammu & Kashmir and Gilgit-Baltistan are drawn *and named*: a territory drawn anonymous is
+   * a claim this map is not entitled to make about ground Pakistan administers. Keyed rather than
+   * matched on the text, since at a narrow frame the text is an abbreviation.
+   */
+  const territoryLabels = new Set(
+    [...kindOf]
+      .filter(([, kind]) => kind === 'territory')
+      .map(([name]) => labelKey('province', name)),
   );
 
   let view = initial;
@@ -755,7 +768,12 @@ export function renderMap(
             },
       );
       drawn.set(site.key, measured);
-      return [measured.box];
+      // A territory's name may not be dropped for want of clear paper — see `mustName`. Asked of
+      // both tiers, because AJK and GB are named as provinces on the baseline and as units under a
+      // variant, and the obligation is to the ground rather than to whichever tier is drawing it.
+      const territoryName =
+        unitKindOf.get(site.key) === 'territory' || territoryLabels.has(site.key);
+      return [territoryName ? { ...measured.box, mustName: true } : measured.box];
     });
 
     const placed = layoutLabels(boxes, {
@@ -779,6 +797,35 @@ export function renderMap(
      * means a proposed province and nothing else (D14). Screen px at every zoom, like the type it
      * carries and like the city dots.
      */
+    /**
+     * One leader, drawn with its corner turned.
+     *
+     * A right angle in a 0.8px line reads as the corner of a box; a turned one reads as a line
+     * going somewhere, which is what a leader is. The radius is capped against both legs, so a
+     * short leader turns a smaller corner instead of overshooting its own ends, and a leader with
+     * no bend at all — rung zero, which the ranking now reaches for first — comes out as the plain
+     * straight run it is.
+     */
+    const leaderPath = ({ from, elbow, to }: PlacedLabel['leader'] & object): string => {
+      const first = Math.hypot(elbow[0] - from[0], elbow[1] - from[1]);
+      const second = Math.hypot(to[0] - elbow[0], to[1] - elbow[1]);
+      const radius = Math.min(LEADER_ELBOW_RADIUS, first / 2, second / 2);
+      if (!(radius > 0.5)) return `M${from[0]},${from[1]}L${elbow[0]},${elbow[1]}L${to[0]},${to[1]}`;
+      const before: [number, number] = [
+        elbow[0] + ((from[0] - elbow[0]) / first) * radius,
+        elbow[1] + ((from[1] - elbow[1]) / first) * radius,
+      ];
+      const after: [number, number] = [
+        elbow[0] + ((to[0] - elbow[0]) / second) * radius,
+        elbow[1] + ((to[1] - elbow[1]) / second) * radius,
+      ];
+      return (
+        `M${from[0]},${from[1]}L${before[0]},${before[1]}` +
+        `Q${elbow[0]},${elbow[1]} ${after[0]},${after[1]}` +
+        `L${to[0]},${to[1]}`
+      );
+    };
+
     const leaders = placed.flatMap((label) =>
       label.leader === undefined
         ? []
@@ -789,21 +836,20 @@ export function renderMap(
       .data(leaders, (d) => d.key)
       .join((enter) => {
         const group = enter.append('g');
-        group.append('path');
+        // Two paths carrying the same geometry, on the unit outlines' own reasoning: a casing in
+        // the paper's colour under the line, so that where two leaders cross, the later one is
+        // drawn with a gap in the earlier — the line hops rather than colliding. In a corner where
+        // eight units share a margin that is the difference between a bundle of wires and a set of
+        // annotations, and it costs nothing but a second stroke.
+        group.append('path').attr('class', 'leader-casing');
+        group.append('path').attr('class', 'leader-line');
         group.append('circle').attr('r', LEADER_DOT_RADIUS);
         return group;
       })
       .attr('class', (d) => `leader leader-${d.kind}`)
       .call((group) => {
-        group
-          .select<SVGPathElement>('path')
-          .attr(
-            'd',
-            (d) =>
-              `M${d.leader.from[0]},${d.leader.from[1]}` +
-              `L${d.leader.elbow[0]},${d.leader.elbow[1]}` +
-              `L${d.leader.to[0]},${d.leader.to[1]}`,
-          );
+        group.select<SVGPathElement>('.leader-casing').attr('d', (d) => leaderPath(d.leader));
+        group.select<SVGPathElement>('.leader-line').attr('d', (d) => leaderPath(d.leader));
         group
           .select<SVGCircleElement>('circle')
           .attr('cx', (d) => d.leader.to[0])

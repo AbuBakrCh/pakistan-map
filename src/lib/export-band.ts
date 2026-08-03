@@ -601,6 +601,8 @@ export interface BandPalette {
   readonly accent: string;
   readonly ruleUnit: string;
   readonly ruleProvince: string;
+  /** The drawn provincial boundary's own colour, which the province swatch has to be. */
+  readonly ruleBoundary: string;
   readonly ruleDivision: string;
 }
 
@@ -639,19 +641,19 @@ export function swatchInk(swatch: BandSwatch, palette: BandPalette): SwatchInk {
       // The accent belongs to `proposed` units and to nothing else. A unit carried through
       // unchanged is drawn at unit weight in the map's own ink, and so is its swatch.
       return swatch.unit === 'proposed'
-        ? { shape: 'rule', stroke: palette.accent, width: 2.4, dash: null }
-        : { shape: 'rule', stroke: palette.ruleUnit, width: 1.6, dash: null };
+        ? { shape: 'rule', stroke: palette.accent, width: 1.4, dash: null }
+        : { shape: 'rule', stroke: palette.ruleUnit, width: 1, dash: null };
     case 'rule':
       switch (swatch.rule) {
         case 'province':
-          return { shape: 'block', fill: palette.land, stroke: palette.ruleProvince };
+          return { shape: 'block', fill: palette.land, stroke: palette.ruleBoundary };
         case 'territory':
           return { shape: 'block', fill: `url(#${BAND_HATCH})`, stroke: palette.inkFaint };
         case 'division':
           return { shape: 'rule', stroke: palette.ruleDivision, width: 1, dash: null };
         case 'dashed':
           // The same dash the map draws, or the entry keys a line the reader cannot find.
-          return { shape: 'rule', stroke: palette.ink, width: 1.35, dash: '4 3' };
+          return { shape: 'rule', stroke: palette.ink, width: 3.4, dash: '6.5 3.5' };
       }
   }
 }

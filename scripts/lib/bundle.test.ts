@@ -24,7 +24,8 @@ import {
 import { assemblePolygons, type OsmMember } from './rings.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
-import { GRADIENT_RULE, splitByDevelopmentGradient } from './development-partition.ts';
+import { BAND_RULE, groupByDevelopmentBand } from './development-partition.ts';
+import { INDEX_BANDS, bandOf } from './development-index.ts';
 import { districtCentroids } from './centroids.ts';
 import {
   haversineKm,
@@ -1628,25 +1629,35 @@ describe('bundle D1, the map service access draws (#31)', () => {
     ),
   );
 
-  /** The rule, re-run from the committed census, the committed graph and the committed composite. */
+  /**
+   * The rule, re-run from the committed census, the committed graph and the committed composite.
+   *
+   * The bands come from `bandOf` applied to the committed scores — the same function that wrote
+   * `development-index.json` — rather than from the artifact's own `band` field, so that this
+   * re-derivation runs the cut as well as the grouping. Reading the band back out of the file would
+   * leave the one arithmetic step between a score and a colour unchecked by the seam that exists to
+   * check it.
+   */
   const rerun = () => {
-    const { partition, problems } = splitByDevelopmentGradient({
+    const { partition, problems } = groupByDevelopmentBand({
       provinces: ROSTER.filter((e) => e.kind !== 'territory' && e.districts.length > 1).map((e) => ({
         province: e.name,
         districts: e.districts,
       })),
       graph,
+      bands: INDEX_BANDS,
+      districtBands: new Map([...scores].map(([d, score]) => [d, bandOf(score).id])),
       scores,
       populations,
     });
     expect(problems).toEqual([]);
-    if (partition === null) throw new Error('the development gradient drew nothing');
+    if (partition === null) throw new Error('the development bands drew nothing');
     return partition;
   };
 
-  it('re-cuts every province and finds the halves that shipped', () => {
+  it('re-groups every province and finds the units that shipped', () => {
     // The whole of what a `derived` badge promises. A line nothing re-derives is an editorial
-    // opinion with a rule written under it, and this one is cut at a figure the project itself
+    // opinion with a rule written under it, and this one is drawn at a figure the project itself
     // defines — so it is the derived boundary in the app with the most to prove.
     const partition = rerun();
     const shipped = new Map(
@@ -1655,38 +1666,76 @@ describe('bundle D1, the map service access draws (#31)', () => {
         .map((u) => [u.name, [...u.districts].sort()]),
     );
     const derived = new Map(
-      partition.splits.flatMap((split) => [
-        [split.lower.principal, [...split.lower.districts].sort()] as const,
-        [split.higher.principal, [...split.higher.districts].sort()] as const,
-      ]),
+      partition.units.map((unit) => [unit.principal, [...unit.districts].sort()] as const),
     );
     expect([...shipped.keys()].sort()).toEqual([...derived.keys()].sort());
     for (const [name, districts] of shipped) {
       expect(districts, name).toEqual(derived.get(name));
     }
-    // Eight halves out of four provinces, named for the most populous district in each — which is
+    // The order too, since the units are emitted province by province and band by band and the
+    // card reads them in that order: a rebuild that wrote the same set in a different order would
+    // be a diff in `scenarios.json` with no boundary change under it.
+    expect([...shipped.keys()]).toEqual([...derived.keys()]);
+    // Thirty-two units out of four provinces, each named for its most populous district — which is
     // a description of an output and is said to be one on the card.
-    expect([...shipped.keys()]).toEqual([
-      'Shangla',
-      'Peshawar',
-      'Rahim Yar Khan',
-      'Lahore',
-      'Sanghar',
-      'Karachi East',
-      'Khuzdar',
-      'Quetta',
-    ]);
+    expect(shipped.size).toBe(32);
+  });
+
+  it('is what the census makes of the rule, not a number of provinces anybody chose', () => {
+    /*
+     * The unit count is a **finding**. Nothing in this engine is optimised and no target was
+     * stated, so the only honest thing to assert is what the 2023 census actually produces — and to
+     * assert it per province, because the spread between them is the finding the card reports:
+     * Khyber Pakhtunkhwa's valleys, settled plain and western districts are served far more
+     * unevenly than Punjab's, and come out in three times as many units.
+     */
+    const provinceOf = new Map<string, string>(
+      Object.entries(statistics.districts as Record<string, { province: string }>).map(
+        ([district, record]) => [district, record.province],
+      ),
+    );
+    const perProvince: Record<string, number> = {};
+    for (const unit of d1().units.filter((u) => u.kind === 'proposed')) {
+      const province = provinceOf.get(unit.districts[0] as string) as string;
+      perProvince[province] = (perProvince[province] ?? 0) + 1;
+      // Every district of a unit is in the unit's own province: the rule does not cross a
+      // provincial boundary, which is the condition most easily lost without anything noticing.
+      for (const district of unit.districts) {
+        expect(provinceOf.get(district), `${unit.name}: ${district}`).toBe(province);
+      }
+    }
+    expect(perProvince).toEqual({
+      'Khyber Pakhtunkhwa': 13,
+      Balochistan: 8,
+      Sindh: 7,
+      Punjab: 4,
+    });
+  });
+
+  it('draws the fragments rather than absorbing them, and names them on the card', () => {
+    // Eleven of the thirty-two are a single district whose neighbours are all served differently.
+    // Absorbing them would take a second rule with nothing published behind it — a size below which
+    // a group is too small to be a province — so they are drawn, and the card lists them by name.
+    const singles = d1()
+      .units.filter((u) => u.kind === 'proposed' && u.districts.length === 1)
+      .map((u) => u.name);
+    expect(singles).toHaveLength(11);
+    const prose = d1().footnotes.map((f) => f.text).join('\n');
+    for (const name of singles) expect(prose, name).toContain(name);
+    expect(prose).toContain('would take a second rule');
   });
 
   it('quotes the engine’s own rule on the card, not a paraphrase of it', () => {
     const composition = d1().composition;
     expect(composition.kind).toBe('derived');
     if (composition.kind !== 'derived') return;
-    expect(composition.rule).toBe(GRADIENT_RULE);
-    // The tie-break is on the card, because which district the lower half takes next is the half
-    // of the rule that actually decides where the line lands.
-    expect(composition.rule).toContain('lower district name');
-    expect(composition.rule).toContain('natural break');
+    expect(composition.rule).toBe(BAND_RULE);
+    // All three conditions are on the card, because any two of them draw a different map — and so
+    // is the absence of any optimisation, which is what a reader would otherwise assume was there.
+    expect(composition.rule).toContain('same development band');
+    expect(composition.rule).toContain('same province');
+    expect(composition.rule).toContain('shared district borders');
+    expect(composition.rule).toContain('Nothing is optimised');
   });
 
   it('carries both claims in its badges: the census’s rates and this project’s mean of them', () => {
@@ -1743,19 +1792,17 @@ describe('bundle D1, the map service access draws (#31)', () => {
     ]);
   });
 
-  it('says on every unit which half of which province it is, and what it scored', () => {
-    // The names are district names, so without this a reader has eight units and no way to tell
-    // which two are one province cut in two, or which of the two is which.
+  it('says on every unit which band of which province it is, and what it scored', () => {
+    // The names are district names, so without this a reader has thirty-two units and no way to
+    // tell which province one belongs to, which colour it is, or why two of the same colour in the
+    // same province are two units. Every unit says all three on its own line.
     const partition = rerun();
-    for (const split of partition.splits) {
-      for (const [half, side] of [
-        [split.lower, 'lower'],
-        [split.higher, 'higher'],
-      ] as const) {
-        const unit = d1().units.find((u) => u.name === half.principal);
-        expect(unit?.note, half.principal).toContain(`${side} half of ${split.province}`);
-        expect(unit?.note, half.principal).toContain(`${(half.mean * 100).toFixed(1)}%`);
-      }
+    for (const unit of partition.units) {
+      const shipped = d1().units.find((u) => u.name === unit.principal);
+      expect(shipped?.note, unit.principal).toContain(`of ${unit.province} in the`);
+      expect(shipped?.note, unit.principal).toContain(`${unit.band.label} band`);
+      expect(shipped?.note, unit.principal).toContain(`${(unit.mean * 100).toFixed(1)}%`);
+      expect(shipped?.note, unit.principal).toContain('touching one another');
     }
   });
 
@@ -1787,80 +1834,81 @@ describe('bundle D1, the map service access draws (#31)', () => {
   it('reports what it agrees with and what it does not, rather than being tuned until it agrees', () => {
     /*
      * The finding #31 is written around, and the one sentence on this card most able to become
-     * false without anybody noticing — the census moves, the break moves, and a claim about which
+     * false without anybody noticing — the census moves, the bands move, and a claim about which
      * districts two independent lines agree on goes on sitting there. So it is re-derived here from
      * L1's own district list and from the partition, and the disagreement is held as well as the
-     * agreement: this rule does *not* reproduce interior Sindh or interior Balochistan, and the
-     * card says so.
+     * agreement.
+     *
+     * The comparison is against **the ground outside Punjab's best-served group**, since what the
+     * Seraiki claim is being read against is what this rule leaves out of the province's largest
+     * unit. Under the cutting rule that was "the lower half"; under the grouping rule Punjab comes
+     * out in four units and the question is the same one asked of a set rather than of a half.
      */
     const southPunjab = new Set(
       (variants.find((v) => v.id === 'l1') as EmittedVariant).units.find(
         (u) => u.name === 'South Punjab',
       )?.districts ?? [],
     );
-    const lower = new Set(
-      d1().units.find((u) => u.name === 'Rahim Yar Khan')?.districts ?? [],
+    const provinceOf = new Map<string, string>(
+      Object.entries(statistics.districts as Record<string, { province: string }>).map(
+        ([district, record]) => [district, record.province],
+      ),
     );
-    const shared = [...southPunjab].filter((d) => lower.has(d));
+    const punjabUnits = d1().units.filter(
+      (u) => u.kind === 'proposed' && provinceOf.get(u.districts[0] as string) === 'Punjab',
+    );
+    const served = [...punjabUnits].sort((a, b) => b.districts.length - a.districts.length)[0];
+    const outside = new Set(
+      punjabUnits.flatMap((u) => (u.name === served?.name ? [] : u.districts)),
+    );
+    const shared = [...southPunjab].filter((d) => outside.has(d));
     expect(southPunjab.size).toBe(11);
-    expect(shared).toHaveLength(9);
-    // The two it does not take, and the two of L2's wider reading that it does — which is the
-    // convergence, stated as the near-miss it actually is rather than as a match.
-    expect([...southPunjab].filter((d) => !lower.has(d)).sort()).toEqual(['Khanewal', 'Multan']);
-    for (const district of ['Mianwali', 'Bhakkar']) expect([...lower]).toContain(district);
+    expect(shared).toHaveLength(8);
+    // The three it keeps in the best-served group, and the five it adds — which is the convergence,
+    // stated as the near-miss it actually is rather than as a match.
+    expect([...southPunjab].filter((d) => !outside.has(d)).sort()).toEqual([
+      'Khanewal',
+      'Multan',
+      'Vehari',
+    ]);
+    expect([...outside].filter((d) => !southPunjab.has(d)).sort()).toEqual([
+      'Bhakkar',
+      'Chiniot',
+      'Jhang',
+      'Khushab',
+      'Pakpattan',
+    ]);
 
     const note = d1().notes.find((n) => n.label === 'What it agrees with, and what it does not');
-    expect(note?.text).toContain('9 of South Punjab’s 11 drawn districts');
-    expect(note?.text).toContain('Khanewal and Multan');
-    expect(note?.text).toContain('not the interior against Karachi');
+    expect(note?.text).toContain('8 of South Punjab’s 11 drawn districts');
+    expect(note?.text).toContain('Khanewal and Multan and Vehari');
     expect(note?.relatedVariants).toEqual(['l1', 'l2', 'l3']);
 
     /*
-     * And the half of that sentence about Sindh and Balochistan, checked against the partition
-     * rather than against itself — which is the discipline H2's four figures are already held to.
-     * `toContain('not the interior against Karachi')` only asserts that the card says what the
-     * card says: the clause is a static literal over two computed unit lists, so a census that
-     * moved either break would leave the sentence sitting there, true of nothing.
+     * And the half of that sentence about the other provinces, checked against the partition rather
+     * than against itself — the discipline H2's four figures are already held to. The clause is a
+     * static literal over computed unit lists, so a census that moved the bands would leave the
+     * sentence sitting there, true of nothing.
      *
-     * What the prose claims is a *negative* in each province, and each is the reading a reader
-     * would otherwise assume the rule had found.
+     * What the prose claims is a comparison: several units each in Sindh and Balochistan, and more
+     * in Khyber Pakhtunkhwa than in any of them. That is the shape of the finding, and it is the
+     * reading a reader would otherwise assume the rule had *not* found, since the obvious guess for
+     * a development map is one line per province.
      */
-    const unitHolding = (district: string): readonly string[] =>
-      d1().units.find((u) => u.districts.includes(district))?.districts ?? [];
-
-    // Sindh separates the south-east, not the interior against Karachi: Karachi's six districts
-    // are in the same unit as Larkana, Sukkur and Khairpur, which is exactly what "the interior
-    // against Karachi" would have split apart.
-    const withKarachi = new Set(unitHolding('Karachi South'));
-    for (const interior of ['Larkana', 'Sukkur', 'Khairpur', 'Dadu']) {
-      expect([...withKarachi], `Sindh: ${interior} sits with Karachi`).toContain(interior);
+    const perProvince = (province: string) =>
+      d1().units.filter(
+        (u) => u.kind === 'proposed' && provinceOf.get(u.districts[0] as string) === province,
+      ).length;
+    expect(note?.text).toContain('Sindh and Balochistan come out in several pieces each');
+    expect(perProvince('Sindh')).toBeGreaterThan(1);
+    expect(perProvince('Balochistan')).toBeGreaterThan(1);
+    expect(note?.text).toContain('Khyber Pakhtunkhwa in more than any of them');
+    for (const province of ['Sindh', 'Balochistan', 'Punjab']) {
+      expect(
+        perProvince('Khyber Pakhtunkhwa'),
+        `Khyber Pakhtunkhwa against ${province}`,
+      ).toBeGreaterThan(perProvince(province));
     }
-    const southEast = new Set(unitHolding('Tharparkar'));
-    for (const district of ['Badin', 'Thatta', 'Umerkot', 'Sanghar', 'Mirpur Khas']) {
-      expect([...southEast], `Sindh: ${district} is in the south-eastern half`).toContain(district);
-    }
-    expect(southEast.has('Karachi South')).toBe(false);
-
-    // Balochistan separates the eastern belt, not everything outside Quetta: Quetta's half is the
-    // large one and holds the west and the coast, so the cut is not the capital against the rest.
-    const withQuetta = new Set(unitHolding('Quetta'));
-    for (const far of ['Gwadar', 'Kech', 'Chagai', 'Panjgur', 'Washuk']) {
-      expect([...withQuetta], `Balochistan: ${far} sits with Quetta`).toContain(far);
-    }
-    const lowerBelt = new Set(unitHolding('Kohlu'));
-    for (const district of ['Barkhan', 'Dera Bugti', 'Musa Khel', 'Sherani', 'Jaffarabad']) {
-      expect([...lowerBelt], `Balochistan: ${district} is in the lower belt`).toContain(district);
-    }
-    // The belt runs south-west out of the eastern districts through the Kalat highlands, which is
-    // what the card calls it and is not the same sentence as "everything outside Quetta": Kalat
-    // and Khuzdar are in it, Mastung and Sibi between them and Quetta are not.
-    for (const district of ['Kalat', 'Khuzdar']) {
-      expect([...lowerBelt], `Balochistan: ${district} is in the lower belt`).toContain(district);
-    }
-    for (const district of ['Mastung', 'Sibi', 'Loralai']) {
-      expect([...withQuetta], `Balochistan: ${district} sits with Quetta`).toContain(district);
-    }
-    expect(lowerBelt.has('Quetta')).toBe(false);
   });
 
   it('is unadvocated, opposed anyway, and says both in the schema’s own shapes', () => {

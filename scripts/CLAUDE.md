@@ -11,7 +11,7 @@ Split by failure mode, so network flakiness never contaminates geometry work:
 |---|---|---|
 | `scripts/fetch-osm.ts` | `build:data:fetch` | Network only. Admin levels 4, 5, 6, the coastline, the four neighbour countries and the first-level `admin_centre` nodes → `data/raw/`, retrying across four Overpass mirrors. Level 4 sources ICT and, now, each unit's seat |
 | `scripts/normalize-geometry.ts` | `build:data:normalize` | Filters strays → folds post-census units into their 2023 parent → injects ICT → stitches rings → clips coastal districts to the coastline → derives the Line of Control from ways shared with India's own relations → merges all three tiers **and the line** from one shared arc set → simplifies → `data/bundle/geography.topojson.json` |
-| `scripts/build-scenarios.ts` | `build:data:scenarios` | Reads the census, the borders **and the development composite** first, because `variants.ts` is a function of all three — ten variants are literals, L6 and L7 are drawn here from Table 11's plurality (#26), A1 to A4 from population and distance (#28) and D1 from the composite (#31). Refuses a composite computed over a census join stamped differently from the one it is reading, since a boundary cut at scores taken over figures the rest of the map no longer carries is undetectable from its own contents. Then validates every variant as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant. Refuses, besides, a basis or a variant short of a badge, a source or a vintage; a badge outside the closed vocabulary; a `census` badge at a vintage that is not the project's; and a boundary this build derived that does not say so — each naming the basis or variant and the word (#21) |
+| `scripts/build-scenarios.ts` | `build:data:scenarios` | Reads the census, the borders **and the development composite** first, because `variants.ts` is a function of all three — ten variants are literals, L6 and L7 are drawn here from Table 11's plurality (#26), A1 to A4 from population and distance (#28) and D1 from the composite (#31). Refuses a composite computed over a census join stamped differently from the one it is reading, since a boundary drawn at scores taken over figures the rest of the map no longer carries is undetectable from its own contents. Then validates every variant as a **complete partition** and bakes it to `data/bundle/scenarios.json`. Fails on a claimed district that is not a district, a district two units both claim, or a district no unit claims — naming the district and, for an overlap, both units. Resolves each claim onto the 2023 set through the same fold table the geometry uses, so the artifact carries the claim *and* the drawing: South Punjab is stated as 13 districts and drawn as 11. Then **dissolves each unit** out of its districts' arcs → `data/bundle/unit-outlines.json`, and derives the **district adjacency graph** from that same arc set → `data/bundle/adjacency.json`, which is what every unit's contiguity flag is read off. Also sums each unit's population out of `statistics.json` and bakes the **scorecard** (#20) onto every variant. Refuses, besides, a basis or a variant short of a badge, a source or a vintage; a badge outside the closed vocabulary; a `census` badge at a vintage that is not the project's; and a boundary this build derived that does not say so — each naming the basis or variant and the word (#21) |
 | `scripts/build-context.ts` | `build:data:context` | Stitches each neighbour relation into closed polygons with the districts' own stitcher → intersects them with `CONTEXT_EXTENT` → pairs each first-level unit with its `admin_centre` node → simplifies to 4% and quantizes → `data/bundle/context.topojson.json`. Fails on a country whose ISO code is not in the cache, a ring that will not stitch shut, a silhouette that clips to nothing, a shape that does not contain its own capital, or a unit with no seat — each named. **A separate artifact from the geography bundle, deliberately:** nothing here shares an edge with anything in there, and merging them would renumber every arc in the country to add a background and imply the two sides of a border are one line. Quantization comes *after* simplification, the opposite order from the geometry build, because `presimplify` restores absolute coordinates for arcs and not for **points** — quantized first, every city dot lands in the Bay of Bengal |
 | `scripts/build-development.ts` | `build:data:development` | Reads the three published rates out of `statistics.json` → takes the **unweighted mean** of them per district → bands each at fixed cuts → `data/bundle/development-index.json`, with the formula, the band method, the range, the counts per band and the twenty districts the census does not reach recorded beside the scores. Fails on a census district with no development block, a rate that is not a proportion in 0–1, a score that falls in no band, or a district set that is not the 136 — each naming the district. **A separate artifact from the census join, deliberately:** that one is PBS's figures and this one is the figure nobody published, and a `synthesized` number inside a `census` artifact is one field away from being read as another published column |
 | `scripts/join-census.ts` | `build:data:census` | Reads the committed `PakPC2023` `.RData` cache → resolves census spellings onto the roster → sums districts and reconciles them upward: divisions against the package's own division table, provinces and the national total against PBS Table 1; sums Table 11's tehsils into districts and reconciles every language column against PBS's printed province figures; sums Tables 12, 23 and 24's tehsils into districts and reconciles all eight development counts against PBS's printed province figures; joins the transcribed **Table 1 district areas** (#49) onto the same roster and reconciles them to the five published province areas and the 796,096 km² national one, checking each transcribed row against the population printed beside it → `data/bundle/statistics.json`. Fails on an unplaced row, an uncovered district, an unknown language category, a count larger than the universe it is part of, a total that does not add up, an area row that matches no district or lands on one twice, a census district with no published area, or a transcribed population that is neither the package's nor one of the eight pinned differences. The emitted artifact records, per tier, which source the check was against |
@@ -55,7 +55,7 @@ rather than reaching into `scripts/`.
 document to transcribe — nobody publishes a district list for "the Pashto-plurality districts of
 Balochistan", nobody at all proposes assigning every district in Pakistan by its plurality mother
 tongue, nobody publishes one for "no province above 25 million people" either, and nobody publishes
-one for "split each province where its development gradient is steepest".
+one for "the districts the census serves alike, grouped where they touch".
 Their boundaries are computed in the one build that already reads the census and the adjacency
 graph, which is what keeps the repo to a single derivation: baking the district lists into a
 committed reference file would have put a second one in the tree to keep honest. Two of the seven
@@ -454,43 +454,53 @@ surface, and the two places the card does use it are the sentences refusing it.
 
 Shared pure logic lives in `scripts/lib/` with tests beside it.
 
-**D1 is the variant that composite draws** (#31) — each province cut in two where the census says
-its internal gradient of service access divides most sharply, and the last of the seventeen.
-`scripts/lib/development-partition.ts` computes it in two steps. The lower unit grows outward from
-the province's lowest-scoring district across shared district borders, taking the lowest-scoring
-district on its edge each time, so **every candidate cut is connected by construction** — and the
-*complement* is checked too, since a whole lower half can still leave the rest of a province in two
-pieces, and such a cut is simply not a candidate. Among those cuts the rule takes the
-**one-dimensional natural break**, `k(n−k)(mean high − mean low)² ÷ n²`, which is Fisher's and
-Jenks's criterion and not ours. The obvious reading of "steepest" — the largest single step between
-two consecutive districts — was tried and rejected on the data: it peels off one district per
-province (Punjab would be Rajanpur and everything else), because a largest gap finds an outlier
-where a natural break finds a division. The cost of the choice is stated on the card: in **Punjab**
-the two districts either side of the break are 0.2 points apart, because Punjab's gradient is a long
-smooth slope rather than a cliff, so what the rule finds there is where the province divides most
-cleanly overall and not where two neighbours differ most.
+**D1 is the variant that composite draws** (#31) — the districts the census serves alike, grouped
+where they touch, and the last of the seventeen. `scripts/lib/development-partition.ts` computes it
+from three conditions and nothing else: a unit is the **largest group of districts that share a
+development band, share a province, and reach each other across shared district borders**. Each of
+the three does work. The **bands** are the shading's own four at their fixed cuts — under 50%, 50 to
+65%, 65 to 80%, 80% and above — applied through the same `bandOf` that wrote
+`development-index.json`, so a unit is exactly a run of one colour and the line drawn over a
+district is the line between two fills a reader can already see. The **province** is a boundary the
+rule does not cross, deliberately: Punjab's best-served districts and Khyber Pakhtunkhwa's are the
+same colour and are not the same place, and joining them would draw a province out of two provinces'
+halves — a redraw of the federation rather than of a province. **Adjacency** is the method rather
+than a filter, as it is in the two engines next door: a unit is a connected component of #16's
+graph, so it cannot come out in two pieces and there is nothing for a contiguity flag to say.
 
-**What it draws is 11 units and one finding that is only half the finding #31 expected.** Eight
-halves out of the four provinces, named for the most populous district in each — Shangla and
-Peshawar, Rahim Yar Khan and Lahore, Sanghar and Karachi East, Khuzdar and Quetta — plus
-Islamabad Capital Territory, which is a single district with no internal gradient and is carried
-through unchanged, plus the two territories, which have no index at all because PBS published none
-of the three rates for their twenty districts (D25). 135 of 156 districts move, every census
-district but Islamabad's, for the reason A1 to A4 already give: not one of the eight halves carries
-the name of the province it came out of. Spread 39.3 : 1, and **nought non-contiguous units**,
-because contiguity is the method here as it is in the other two engines.
+**Nothing in it is optimised, and the unit count is a finding rather than a setting.** There is no
+statistic being maximised and no number to tune. The rule replaced one that cut each province in two
+at the one-dimensional natural break — Fisher's and Jenks's criterion — and the change is a change
+of question rather than of tuning: that rule asked *where does this province divide most sharply*
+and this one asks *which districts does the census serve alike*. The card says so in as many words,
+because "steepest", "best" and "most even" are all things a reader would otherwise assume a
+development map had found.
 
-**Punjab is the case the ticket was right about and Sindh and Balochistan are not, and the card says
-so rather than the rule being tuned until they are.** The lower half of Punjab contains **9 of South
-Punjab's 11 drawn districts** — all but Multan and Khanewal — and adds the Thal, including exactly
-the two districts (Mianwali and Bhakkar) that L2's wider reading of the Seraiki claim adds. That
+**What it draws is 35 units, and two of its costs are stated on the card rather than smoothed
+away.** Thirty-two groups out of the four provinces — 13 in Khyber Pakhtunkhwa, 8 in Balochistan, 7
+in Sindh and 4 in Punjab — each named for its most populous district, plus Islamabad Capital
+Territory, which the caller keeps out of the scope so that it is drawn as the capital territory it
+is rather than renamed after its one district, plus the two territories, which have no index at all
+because PBS published none of the three rates for their twenty districts (D25). The first cost is
+that **fragments are units**: eleven of the thirty-two are a single district whose neighbours are
+all served differently, Gwadar and Hyderabad and Layyah among them, and absorbing them would take a
+second rule with nothing published behind it and a threshold nobody sourced. The second is the
+**spread**, at 456.4 : 1 — one 80%-and-above group runs from Attock to Vehari and holds 89 million
+people where Upper Chitral holds 195,528 — because the rule is stated in service access and says
+nothing whatever about population. 135 of 156 districts move, every census district but Islamabad's,
+for the reason A1 to A4 already give: not one of the thirty-two carries the name of the province it
+came out of. **Nought non-contiguous units**, by construction.
+
+**Punjab is the case the ticket was right about, and the card reports the rest as it ran.** The
+ground outside Punjab's best-served group contains **8 of South Punjab's 11 drawn districts** — all
+but Multan, Khanewal and Vehari — and adds five more across the Thal and the centre. That
 convergence is computed from L1's own district list in the same run rather than asserted, because it
-is the sentence on that card most able to become false without anybody noticing. What separates in
-**Sindh** is the south-east — Tharparkar, Umerkot, Badin, Mirpur Khas, Sanghar, Sujawal, Thatta and
-Tando Mohammad Khan — and not the interior against Karachi; in **Balochistan** it is a belt
-running from the eastern districts south-west through the Kalat highlands, and not everything
-outside Quetta. A rule adjusted to agree
-with the claims it is meant to be independent of has nothing left to say about them.
+is the sentence on that card most able to become false without anybody noticing. Where the agreement
+stops is now a different shape of statement from the old rule's, and the card says that too: this
+rule does not divide a province in two, so Sindh and Balochistan come out in several pieces each and
+Khyber Pakhtunkhwa in more than either — its valleys, its settled plain and its western districts
+are served too differently for one line to be the story. A rule adjusted to agree with the claims it
+is meant to be independent of has nothing left to say about them.
 
 Every relation must be classified. A relation matching no 2023 district and no fold rule
 **fails the build** rather than being skipped — a silent discard is how the district set drifts

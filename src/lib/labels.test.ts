@@ -17,12 +17,10 @@ import {
   labelAnchor,
   labelKey,
   labelLines,
+  wrappedLines,
   labelPolygon,
   labelText,
-  landSpanAt,
   layoutLabels,
-  LEADER_CLEAR,
-  LEADER_GAP,
   LABEL_CLEARANCE,
   CALLOUT_SCALE,
   MAX_LEADER_FRACTION,
@@ -145,13 +143,21 @@ describe('the division tier, drawn only when it is asked for', () => {
    * five of them in one case is a timeout rather than a failure.
    */
   for (const id of ['a1', 'a2', 'a3', 'h2', 'l7']) {
-    it(`rescues not one of ${id}'s unit names at the 390px bar`, () => {
-      const withDivisions = variantAt(id, BAR_390);
-      const without = layOutVariantAt(id, BAR_390, { divisions: false });
-      const unnamed = (drawn: { units: readonly string[]; placed: ReadonlySet<string> }) =>
-        drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
-      expect(unnamed(without), id).toEqual(unnamed(withDivisions));
-    });
+    it(
+      `rescues not one of ${id}'s unit names at the 390px bar`,
+      () => {
+        const withDivisions = variantAt(id, BAR_390);
+        const without = layOutVariantAt(id, BAR_390, { divisions: false });
+        const unnamed = (drawn: { units: readonly string[]; placed: ReadonlySet<string> }) =>
+          drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
+        expect(unnamed(without), id).toEqual(unnamed(withDivisions));
+      },
+      // Two whole layouts of a crowded variant at the bar, and a callout now walks 27 rungs on both
+      // sides through five passes where it walked 11 through two. These were landing at 4.0–4.6s
+      // against the 5s default and failing intermittently on the clock rather than on the claim,
+      // which is the worst kind of red: it points at the assertion and means nothing of the sort.
+      20_000,
+    );
   }
 });
 
@@ -702,45 +708,40 @@ describe('a variant at the 390px bar', () => {
   /**
    * The units this build cannot name at 390px — listed, because a count would hide which.
    *
-   * **#51 cut it from twenty-one names across nine variants to seven across four**, and the four
-   * changes that did it are worth naming because each is a different lever. A name is now set down
-   * to **7.5px** rather than to the district tier's 8.5px, a name that will not fit at its anchor is
-   * offered the **roomiest lobe of its own ground** before the type is set down at all, a callout is
-   * set at `CALLOUT_SCALE` rather than at full size and so needs a fifth less paper, and the leader
-   * may run to **0.6 of the frame's shorter side**, which is what reaches the margin from the middle
-   * of the country.
+   * **The 390px bar is now met by sixteen of the seventeen variants.** It was twenty-one names
+   * across nine variants before #51, seven across four after it, and six on one variant now — A1 to
+   * A3, whose rule-drawn units in central Punjab were the standing example of the bar going unmet,
+   * name every unit at the bar, and so does H2, whose *Gilgit Agency and Baltistan* is the longest
+   * unit name in the app. Four levers did that, and each is a different one:
    *
-   * Six units left the list outright — A1's *Gujranwala*, *Lahore*, *Faisalabad* and *Peshawar*,
-   * A2's *Gujranwala* and *Dera Ghazi Khan*, A3's *Multan* and *Lahore*, A4's *Killa Abdullah*, H2's
-   * *Las Bela* and *Nagar*, H3's and L4's *Islamabad Capital Territory*, L6's *Southern
-   * Pakhtunkhwa*, and all three of L7's. Two joined it: A1's and A3's *Rahim Yar Khan*, which used
-   * to be named and now wants a callout in paper its neighbours reach first. That is the currency
-   * this keeps being paid in, and it is stated rather than netted off.
+   *  - A name that does not fit on one line is **broken between its words** (`wrappedLines`), so a
+   *    three-word name is as wide as its wider half rather than as wide as the sum.
+   *  - The type floor came down from 7.5px to **6.5px** (`MIN_UNIT_LABEL_SCALE`).
+   *  - A leader may **cross ground the unit does not own**. It was capped at 26px and then at 80px,
+   *    and both were quotas deciding which units got named; the cap is gone.
+   *  - A callout concedes down a **five-pass ladder** ending in one that lets leaders cross each
+   *    other and pass under a name — the pass that turns "every unit is named" from an aspiration
+   *    into a property.
    *
-   * What is left is one shape of problem: a long name whose ground is a fraction as wide on a phone
-   * *and* whose paper on both sides is already spoken for. `SHORT_FORMS` still forbids inventing
-   * the missing abbreviations — a coinage would be a name no source uses, which is a worse thing to
-   * put on this map than a missing label — so the names are their own shortest true forms.
-   *
-   * **A1 to A3 are the bulk of it, and they are the rule engine's** (#28). They are not transcribed
-   * proposals whose author chose the names: a rule stated as "no province above 25 million"
-   * produces fourteen to sixteen units, most of them packed into Punjab and upper Sindh and each
-   * named after its capital district. At the bar the country is 369px wide and central Punjab about
-   * 120px of it, so most of those units are already out on leaders and the paper beside them is
-   * full. Two each is what is left over, where it was four and five. The bar #34 set is still
-   * **not met** for these three and CLAUDE.md says so in as many words.
-   *
-   * H2's *Gilgit Agency and Baltistan* is the territory and is a different failure — see the
-   * exception below.
+   * What is left is **D1 and only D1**: 35 units, eleven of them a single district, and at the bar
+   * the country is 369px wide. Six names are lost — four in the northern cluster, where eight units
+   * the size of a district compete for the same few rows of margin, and Karachi East and Hyderabad
+   * in the south, where the same thing happens around the delta. Every one of them is on the map, in
+   * the key beside it, in the card and in the tooltip; what they lack is a name on the ground at
+   * this one size.
    *
    * The list is what makes this honest rather than a silent floor, and the test after it is what
    * makes it bearable: not one of them is lost for good.
    */
   const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
-    a1: ['Rahim Yar Khan', 'Bahawalnagar'],
-    a2: ['Lahore', 'Faisalabad'],
-    a3: ['Rahim Yar Khan', 'Bahawalnagar'],
-    h2: ['Gilgit Agency and Baltistan'],
+    d1: [
+      'South Waziristan',
+      'Torghar',
+      'Lower Chitral',
+      'Upper Chitral',
+      'Hyderabad',
+      'Karachi East',
+    ],
   };
 
   for (const variant of scenarios.variants) {
@@ -787,78 +788,36 @@ describe('a variant at the 390px bar', () => {
     });
   }
 
-  it('leaves no territory anonymous, and says why the one exception is not a ranking failure', () => {
+  it('leaves no territory anonymous, at the bar and under every variant', () => {
     /*
      * The obligation the politically sensitive rendering section states — AJK and GB drawn **and
      * named** — carried through into the variant views, where until #28 it was only true by luck:
      * with eight units there was room for everything, and with sixteen there is not.
      *
-     * **There was one of these and now there is one**, and it is not the same one: #50 named H3's
-     * *Northern Areas* at the bar for the first time. Its name is 145px of type set at an anchor
-     * 71px from the right edge, so it ran off the frame at any priority — a failure no ranking
-     * reaches, and the one a leader answers, because a callout does not have to be over the ground
-     * it names. What is left is H2's *Gilgit Agency and Baltistan*, which at 279px is the longest
-     * unit name in the app and is anchored further east still, since Hunza and Nagar are drawn out
-     * of its western end as the states they were: 279px of type plus its dot and its clearance does
-     * not fit on either side of that anchor in a 369px frame, which is asserted below rather than
-     * asserted-about-in-a-comment.
+     * **There is no exception left, and the list is gone rather than shortened.** There was one
+     * through #28 and #50 and one after them: H2's *Gilgit Agency and Baltistan*, which at 279px is
+     * the longest unit name in the app, anchored in eastern Baltistan because Hunza and Nagar are
+     * drawn out of its western end as the states they were. The arithmetic that excused it was
+     * honest and is no longer true — every row of the frame either had no room for the name or was
+     * too far from it to reach, under a leader cap of 0.6 of the frame's shorter side and a rule
+     * that a leader might not cross ground the unit did not own.
      *
-     * The alternative — coining a short form for Pakistani-administered ground that no source uses
-     * — is the thing `SHORT_FORMS` exists to refuse. It is open item 5, not a layout bug. The
-     * baseline names the same ground because `GB` exists to be set there.
+     * Two changes closed it and they are worth telling apart. The **leader may now travel**: the
+     * transit cap that made this name unreachable was a quota on which units got named, and it is
+     * gone. And `mustName` says out loud that a territory's name may not be dropped for want of
+     * clear paper — the one carve-out in a layout that otherwise sets a callout outside the drawn
+     * country or not at all, made for a constitutional claim rather than for a crowded frame.
+     *
+     * Asserted as an emptiness over every variant rather than as a shrinking list, because that is
+     * the claim: a territory drawn anonymous is a claim this map is not entitled to make, and there
+     * is now no size or selection at which it makes one.
      */
-    const ANONYMOUS_AT_390: Readonly<Record<string, readonly string[]>> = {
-      h2: ['Gilgit Agency and Baltistan'],
-    };
     for (const variant of scenarios.variants) {
       const drawn = variantAt(variant.id, BAR_390);
       const anonymous = drawn.territories.filter(
         (name) => !drawn.placed.has(labelKey('unit', name)),
       );
-      expect(anonymous, variant.id).toEqual(ANONYMOUS_AT_390[variant.id] ?? []);
-    }
-
-    /*
-     * The cause, told apart from the two failures it is not. A territory *outranked* would be a
-     * ranking failure and is what #28 fixed. A territory whose name overflowed its own ground would
-     * be what #50 fixed. This is the third thing: the name did not fit its ground — so it is marked
-     * for a callout, which is asserted — and there is then no paper anywhere in the frame wide
-     * enough to take one, which is arithmetic on the frame rather than on the layout's answer.
-     *
-     * **Stated against the drawn land and the leader cap since #51**, because those are what a
-     * callout now has to satisfy: the old form asserted that the assembly overran the frame once it
-     * cleared the unit's *own reach*, which stopped being the question the moment a callout was
-     * required to reach paper. There *is* paper wide enough for this name — 290px of it along the
-     * top of the frame, where the country narrows to Chitral — and the name still cannot be set
-     * there, because reaching it from an anchor in eastern Baltistan is a leader far longer than
-     * any this map will draw. So the claim asserted is the honest one and it is the conjunction:
-     * **every row of the frame either has no room for the name or is too far from it to reach.**
-     */
-    for (const [id, names] of Object.entries(ANONYMOUS_AT_390)) {
-      const drawn = variantAt(id, BAR_390);
-      const cap = Math.min(drawn.viewport.width, drawn.viewport.height) * MAX_LEADER_FRACTION;
-      for (const name of names) {
-        const box = drawn.sized.get(labelKey('unit', name)) as LabelBox;
-        expect(box.callout, `${id}: ${name} fits its own ground`).toBeDefined();
-        const from = box.callout?.from;
-        if (from === undefined) continue;
-        // Dot, gap and name, set clear of the land's own edge — the assembly `placeCallout` lays
-        // out, measured with the renderer's own numbers rather than a copy of them.
-        const assembly = LEADER_GAP + box.width;
-        for (let y = 0; y <= drawn.viewport.height; y += 4) {
-          const span = landSpanAt(drawn.land, y);
-          if (span === null) continue;
-          const sides = [
-            { paper: drawn.viewport.width - (span[1] + LEADER_CLEAR), dotX: span[1] + LEADER_CLEAR },
-            { paper: span[0] - LEADER_CLEAR, dotX: span[0] - LEADER_CLEAR - assembly },
-          ];
-          for (const { paper, dotX } of sides) {
-            if (paper < assembly) continue;
-            const leader = Math.abs(dotX - from[0]) + Math.abs(y - from[1]);
-            expect(leader, `${id}: ${name} could be called out at y=${y}`).toBeGreaterThan(cap);
-          }
-        }
-      }
+      expect(anonymous, variant.id).toEqual([]);
     }
   });
 
@@ -1012,6 +971,70 @@ describe('a unit name sits inside the unit it names', () => {
   });
 });
 
+describe('wrappedLines — the same name over two lines', () => {
+  it('breaks between words at the split that leaves the halves closest in length', () => {
+    // The atlas answer to a long name on a compact ground, and the reason `Rahim Yar Khan` can be
+    // written inside Rahim Yar Khan: on one line the box is as wide as the sum of three words, on
+    // two it is as wide as the wider half.
+    expect(wrappedLines('Rahim Yar Khan')).toEqual(['Rahim', 'Yar Khan']);
+    expect(wrappedLines('Kambar Shahdadkot')).toEqual(['Kambar', 'Shahdadkot']);
+    expect(wrappedLines('Gilgit Agency and Baltistan')).toEqual(['Gilgit Agency', 'and Baltistan']);
+  });
+
+  it('decides the break from the text and never from the measurement', () => {
+    // The objection `labelLines` records, and it is a real one: a name broken wherever the type ran
+    // out breaks somewhere different at every zoom, and a reader watching a proposal's name reflow
+    // as they lean in is reading the layout rather than the map. The split is a property of the
+    // string, so it is the same at every size and on every frame.
+    const once = wrappedLines('Dera Ismail Khan');
+    expect(wrappedLines('Dera Ismail Khan')).toEqual(once);
+    expect(once).toEqual(['Dera', 'Ismail Khan']);
+  });
+
+  it('leaves alone what it cannot help', () => {
+    // One word has nowhere to break, and a bracketed name breaks already — wrapping that again
+    // would put its own qualifier on a third line.
+    expect(wrappedLines('Torghar')).toEqual(['Torghar']);
+    expect(wrappedLines('Gilgit-Baltistan')).toEqual(['Gilgit-Baltistan']);
+    expect(wrappedLines('Balochi (Kech)')).toEqual(['Balochi (Kech)']);
+  });
+
+  it('is offered after the whole name and before the abbreviation, on a ground that needs it', () => {
+    /*
+     * The order is the argument: keeping the name a reader is looking for is worth more than
+     * keeping it on one line, and worth less than nothing invented. Asserted through `measureLabel`
+     * rather than by reading the ladder, because the order only matters where it decides something.
+     */
+    const site = {
+      key: labelKey('unit', 'Rahim Yar Khan'),
+      text: 'Rahim Yar Khan',
+      tier: 'unit' as const,
+      anchor: [0, 0] as [number, number],
+      priority: 20,
+    };
+    const whole = measure('Rahim Yar Khan', 'unit').width;
+    const wider = measure('Yar Khan', 'unit').width;
+    // A ground that takes the wrapped name at full size and could never take the whole one: wider
+    // than its wider line and its clearance, and narrower than the name set on one.
+    const half = wider / 2 + LABEL_CLEARANCE + 1;
+    const ground: Ring[] = [
+      [
+        [-half, -40],
+        [half, -40],
+        [half, 40],
+        [-half, 40],
+        [-half, -40],
+      ],
+    ];
+    expect(2 * half).toBeLessThan(whole);
+    const fitted = measureLabel(site, [0, 0], Infinity, measure, { rings: ground });
+    expect(fitted.lines).toEqual(['Rahim', 'Yar Khan']);
+    expect(fitted.scale).toBe(1);
+    expect(fitted.box.width).toBeCloseTo(wider);
+    expect(fitted.box.callout).toBeUndefined();
+  });
+});
+
 describe('labelLines', () => {
   it('breaks a bracketed name on the bracket, so the box is its widest line', () => {
     // L7's regions are a language and, in brackets, which of its two regions this is. Set on one
@@ -1106,7 +1129,7 @@ describe('shrinking a unit name to fit its ground', () => {
       expect(fitted.scale, `at ${half}`).toBeLessThanOrEqual(1);
       expect(fitted.scale, `at ${half}`).toBeGreaterThanOrEqual(MIN_UNIT_LABEL_SCALE);
     }
-    expect(measure('x', 'unit', MIN_UNIT_LABEL_SCALE).height).toBeCloseTo(7.5, 1);
+    expect(measure('x', 'unit', MIN_UNIT_LABEL_SCALE).height).toBeCloseTo(6.5, 1);
     // Still smaller than a unit set at full size, which is what makes the ladder a ladder.
     expect(measure('x', 'unit', MIN_UNIT_LABEL_SCALE).height).toBeLessThan(
       measure('x', 'unit').height,
@@ -1187,16 +1210,22 @@ describe('a name taken outside its ground, on a leader', () => {
 
   it('never crosses another label, and never another leader', () => {
     /*
-     * The rule that makes a leader worth drawing. A line that crosses a name points at a word
-     * rather than at a piece of ground, and two that cross each other swap the two units they
-     * name — which on this map is the one mistake a callout could make that is worse than no
-     * callout at all.
+     * The rule that makes a leader worth drawing, asked **where there is paper to obey it in**. A
+     * line that crosses a name points at a word rather than at a piece of ground, and two that
+     * cross each other swap the two units they name.
+     *
+     * It is no longer absolute, and the case below is written so that it is not being asked to be.
+     * The concession ladder in `placeCallout` ends in a pass that lets a leader cross another and
+     * pass beneath a name, because **every unit is named** outranks it: a crossed leader is a poor
+     * annotation and a recoverable one, where a unit drawn on the map and named nowhere on it is a
+     * shape the reader cannot ask about. So the claim held here is the first four rungs of that
+     * ladder — given room, nothing crosses — and the case after it holds the fifth.
      */
     const labels: LabelBox[] = [
-      callout('one', [100, 150], { left: 15, right: 15 }),
-      callout('two', [120, 155], { left: 15, right: 15 }),
-      callout('three', [140, 145], { left: 15, right: 15 }),
-      { key: 'unit:settled', x: 250, y: 150, width: 90, height: 13, priority: 99 },
+      callout('one', [100, 110], { left: 15, right: 15 }),
+      callout('two', [110, 160], { left: 15, right: 15 }),
+      callout('three', [120, 210], { left: 15, right: 15 }),
+      { key: 'unit:settled', x: 300, y: 40, width: 60, height: 13, priority: 99 },
     ];
     const placed = layoutLabels(labels, { bounds, gap: 3 });
     const boxes = new Map(labels.map((l) => [l.key, l]));
@@ -1233,15 +1262,115 @@ describe('a name taken outside its ground, on a leader', () => {
     }
   });
 
-  it('drops the name where no candidate is clear, rather than crossing something', () => {
-    // A name wider than the frame, with nowhere either side of its anchor to put it.
+  it('crosses rather than gives up the name, where the paper leaves it no third answer', () => {
+    /*
+     * The fifth rung, and the property the whole ladder exists for: **a unit is named**.
+     *
+     * Six callouts hung off the same few rows, which is D1's northern cluster in miniature — eight
+     * units the size of a district competing for one margin. There is not room for six leaders that
+     * never meet, and the honest answer is six names with some of the lines crossing rather than
+     * four names and two shapes a reader cannot ask about. Asserted as the conjunction, since either
+     * half alone would pass while the other was broken: every name is placed, and no two *names*
+     * overlap — the concession is always to the lines.
+     */
+    const crowded: LabelBox[] = Array.from({ length: 6 }, (_, i) =>
+      callout(`unit ${i}`, [190 + i * 4, 120 + i * 6], { left: 12, right: 12 }, 80),
+    );
+    const placed = layoutLabels(crowded, { bounds, gap: 3 });
+    expect(placed.map((p) => p.key).sort()).toEqual(crowded.map((l) => l.key).sort());
+    const boxes = new Map(crowded.map((l) => [l.key, l]));
+    const rects = placed.map((p) => {
+      const box = boxes.get(p.key) as LabelBox;
+      return {
+        x0: p.x - box.width / 2,
+        y0: p.y - box.height / 2,
+        x1: p.x + box.width / 2,
+        y1: p.y + box.height / 2,
+      };
+    });
+    for (const [i, a] of rects.entries()) {
+      for (const [j, b] of rects.entries()) {
+        if (i >= j) continue;
+        const apart = a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+        expect(apart, `${crowded[i]?.key} overlaps ${crowded[j]?.key}`).toBe(true);
+      }
+    }
+  });
+
+  it('takes the name out toward its own unit’s nearest margin, not the far one', () => {
+    /*
+     * The orientation rule: a Khyber Pakhtunkhwa unit's name belongs in the north-western margin
+     * and a Sindh unit's in the southern one, so that a reader looking at a province finds that
+     * province's names beside it. Asked of the *unit* rather than of the country's middle, which is
+     * the correction that made it right — a unit a few px the wrong side of the midline was being
+     * pushed "outward" across the country, past the paper a short run from its own ground.
+     *
+     * Land occupying the right of the frame, and a unit at its western edge: the near margin is the
+     * western one, and the name goes there even though the eastern paper is emptier.
+     */
+    const land: Ring[] = [
+      [
+        [140, 0],
+        [400, 0],
+        [400, 300],
+        [140, 300],
+        [140, 0],
+      ],
+    ];
+    const placed = layoutLabels([callout('west', [150, 150], { left: 10, right: 10 }, 60)], {
+      bounds,
+      gap: 3,
+      land,
+    });
+    const leader = placed[0]?.leader as Leader;
+    expect(leader.to[0]).toBeLessThan(140);
+  });
+
+  it('prefers the flat leader over the bent one that is barely shorter', () => {
+    /*
+     * Ranked on raw length, a leader that drops two rungs to save three pixels of run beats the
+     * plain horizontal one, and a column of names each bent a different amount is what the reader
+     * gets. A bend is charged against the straight run it replaces, so rung zero — no elbow at all
+     * — is what an uncontested name reaches for.
+     *
+     * Asked of an *eastward* callout, which is the side where rung zero is available at all: the
+     * assembly reads dot-then-name, so a westward name sits between its own dot and its ground and
+     * a leader on that row would run through it. That asymmetry is the routing's, not the
+     * ranking's, and it is asserted rather than worked around.
+     */
+    const land: Ring[] = [
+      [
+        [0, 0],
+        [300, 0],
+        [300, 300],
+        [0, 300],
+        [0, 0],
+      ],
+    ];
+    const placed = layoutLabels([callout('flat', [250, 150], { left: 10, right: 10 }, 60)], {
+      bounds,
+      gap: 3,
+      land,
+    });
+    const leader = placed[0]?.leader as Leader;
+    expect(leader.to[0]).toBeGreaterThan(300);
+    expect(leader.to[1]).toBe(leader.from[1]);
+    // Rung zero: the elbow is the dot, so the whole leader is one straight run.
+    expect(leader.elbow).toEqual(leader.to);
+  });
+
+  it('drops the name where the frame itself has no room for it', () => {
+    // A name wider than the frame, with nowhere either side of its anchor to put it. No pass of the
+    // ladder can help: the concessions are about clearance, and this one does not fit at all.
     const impossible = callout('vast', [200, 150], { left: 100, right: 100 }, 380);
     expect(layoutLabels([impossible], { bounds, gap: 3 })).toEqual([]);
   });
 
   it('keeps leaders off ground something else is already standing on', () => {
     // The unit key and the docked tooltip are opaque boxes (#33). A leader that ran under one
-    // would be a line disappearing into a panel, which explains nothing.
+    // would be a line disappearing into a panel, which explains nothing — so unlike a *name*, which
+    // the last rung of the ladder will pass a leader beneath, these are refused at every pass. A
+    // leader under a name is still followable; a leader under a panel is gone.
     const bar = { x0: 0, y0: 0, x1: 400, y1: 160 };
     const placed = layoutLabels([callout('Nagar', [100, 150], { left: 20, right: 20 })], {
       bounds,

@@ -657,6 +657,10 @@ describe('variantCard — the composite is stated on the card that is drawn from
 
   it('describes the boundary as computed rather than transcribed', () => {
     expect(card.composition).toContain('Derived from data rather than transcribed from a proposal');
-    expect(card.composition).toContain('natural break');
+    // The rule's own three conditions, quoted whole rather than paraphrased: this is the one card
+    // whose boundary a reader can only hold the app to by redrawing it from the sentence on it.
+    expect(card.composition).toContain('same development band');
+    expect(card.composition).toContain('same province');
+    expect(card.composition).toContain('shared district borders');
   });
 });

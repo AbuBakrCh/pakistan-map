@@ -28,8 +28,13 @@
  */
 
 import type { AdjacencyGraph } from './adjacency.ts';
-import { GRADIENT_RULE, splitByDevelopmentGradient } from './development-partition.ts';
-import { INDEX_FORMULA, NOT_A_POVERTY_MEASURE } from './development-index.ts';
+import { BAND_RULE, groupByDevelopmentBand } from './development-partition.ts';
+import {
+  INDEX_BANDS,
+  INDEX_FORMULA,
+  NOT_A_POVERTY_MEASURE,
+  bandOf,
+} from './development-index.ts';
 import { groupDigits as group } from './digits.ts';
 import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-partition.ts';
 import {
@@ -2742,35 +2747,33 @@ const A5: Variant = {
 };
 
 /**
- * D1 — each province cut where its development gradient is steepest (#31).
+ * D1 — the districts the census serves alike, grouped where they touch (#31).
  *
  * The one variant on the Development basis, and the only boundary in the app drawn from what the
  * census says about **service access** rather than from language, from population or from a
  * document. Nobody publishes a district list for it, so the rule stands in for one, exactly as it
- * does for L6, L7 and A1 to A4: `development-partition.ts` computes the cut and the card prints
- * the rule that produced it.
+ * does for L6, L7 and A1 to A4: `development-partition.ts` computes the grouping and the card
+ * prints the rule that produced it.
  *
  * Two things about it are worth reading before the copy below.
  *
  * **The scores are the committed composite, not a recomputation.** `development-index.json` is
  * where the formula is applied, once, and both the shading and this boundary read it — because a
  * composite computed twice is two composites, and the map would be free to shade a district one
- * way while the line drawn over it had been decided on another number.
+ * way while the line drawn over it had been decided on another number. The **bands** are the
+ * shading's own four at their fixed cuts, applied through `bandOf` — the same function that wrote
+ * the artifact — so a unit is exactly a run of one colour and a reader can see the boundary before
+ * it is drawn.
  *
- * **What the rule finds is not quite what the ticket expected, and the card says so.** #31's
- * premise is that this split independently reproduces South Punjab, interior Sindh and interior
- * Balochistan. Punjab is the case it is right about — the lower half is South Punjab plus the
- * Thal, and it picks up exactly the two districts L2's wider reading of the Seraiki claim adds.
- * Sindh and Balochistan come out differently: what separates in Sindh is the south-east rather
- * than the interior against Karachi, and in Balochistan a belt running from the eastern districts
- * south-west through the Kalat highlands, rather than everything outside Quetta. The rule is run
- * to the end and reported, which is the same discipline L7 is
- * under: a rule tuned until it agrees with the claims it was meant to be independent of would have
- * nothing left to say about them.
+ * **The unit count is a finding and not a setting.** Nothing here is optimised: the rule groups,
+ * and what it makes of the 2023 census is what it makes. Eleven of the units are a single district,
+ * and the population spread between the largest and the smallest is the widest in the app by a long
+ * way — both are reported on the card rather than smoothed away with a merging rule nobody
+ * published.
  */
 function developmentGradient(context: DerivationContext): Variant {
-  // The four provinces. Islamabad Capital Territory is one district and has no internal gradient;
-  // the engine returns it as `unsplit` with the reason, and it is carried through below. AJK and
+  // The four provinces. Islamabad Capital Territory is one district and is carried through below,
+  // as it is today, rather than drawn as a unit of its own named for its one district. AJK and
   // Gilgit-Baltistan are outside the census entirely (D25), so the rule cannot see them at all.
   const provinces = ROSTER.filter(
     (entry) => entry.kind !== 'territory' && entry.districts.length > 1,
@@ -2779,9 +2782,17 @@ function developmentGradient(context: DerivationContext): Variant {
     (entry) => entry.kind !== 'territory' && entry.districts.length === 1,
   );
 
-  const { partition, problems } = splitByDevelopmentGradient({
+  // The band a district is in, from the score the artifact carries — one cut applied by the one
+  // function that defines it, so the line between two units is the line between two colours.
+  const districtBands = new Map(
+    [...context.development].map(([district, score]) => [district, bandOf(score).id] as const),
+  );
+
+  const { partition, problems } = groupByDevelopmentBand({
     provinces,
     graph: context.graph,
+    bands: INDEX_BANDS,
+    districtBands,
     scores: context.development,
     populations: context.populations,
   });
@@ -2794,54 +2805,48 @@ function developmentGradient(context: DerivationContext): Variant {
 
   const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
 
-  /** The two halves of one province, as units. Named for their most populous district. */
-  const halves = partition.splits.flatMap((split) =>
-    (
-      [
-        [split.lower, split.higher, 'lower'],
-        [split.higher, split.lower, 'higher'],
-      ] as const
-    ).map(
-      ([half, other, side]): Unit => ({
-        id: slug(half.principal),
-        name: half.principal,
-        kind: 'proposed',
-        claims: nonEmpty(half.districts, `the ${side} half of ${split.province}`),
-        note:
-          `The ${side} half of ${split.province} on the development index — ` +
-          `${half.districts.length} districts averaging ${percent(half.mean)}, against ` +
-          `${percent(other.mean)} across the rest of the province, and ` +
-          `${group(half.population)} people. Named for ${half.principal}, the most populous ` +
-          `district in it.`,
-      }),
-    ),
+  /** One group of same-band, touching districts, as a unit. Named for its most populous district. */
+  const groups = partition.units.map(
+    (unit): Unit => ({
+      id: slug(unit.principal),
+      name: unit.principal,
+      kind: 'proposed',
+      claims: nonEmpty(unit.districts, `the ${unit.band.label} group around ${unit.principal}`),
+      note:
+        `${unit.districts.length} district${unit.districts.length === 1 ? '' : 's'} of ` +
+        `${unit.province} in the ${unit.band.label} band, touching one another — averaging ` +
+        `${percent(unit.mean)} on the development index, and ${group(unit.population)} people. ` +
+        `Named for ${unit.principal}, the most populous district in it.`,
+    }),
   );
 
-  /** The seams, in one sentence each: where the rule cut, and how sharp the cut is there. */
-  const seams = partition.splits
-    .map(
-      (split) =>
-        `${split.province} at ${split.seam.below} (${percent(
-          context.development.get(split.seam.below) ?? 0,
-        )}) against ${split.seam.above} (${percent(
-          context.development.get(split.seam.above) ?? 0,
-        )}), separating ${split.lower.districts.length} districts from ` +
-        `${split.higher.districts.length}`,
-    )
-    .join('; ');
+  /** How many units each province comes out in, which is the whole shape of the finding. */
+  const perProvince = provinces
+    .map((scope) => {
+      const count = partition.units.filter((unit) => unit.province === scope.province).length;
+      return `${scope.province} ${count}`;
+    })
+    .join(', ');
 
-  /** Which of the four provinces the rule divides most sharply, and which least. */
-  const ranked = [...partition.splits].sort((a, b) => b.separation - a.separation);
-  const sharpest = ranked[0];
-  const shallowest = ranked[ranked.length - 1];
+  /** The units of one district — the fragments the rule makes and does not absorb. */
+  const singletons = partition.units
+    .filter((unit) => unit.districts.length === 1)
+    .map((unit) => unit.principal)
+    .sort((a, b) => a.localeCompare(b));
+
+  const bySize = [...partition.units].sort((a, b) => b.population - a.population);
+  const largest = bySize[0];
+  const smallest = bySize[bySize.length - 1];
 
   /**
    * The convergence with the Seraiki claim, computed rather than asserted.
    *
    * This is the finding #31 is written around, and it is the one sentence on the card most likely
-   * to become false without anybody noticing — the census moves, the break moves, and a claim
+   * to become false without anybody noticing — the census moves, the bands move, and a claim
    * about which districts two independent lines agree on goes on sitting there. So it is derived
-   * from L1's own district list and from the partition, in the same run.
+   * from L1's own district list and from the partition, in the same run. The comparison is against
+   * the **best-served group of Punjab**, since what the Seraiki claim is being read against is the
+   * ground this rule leaves *outside* it.
    */
   const southPunjab = new Set(
     SOUTH_PUNJAB.claims.flatMap((claim) => {
@@ -2849,8 +2854,11 @@ function developmentGradient(context: DerivationContext): Variant {
       return found === null ? [] : [found.district];
     }),
   );
-  const punjab = partition.splits.find((split) => split.province === 'Punjab');
-  const lowerPunjab = new Set(punjab?.lower.districts ?? []);
+  const punjabUnits = partition.units.filter((unit) => unit.province === 'Punjab');
+  const servedPunjab = [...punjabUnits].sort((a, b) => b.population - a.population)[0];
+  const lowerPunjab = new Set(
+    punjabUnits.flatMap((unit) => (unit === servedPunjab ? [] : unit.districts)),
+  );
   const shared = [...southPunjab].filter((district) => lowerPunjab.has(district)).sort();
   const claimedNotFound = [...southPunjab].filter((district) => !lowerPunjab.has(district)).sort();
   const foundNotClaimed = [...lowerPunjab].filter((district) => !southPunjab.has(district)).sort();
@@ -2858,15 +2866,16 @@ function developmentGradient(context: DerivationContext): Variant {
   return {
     id: 'd1',
     basis: 'development',
-    name: 'Each province at its steepest development gradient',
+    name: 'The districts the census serves alike, grouped where they touch',
     tagline: 'the map service access draws, with nothing else in it',
     // The basis shades `census · synthesized`; this variant's boundary adds `derived`, because the
     // composite is a figure this project defines and the *line* is arithmetic this build did over
     // it. Both claims are on the card, and the card says why the two disagree with the basis.
     badges: ['census', 'synthesized', 'derived'],
     rationale:
-      'Every province is cut in two where the 2023 census says its internal gradient of service ' +
-      'access divides most sharply. The index behind it is this project’s own: the unweighted ' +
+      'Districts that fall in the same development band and touch one another inside the same ' +
+      'province are drawn as one unit. The index behind the band is this project’s own: the ' +
+      'unweighted ' +
       'mean of literacy among people aged 10 and above, the share of households with an improved ' +
       'drinking-water source, and the share with a flush toilet. No language, no history and no ' +
       'population figure goes into the line — the only question asked of a district is how many ' +
@@ -2903,7 +2912,7 @@ function developmentGradient(context: DerivationContext): Variant {
     universe: 'drawn',
     composition: {
       kind: 'derived',
-      rule: GRADIENT_RULE,
+      rule: BAND_RULE,
       from:
         'data/bundle/development-index.json — the composite this build computes from PBS 2023 ' +
         'Census Tables 12, 23 and 24 — and the district adjacency graph in ' +
@@ -2911,23 +2920,26 @@ function developmentGradient(context: DerivationContext): Variant {
     },
     units: nonEmpty(
       [
-        ...halves,
-        // The capital, whole, because a single district has no gradient to cut. Said on the card
-        // rather than left as an eight-unit map with a ninth thing on it nobody explained.
+        ...groups,
+        // The capital, whole, as it is today: it is one district, so a unit drawn out of it would
+        // be the same ground under a different name. Said on the card rather than left as a
+        // thirty-fourth thing on the map nobody explained.
         intactProvince(capital.name),
         intactProvince('Azad Jammu & Kashmir'),
         intactProvince('Gilgit-Baltistan'),
       ],
-      'the units of a development-gradient partition',
+      'the units of a development-band partition',
     ),
     footnotes: [
       {
         kind: 'derived-boundary',
         text:
           'This boundary was computed, not copied from a proposal. Nobody publishes a district ' +
-          `list for this rule, so the rule stands in for one — ${GRADIENT_RULE} The cuts it ` +
-          `makes are ${seams}. Change the census and these lines move; nobody whose argument ` +
-          'this is chose where they run.',
+          `list for this rule, so the rule stands in for one — ${BAND_RULE} What it makes of the ` +
+          `2023 census is ${partition.units.length} units across the provinces it groups ` +
+          `(${perProvince}), which is a finding and not a setting: nothing here is optimised and ` +
+          'no number of provinces was aimed at. Change the census and these lines move; nobody ' +
+          'whose argument this is chose where they run.',
       },
       {
         kind: 'note',
@@ -2945,29 +2957,31 @@ function developmentGradient(context: DerivationContext): Variant {
         text:
           'Each unit is named for its most populous district, which is a description of an output ' +
           'and not a name anybody uses for a province. The engine has no source for a name, and ' +
-          'inventing one — "lower Punjab", "the served half" — would be both the editorial voice ' +
-          'the rule exists to keep out and a judgement about the people living there. The halves ' +
-          'are told apart by their scores, which are on each unit above.',
+          'inventing one — "lower Punjab", "the served belt" — would be both the editorial voice ' +
+          'the rule exists to keep out and a judgement about the people living there. Two units ' +
+          'of one province can sit in the same band without touching, and they are told apart by ' +
+          'their districts and their scores, which are on each unit above.',
       },
       {
         kind: 'note',
         text:
-          `The rule finds a division, not an outlier, and the difference shows in how sharp the ` +
-          `four cuts are: ${sharpest?.province ?? ''} divides most cleanly and ` +
-          `${shallowest?.province ?? ''} least. In ${shallowest?.province ?? ''} the two ` +
-          `districts either side of the break are ` +
-          `${percent(Math.abs(shallowest?.seam.difference ?? 0))} apart, because its gradient is ` +
-          'a long smooth slope rather than a cliff — so what the rule finds there is where the ' +
-          'province divides most cleanly overall, not where two neighbours differ most. A rule ' +
-          'that took the largest single step instead would peel one district off each province ' +
-          'and call it a partition.',
+          `A district whose neighbours are all served differently from it is a unit on its own, ` +
+          `and ${singletons.length} of the ${partition.units.length} are: ` +
+          `${singletons.join(', ')}. They are drawn rather than absorbed into a neighbour, ` +
+          'because absorbing them would take a second rule — a size below which a group is too ' +
+          'small to be a province — and nobody publishes that number either. The same absence of ' +
+          'tuning is why the units are the size they are: the rule is stated in service access ' +
+          `and says nothing whatever about population, so ${largest?.principal ?? ''} holds ` +
+          `${group(largest?.population ?? 0)} people and ${smallest?.principal ?? ''} holds ` +
+          `${group(smallest?.population ?? 0)}. The scorecard prints that spread; it is the ` +
+          'widest in this app, and it is what a map drawn from one question and no others costs.',
       },
       {
         kind: 'note',
         text:
-          `${capital.name} is one district, so it has no internal gradient and is carried ` +
-          'through exactly as it is — the only first-level entity inside the census this rule ' +
-          'leaves alone. Azad Jammu & Kashmir and Gilgit-Baltistan are outside it entirely: PBS ' +
+          `${capital.name} is one district, so a unit drawn out of it would be the same ground ` +
+          'under a different name; it is carried through exactly as it is, and is the only ' +
+          'first-level entity inside the census this rule leaves alone. Azad Jammu & Kashmir and Gilgit-Baltistan are outside it entirely: PBS ' +
           'published no literacy, water or toilet figure for any of their twenty districts, so ' +
           'they have no index, and a district with no figure is not a district scoring zero. ' +
           'They are drawn and named exactly as they are today.',
@@ -2977,24 +2991,23 @@ function developmentGradient(context: DerivationContext): Variant {
       {
         label: 'What it agrees with, and what it does not',
         text:
-          'In Punjab this line lands close to the Seraiki claim without being told anything about ' +
+          'In Punjab this rule lands close to the Seraiki claim without being told anything about ' +
           `language: ${shared.length} of South Punjab’s ${southPunjab.size} drawn districts fall ` +
-          `in the lower half` +
+          'outside the best-served group of the province' +
           (claimedNotFound.length === 0
             ? ''
             : `, ${claimedNotFound.join(' and ')} being the exception` +
               `${claimedNotFound.length === 1 ? '' : 's'}`) +
           (foundNotClaimed.length === 0
             ? ''
-            : `, and it takes in ${foundNotClaimed.join(', ')} besides — among them the two ` +
-              'districts the wider reading of that claim adds') +
-          '. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the ' +
-          'south-east and not the interior against Karachi, and in Balochistan a belt running ' +
-          'from the eastern districts south-west through the Kalat highlands — not everything ' +
-          'outside Quetta, which keeps the west, the coast and Sibi. The rule is reported as it ' +
-          'ran rather than tuned ' +
-          'until it agreed, because a rule adjusted to match the claims it is meant to be ' +
-          'independent of has nothing left to say about them.',
+            : `, and the ground outside it takes in ${foundNotClaimed.join(', ')} besides`) +
+          '. Elsewhere the agreement stops, and it stops in a way the old cut could not show: ' +
+          'this rule does not divide a province in two, so Sindh and Balochistan come out in ' +
+          'several pieces each and Khyber Pakhtunkhwa in more than any of them — the census ' +
+          'serves its valleys, its settled plain and its western districts too differently for ' +
+          'one line to be the story. The rule is reported as it ran rather than tuned until it ' +
+          'agreed, because a rule adjusted to match the claims it is meant to be independent of ' +
+          'has nothing left to say about them.',
         relatedVariants: ['l1', 'l2', 'l3'],
       },
       {

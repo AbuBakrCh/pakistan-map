@@ -181,18 +181,42 @@ describe('labelAlongLine', () => {
   });
 
   /*
-   * The concession ladder. Land is a compromise the name may make; another name is not — two
-   * names on top of each other leaves neither readable, and the map already refuses that for
-   * every tier name. So the order is: full name on clear paper, full name over land, short name
-   * on clear paper, short name over land, nothing.
+   * The concession ladder, and it concedes length and nothing else: full name on clear paper,
+   * short name on clear paper, nothing. Neither question is ever given up — another name on top of
+   * this one leaves both unreadable, and drawn land under it turns the name of a *line* into the
+   * name of the ground it lies on, which on this line is the whole question.
    */
-  it('gives up clear ground before it gives up the full name', () => {
-    // Nowhere on this line is off the land, but nothing is in the way of a name.
+  it('gives up the full name before it gives up clear ground', () => {
+    // The full name has nowhere clear along this line; the short one does.
     const placed = labelAlongLine([[[200, 380], [200, 20]]], {
       ...options,
       forms: [
         { text: 'Line of Control', permits: () => true, prefers: () => false },
-        { text: 'LoC', permits: () => true },
+        { text: 'LoC', permits: () => true, prefers: () => true },
+      ],
+    });
+    expect(placed?.text).toBe('LoC');
+  });
+
+  it('sets no name at all rather than one over drawn land', () => {
+    // Nothing is in the way of a name anywhere; every position is over land. The line goes
+    // unnamed, which is affordable only because the legend keys the dash under every basis.
+    const placed = labelAlongLine([[[200, 380], [200, 20]]], {
+      ...options,
+      forms: [
+        { text: 'Line of Control', permits: () => true, prefers: () => false },
+        { text: 'LoC', permits: () => true, prefers: () => false },
+      ],
+    });
+    expect(placed).toBeNull();
+  });
+
+  it('keeps the full name where both forms have clear ground, so length is conceded only once', () => {
+    const placed = labelAlongLine([[[200, 380], [200, 20]]], {
+      ...options,
+      forms: [
+        { text: 'Line of Control', permits: () => true, prefers: () => true },
+        { text: 'LoC', permits: () => true, prefers: () => true },
       ],
     });
     expect(placed?.text).toBe('Line of Control');

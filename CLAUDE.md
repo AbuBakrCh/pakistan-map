@@ -8,7 +8,7 @@ one, H1 to H4, and the Development basis's D1; `SCENARIOS-DRAFT.md` is deleted, 
 L3 are the two wider readings of the Seraiki claim, and L3 is the one *transcribed* proposal whose
 province crosses an existing provincial boundary; L6 and L7 are the first two variants this build
 **draws itself**, from census plurality rather than from anybody's document, A1 to A4 are the
-four the rule engine draws from population and distance, and D1 is the one cut at a figure this
+four the rule engine draws from population and distance, and D1 is the one drawn at a figure this
 project defines rather than one anybody published — seven derived boundaries in all, every one
 of them re-derived by the suite. A5 is the one variant that redraws nothing: it promotes
 Gilgit-Baltistan and Azad Kashmir to provinces and moves not a single district, and H2 is the
@@ -245,17 +245,20 @@ being edited.
   a line that looks solid and means the opposite. Width and dash are in screen px at every zoom.
   The name is set along whichever part of the line is on screen, on the side with no drawn land,
   and it **yields to** the tier names rather than displacing them — the territories are drawn
-  *and named*. Yielding is absolute and ordered: the full name on clear paper, then the full name
-  over land, then **`LoC`** on clear paper, then `LoC` over land, then no name at all. Sitting over
-  land is a compromise; sitting over another name is a defect, since it costs a reader both names,
-  and the dash is keyed in the legend under **every** basis — so an unnamed line is still an
-  explained one. At default zoom the northern names are dense enough that the abbreviation is what
-  gets set; from about 3× the full name returns. **"Clear paper" means paper, and had to be taught
-  the difference once #8 landed**: until the neighbour silhouettes were drawn, the far side of the
-  line was blank, so *outside Pakistan* and *on nothing* were the same question and asking only
-  about the provinces answered it. India is drawn there now, and the top-ranked placement would
-  have been the one over a silhouette while the code still scored it as empty. Both sides are
-  asked, so the four-step order means what it says again.
+  *and named*. Yielding is absolute and ordered, and the order now concedes **length and nothing
+  else**: the full name on clear paper, then **`LoC`** on clear paper, then no name at all.
+  Over-land placement used to be the second and fourth steps, on the reasoning that a name over land
+  still reads. It does read; what it reads as is the problem — set across Gilgit-Baltistan's hatch,
+  the name of a *line* becomes the name of the *ground*, on the one stretch of this map where what a
+  name is attached to is the whole question, and it crossed the boundary rule and Gilgit's own name
+  besides. The cost is that at some zooms the line goes unnamed, and that is affordable only because
+  the dash is keyed in the legend under **every** basis — an unexplained dash would not be an
+  acceptable trade and this change would not have been available. **"Clear paper" means paper, and
+  had to be taught the difference once #8 landed**: until the neighbour silhouettes were drawn, the
+  far side of the line was blank, so *outside Pakistan* and *on nothing* were the same question and
+  asking only about the provinces answered it. India is drawn there now, and the top-ranked
+  placement would have been the one over a silhouette while the code still scored it as empty. Both
+  sides are asked, so the order means what it says.
 - **The Working Boundary is not the Line of Control.** Punjab's Sialkot–Jammu stretch is a
   different line, south of the ceasefire line's terminus on the Chenab; it is not drawn dashed,
   and the colophon says so. Falls out of the derivation rule rather than being special-cased.
@@ -385,6 +388,15 @@ being edited.
 - Deep-link URLs (`#/language/l2`).
 - **Visual direction: editorial atlas, light.** Warm off-white canvas, muted desaturated
   categorical fills, hairline strokes, serif headings, one accent reserved for unit outlines.
+  **The one bold line is the current provincial boundary**, and it is bold in the map's own
+  neutral grey (`--rule-boundary`) rather than in the interface's warm hairline: every unit outline
+  in stratum 3 is drawn *inside* it, and on an unchanged province the two are the same geometry
+  drawn twice, so a reader who cannot tell them apart is reading one map where there are two. The
+  proposal is the thinner line and the different colour — the accent, which means *a proposed
+  province* and nothing else. Weight says *this is the standing boundary*; hue says *and it is not
+  part of the proposal drawn over it*. The ceasefire line is kept a step above the boundary
+  whatever the boundary weighs, since a caveat set fainter than the thing it qualifies is a caveat
+  nobody reads.
   No dark mode in v1 — categorical palettes are harder to keep distinguishable on dark, and
   the editorial register signals *reference* rather than *toy* on a politically live subject.
 - Palette validated via the `dataviz` skill for colourblind safety — and the validation lives in
@@ -409,10 +421,13 @@ being edited.
 - **Responsive, and the phone is not the degraded case** (#33). Hard bar: **map legible and
   variant switching functional at 390px.** Pakistan's internet is overwhelmingly mobile-first, so
   this is where most of the audience meets the app. Panel becomes a bottom sheet; hover becomes
-  tap; `Space` becomes a button. Where the bar is **not** met it is met by name and not by silence:
-  the seven unit labels A1 to A3 and H2 cannot set at this size are listed one by one in
-  the suite, with what a reader gets instead — see the labelling section. It was twenty-one across
-  nine variants before #51. The breakpoint is stated **once, in the stylesheet** (`--sheet`)
+  tap; `Space` becomes a button. **Sixteen of the seventeen variants now meet it outright**, A1 to
+  A3 among them — the rule-drawn partitions that were the standing example of the bar going unmet —
+  and so does H2, whose *Gilgit Agency and Baltistan* is the longest unit name in the app. It was
+  twenty-one names across nine variants before #51 and seven across four after it. What is left is
+  **D1 and only D1**, whose thirty-five units include eleven of a single district: six names go
+  unset at this size, listed one by one in the suite with what a reader gets instead — see the
+  labelling section. The breakpoint is stated **once, in the stylesheet** (`--sheet`)
   and read from there by `sheet.ts`, the same arrangement `--switch` already has and for the same
   reason: a JS copy of `560px` eventually disagrees with the CSS one, and a sheet whose script
   thinks it is a sheet while its CSS thinks it is a column sets a height on a box that is not
@@ -552,20 +567,22 @@ Numbered by the grilling question that settled each.
    open item 1 gave AJK's district names: a check against a published document, recorded in
    `docs/research/`. Related, and the owner's call rather than the build's: **what H3's advocates
    call the *Northern Areas* short**, what H2's ***Gilgit Agency and Baltistan*** is called short —
-   at 279px the longest unit name in the app, and the second territory this build cannot name at the
-   bar (#30) — and what L7's *Pushto (Keamari)* and *Kohiostani* are called short, since without
-   attested forms those four cannot be named at the 390px bar at all. All
-   four are named at desktop size, so this is a legibility gap on one device rather than a unit
-   the app cannot draw. **H2's *Khairpur*, *Dir* and *Nagar* are not this item**: they are proposed
-   units already at their shortest true names, crowded out by neighbours the same size, which is the
-   A1-to-A3 case below rather than a missing source.
+   at 279px the longest unit name in the app (#30) — and what L7's *Pushto (Keamari)* and
+   *Kohiostani* are called short.
 
-   **A1 to A3's fourteen unnamed units are not this open item**, and filing them here would be asking
-   a question with no one to answer it (#28). A rule-drawn unit has no advocates to have a short
-   form: the engine names each after its capital district, so *Gujranwala* and *Faisalabad* are
-   already the shortest true names those units have. Nothing is outstanding — the bar is simply not
-   met for those three variants, which is stated where the labelling doctrine is rather than left
-   waiting on a source that does not exist.
+   **None of those four is a name the app now fails to set**, and the item is kept open anyway. All
+   four are named at the 390px bar as things stand — a name that will not fit its ground goes out on
+   a leader, and the leader may now travel — so this is no longer a legibility gap but a provenance
+   one: a short form is what a reader sees where the ground is small, and `GB` is the one entry in
+   the table resting on general usage rather than on a document.
+
+   **D1's six unnamed units at the bar are not this open item**, and filing them here would be asking
+   a question with no one to answer it (#28, #31). A rule-drawn unit has no advocates to have a short
+   form: the engine names each after its most populous district, so *South Waziristan* and *Karachi
+   East* are already the shortest true names those units have. Nothing is outstanding — thirty-five
+   units on a 369px-wide country is more than the paper holds, which is stated where the labelling
+   doctrine is rather than left waiting on a source that does not exist. A1 to A3 were this
+   paragraph's example until the labelling pass above, and name every unit at the bar now.
 
 **Scenario content: 17 variants approved, 17 built** — Language 7, Administrative 5, Historical 4,
 Development 1. Nothing is outstanding, and `SCENARIOS-DRAFT.md` is deleted (#36): the typed module

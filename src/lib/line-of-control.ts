@@ -260,21 +260,30 @@ export function labelAlongLine(
     fractions.push(0.5 + step * 0.045, 0.5 - step * 0.045);
   }
 
-  // Each form is exhausted before the next is tried, and within a form the preferred ground is
-  // exhausted before it is given up. So the order of concessions is: the full name on clear paper,
-  // the full name over land, the short name on clear paper, the short name over land — and then
-  // nothing. `permits` is never given up at any step, which is the whole point: a name that
-  // cannot be set clear of the other names is not set at all.
+  // Each form is exhausted before the next is tried, and **neither** of the two questions is ever
+  // given up. So the order of concessions is: the full name on clear paper, the short name on clear
+  // paper — and then nothing at all.
+  //
+  // Over-land placement used to be the third step, on the reasoning that a name over land still
+  // reads. It does read; what it reads as is the problem. Set across Gilgit-Baltistan's hatch the
+  // name of a *line* becomes the name of the *ground* it lies on — on the one stretch of this map
+  // where what a name is attached to is the whole question, and where "LINE OF CONTROL" written
+  // over a territory Pakistan administers says something this app has no source for and does not
+  // mean. It also crossed the boundary rule and Gilgit's own name, which the rest of the layout
+  // refuses for every other label.
+  //
+  // The cost is stated rather than hidden, and it is the reason this was ever a fallback: at some
+  // zooms the line goes unnamed. That is affordable only because the dash is keyed in the legend
+  // under every basis (D12), so an unnamed ceasefire line is still an explained one — an unexplained
+  // dash would not be an acceptable trade and this change would not be available.
   for (const form of forms) {
-    for (const insist of [true, false]) {
-      for (const outward of [true, false]) {
-        for (const fraction of fractions) {
-          const candidate = place(bestLength * fraction, outward, form.text);
-          if (!inside([candidate.x, candidate.y])) continue;
-          if (!form.permits(candidate)) continue;
-          if (insist && form.prefers !== undefined && !form.prefers(candidate)) continue;
-          return candidate;
-        }
+    for (const outward of [true, false]) {
+      for (const fraction of fractions) {
+        const candidate = place(bestLength * fraction, outward, form.text);
+        if (!inside([candidate.x, candidate.y])) continue;
+        if (!form.permits(candidate)) continue;
+        if (form.prefers !== undefined && !form.prefers(candidate)) continue;
+        return candidate;
       }
     }
   }
