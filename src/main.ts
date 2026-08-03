@@ -53,7 +53,14 @@ import {
   type Selection,
 } from './lib/selection.ts';
 import { figuresWithheld, type DistrictShading, type UnitMembership } from './lib/tooltip.ts';
-import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './lib/units.ts';
+import {
+  readUnitOutlines,
+  unitBoundaries,
+  unitByDistrict,
+  unitLegend,
+  unitRoster,
+  type UnitRosterEntry,
+} from './lib/units.ts';
 import { aboutTheData } from './lib/about.ts';
 import { variantCard } from './lib/card.ts';
 import { exportPng } from './export-image.ts';
@@ -372,6 +379,13 @@ function render(): void {
   // gesture has nothing to hold out of the way and the map is drawn as it always is.
   const held = comparing(variant);
   panel.show(selection, held);
+  /*
+   * Written **before** the map is shown, because the map lays its names out against whatever is
+   * standing on the paper (#33's `occupied` list) and measures this box to do it. Written after,
+   * the first layout of a variant would run against the previous variant's key — eight names of
+   * ground either freed or covered a frame late.
+   */
+  renderUnitKey(selection, variant);
   map.show(held ? comparedView(variant) : viewFor(selection));
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
@@ -476,6 +490,81 @@ const item = (entry: LegendEntry): string =>
 const lineOfControlEntry = `
   <span class="legend-item"><span class="swatch swatch-dashed"></span>Line of Control —
     ceasefire line, not an international border</span>`;
+
+/**
+ * The map's own key to the units it is drawing, in the frame's top-left corner.
+ *
+ * Built as elements rather than as markup, for the reason the tooltip is: a unit's name is text
+ * and can never be read as HTML. The words and the order are `unitRoster`'s — this composes no
+ * sentence of its own, exactly as `panel.ts` composes none of the card's.
+ *
+ * Emptied at the baseline rather than hidden by a flag, so the stylesheet's `:empty` rule takes it
+ * off the paper altogether: there is no proposal on screen and a box saying so would be a caption
+ * with nothing to caption. It is *not* given the comparison, on the same grounds as the legend and
+ * the card — compare is a gesture over the map, and the proposal is still selected while it is
+ * held off the screen.
+ */
+function renderUnitKey(active: Selection, variant: VariantRecord | null): void {
+  // Looked up per render rather than held, exactly as the legend and the colophon are: these three
+  // are the surfaces this file writes markup into, and they are found the same way.
+  const mount = document.getElementById('unit-key');
+  if (mount === null) return;
+  mount.replaceChildren();
+  if (variant === null) return;
+
+  // The same fill map the map itself is drawing with — read from `FILLS` rather than recomputed, so
+  // a swatch in the key and the ground under the outline cannot be two different answers.
+  const roster = unitRoster(variant, active === null ? null : (FILLS[active.basis] ?? null));
+  const heading = document.createElement('p');
+  heading.className = 'unit-key-heading';
+  heading.textContent = roster.heading;
+  mount.append(heading);
+
+  const list = document.createElement('ul');
+  list.className = 'unit-key-list';
+  for (const entry of roster.entries) {
+    const row = document.createElement('li');
+    // The unit's name is set in its own outline's colour, which is what the map does with unit
+    // names: the accent says *proposed* and says it in the one place a reader is already reading.
+    row.className = `unit-key-item unit-key-${entry.swatch}`;
+    row.append(unitKeySwatch(entry));
+    const name = document.createElement('span');
+    name.textContent = entry.name;
+    row.append(name);
+    list.append(row);
+  }
+  mount.append(list);
+}
+
+/**
+ * A unit's ground, as the map paints it: its own districts' fills, in proportion, widest first.
+ *
+ * A unit is never filled (D14), so this is not the unit's colour — it is what stratum 1 has put
+ * under it, and a unit covering four mother tongues gets four segments. Where the basis shades
+ * nothing the roster returns no segments at all and the row falls back to the outline's own stroke,
+ * which is the only thing there is to key on an unshaded map.
+ */
+function unitKeySwatch(entry: UnitRosterEntry): HTMLElement {
+  if (entry.fills.length === 0) {
+    const stroke = document.createElement('span');
+    stroke.className = `swatch swatch-${entry.swatch}`;
+    return stroke;
+  }
+
+  const bar = document.createElement('span');
+  bar.className = 'unit-key-fill';
+  for (const segment of entry.fills) {
+    const part = document.createElement('span');
+    part.className =
+      segment.swatch.kind === 'colour' ? 'unit-key-part' : `unit-key-part swatch-${segment.swatch.kind}`;
+    if (segment.swatch.kind === 'colour') part.style.background = segment.swatch.colour;
+    // Sized by the share the roster computed — a count of the unit's own districts, which is the
+    // one quantity here that needs no source because it is a fact about what is drawn.
+    part.style.flexGrow = `${segment.share}`;
+    bar.append(part);
+  }
+  return bar;
+}
 
 function renderLegend(active: Selection, variant: VariantRecord | null): void {
   const legend = document.getElementById('legend');

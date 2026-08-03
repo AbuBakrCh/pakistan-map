@@ -25,6 +25,7 @@ import type {
   UnitRecord,
   VariantRecord,
 } from '../bundle.ts';
+import { NO_DATA, type DistrictFill, type LegendEntry } from './fill.ts';
 import { linesFromArcs } from './geography.ts';
 import { arcsOf } from './line-of-control.ts';
 
@@ -132,6 +133,141 @@ export function unitByDistrict(variant: VariantRecord): ReadonlyMap<string, Unit
 
 /** The swatch a legend entry wears — the same three classes the outlines are drawn with. */
 export type UnitSwatch = 'unit-proposed' | 'unit-unchanged' | 'unit-territory';
+
+/**
+ * A variant's units, proposed first.
+ *
+ * Not the bundle's order, which is the order the partition was written in — remainders after the
+ * claim they are the remainder of. Every surface that *lists* units reads them this way, because
+ * each is about what the variant proposes and a reader scanning eighteen units for the one that
+ * does not exist should not have to. Exported so the card and the map's own key are one order
+ * rather than two that happen to agree today: they are read one after the other, and a unit that
+ * came third on the paper and seventh in the card would read as two different units.
+ */
+export function unitsProposedFirst(variant: VariantRecord): readonly UnitRecord[] {
+  const rank: Readonly<Record<UnitKind, number>> = { proposed: 0, unchanged: 1, territory: 2 };
+  return [...variant.units]
+    .map((unit, index) => ({ unit, index }))
+    .sort((a, b) => rank[a.unit.kind] - rank[b.unit.kind] || a.index - b.index)
+    .map(({ unit }) => unit);
+}
+
+/**
+ * One colour under a unit, and how much of the unit wears it.
+ *
+ * A unit is **never filled** (D14) — what is under it is stratum 1, which is the basis's data — so
+ * a unit's "colour" is not one colour at all: Punjab covers four mother tongues, and a swatch
+ * showing one of them would be this app naming a dominant language for a province that the census
+ * publishes no such figure for. So the swatch is the unit's *own* districts in the fills the map
+ * actually paints them, in proportion.
+ *
+ * The proportion is **of districts**, which is the atom every unit is composed of (D23) and the one
+ * quantity here that is exact and needs no source: it is a count of what is drawn. Not of people
+ * and not of ground — either would be a published figure being implied by a 20px picture, and PBS
+ * publishes neither of them cut this way.
+ */
+export interface UnitFillSegment {
+  /** The same swatch vocabulary the legend under the frame uses: a colour, or one of two absences. */
+  readonly swatch: LegendEntry['swatch'];
+  /** How many of the unit's own districts the map paints this way. */
+  readonly districts: number;
+  /** That count as a share of the unit's districts. The segments of a unit sum to 1. */
+  readonly share: number;
+}
+
+/** One line of the map's own key: a unit, the stroke it is outlined in, and the ground under it. */
+export interface UnitRosterEntry {
+  readonly name: string;
+  readonly swatch: UnitSwatch;
+  /**
+   * The fills under this unit, widest first. **Empty** where the basis shades nothing — the
+   * Administrative and Historical bases draw boundaries over an unshaded country — in which case
+   * there is no ground colour to key and the outline's own stroke is all a row can carry.
+   */
+  readonly fills: readonly UnitFillSegment[];
+}
+
+export interface UnitRoster {
+  /** How many units the variant cuts the country into, in the words the map sets. */
+  readonly heading: string;
+  readonly entries: readonly UnitRosterEntry[];
+}
+
+/**
+ * What the map paints one unit's districts, in proportion, widest first.
+ *
+ * Keyed on the district the map *draws* rather than the one the claim names, exactly as the hover
+ * is: the claim may say Taunsa, and the shape under the pointer is Dera Ghazi Khan.
+ *
+ * A district the fill map has never heard of is `no-data` — the same absence AJK's and GB's twenty
+ * carry — because that is what the map does with it: it takes no fill and the unshaded baseline
+ * shows through. The two absences stay apart here as they do everywhere else (#17): a question the
+ * census could not answer is stippled, and one it never asked here is hatched.
+ */
+function fillsUnder(
+  unit: UnitRecord,
+  fills: ReadonlyMap<string, DistrictFill> | null,
+): readonly UnitFillSegment[] {
+  if (fills === null || unit.districts.length === 0) return [];
+
+  const counts = new Map<string, { swatch: LegendEntry['swatch']; districts: number }>();
+  for (const district of unit.districts) {
+    const fill = fills.get(district) ?? NO_DATA;
+    const swatch: LegendEntry['swatch'] =
+      fill.kind === 'category' || fill.kind === 'band'
+        ? { kind: 'colour', colour: fill.colour }
+        : fill.kind === 'no-dominant'
+          ? { kind: 'stipple' }
+          : { kind: 'hatch' };
+    const key = swatch.kind === 'colour' ? swatch.colour : swatch.kind;
+    const seen = counts.get(key);
+    if (seen === undefined) counts.set(key, { swatch, districts: 1 });
+    else seen.districts += 1;
+  }
+
+  // Widest first, ties broken on the key itself, so a unit's swatch is the same picture on every
+  // build — two fills of equal width would otherwise swap places with the district order.
+  return [...counts.entries()]
+    .sort(([keyA, a], [keyB, b]) => b.districts - a.districts || keyA.localeCompare(keyB))
+    .map(([, segment]) => ({
+      swatch: segment.swatch,
+      districts: segment.districts,
+      share: segment.districts / unit.districts.length,
+    }));
+}
+
+/**
+ * The roster the map frame carries in its own corner, beside the boundaries it names.
+ *
+ * `unitLegend` says what the three strokes *mean*; this says which unit is which, on the paper,
+ * where the reader is looking. It names **every** unit and not only the proposed ones, for the
+ * reason the card lists them all: a variant is a complete partition, and a key naming only what is
+ * new would leave a reader unable to say what the rest of the country had become. The count leads
+ * it because that is the first thing asked of a proposal — how many provinces would there be.
+ *
+ * No population and no district count, deliberately. Those are the scorecard's (#20) and they are
+ * printed in full where they belong; a second set of figures on the paper is a second place for
+ * them to be wrong. This answers *what am I looking at* and stops there.
+ *
+ * Each row carries **two** things about a unit and they are two different facts. Its outline's own
+ * stroke, which says whether the unit is proposed — the accent means that and nothing else (D14) —
+ * and the ground beneath it, which is the basis's data and belongs to no unit. Handed the fills
+ * rather than reaching for them, so this module knows nothing about which basis is active.
+ */
+export function unitRoster(
+  variant: VariantRecord,
+  fills: ReadonlyMap<string, DistrictFill> | null = null,
+): UnitRoster {
+  const units = unitsProposedFirst(variant);
+  return {
+    heading: `${units.length} ${units.length === 1 ? 'unit' : 'units'}`,
+    entries: units.map((unit) => ({
+      name: unit.name,
+      swatch: `unit-${unit.kind}` as UnitSwatch,
+      fills: fillsUnder(unit, fills),
+    })),
+  };
+}
 
 export interface UnitLegendEntry {
   readonly label: string;

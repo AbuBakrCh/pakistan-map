@@ -45,6 +45,7 @@ import type {
 } from '../bundle.ts';
 import { groupDigits } from './figures.ts';
 import { figuresWithheld } from './tooltip.ts';
+import { unitsProposedFirst } from './units.ts';
 
 /**
  * What each provenance word means, in the reader's terms rather than the pipeline's.
@@ -339,36 +340,32 @@ function unitDistricts(unit: VariantRecord['units'][number]): string {
 }
 
 /**
- * The units, proposed first.
+ * The units, proposed first — in the one order every surface that lists them reads.
  *
- * Not the bundle's order, which is the order the partition was written in — remainders after the
- * claim they are the remainder of. The card is about what the variant *proposes*, and a reader
- * scanning eight units for the one that does not exist should not have to.
+ * The ordering itself is `unitsProposedFirst`'s, which the map's own key uses too: two lists of the
+ * same units in two orders is the card and the paper disagreeing about which unit is the proposal,
+ * and that is exactly what a reader looks at both of them to find out.
  */
 function unitsOf(variant: VariantRecord): readonly CardUnit[] {
-  const rank: Readonly<Record<UnitKind, number>> = { proposed: 0, unchanged: 1, territory: 2 };
   // A property of the variant, asked once and asked of the one predicate that answers it (#48):
   // whether *this card* prints a population anywhere.
   const withholding = figuresWithheld(variant) !== null;
-  return [...variant.units]
-    .map((unit, index) => ({ unit, index }))
-    .sort((a, b) => rank[a.unit.kind] - rank[b.unit.kind] || a.index - b.index)
-    .map(({ unit }) => ({
-      id: unit.id,
-      name: unit.name,
-      alsoKnownAs: unit.alsoKnownAs.length === 0 ? null : `also: ${unit.alsoKnownAs.join(', ')}`,
-      kind: unit.kind,
-      standing: unitStanding(unit.kind),
-      districts: unitDistricts(unit),
-      population: unitPopulation(unit, withholding),
-      // Ground where this unit's own line has no people to give (#49), which is the withholding
-      // and not the voided spread: the two surfaces answer different questions. A variant voided
-      // by a census hole still prints every unit's population, so an area beside it would be a
-      // second figure nobody is missing — where a withholding variant's unit line has none at all.
-      // Asked of `figuresWithheld`, so this line and the population above it cannot disagree (#48).
-      area: withholding && unit.areaSqKm !== null ? `${groupDigits(unit.areaSqKm)} km²` : null,
-      note: unit.note,
-    }));
+  return unitsProposedFirst(variant).map((unit) => ({
+    id: unit.id,
+    name: unit.name,
+    alsoKnownAs: unit.alsoKnownAs.length === 0 ? null : `also: ${unit.alsoKnownAs.join(', ')}`,
+    kind: unit.kind,
+    standing: unitStanding(unit.kind),
+    districts: unitDistricts(unit),
+    population: unitPopulation(unit, withholding),
+    // Ground where this unit's own line has no people to give (#49), which is the withholding
+    // and not the voided spread: the two surfaces answer different questions. A variant voided
+    // by a census hole still prints every unit's population, so an area beside it would be a
+    // second figure nobody is missing — where a withholding variant's unit line has none at all.
+    // Asked of `figuresWithheld`, so this line and the population above it cannot disagree (#48).
+    area: withholding && unit.areaSqKm !== null ? `${groupDigits(unit.areaSqKm)} km²` : null,
+    note: unit.note,
+  }));
 }
 
 /**

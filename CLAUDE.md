@@ -732,6 +732,7 @@ What it holds:
 | Contiguity flags — recomputed from the shipped graph and compared unit by unit rather than read back, `detached` empty exactly where the unit is whole, and the two numbers held apart on the unit where they visibly disagree: South Punjab is **one piece and three polygons**. A non-contiguous unit flagged over the real map — Lower Chitral and Karachi South — with nothing that can refuse it | `bundle.test.ts` |
 | What a *non-contiguous* unit looks like — the one thing the shipped set cannot demonstrate, since every one of its 149 units hangs together: the stranded district named, the walk confined to the unit's own districts (unconfined, every unit on a one-component map reads contiguous and the flag becomes decoration), an asymmetric graph and an uncut three-way arc each named, on the same three squares | `adjacency.test.ts` |
 | What the validator does when a partition is *wrong* — the one thing a valid bundle cannot demonstrate: the district named, both units named on an overlap, both answers to open item 2b expressible | `scenarios.test.ts` |
+| The map's own key to its units — every unit of **every** variant named exactly once and wearing the stroke the bundle's own `kind` says its outline is drawn in, so a swatch and an outline cannot come apart; **the ground under a unit re-derived from the fill map the renderer draws with**, every district of a unit in exactly one segment and the shares summing to the whole, widest first — with the segments that make the swatch worth having named rather than counted, since South Punjab is 8 Saraiki districts and **3 Punjabi** ones and a colour per unit would report the Seraiki claim as coextensive with the Seraiki language; the two absences kept apart on one map, the territories hatched entire and Chitral stippled inside Khyber Pakhtunkhwa, neither of them a colour; nothing keyed at all where the basis shades nothing, rather than a colour invented for an unshaded map; the count leading it and reading `1 unit` where a variant has one, since a key saying "1 units" is the first thing a reader sees; and the roster held against **the card's own unit list** rather than against a literal of its own, over every variant — the two are read one after the other and a unit third on the paper and seventh in the card reads as two. The proposed-first rule asserted over a variant **reversed**, since the bundle's order is the order the partition was written in, with the within-kind order shown to stay the partition's | `src/lib/units.test.ts` |
 | Anchors inside the shape they name, a projection fitted to Pakistan, no two names overlapping, both territories named | `src/lib/*.test.ts` |
 | The dashed line is the **right stretch** — every arc of it belongs to AJK or GB and to no province, it is the whole of AJK's outer boundary, and it is only part of GB's, the remaining 3 arcs being the China and Afghanistan frontier. Endpoints named (Chenab, Karakoram), districts named, length agreeing with the provenance that states it. A set question on arc indices, exact, because line and boundary share arcs | `src/lib/line-of-control.test.ts` |
 | Palette — every census category coloured, colourblind separation re-derived from the hexes on the category pairs that actually share a border, the pairs it cannot separate named in the module | `src/lib/palette.test.ts` |
@@ -797,6 +798,76 @@ is no build to guard.
 
 **Default:** current provinces and territories, named, with the seven first-level seats and the
 ceasefire line. Nothing else.
+
+**The map keys its own units, top left of the frame.** Under a variant the paper carries a small
+box: the unit **count** — the first thing anybody asks of a proposal, *how many provinces would
+there be* — and every unit named, each beside a swatch of the ground the map is painting underneath
+it. It arrives and leaves with the outlines exactly as the card does (#19): the current map proposes
+nothing, so at the baseline the box is emptied and the stylesheet's `:empty` rule takes it off the
+paper altogether.
+
+**A unit's swatch is not a unit colour, because there is no such thing** (D14). A unit is never
+filled — what is under it is stratum 1, which is the basis's data and belongs to no unit — and
+Punjab covers four mother tongues. So each row carries the unit's **own districts in the fills the
+map actually paints them**, widest first: South Punjab reads as 8 Saraiki districts and 3 Punjabi
+ones, and the Punjab it leaves behind as 23 Punjabi and 2 Saraiki. A single colour per unit would
+report the Seraiki claim as coextensive with the Seraiki language, which is exactly the disagreement
+between an outline and the shading beneath it that this map exists to show — and naming one of
+Punjab's four would be a dominant mother tongue for a province, which the census publishes for no
+province. The two absences stay apart in the swatch as they do everywhere else (#17): the twenty
+AJK and GB districts hatch, Chitral stipples.
+
+**The proportion is of districts**, which is the atom every unit is composed of (D23) and the one
+quantity here that needs no source, being a count of what is drawn. Not of people and not of ground:
+either would be a published figure implied by a 20px picture, and PBS publishes neither cut this
+way. The colours themselves are keyed by the legend under the frame, which names every one of
+them — identity is never colour alone.
+
+**Which leaves the kind to the name**, set in the unit's own outline colour exactly as the map sets
+it: the accent means *a proposed province* and nothing else, and it says so in the one place a
+reader is already reading the names. Where a basis shades nothing — the Administrative and
+Historical bases draw boundaries over an unshaded country — there is no ground to key, and the row
+falls back to the outline's own stroke, which is why the stroke is carried on every entry and not
+only where the fills are missing.
+
+It is a different question from the legend under the frame, which is why both exist. That one says
+what a *stroke means* — proposed, unchanged, territory — and a reader matching a colour to a shape
+has to look away from the map to do it; this says *whose boundary that is*, on the paper, where they
+are already looking. It names **every** unit and not only the proposed ones, for the reason the card
+lists them all: a variant is a complete partition, and a key naming only what is new leaves a reader
+unable to say what the rest of the country has become.
+
+Three things it does not do. **No populations and no printed district counts** — those are the scorecard's
+(#20), printed in full where a reader compares two proposals straight down a column, and a second
+set of figures on the paper is a second place for them to be wrong. **It does not answer to
+compare**, on the same grounds as the legend and the card: the reader is holding a key down over the
+map, the proposal is still selected, and rewriting the paper's own furniture underneath them would
+be the page changing rather than the map. And it takes **no pointer events**, because a reader
+panning through that corner is reading the map and not the key.
+
+**The order is the card's, and it is one order rather than two that agree today.** Both read
+`unitsProposedFirst` — proposed units first, and inside a kind the partition's own order, since
+nothing in the bundle ranks Sindh against Balochistan. The two lists are read one after the other,
+and a unit third on the paper and seventh in the card reads as two different units.
+
+**It takes part in the label layout, unlike the division toggle beside it.** That chip is small and
+translucent in a corner the names rarely reach; this is a solid box of up to fifteen lines, and a
+name left underneath it is a name a reader cannot read — so it is seeded into the same `occupied`
+set the docked tooltip is (#33), and the four-step yielding order ends in *no name at all* rather
+than in a name behind a box (D12). The cost is stated rather than hidden: under a variant the
+north-west corner is spent, and a name that would have sat there gives way for as long as the
+proposal is on screen. It comes back on zoom, and the box names the same units the name would have.
+
+**It is not drawn at 390px, and that is a decision rather than a fallback** (#33's bar). The top of
+the frame is the docked tooltip's and the bottom left is the division toggle's and the two actions';
+what is left is 369px of country, which is the one thing the hard bar is about, and a box of fifteen
+names over it would cover more of Pakistan than it explained. Nothing is lost that a reader cannot
+reach: the card is the sheet already in their hand and lists every unit with its own population, and
+a tap on any district names its unit in the tooltip's third line.
+
+**And it is `aria-hidden`.** The map already names every region in words for a screen reader (#35,
+`lib/regions.ts`), with each unit's constitutional standing beside it; this is the same list with
+less in it, and reading it out again would give a reader the units twice and the standing once.
 
 **The division tier is offered, not assumed — one toggle, top right of the map frame.** *Show all
 divisions* draws the ~39 divisions and their 37 names; off, which is how the page opens, the map is

@@ -615,9 +615,38 @@ export function renderMap(
    * the box and the name it landed on. Measured from the element rather than assumed, because its
    * height is whatever the district's own figures came to.
    */
-  function dockedTooltip(): readonly { x0: number; y0: number; x1: number; y1: number }[] {
+  function dockedTooltip(): readonly Rect[] {
     const node = tooltip.node() as HTMLElement | null;
     if (node === null || hovered === null || !isSheetLayout()) return [];
+    return standingOn(node);
+  }
+
+  /**
+   * The ground the unit key is standing on, on the same terms and for the same reason.
+   *
+   * It is an opaque box in the frame's top-left corner naming the units, and unlike the division
+   * toggle it is neither small nor translucent — so a name left underneath it is a name a reader
+   * cannot read, which is the failure the four-step order ends in "no name at all" to avoid (D12).
+   * Empty at the baseline, where the box has no contents and the stylesheet takes it off the paper;
+   * empty on a phone, where it is not drawn at all. Measured rather than assumed, because its
+   * height is however many units the variant has.
+   *
+   * The cost is stated rather than hidden: under a variant this corner is spent, and a name that
+   * would have sat in Pakistan's north-west gives way for as long as the proposal is on screen. It
+   * comes back on zoom, and the box names the same units the name would have.
+   */
+  function unitKey(): readonly Rect[] {
+    const node = container.querySelector('.unit-key');
+    return node === null ? [] : standingOn(node as HTMLElement);
+  }
+
+  /** Everything opaque on the paper, in the frame's own coordinates. */
+  function obstacles(): readonly Rect[] {
+    return [...dockedTooltip(), ...unitKey()];
+  }
+
+  /** One element's footprint, or nothing at all where it is not being drawn. */
+  function standingOn(node: HTMLElement): readonly Rect[] {
     const well = container.getBoundingClientRect();
     const box = node.getBoundingClientRect();
     if (box.width < 1 || box.height < 1) return [];
@@ -674,7 +703,7 @@ export function renderMap(
       return [box];
     });
 
-    const placed = layoutLabels(boxes, { bounds: size, gap: 3, occupied: dockedTooltip() });
+    const placed = layoutLabels(boxes, { bounds: size, gap: 3, occupied: obstacles() });
     labelLayer
       .selectAll<SVGTextElement, { key: string; x: number; y: number }>('text')
       .data(placed, (label) => label.key)
@@ -714,7 +743,7 @@ export function renderMap(
      * an opaque box. The four-step order ends in "no name at all" rather than in a name a reader
      * cannot see (D12).
      */
-    const line = locLabel(transform, [...dockedTooltip(), ...taken]);
+    const line = locLabel(transform, [...obstacles(), ...taken]);
     locLabelLayer
       .selectAll<SVGTextElement, PlacedLineLabel>('text')
       .data(line === null ? [] : [line])

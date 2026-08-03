@@ -28,6 +28,22 @@
             and because a control that changes the paper belongs on the paper.
           -->
           <div id="map-controls" class="map-controls"></div>
+
+          <!--
+            The map's own key to stratum 3: how many units the active variant cuts the country
+            into, and which unit is which, in its outline's own stroke. It sits on the paper
+            because that is where the outlines are — the legend under the frame says what a stroke
+            *means*, and this says whose boundary it is.
+
+            Empty and gone at the baseline, exactly as the card and the outlines are (#19): the
+            current map proposes nothing, and there is nothing here to name.
+
+            `aria-hidden`, and that is a decision rather than an oversight. The map already names
+            every region in words for a screen reader (#35, `lib/regions.ts`), with each unit's
+            constitutional standing beside it; this is the same list with less in it, and reading
+            it out again would give a reader the units twice and the standing once.
+          -->
+          <div id="unit-key" class="unit-key" aria-hidden="true"></div>
         </div>
         <figcaption class="legend" id="legend"></figcaption>
       </figure>

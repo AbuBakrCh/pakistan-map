@@ -470,6 +470,109 @@ body {
 }
 
 /*
+ * The map's own key to stratum 3 — the count, and which unit is which, in the frame's top-left.
+ *
+ * On the paper rather than under it, because it names lines that are on the paper: the legend below
+ * the frame says what a stroke *means* and a reader matching it to a shape has to look away from
+ * the map to do it. Top left is the corner the map-controls chip is not in, and on this projection
+ * it is Balochistan's western edge and the ground beyond it — the emptiest quarter of the frame at
+ * zoom 1.
+ *
+ * Unlike that chip it *is* seeded into the label layout (`obstacles` in `map.ts`), and the
+ * difference is opacity and size: this is a solid box of up to eighteen lines, and a division name
+ * left underneath it is a name a reader cannot read.
+ *
+ * Empty at the baseline, and `:empty` is what takes it away — there is no proposal on screen, so
+ * there is nothing to key, exactly as there is no card (#19).
+ */
+.unit-key {
+  position: absolute;
+  left: 0.6rem;
+  top: 0.6rem;
+  z-index: 1;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--land-hatch);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  /* A rule-drawn variant has eighteen units and a phone-height frame has room for fewer: the box
+   * scrolls rather than growing down the map, on the same terms as the legend's own cap. */
+  max-height: min(60%, 22rem);
+  max-width: 13rem;
+  overflow-y: auto;
+  padding: 0.45rem 0.6rem;
+  /* It explains the map; it is never in the way of reading one. Panning through the corner it
+   * stands in has to work, which means the pointer goes to the paper underneath. */
+  pointer-events: none;
+}
+
+.unit-key:empty {
+  display: none;
+}
+
+.unit-key-heading {
+  color: var(--ink);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.3rem;
+}
+
+.unit-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.unit-key-item {
+  align-items: center;
+  color: var(--ink-soft);
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* The swatch is the stroke, so it must not shrink when a long name wraps beside it. */
+.unit-key-item .swatch {
+  flex: 0 0 auto;
+  width: 1.6rem;
+}
+
+/*
+ * The ground under a unit, as the map paints it — the unit's own districts' fills, in proportion.
+ *
+ * Not "the unit's colour", which does not exist: a unit is never filled (D14) and Punjab covers
+ * four mother tongues. Showing one of them would be this app naming a dominant language for a
+ * province the census publishes no such figure for, so all of them are shown, each as wide as the
+ * share of the unit's districts it paints. The segments are keyed by the legend under the frame,
+ * which names every colour — identity is never colour alone.
+ */
+.unit-key-fill {
+  border: 1px solid var(--rule-province);
+  display: flex;
+  flex: 0 0 auto;
+  height: 0.85rem;
+  overflow: hidden;
+  width: 1.6rem;
+}
+
+.unit-key-part {
+  /* Width comes from the share the roster computed; a sliver still has to be visible as one. */
+  flex-basis: 0;
+  min-width: 1px;
+}
+
+/*
+ * A unit's name is set in its own outline's colour, exactly as it is on the map — the accent means
+ * *a proposed province* and nothing else, and it says so here in the one place a reader is reading
+ * the names anyway. It is the row's only signal of kind once the swatch is showing the ground.
+ */
+.unit-key-item.unit-key-unit-proposed {
+  color: var(--accent);
+}
+
+/*
  * Stratum 3 — the active variant's units, drawn heavy and on top.
  *
  * Two paths per unit: a casing in the paper's own colour, then the outline over it. Without the
@@ -1606,6 +1709,23 @@ body {
     top: auto;
     transition: bottom var(--switch) ease;
     z-index: 6;
+  }
+
+  /*
+   * The unit key is not drawn on a phone at all, and that is a decision rather than a fallback.
+   *
+   * The top of the frame is the docked tooltip's (#33) and the bottom left is the division toggle's
+   * and the two actions' — what is left is the map, which at 390px is 369px of country and the one
+   * thing the hard bar is about. A box of up to eighteen names over it would cover more of Pakistan
+   * than it explained.
+   *
+   * Nothing is lost that a reader cannot reach: the card is the sheet in their hand and it lists
+   * every unit by name with its own population, and a tap on any district names its unit in the
+   * tooltip's third line. This is the surface those two already are, put where a desktop has room
+   * for it.
+   */
+  .unit-key {
+    display: none;
   }
 
   .chip-divisions {

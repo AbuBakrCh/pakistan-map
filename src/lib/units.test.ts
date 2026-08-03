@@ -13,10 +13,24 @@ import geography from '../../data/bundle/geography.topojson.json';
 import scenarios from '../../data/bundle/scenarios.json';
 import outlines from '../../data/bundle/unit-outlines.json';
 import type { ScenarioBundle, UnitOutlineBundle } from '../bundle.ts';
+import statistics from '../../data/bundle/statistics.json';
+import type { CensusStatistics } from '../bundle.ts';
+import { variantCard } from './card.ts';
+import { motherTongueFills } from './mother-tongue.ts';
 import { readDistricts } from './geography.ts';
 import { labelAnchor } from './labels.ts';
 import { arcsOf } from './line-of-control.ts';
-import { readUnitOutlines, unitBoundaries, unitByDistrict, unitLegend } from './units.ts';
+import {
+  readUnitOutlines,
+  unitBoundaries,
+  unitByDistrict,
+  unitLegend,
+  unitRoster,
+  unitsProposedFirst,
+  type UnitRosterEntry,
+} from './units.ts';
+
+const censusStatistics = statistics as unknown as CensusStatistics;
 
 const topology = geography as never;
 const bundle = outlines as unknown as UnitOutlineBundle;
@@ -256,6 +270,136 @@ describe('unitLegend', () => {
     if (h1 === undefined) throw new Error('h1 is not in the scenario bundle');
     expect(h1.units.map((u) => u.kind)).toEqual(['proposed', 'territory', 'territory']);
     expect(unitLegend(h1).map((e) => e.swatch)).toEqual(['unit-proposed', 'unit-territory']);
+  });
+});
+
+/**
+ * The map's own key (the count, the names, the strokes), held over every variant.
+ *
+ * Two things are worth more than the wording here. That the roster and the *card* list the same
+ * units in the same order — they are read one after the other, and a unit third on the paper and
+ * seventh in the card reads as two units. And that every unit gets a stroke the map actually draws
+ * it in: a swatch that keys nothing is the failure the export band's own key refuses by name.
+ */
+describe('unitRoster', () => {
+  it('leads with the count, in the number the variant has', () => {
+    expect(unitRoster(l1).heading).toBe(`${l1.counts.units} units`);
+
+    // A one-unit variant is not in the shipped set — H1 comes closest, at one province and the two
+    // territories — and a key reading "1 units" is the first thing a reader would see.
+    const alone = { ...l1, units: l1.units.slice(0, 1) };
+    expect(unitRoster(alone).heading).toBe('1 unit');
+  });
+
+  it('names every unit of every variant exactly once, in its outline’s own stroke', () => {
+    for (const variant of variants) {
+      const roster = unitRoster(variant);
+      expect(roster.entries).toHaveLength(variant.units.length);
+      expect(new Set(roster.entries.map((e) => e.name)).size).toBe(variant.units.length);
+
+      // Keyed on the kind the bundle records, so a unit's swatch and its outline cannot come apart.
+      const swatchOf = new Map(roster.entries.map((e) => [e.name, e.swatch]));
+      for (const unit of variant.units) {
+        expect(swatchOf.get(unit.name)).toBe(`unit-${unit.kind}`);
+      }
+    }
+  });
+
+  it('shades each unit with the ground the map actually paints under it, in proportion', () => {
+    const fills = motherTongueFills(censusStatistics);
+    const roster = unitRoster(l1, fills);
+    const entry = (name: string): UnitRosterEntry => {
+      const found = roster.entries.find((e) => e.name === name);
+      if (found === undefined) throw new Error(`${name} is not a unit of l1`);
+      return found;
+    };
+
+    for (const unit of l1.units) {
+      const segments = entry(unit.name).fills;
+      // Every district of the unit is in exactly one segment, and the shares sum to the whole:
+      // a swatch short of a district would be a picture of ground the unit does not cover.
+      expect(segments.reduce((sum, s) => sum + s.districts, 0)).toBe(unit.districts.length);
+      expect(segments.reduce((sum, s) => sum + s.share, 0)).toBeCloseTo(1, 10);
+      // Widest first, so the swatch reads left to right as the unit's own ground does.
+      expect(segments.map((s) => s.districts)).toEqual(
+        [...segments.map((s) => s.districts)].sort((a, b) => b - a),
+      );
+    }
+
+    /*
+     * And the segments are what make the swatch worth having, rather than a colour per unit.
+     *
+     * South Punjab is **8 Saraiki districts and 3 Punjabi ones** — Khanewal, Vehari and
+     * Bahawalnagar — and the Punjab it leaves behind is 23 Punjabi and 2 Saraiki. A single colour
+     * would report the Seraiki claim as coextensive with the Seraiki language, which is precisely
+     * the disagreement between an outline and the shading beneath it that this map exists to show.
+     * Named rather than counted, because that is the sentence a reader would dispute.
+     */
+    const colourOf = (district: string): string => {
+      const fill = fills.get(district);
+      if (fill?.kind !== 'category') throw new Error(`${district} is not shaded by a category`);
+      return fill.colour;
+    };
+    expect(entry('South Punjab').fills).toEqual([
+      { swatch: { kind: 'colour', colour: colourOf('Multan') }, districts: 8, share: 8 / 11 },
+      { swatch: { kind: 'colour', colour: colourOf('Khanewal') }, districts: 3, share: 3 / 11 },
+    ]);
+    expect(entry('Punjab').fills.map((f) => f.districts)).toEqual([23, 2]);
+  });
+
+  it('keys the two absences apart, and neither of them as a colour', () => {
+    const roster = unitRoster(l1, motherTongueFills(censusStatistics));
+    const fillsOf = (name: string): readonly { swatch: { kind: string } }[] =>
+      roster.entries.find((e) => e.name === name)?.fills ?? [];
+
+    // The census reached neither territory at all (D25), so the whole unit is the one absence —
+    // hatched, exactly as the legend under the frame keys it, and never a low band or a colour.
+    for (const territory of ['Azad Jammu & Kashmir', 'Gilgit-Baltistan']) {
+      expect(fillsOf(territory).map((f) => f.swatch)).toEqual([{ kind: 'hatch' }]);
+    }
+
+    // And the other absence is a different swatch on the same map: Khyber Pakhtunkhwa holds both
+    // Chitrals, which the census reached and named no dominant tongue for (#17).
+    expect(fillsOf('Khyber Pakhtunkhwa').map((f) => f.swatch.kind)).toContain('stipple');
+    expect(fillsOf('Khyber Pakhtunkhwa').map((f) => f.swatch.kind)).not.toContain('hatch');
+  });
+
+  it('keys nothing where the basis shades nothing, rather than inventing a colour', () => {
+    // The Administrative and Historical bases draw boundaries over an unshaded country. There is no
+    // ground colour to show, so the row falls back to the outline's own stroke — which is why the
+    // stroke is carried on every entry and not only where the fills are missing.
+    for (const entry of unitRoster(l1).entries) expect(entry.fills).toEqual([]);
+  });
+
+  it('reads in the card’s order, so the paper and the card agree which unit is the proposal', () => {
+    for (const variant of variants) {
+      const card = variantCard(scenarios as unknown as ScenarioBundle, variant);
+      expect(unitRoster(variant).entries.map((e) => e.name)).toEqual(card.units.map((u) => u.name));
+    }
+  });
+
+  it('puts the proposed units first even where the partition was written the other way round', () => {
+    // The bundle's own order is the order the partition was written in — remainders after the
+    // claim they are the remainder of — so this is asserted against a variant reversed rather than
+    // against one that happens to already be in the right order.
+    const written = [...l1.units].reverse();
+    const reversed = { ...l1, units: written };
+    expect(unitsProposedFirst(reversed).map((u) => u.kind)).toEqual([
+      'proposed',
+      ...written.filter((u) => u.kind === 'unchanged').map(() => 'unchanged'),
+      ...written.filter((u) => u.kind === 'territory').map(() => 'territory'),
+    ]);
+
+    // Only the *kinds* are reordered. Inside one kind the partition's own order stands, because
+    // nothing in the bundle ranks Sindh against Balochistan and inventing a rank here would be
+    // this app ordering the provinces by something no source states.
+    const inWrittenOrder = (kind: string): string[] =>
+      written.filter((u) => u.kind === kind).map((u) => u.name);
+    expect(unitsProposedFirst(reversed).map((u) => u.name)).toEqual([
+      ...inWrittenOrder('proposed'),
+      ...inWrittenOrder('unchanged'),
+      ...inWrittenOrder('territory'),
+    ]);
   });
 });
 
