@@ -112,6 +112,25 @@ Not used as a noun for a separate control. The basis *is* the overlay — select
 shades the districts.
 _Avoid_: as a distinct toggle or layer control
 
+**Room**:
+The space a shape actually leaves at a label's anchor, measured along both axes and short of the
+boundary by a few px — not the shape's bounding box, which on a crescent or a coastal strip is
+mostly somebody else's ground. What decides whether a unit's name is set on its own ground, set
+down in size, or taken outside it.
+_Avoid_: extent, bounds, bbox, space
+
+**Callout**:
+A unit name set outside the shape it names, because the room will not take it at any size this map
+sets. Joined back to its own ground by a leader. Never an overflow: a name is never drawn across a
+boundary it does not belong to.
+_Avoid_: overflow, spill, external label, annotation
+
+**Leader**:
+The line joining a callout to the ground it names — one orthogonal elbow, ending in a filled dot
+immediately before the name's first character, drawn in that unit's own outline colour. Furniture:
+screen px at every zoom, and never crossing a label or another leader.
+_Avoid_: pointer, connector, tick, callout line
+
 **Contiguity**:
 Whether a unit's districts form a single connected region. Flagged on the variant scorecard,
 never enforced.

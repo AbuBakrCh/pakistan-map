@@ -778,6 +778,40 @@ body {
 }
 
 /*
+ * The leader (#50) — what joins a name set outside its own unit back to the ground it names.
+ *
+ * A unit whose ground will not take its name at any size this map sets is not left as an
+ * unlabelled shape and its name is not spilled across a neighbour: it is taken outside the shape,
+ * set horizontally, and attached by a single-elbow line ending in a dot immediately before the
+ * first character. Both are furniture and stay in screen px at every zoom, like the type and the
+ * city dots.
+ *
+ * Coloured as the unit's own outline is, for the same reason the name is: it ties the two together
+ * without filling the unit, since fill is data and nothing else (D14). Which means the accent still
+ * means a *proposed province* here and nowhere else. Set a hair lighter than the outline itself —
+ * the leader is an instruction about where to look, not a boundary.
+ */
+.leader path {
+  fill: none;
+  stroke: var(--rule-unit);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.leader circle {
+  fill: var(--rule-unit);
+  stroke: none;
+}
+
+.leader-proposed path {
+  stroke: var(--accent);
+}
+
+.leader-proposed circle {
+  fill: var(--accent);
+}
+
+/*
  * A city's name: smaller than a division's and set upright rather than italic, because it names a
  * point and not an area. Roman against the divisions' italic is the atlas convention for exactly
  * that distinction, and it is what keeps "Quetta" at a dot from reading as a second division.

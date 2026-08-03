@@ -45,15 +45,25 @@ import {
   baselineLabelSites,
   districtLabelSites,
   labelAnchor,
+  labelPolygon,
   DISTRICT_LABEL_ZOOM,
   labelKey,
+  LEADER_DOT_RADIUS,
+  LINE_SPACING,
+  MAX_LEADER_FRACTION,
+  calloutReserve,
   type CitySite,
   layoutLabels,
   measureLabel,
   variantLabelSites,
+  type LabelBox,
   type LabelSite,
   type LabelTier,
+  type MeasuredLabel,
   type Measurer,
+  type PlacedLabel,
+  type Point,
+  type Ring,
 } from './lib/labels.ts';
 import {
   arcsOf,
@@ -395,6 +405,9 @@ export function renderMap(
   // the same reason and drawn from the same pass: a circle has no `vector-effect` for its radius,
   // so a dot inside the zoomed group would grow into a blot at 24×.
   const cityLayer = svg.append('g').attr('class', 'stratum-cities');
+  // The leaders, under the names they carry: a leader is furniture pointing at ground, and a name
+  // it managed to cross would be the one thing this pass exists to prevent.
+  const leaderLayer = svg.append('g').attr('class', 'stratum-leaders');
   const labelLayer = svg.append('g').attr('class', 'stratum-labels');
   const locLabelLayer = svg.append('g').attr('class', 'stratum-labels');
 
@@ -402,12 +415,19 @@ export function renderMap(
   // Measured as the browser will draw it: province names are set in caps by the stylesheet, and
   // caps run a quarter wider. Measuring the lower-case string is how labels come to overlap
   // despite a layout that says they cannot.
-  const measure: Measurer = (text, tier) => {
-    const { size, tracking, caps } = TYPE[tier];
+  // `scale` is how far `measureLabel` has had to set a name down to fit the ground it names; the
+  // tracking is scaled with the size, because letter-spacing is set in `em` by the stylesheet and a
+  // width measured with the full tracking under a smaller face is a width the browser never draws.
+  const measure: Measurer = (text, tier, scale = 1) => {
+    const { size: nominal, tracking, caps } = TYPE[tier];
+    const size = nominal * scale;
     const drawn = caps ? text.toUpperCase() : text;
     if (ruler === null) return { width: drawn.length * size * 0.62, height: size };
     ruler.font = `${size}px ${SERIF}`;
-    return { width: ruler.measureText(drawn).width + tracking * drawn.length, height: size };
+    return {
+      width: ruler.measureText(drawn).width + tracking * scale * drawn.length,
+      height: size,
+    };
   };
 
   /**
@@ -530,6 +550,25 @@ export function renderMap(
   let interior: [number, number] = [0, 0];
   /** Unzoomed on-screen width of each named shape, refreshed whenever the projection is refitted. */
   const shapeWidth = new Map<string, number>();
+  /**
+   * Each unit's own ground, in unzoomed screen px — the rings its name has to fit inside.
+   *
+   * Only the units, because they are the only tier fitted to its interior rather than to a width.
+   * Only the polygon `labelAnchor` anchored in, because a name on the mainland measured against an
+   * island's rings would be told about room it cannot reach. Held unzoomed and pushed through the
+   * transform per frame, exactly as the anchors are: refitting is what costs, and a zoom is a
+   * multiply.
+   */
+  const unitRings = new Map<string, readonly Ring[]>();
+  /**
+   * The whole of the drawn country, in unzoomed screen px — what a callout has to get clear of.
+   *
+   * Every polygon of every province rather than the largest of each, unlike `unitRings`: that map
+   * answers "how much room is there *here*", where this one answers "where does Pakistan end on this
+   * row", and an island left out of the second is a name set on top of it. Built once per refit and
+   * pushed through the transform per frame, on the same reasoning as the anchors and the rings.
+   */
+  let landRings: readonly Ring[] = [];
 
   /**
    * The ceasefire line's name, laid along whichever part of the line is on screen.
@@ -680,7 +719,7 @@ export function renderMap(
       .attr('cx', (dot) => dot.x)
       .attr('cy', (dot) => dot.y);
 
-    const drawn = new Map<string, string>();
+    const drawn = new Map<string, MeasuredLabel>();
     /*
      * The districts join the contest only past the threshold, and they join it *last* — ranked
      * under every other tier, so a district name can never take the frame from the province it
@@ -698,14 +737,81 @@ export function renderMap(
       // How wide the shape is on screen right now, which is what decides whether its name fits
       // inside it. It grows as the reader zooms, so abbreviations expand back into full names.
       const shape = shapeWidth.get(site.key) ?? Infinity;
-      const { box, text } = measureLabel(site, transform.apply(point), shape * transform.k, measure);
-      drawn.set(site.key, text);
-      return [box];
+      // The unit tier alone is fitted to the ground it names rather than to a width, so it alone is
+      // handed its own rings — pushed through the transform here, since the room a name has is the
+      // room it has *at this zoom* and it is what brings a shrunk name back to full size.
+      const rings = unitRings.get(site.key);
+      const measured = measureLabel(
+        site,
+        transform.apply(point),
+        shape * transform.k,
+        measure,
+        rings === undefined
+          ? undefined
+          : {
+              rings: rings.map((ring) =>
+                ring.map((p) => transform.apply([p[0], p[1]]) as Point),
+              ),
+            },
+      );
+      drawn.set(site.key, measured);
+      return [measured.box];
     });
 
-    const placed = layoutLabels(boxes, { bounds: size, gap: 3, occupied: obstacles() });
+    const placed = layoutLabels(boxes, {
+      bounds: size,
+      gap: 3,
+      occupied: obstacles(),
+      // The country at *this* zoom, which is what a callout has to clear — a name beside the coast
+      // at 1× is a name in the middle of Balochistan at 4×, so the rings travel with the transform
+      // exactly as the units' own do.
+      land: landRings.map((ring) => ring.map((p) => transform.apply([p[0], p[1]]) as Point)),
+      maxLeader: Math.min(size.width, size.height) * MAX_LEADER_FRACTION,
+    });
+
+    /*
+     * The leaders (#50). A name that would not fit inside its own unit at any size this map sets is
+     * taken outside the shape and joined back to its ground by a single-elbow leader ending in a
+     * dot — so the reader is told *which* ground, which is the whole of what a unit name is for.
+     *
+     * Drawn under the names and in the unit's own colour, on the same reasoning as the name itself:
+     * matching the outline ties the two together without filling the unit, and the accent still
+     * means a proposed province and nothing else (D14). Screen px at every zoom, like the type it
+     * carries and like the city dots.
+     */
+    const leaders = placed.flatMap((label) =>
+      label.leader === undefined
+        ? []
+        : [{ key: label.key, leader: label.leader, kind: unitKindOf.get(label.key) ?? 'proposed' }],
+    );
+    leaderLayer
+      .selectAll<SVGGElement, (typeof leaders)[number]>('g')
+      .data(leaders, (d) => d.key)
+      .join((enter) => {
+        const group = enter.append('g');
+        group.append('path');
+        group.append('circle').attr('r', LEADER_DOT_RADIUS);
+        return group;
+      })
+      .attr('class', (d) => `leader leader-${d.kind}`)
+      .call((group) => {
+        group
+          .select<SVGPathElement>('path')
+          .attr(
+            'd',
+            (d) =>
+              `M${d.leader.from[0]},${d.leader.from[1]}` +
+              `L${d.leader.elbow[0]},${d.leader.elbow[1]}` +
+              `L${d.leader.to[0]},${d.leader.to[1]}`,
+          );
+        group
+          .select<SVGCircleElement>('circle')
+          .attr('cx', (d) => d.leader.to[0])
+          .attr('cy', (d) => d.leader.to[1]);
+      });
+
     labelLayer
-      .selectAll<SVGTextElement, { key: string; x: number; y: number }>('text')
+      .selectAll<SVGTextElement, PlacedLabel>('text')
       .data(placed, (label) => label.key)
       .join('text')
       // A unit's name is set in its own outline's colour, which is what ties the two together
@@ -717,21 +823,63 @@ export function renderMap(
       })
       .attr('x', (label) => label.x)
       .attr('y', (label) => label.y)
-      .text((label) => drawn.get(label.key) ?? '');
+      // Set down where the ground would not take it at full size — inline, because the stylesheet
+      // sets the tier's own size on the class and a presentation attribute would lose to it.
+      .style('font-size', (label) => {
+        const tier = tierByKey.get(label.key) ?? tierOf.get(label.key);
+        const measured = drawn.get(label.key);
+        return measured === undefined || measured.scale === 1 || tier === undefined
+          ? null
+          : `${TYPE[tier].size * measured.scale}px`;
+      })
+      .each(function setLines(label) {
+        // One `tspan` per line, so a bracketed name is as wide as its widest line rather than as
+        // wide as the sum. Centred on the anchor by hand: `dominant-baseline` centres one line.
+        const measured = drawn.get(label.key);
+        const tier = tierByKey.get(label.key) ?? tierOf.get(label.key);
+        const lines = measured?.lines ?? [];
+        const leading =
+          measured === undefined || tier === undefined
+            ? 0
+            : TYPE[tier].size * measured.scale * LINE_SPACING;
+        select(this)
+          .selectAll<SVGTSpanElement, string>('tspan')
+          .data(lines)
+          .join('tspan')
+          .attr('x', label.x)
+          .attr('dy', (_, i) => (i === 0 ? (-(lines.length - 1) * leading) / 2 : leading))
+          .text((line) => line);
+      });
 
     const sized = new Map(boxes.map((box) => [box.key, box]));
-    const taken = placed.flatMap((label) => {
+    const rectOf = (label: PlacedLabel, box: LabelBox) => ({
+      x0: label.x - box.width / 2,
+      y0: label.y - box.height / 2,
+      x1: label.x + box.width / 2,
+      y1: label.y + box.height / 2,
+    });
+    /*
+     * Two lists, exactly as `layoutLabels` keeps two, and for the same reason.
+     *
+     * A callout carries reserved paper into this one too: the line's name is placed on its own path
+     * against a `taken` built here and compared with *no* clearance at all, so a callout that
+     * reserved a line of type inside the layout would have `LINE OF CONTROL` set flush against it
+     * here — which is one of the four words that were piled around `HINDKO`.
+     *
+     * But the reserve stays a **preference**. The line's name is offered the reserved list first
+     * and the bare one only if that found nowhere, because the alternative is a reserve that can
+     * cost the ceasefire line its name outright — and the four-step yielding order ends in "no name
+     * at all" only after the map has actually tried, not because a neighbour claimed the paper.
+     */
+    const occupied = placed.flatMap((label) => {
       const box = sized.get(label.key);
-      return box === undefined
-        ? []
-        : [
-            {
-              x0: label.x - box.width / 2,
-              y0: label.y - box.height / 2,
-              x1: label.x + box.width / 2,
-              y1: label.y + box.height / 2,
-            },
-          ];
+      return box === undefined ? [] : [rectOf(label, box)];
+    });
+    const reserved = placed.flatMap((label) => {
+      const box = sized.get(label.key);
+      if (box === undefined) return [];
+      const rect = rectOf(label, box);
+      return [box.callout === undefined ? rect : calloutReserve(rect, box.height)];
     });
 
     /*
@@ -743,7 +891,24 @@ export function renderMap(
      * an opaque box. The four-step order ends in "no name at all" rather than in a name a reader
      * cannot see (D12).
      */
-    const line = locLabel(transform, [...obstacles(), ...taken]);
+    // The leaders are in that list too (#50), as the thin rectangles they are. The line's name is
+    // placed after the tier names and around them, and a leader is exactly the kind of thing it
+    // would otherwise walk into: `LINE OF CONTROL` is set on clear paper east of the line, which is
+    // the same paper a callout out of Kashmir reaches across.
+    const leaderRects = leaders.flatMap(({ leader }) =>
+      [
+        [leader.from, leader.elbow] as const,
+        [leader.elbow, leader.to] as const,
+      ].map(([a, b]) => ({
+        x0: Math.min(a[0], b[0]) - 2,
+        y0: Math.min(a[1], b[1]) - 2,
+        x1: Math.max(a[0], b[0]) + 2,
+        y1: Math.max(a[1], b[1]) + 2,
+      })),
+    );
+    const line =
+      locLabel(transform, [...obstacles(), ...reserved, ...leaderRects]) ??
+      locLabel(transform, [...obstacles(), ...occupied, ...leaderRects]);
     locLabelLayer
       .selectAll<SVGTextElement, PlacedLineLabel>('text')
       .data(line === null ? [] : [line])
@@ -1186,6 +1351,34 @@ export function renderMap(
    */
   function measureShapes(path: ReturnType<typeof geoPath>): void {
     shapeWidth.clear();
+    unitRings.clear();
+    landRings = geography.provinces.features.flatMap((f) => {
+      const geometry = f.geometry as { type: string; coordinates: unknown };
+      const polygons = (
+        geometry.type === 'Polygon'
+          ? [geometry.coordinates as number[][][]]
+          : (geometry.coordinates as number[][][][])
+      ) as number[][][][];
+      return polygons.flatMap((rings) =>
+        rings.map((ring) =>
+          ring.flatMap((coordinate) => {
+            const screen = project(coordinate as [number, number]);
+            return screen === null ? [] : [screen as Point];
+          }),
+        ),
+      );
+    });
+    for (const f of view.units?.features ?? []) {
+      unitRings.set(
+        labelKey('unit', f.properties.name),
+        labelPolygon(f as never).coordinates.map((ring) =>
+          ring.flatMap((coordinate) => {
+            const screen = project(coordinate as [number, number]);
+            return screen === null ? [] : [screen as Point];
+          }),
+        ),
+      );
+    }
     const measured: readonly (readonly [LabelTier, readonly { properties: { name: string } }[]])[] =
       [
         ['province', geography.provinces.features],
@@ -1309,7 +1502,10 @@ export function renderMap(
     // The names and the dots are drawn in screen space, outside the zoomed group, so their own
     // boxes are already in the crop's coordinates. An empty layer reports a zero box, which would
     // drag the crop to the origin — hence the guard rather than a blind union.
-    for (const layer of [labelLayer, locLabelLayer, cityLayer]) {
+    // The leaders are in it for the same reason the names are, and one step further out: a name on
+    // a leader is *outside* the land by construction (#50), so a crop taken to the coastline would
+    // slice off the name and leave the line pointing at nothing.
+    for (const layer of [labelLayer, locLabelLayer, cityLayer, leaderLayer]) {
       const node = layer.node();
       if (node === null) continue;
       const bounds = node.getBBox();

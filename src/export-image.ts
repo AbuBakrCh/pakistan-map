@@ -152,9 +152,18 @@ function inlineStyles(live: Element, clone: Element): void {
   }
   clone.setAttribute('style', declarations.join(';'));
 
-  // Caps are a stylesheet decision and the DOM holds the lower-case string. Baked in rather than
-  // referenced, so the raster cannot disagree with the screen about what a label says.
-  if (computed.getPropertyValue('text-transform') === 'uppercase' && clone.textContent !== null) {
+  /*
+   * Caps are a stylesheet decision and the DOM holds the lower-case string. Baked in rather than
+   * referenced, so the raster cannot disagree with the screen about what a label says.
+   *
+   * Only on a leaf, and that is not a nicety. Since #50 a bracketed unit name is set on two lines
+   * as two `tspan`s, and writing `textContent` on the `<text>` around them **deletes them**: the
+   * picture came out with `BALOCHI(KECH)` run together on one line, with no space, because two text
+   * nodes concatenate. The `tspan`s inherit the same computed `text-transform`, so the recursion
+   * below reaches each of them and the caps are baked where the words actually are.
+   */
+  const caps = computed.getPropertyValue('text-transform') === 'uppercase';
+  if (caps && clone.children.length === 0 && clone.textContent !== null) {
     clone.textContent = clone.textContent.toUpperCase();
   }
 
