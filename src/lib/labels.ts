@@ -304,6 +304,52 @@ function boxInside(rings: readonly Ring[], at: Point, width: number, height: num
 }
 
 /**
+ * Where else on its own ground a unit's leader may be launched from — the four reaches of the
+ * shape, pulled back inside it.
+ *
+ * The anchor is the honest start and is tried first and everywhere; this is what a unit has left
+ * when the anchor is walled in. A shape's extremity in each direction is the point of it nearest to
+ * whatever paper lies that way, so a leader launched there has the least of its neighbours' names to
+ * get past — which is the only thing that was ever blocking these, since a line may cross ground
+ * freely and may not cross a name at all.
+ *
+ * The extremity itself is on the boundary, so each is drawn back toward the anchor until it is
+ * comfortably inside: a leader that starts exactly on a unit's outline reads as belonging to the
+ * outline rather than to the ground. Where a shape is thin enough that no draw-back lands inside, it
+ * contributes nothing and the unit is left with its anchor, which is the honest answer anyway.
+ */
+function launchPoints(rings: readonly Ring[], anchor: Point): Point[] {
+  const extremes: Point[] = [];
+  for (const [axis, sign] of [
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 1],
+  ] as const) {
+    let best: Point | null = null;
+    for (const ring of rings) {
+      for (const point of ring) {
+        if (best === null || point[axis] * sign > best[axis] * sign) best = point;
+      }
+    }
+    if (best !== null) extremes.push(best);
+  }
+  const found: Point[] = [];
+  for (const extreme of extremes) {
+    for (const back of [0.1, 0.25, 0.45]) {
+      const point: Point = [
+        extreme[0] + (anchor[0] - extreme[0]) * back,
+        extreme[1] + (anchor[1] - extreme[1]) * back,
+      ];
+      if (!contains(rings, point)) continue;
+      found.push(point);
+      break;
+    }
+  }
+  return found;
+}
+
+/**
  * Grid resolution of the roomiest-point search, and how many of the results are worth trying.
  *
  * Coarser than `SEARCH_STEPS`, which is the anchor's own search and runs once per shape for the
@@ -775,6 +821,22 @@ export interface LabelBox {
   readonly callout?: {
     readonly from: Point;
     readonly reach: { readonly left: number; readonly right: number };
+    /**
+     * Other points on the **same ground** the leader may launch from, tried only after the anchor
+     * has failed at every rung, route and clearance this layout offers.
+     *
+     * The anchor is where a callout should start and stays where it starts: it is the point that
+     * answers *which ground is this name about*, and nothing below is reached for while it works.
+     * What it cannot answer is a unit walled in by its neighbours' names — Upper Dir sits in the
+     * middle of D1's northern cluster, and every route from its centre to paper runs through the
+     * names of the units around it. Its own western edge is a few px from open ground, and a leader
+     * from there says exactly what a leader from the centre says: this name belongs to that shape.
+     *
+     * Bounded by the same thing that bounds the interior lobes, which is what makes it safe: every
+     * one of these is **inside the unit itself**, so a leader launched from one cannot point at
+     * ground the name does not describe.
+     */
+    readonly starts?: readonly Point[];
   };
   /**
    * The ground this name was fitted inside, where it was fitted to one at all.
@@ -1088,6 +1150,7 @@ export function measureLabel(
   return box(chosen, CALLOUT_SCALE, {
     from: at,
     reach: { left: anchored.reach.left, right: anchored.reach.right },
+    starts: launchPoints(fit.rings, at),
   });
 }
 
@@ -1457,6 +1520,13 @@ function placeCallout(
 ): { placed: PlacedLabel; rect: Rect; leader: Segment[] } | null {
   const callout = label.callout as NonNullable<LabelBox['callout']>;
   /*
+   * The point on the ground this leader is launched from — the anchor, until the anchor has been
+   * tried everywhere and failed. Reassigned by the loop at the foot of this function rather than
+   * passed down, so every candidate, every cost and every judgement below is asked about one start
+   * at a time and the whole ladder is walked for each.
+   */
+  let from: Point = callout.from;
+  /*
    * How far apart two rungs of the ladder are.
    *
    * A whole line of type between the boxes, not the layout's bare minimum. At `height + gap` the
@@ -1481,13 +1551,17 @@ function placeCallout(
    * on the terms it was written for.
    */
   const pastOwnUnit = (direction: 1 | -1): number =>
-    callout.from[0] +
+    from[0] +
     direction * ((direction > 0 ? callout.reach.right : callout.reach.left) + LEADER.CLEAR);
 
   const leadingEdge = (y: number, direction: 1 | -1, useLand: boolean): number => {
     if (land === undefined || !useLand) return pastOwnUnit(direction);
     let edge: number | null = null;
-    for (const row of [y - label.height / 2, y, y + label.height / 2]) {
+    // Rounded to the whole px the cache is keyed on. Every launch point and every rung asks about
+    // its own rows, and an unrounded key made each of them a fresh scan of some twenty thousand
+    // points; snapped, the rows repeat and the cache does the work it was put here to do. Half a
+    // pixel of the land's own span is well inside `LEADER.CLEAR`.
+    for (const row of [y - label.height / 2, y, y + label.height / 2].map(Math.round)) {
       let span = spans.get(row);
       if (span === undefined) {
         span = landSpanAt(land, row);
@@ -1508,20 +1582,40 @@ function placeCallout(
     readonly rungs: number;
     readonly direction: 1 | -1;
     readonly length: number;
+    /**
+     * Which leg the elbow is turned at — the **column** the dot stands in, or the **row** the name
+     * is set on. Two routes to the same dot, and the pair is what keeps a leader off other names.
+     *
+     * `column` is the original and stays the preferred one: out along the anchor's own row to the
+     * dot's column, then up or down into the dot. `row` turns the other way — up or down the
+     * anchor's own column first, then out along the name's row. Same start, same dot, same two
+     * legs; they simply sweep different paper, and where the band of names beside a unit is solid
+     * the vertical-first route leaves it by the shortest way out instead of ploughing through it.
+     *
+     * Both are still a single orthogonal elbow ending in a dot immediately before the first
+     * character, so the reasoning that refuses a diagonal is untouched: the name always runs
+     * rightwards from its dot, and neither route ever travels along the name to reach it.
+     */
+    readonly elbowAt: 'column' | 'row';
   }
 
   const candidatesFor = (useLand: boolean): Candidate[] => {
     const found: Candidate[] = [];
     for (const rungs of CALLOUT_RUNGS) {
       for (const direction of [1, -1] as const) {
-        const y = callout.from[1] + rungs * step;
+        const y = from[1] + rungs * step;
         // The assembly always reads dot-then-name, so a leftward callout is laid out from its far
         // edge back: the whole of it — dot, gap, name — sits clear of the land's left side.
         const clear = leadingEdge(y, direction, useLand);
         const dotX = direction > 0 ? clear : clear - LEADER.GAP - label.width;
-        const length = Math.abs(dotX - callout.from[0]) + Math.abs(rungs * step);
+        const length = Math.abs(dotX - from[0]) + Math.abs(rungs * step);
         if (length > maxLeader) continue;
-        found.push({ y, dotX, rungs, direction, length });
+        for (const elbowAt of ['column', 'row'] as const) {
+          // Rung zero is one straight line and the two routes draw it identically, so it is offered
+          // once rather than twice — the duplicate would only be judged twice to the same answer.
+          if (rungs === 0 && elbowAt === 'row') continue;
+          found.push({ y, dotX, rungs, direction, length, elbowAt });
+        }
       }
     }
     /*
@@ -1558,17 +1652,22 @@ function placeCallout(
      * sense, where a unit in the north wants its name above rather than below.
      */
     const runTo = (direction: 1 | -1): number =>
-      Math.abs(leadingEdge(callout.from[1], direction, true) - callout.from[0]);
+      Math.abs(leadingEdge(from[1], direction, true) - from[0]);
     const nearSide: 1 | -1 = land === undefined ? 1 : runTo(1) <= runTo(-1) ? 1 : -1;
-    const outwardY = middle === null ? 0 : Math.sign(callout.from[1] - middle[1]);
+    const outwardY = middle === null ? 0 : Math.sign(from[1] - middle[1]);
     const cost = (c: Candidate): number =>
-      Math.abs(c.dotX - callout.from[0]) +
+      Math.abs(c.dotX - from[0]) +
       ELBOW_COST * Math.abs(c.rungs * step) +
       (land !== undefined && c.direction !== nearSide ? WRONG_SIDE_COST : 0) +
       (outwardY !== 0 && c.rungs !== 0 && Math.sign(c.rungs) !== outwardY ? WRONG_WAY_COST : 0);
     return found.sort(
       (a, b) =>
         cost(a) - cost(b) ||
+        // The two routes to one dot cost exactly the same — same run, same bend — so the tie is
+        // where the choice between them is made, and it goes to the original. The vertical-first
+        // route is a way through a full margin and never a new preference: every leader this map
+        // could already draw it still draws, and draws unchanged.
+        (a.elbowAt === b.elbowAt ? 0 : a.elbowAt === 'column' ? -1 : 1) ||
         Math.abs(a.rungs) - Math.abs(b.rungs) ||
         b.direction - a.direction ||
         a.rungs - b.rungs,
@@ -1582,13 +1681,13 @@ function placeCallout(
    * asks for breathing room from the other names without asking the paper to be bigger than it is.
    */
   const judge = (
-    { y, dotX }: Candidate,
+    { y, dotX, elbowAt }: Candidate,
     clear: number,
     apart: boolean,
     clearOfNames = true,
   ): { placed: PlacedLabel; rect: Rect; leader: Segment[] } | null => {
     const to: Point = [dotX, y];
-    const elbow: Point = [dotX, callout.from[1]];
+    const elbow: Point = elbowAt === 'column' ? [dotX, from[1]] : [from[0], y];
     const x = dotX + LEADER.GAP + label.width / 2;
 
     const rect: Rect = {
@@ -1603,7 +1702,7 @@ function placeCallout(
     if (leaders.some((segment) => meetsRect(segment, rect, clear))) return null;
 
     const segments: Segment[] = [
-      [callout.from, elbow],
+      [from, elbow],
       [elbow, to],
     ];
     if (segments.some((s) => opaque.some((other) => meetsRect(s, other, clear)))) return null;
@@ -1616,7 +1715,7 @@ function placeCallout(
     }
 
     return {
-      placed: { key: label.key, x, y, leader: { from: callout.from, elbow, to } },
+      placed: { key: label.key, x, y, leader: { from: from, elbow, to } },
       rect,
       leader: segments,
     };
@@ -1643,22 +1742,22 @@ function placeCallout(
    */
   const roomy = Math.max(gap, label.height);
   /*
-   * Four passes, in a stated order of concession, and the last one is what makes **every unit is
-   * named** true rather than aspirational.
+   * Three passes, in a stated order of concession, and **every one of them keeps the lines apart**.
    *
    *  1. A whole line of type of clear space on every side, and no leader within that of another.
    *  2. The layout's own `gap` — enough that two names are two names.
    *  3. A hairline. Tight, and still two names and two lines.
-   *  4. The same hairline between the *names*, and the lines let cross.
    *
-   * The first three are the map as it should look and the fourth is the map keeping its promise. A
-   * crossed leader is a poor annotation — it points at a line rather than at a piece of ground — and
-   * it is recoverable by following it, where a unit drawn on the map and named nowhere on it is a
-   * shape the reader cannot ask about at all. That is the order, and it is why the concession is to
-   * the *lines* and never to the names: two labels are never allowed to overlap at any pass.
+   * Two further rungs used to sit under these — the same hairline with the *lines* let cross, and
+   * then a leader allowed to pass beneath a name it does not belong to — taken on the reasoning
+   * that a crossed leader is recoverable where an unnamed unit is not. They are gone. **No leader
+   * on this map crosses another leader or any name, at any pass**, and what replaces them is room
+   * rather than tolerance: a second route to every dot (`elbowAt`) and a second place to launch
+   * from (`callout.starts`), both of which find paper the crossing passes were being spent to
+   * avoid looking for.
    *
-   * In practice the fourth is reached only in the northern cluster of D1 and A1 to A3, where eight
-   * or nine units the size of a district compete for the same few rows of margin.
+   * What is left to give is what was always underneath: a name with nowhere clear to go is
+   * **dropped**, and the layout reruns on every zoom, so the room is what brings it back.
    */
   const passes: readonly {
     readonly clear: number;
@@ -1668,11 +1767,6 @@ function placeCallout(
     ...(roomy > gap ? [{ clear: roomy, apart: true }] : []),
     { clear: gap, apart: true },
     { clear: 1, apart: true },
-    { clear: 1, apart: false },
-    // The fifth, and the only thing left to give. A leader may pass beneath a name it does not
-    // belong to — which reads as that name being underlined, and is the last concession available
-    // before a unit goes unnamed. Two labels still never overlap, at this pass as at every other.
-    { clear: 1, apart: false, clearOfNames: false },
   ];
 
   /*
@@ -1701,12 +1795,22 @@ function placeCallout(
    */
   const modes: (boolean | 'own-reach')[] =
     land === undefined ? ['own-reach'] : label.mustName === true ? [true, 'own-reach'] : [true];
-  for (const mode of modes) {
-    const candidates = candidatesFor(mode === true);
-    for (const pass of passes) {
-      for (const candidate of candidates) {
-        const placed = judge(candidate, pass.clear, pass.apart, pass.clearOfNames ?? true);
-        if (placed !== null) return placed;
+  /*
+   * The anchor everywhere first, and only then the rest of the unit's own ground.
+   *
+   * The whole ladder — every mode, every pass, every rung and both routes — is walked from the
+   * anchor before a second launch point is looked at, so no leader on this map leaves the anchor
+   * while the anchor still had an answer. See `callout.starts`.
+   */
+  for (const start of [callout.from, ...(callout.starts ?? [])]) {
+    from = start;
+    for (const mode of modes) {
+      const candidates = candidatesFor(mode === true);
+      for (const pass of passes) {
+        for (const candidate of candidates) {
+          const placed = judge(candidate, pass.clear, pass.apart, pass.clearOfNames ?? true);
+          if (placed !== null) return placed;
+        }
       }
     }
   }
