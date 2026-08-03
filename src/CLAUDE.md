@@ -192,6 +192,24 @@ itself. The development figures are dropped whole where a variant withholds mode
 the reason that rule exists — they are a mean of 2023 rates, and three of them beside a boundary of
 1947 would be the same claim the withholding refuses.
 
+**A box too tall for the frame scrolls; it is never truncated and never abbreviated.** Capped to
+the well less `placeTooltip`'s own two margins on a desktop and to **half** the frame on a phone,
+where it is a docked bar growing down over the country the figures are about. Nothing is dropped
+to make it fit, for the reason the phone bar already gives — a tooltip that shed its sources would
+shed them for most of this app's readers — and the part below the fold is the composite's three
+components, which are exactly what a reader checks the shading against.
+
+Three consequences, and each is a cost paid on purpose. **The scrollbar stands rather than fading
+in**, in the two keys' own idiom and for their reason: an overlay bar asks a reader to discover by
+accident that the figures continue. **A scrolling box takes the pointer** — the one exception to
+*never a hit target* — so over that rectangle the map cannot be hovered, panned or zoomed, and on a
+phone a tap there no longer reaches the district beneath; it is given only while there is something
+below the fold, so a box that fits is the box it has always been. And **a scrolling box stops
+following the pointer**, put down once beside its district: a box the height of the frame is placed
+14px from the cursor and slides with it, so a scrollbar that followed could never be caught. The
+SVG and the box agree about the boundary between them (`movedInto`), so reaching into the tooltip
+is not read as leaving the map.
+
 ### Labels
 
 The whole doctrine — how a unit's name is fitted to its ground, what it concedes and in what

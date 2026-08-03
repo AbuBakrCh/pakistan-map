@@ -1080,16 +1080,84 @@ body {
    * it is cannot be placed by measuring it first.
    */
   width: max-content;
-  /* Never a hit target: a box that takes the pointer takes it away from the map beneath it. */
+  /* Never a hit target: a box that takes the pointer takes it away from the map beneath it. The
+   * one exception is `.is-scrollable` below, which has to be reachable to be scrolled. */
   pointer-events: none;
   position: absolute;
   top: 0;
   /* Sits above the SVG and below nothing — the legend and colophon are outside the well. */
   z-index: 1;
+  /*
+   * The box is capped to the frame it sits in and scrolls inside that cap rather than running off
+   * the bottom of the map.
+   *
+   * Under the Development basis this is the longest tooltip in the app — six figures deep, each
+   * with its own label, value, note and source (#31) — and on a short window it is taller than the
+   * well. `placeTooltip` clamps a box too big for the frame onto the near margin, which is the
+   * right answer for where it starts and no answer at all for the half hanging below the fold: the
+   * figures that go missing there are the composite's three components, which are exactly the ones
+   * a reader checks the shading against. Nothing is abbreviated and nothing is dropped to make it
+   * fit — the box scrolls, on the unit key's own terms.
+   *
+   * 16px is the two 8px margins `placeTooltip` keeps, so the cap and the placement agree.
+   */
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  /* A wheel that runs out of tooltip does not go on to zoom the map underneath: the reader was
+   * reading the figures, and the country moving out from under them answers a different gesture. */
+  overscroll-behavior: contain;
 }
 
 .tooltip.is-shown {
   display: block;
+}
+
+/*
+ * A box that scrolls has to take the pointer, so a scrolling tooltip stops the pointer where every
+ * other tooltip lets it through. Given only while there is something below the fold, because the
+ * cost is real: over that rectangle the map cannot be hovered, panned or zoomed, and on a phone a
+ * tap on the bar no longer reaches the district beneath it. `map.ts` sets the class from the
+ * measurement, so a box that fits is the hit-target-free box it has always been.
+ *
+ * It also stops following the pointer while it is scrollable — see `place` in `map.ts`. A box the
+ * height of the frame cannot be caught by a cursor it is placed 14px away from, and a scrollbar
+ * that outruns the pointer is not a scrollbar.
+ */
+.tooltip.is-scrollable {
+  pointer-events: auto;
+}
+
+/* The bar stands rather than fading in, for the reason the two keys' do: macOS hides an overlay
+ * scrollbar until it is used, which asks the reader to discover by accident that the district's
+ * figures continue below the fold — and a tooltip that looks complete and is not is the one thing
+ * this box exists to avoid. The `@supports` split is the keys' own, and argued at `.unit-key`. */
+@supports not selector(::-webkit-scrollbar) {
+  .tooltip {
+    scrollbar-width: thin;
+    scrollbar-color: var(--land-hatch) transparent;
+  }
+}
+
+.tooltip::-webkit-scrollbar {
+  width: 8px;
+  -webkit-appearance: none;
+  background: color-mix(in srgb, var(--land-hatch) 22%, transparent);
+}
+
+.tooltip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tooltip::-webkit-scrollbar-thumb {
+  background: var(--land-hatch);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 4px;
+}
+
+.tooltip::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+  background-clip: padding-box;
 }
 
 .tooltip-name {
@@ -2026,6 +2094,16 @@ body {
     right: 0;
     top: 0;
     width: auto;
+    /*
+     * Half the frame, not all of it minus a margin.
+     *
+     * Docked, the box is squared against the top of the map and grows *down over the country* — so
+     * the desktop cap would let a Development tooltip take the whole visible strip and leave a
+     * reader reading figures about a district they can no longer see. Half keeps the country the
+     * larger half of its own frame and puts the rest of the figures a scroll away, which is the
+     * trade the line-height above already makes in the other direction.
+     */
+    max-height: 50%;
   }
 
   /*

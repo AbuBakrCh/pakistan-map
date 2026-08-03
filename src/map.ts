@@ -529,6 +529,11 @@ export function renderMap(
     })
     .on('pointerleave', (event: PointerEvent) => {
       if (selectsByTap(event.pointerType)) return;
+      // Reaching into a scrolling tooltip is leaving the SVG, and it is not leaving the map: the
+      // box is the map's own answer about the district still washed underneath it, and clearing
+      // the hover here would take the figures away at the moment they were reached for — and then
+      // hand the pointer straight back to the paper, which flickers.
+      if (movedInto(event, tooltip.node())) return;
       clearHover();
     })
     .on('pointerdown', (event: PointerEvent) => {
@@ -555,6 +560,29 @@ export function renderMap(
       if (tapResolves(found?.properties.name ?? null, hovered) === 'dismiss') clearHover();
       else if (found !== null) showDistrict(found, at);
     });
+
+  /**
+   * Where a pointer went when it left an element — `null` for the page, which is not an element.
+   *
+   * The SVG and the tooltip are siblings in the well, so the pair of them have to agree about the
+   * boundary between them or a pointer crossing it is read as a departure by whichever it left.
+   */
+  function movedInto(event: PointerEvent, into: Element | null): boolean {
+    const to = event.relatedTarget;
+    return into !== null && to instanceof Node && into.contains(to);
+  }
+
+  /*
+   * The other half of that agreement. Only a scrolling tooltip ever receives this, since only a
+   * scrolling tooltip takes the pointer at all — and it hands the hover back rather than dropping
+   * it when the pointer goes on to the map, which is the common case: the reader has finished
+   * reading and gone back to the country, where `pointermove` answers for whatever is under them.
+   */
+  tooltip.on('pointerleave', (event: PointerEvent) => {
+    if (selectsByTap(event.pointerType)) return;
+    if (movedInto(event, svg.node())) return;
+    clearHover();
+  });
 
   let project = fitProjection(geography.provinces, { width: 1, height: 1, padding: 0 });
   let size = { width: 0, height: 0 };
@@ -987,6 +1015,16 @@ export function renderMap(
   let hovered: string | null = null;
   /** The tooltip's own size, measured once per district rather than once per pointer event. */
   let tooltipSize = { width: 0, height: 0 };
+  /**
+   * Whether a scrolling box has already been put down for the district showing.
+   *
+   * Only a scrolling box is ever anchored, and it is anchored because it has to be catchable: a
+   * tooltip the height of the frame is placed 14px from the cursor and slides with it, so a reader
+   * reaching for its scrollbar pushes it away for as long as they keep reaching. Reset whenever the
+   * content changes, so the next district gets its box beside itself rather than inheriting the
+   * last one's corner.
+   */
+  let anchored = false;
 
   /**
    * Show the district under the pointer: wash the district, wash the province it belongs to, and
@@ -1084,6 +1122,20 @@ export function renderMap(
       node.style.removeProperty('top');
       return;
     }
+    /*
+     * A box with something below its fold is put down once and left there.
+     *
+     * It is the same reasoning the phone dock is built on, arriving on a desktop for a different
+     * reason. A scrolling tooltip is as tall as the frame allows, so `placeTooltip` has already
+     * clamped it to the top margin and the only freedom left is horizontal — and following the
+     * pointer horizontally is exactly what puts its scrollbar out of reach, since the box is placed
+     * beside the cursor and moves the moment the cursor moves toward it. Anchored, it sits beside
+     * the district it describes and a reader can walk into it.
+     */
+    if (tooltip.classed('is-scrollable')) {
+      if (anchored) return;
+      anchored = true;
+    }
     const placed = placeTooltip(at, tooltipSize, size, { gap: 14, margin: 8 });
     node.style.left = `${placed.x}px`;
     node.style.top = `${placed.y}px`;
@@ -1092,7 +1144,10 @@ export function renderMap(
   function clearHover(): void {
     const wasShowing = hovered !== null;
     hovered = null;
-    tooltip.classed('is-shown', false).text('');
+    // The pointer goes back through the box as well as the box going away: a hidden element that
+    // still takes the pointer would leave a dead rectangle over the map.
+    tooltip.classed('is-shown', false).classed('is-scrollable', false).text('');
+    anchored = false;
     readout.text('');
     hoverLayer.selectAll('path').remove();
     // The names that gave way to the docked box get their ground back.
@@ -1138,6 +1193,22 @@ export function renderMap(
       if (content.unit.value !== null) line('tooltip-value', content.unit.value, row);
       if (content.unit.note !== null) line('tooltip-note', content.unit.note, row);
     }
+
+    /*
+     * Does this district's box have anything below its fold?
+     *
+     * Asked of the element rather than predicted from the figure count: the answer depends on the
+     * window's height, the basis, whether the variant withholds and how many lines each note wraps
+     * to, and every one of those is already settled by the time the browser has laid this out. The
+     * class is set *before* the box is measured, because it turns the scrollbar into layout and a
+     * placement measured without it would be 8px wide of the box it places.
+     *
+     * `scrollTop` is put back to the top by hand — a box reused for the next district would
+     * otherwise open partway down a different district's figures.
+     */
+    node.scrollTop = 0;
+    tooltip.classed('is-scrollable', node.scrollHeight - node.clientHeight > 1);
+    anchored = false;
 
     const { width, height } = node.getBoundingClientRect();
     tooltipSize = { width, height };
