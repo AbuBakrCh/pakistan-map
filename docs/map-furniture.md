@@ -48,8 +48,12 @@ Three things it does not do. **No populations and no printed district counts** �
 set of figures on the paper is a second place for them to be wrong. **It does not answer to
 compare**, on the same grounds as the legend and the card: the reader is holding a key down over the
 map, the proposal is still selected, and rewriting the paper's own furniture underneath them would
-be the page changing rather than the map. And it takes **no pointer events**, because a reader
-panning through that corner is reading the map and not the key.
+be the page changing rather than the map. And it takes **no pointer events beyond the wheel**: a
+rule-drawn variant keys more units than a short frame holds, so the box scrolls, and a box that
+scrolls has to receive the wheel that scrolls it. The cost is stated rather than hidden — while a
+key is drawn the map cannot be panned or zoomed through that corner — and `overscroll-behavior`
+keeps a wheel that has run out of key from going on to zoom the country underneath it, which would
+answer a reading gesture by moving the ground.
 
 **The order is the card's, and it is one order rather than two that agree today.** Both read
 `unitsProposedFirst` — proposed units first, and inside a kind the partition's own order, since

@@ -521,10 +521,55 @@ body {
   max-height: min(60%, 22rem);
   max-width: 13rem;
   overflow-y: auto;
+  /* A wheel that runs out of key does not go on to zoom the map underneath: the reader was
+   * reading the key, and the country moving out from under them answers a different gesture. */
+  overscroll-behavior: contain;
   padding: 0.45rem 0.6rem;
-  /* It explains the map; it is never in the way of reading one. Panning through the corner it
-   * stands in has to work, which means the pointer goes to the paper underneath. */
-  pointer-events: none;
+  /* It explains the map and is never in the way of reading one — but a box that scrolls has to
+   * take the wheel, so the pointer stops here rather than reaching the paper underneath. The cost
+   * is that the map cannot be panned or zoomed through this corner while a key is drawn. */
+  pointer-events: auto;
+}
+
+/* The bar stands rather than fading in on the wheel. macOS hides an overlay scrollbar until it is
+ * used, which asks the reader to discover by accident that the key continues below the fold — and a
+ * key that looks complete and is not misreports the partition. The rules below opt out of the
+ * overlay behaviour and cost 8px of the key's own width, which is the cheaper of the two. */
+
+/* The two properties are mutually exclusive in practice, not complementary: a Chromium that sees
+ * `scrollbar-width` or `scrollbar-color` drops every `::-webkit-scrollbar` rule on the element and
+ * goes back to the platform's overlay bar, which is the fading one. So the standard properties are
+ * given only to engines with no pseudo-element to lose — Firefox — and Chromium and WebKit are
+ * left with the rules that actually hold the bar open. */
+@supports not selector(::-webkit-scrollbar) {
+  .unit-key {
+    scrollbar-width: thin;
+    scrollbar-color: var(--land-hatch) transparent;
+  }
+}
+
+.unit-key::-webkit-scrollbar {
+  width: 8px;
+  /* An overlay bar is drawn over the content and is free to fade; one with a background is part of
+   * the box and stays. This declaration is the thing keeping it on screen. */
+  -webkit-appearance: none;
+  background: color-mix(in srgb, var(--land-hatch) 22%, transparent);
+}
+
+.unit-key::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.unit-key::-webkit-scrollbar-thumb {
+  background: var(--land-hatch);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 4px;
+}
+
+.unit-key::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+  background-clip: padding-box;
 }
 
 .unit-key:empty {

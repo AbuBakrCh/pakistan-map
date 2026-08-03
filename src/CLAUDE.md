@@ -24,7 +24,9 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   that is* where the legend says only what a stroke means. It names **every** unit and not only
   the proposed ones, for the reason the card lists them all.
 - Three things it does not do: **no populations and no printed district counts** (the scorecard's,
-  #20), **it does not answer to compare**, and it takes **no pointer events**.
+  #20), **it does not answer to compare**, and it takes **no pointer events beyond the wheel** —
+  it scrolls when a variant keys more units than the frame holds, which costs panning and zooming
+  through that corner while a key is drawn.
 - **The order is the card's** — one `unitsProposedFirst`, not two orders that agree today.
 - **It takes part in the label layout**, seeded into the same `occupied` set as the docked
   tooltip. **It is not drawn at 390px**, a decision rather than a fallback. **And it is
