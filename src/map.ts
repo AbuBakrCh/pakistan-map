@@ -692,9 +692,26 @@ export function renderMap(
     return node === null ? [] : standingOn(node as HTMLElement);
   }
 
+  /**
+   * The ground stratum 1's key is standing on, on exactly the unit key's terms.
+   *
+   * The same kind of box in the opposite corner — opaque, and as tall as the basis has categories —
+   * so it is measured and kept off for the same reason. Empty and off the paper under a basis that
+   * shades nothing, and not drawn at all on a phone, so on the baseline it costs the layout nothing.
+   *
+   * The cost is the mirror of the unit key's: under a shaded basis the frame's top-right corner is
+   * spent, which on this projection is the Kashmir salient — and the names there are the ones D12
+   * cares most about, so this is the corner where the four-step order is most likely to end in no
+   * name at all. It ends there rather than under a box, which is the point.
+   */
+  function fillKey(): readonly Rect[] {
+    const node = container.querySelector('.fill-key');
+    return node === null ? [] : standingOn(node as HTMLElement);
+  }
+
   /** Everything opaque on the paper, in the frame's own coordinates. */
   function obstacles(): readonly Rect[] {
-    return [...dockedTooltip(), ...unitKey()];
+    return [...dockedTooltip(), ...unitKey(), ...fillKey()];
   }
 
   /** One element's footprint, or nothing at all where it is not being drawn. */

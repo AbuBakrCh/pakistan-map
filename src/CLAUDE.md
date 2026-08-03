@@ -31,6 +31,15 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
 - **It takes part in the label layout**, seeded into the same `occupied` set as the docked
   tooltip. **It is not drawn at 390px**, a decision rather than a fallback. **And it is
   `aria-hidden`**, because `lib/regions.ts` already names every region in words (#35).
+- **The map keys its own colours too, top right, under the division toggle** — stratum 1's key, on
+  the paper: every fill the map has actually painted beside the answer it stands for, and both
+  absences with it (#17). The rows are `motherTongueLegend`'s and `developmentLegend`'s, the same two
+  the legend under the frame and the export band are built from, so no fill is keyed two ways; the
+  heading is the basis's own name. It keys **only the ground the map painted** — the six categories
+  dominant in no district stay below the frame — and is emptied, and taken off the paper by `:empty`,
+  under a basis that shades nothing and at the baseline. Everything else is the unit key's: it does
+  not answer to compare, it takes the wheel, it is seeded into the same `occupied` set, it is
+  `aria-hidden`, and it is not drawn at 390px.
 - **The division tier is offered, not assumed** — one toggle, top right. It goes **whole or not at
   all**, the **legend follows it**, and it is **not in the URL and not in history** (as the
   sheet's detent is not). It rescues **not one** of the unit names this build cannot set at

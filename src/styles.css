@@ -491,6 +491,104 @@ body {
 }
 
 /*
+ * Stratum 1's key, on the paper — the frame's top right, under the division toggle.
+ *
+ * Same box as the unit key opposite it and set from the same rules, because they are the same kind
+ * of thing: the unit key says whose boundary a line is, this says what a colour means, and a reader
+ * matching either to the map should not have to look away from the map to do it.
+ *
+ * Cleared to the chip above it rather than nested inside it: `panel.ts` appends the division button
+ * into `#map-controls` and would append it *after* anything already in there, which would put the
+ * key above the control it is meant to sit under. The offset is the chip's own box — 0.6rem of
+ * inset, the chip's line and padding, and a gap — and the box is anchored to the top so a basis with
+ * eleven rows grows down the frame rather than up into the control.
+ *
+ * Empty under a basis that shades nothing, and `:empty` is what takes it away: there are no colours
+ * on the map, so there is nothing to key.
+ */
+.fill-key {
+  position: absolute;
+  right: 0.6rem;
+  top: calc(0.6rem + 2.1rem);
+  z-index: 1;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--land-hatch);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  /* Fifteen mother tongues is more than a phone-height frame holds: the box scrolls rather than
+   * running off the bottom of the map, on the unit key's own terms and the legend's own cap. */
+  max-height: min(60%, 22rem);
+  max-width: 13rem;
+  overflow-y: auto;
+  /* A wheel that runs out of key does not go on to zoom the map underneath. */
+  overscroll-behavior: contain;
+  padding: 0.45rem 0.6rem;
+  pointer-events: auto;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .fill-key {
+    scrollbar-width: thin;
+    scrollbar-color: var(--land-hatch) transparent;
+  }
+}
+
+/* The bar stands rather than fading in, for the reason the unit key's does: a key that looks
+ * complete and is not misreports what the colours on the map mean. */
+.fill-key::-webkit-scrollbar {
+  width: 8px;
+  -webkit-appearance: none;
+  background: color-mix(in srgb, var(--land-hatch) 22%, transparent);
+}
+
+.fill-key::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fill-key::-webkit-scrollbar-thumb {
+  background: var(--land-hatch);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 4px;
+}
+
+.fill-key::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+  background-clip: padding-box;
+}
+
+.fill-key:empty {
+  display: none;
+}
+
+.fill-key-heading {
+  color: var(--ink);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.3rem;
+}
+
+.fill-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+/* The rows are the legend's own, so they are set like the legend's — but stacked, and with the
+ * swatch held to its width while a long label wraps beside it rather than squeezing it. */
+.fill-key .legend-item {
+  align-items: start;
+}
+
+.fill-key .swatch {
+  flex: 0 0 auto;
+  /* Nudged down to sit on the first line's baseline rather than against the cap height, which is
+   * what `align-items: start` costs on a row whose label wraps to three lines. */
+  margin-top: 0.15rem;
+}
+
+/*
  * The map's own key to stratum 3 — the count, and which unit is which, in the frame's top-left.
  *
  * On the paper rather than under it, because it names lines that are on the paper: the legend below
@@ -1879,6 +1977,17 @@ body {
    * for it.
    */
   .unit-key {
+    display: none;
+  }
+
+  /*
+   * Stratum 1's on-paper key goes with it, and for the same reason twice over: at 390px the top of
+   * the frame is the docked tooltip's, and a box of up to eleven rows over 369px of country would
+   * cover more of Pakistan than it explained. The legend under the frame is unchanged on a phone
+   * and carries every one of these rows in full — this is that surface put where a desktop has the
+   * room to hold it beside the map.
+   */
+  .fill-key {
     display: none;
   }
 

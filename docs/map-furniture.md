@@ -1,6 +1,6 @@
-# Map furniture — the unit key, the division toggle, the page regions
+# Map furniture — the unit key, the fill key, the division toggle, the page regions
 
-The three things drawn around the map rather than on it. `src/CLAUDE.md` carries what each
+The things drawn around the map rather than on it. `src/CLAUDE.md` carries what each
 one is and the rules it follows; this file carries why each was decided that way.
 
 ---
@@ -78,6 +78,41 @@ a tap on any district names its unit in the tooltip's third line.
 **And it is `aria-hidden`.** The map already names every region in words for a screen reader (#35,
 `lib/regions.ts`), with each unit's constitutional standing beside it; this is the same list with
 less in it, and reading it out again would give a reader the units twice and the standing once.
+
+**And the map keys its own colours, top right, under the division toggle.** Stratum 1 is the half of
+the map a reader checks most often and the half the paper explains least: an outline is named where
+it is drawn, and a fill is named 500px below the country in the legend under the frame. So the same
+rows are repeated on the paper — every colour the map has actually painted, beside the answer it
+stands for: nine mother tongues under the language basis, four bands of the composite under
+Development, and in both cases the two absences (#17), because a stipple and a hatch a reader cannot
+key are two greys they will read as one.
+
+**Repeated is the operative word.** The entries are `motherTongueLegend`'s and
+`developmentLegend`'s — the same two functions the legend under the frame is built from, and the same
+two the export band derives its key from (#32) — so the three surfaces cannot key one fill three
+ways. Nothing here composes a label, and the heading is the basis's own `name` off the artifact.
+
+**It keys the ground the map painted, and only that.** The language basis's six categories that are
+named by the census and dominant in no district stay below the frame, where they are grouped and
+explained: six swatches on the paper for six colours no district carries would be the on-paper key
+explaining a picture that is not there — the same rule the `Division` swatch follows when the tier is
+off, and the same one the export band's key follows when it refuses a basis it has no fill for. Under
+a basis that shades nothing, and at the baseline, the box is emptied and `:empty` takes it off the
+paper, exactly as the unit key is emptied when nothing is proposed.
+
+The rest it inherits from the unit key opposite it, because it is the same kind of object and any
+difference would be arbitrary: it **does not answer to compare**, it **takes the wheel** and scrolls
+when a basis has more categories than the frame is tall, it is **seeded into the label layout**, and
+it is **`aria-hidden`** because the legend below carries these rows in these words already. It is
+**not drawn at 390px** for the reason the unit key is not — the top of the frame is the docked
+tooltip's, and eleven rows over 369px of country would cover more of Pakistan than they explained,
+while the legend under the frame is unchanged on a phone and carries every row in full.
+
+The cost is the mirror image of the unit key's and is worth stating on its own, because this corner
+is not the other one: the frame's top right is the Kashmir salient, so under a shaded basis this is
+where the four-step yielding order is most likely to end in *no name at all*. It ends there rather
+than under a box (D12), and the ceasefire line's own name concedes length before it concedes
+existence — which is the order it already follows.
 
 **The division tier is offered, not assumed — one toggle, top right of the map frame.** *Show all
 divisions* draws the ~39 divisions and their 37 names; off, which is how the page opens, the map is

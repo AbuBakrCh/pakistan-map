@@ -386,6 +386,9 @@ function render(): void {
    * ground either freed or covered a frame late.
    */
   renderUnitKey(selection, variant);
+  // Written before the map for the same reason, and measured into the same `occupied` list: it is
+  // a solid box in the frame's top right and a name left underneath it is a name nobody can read.
+  renderFillKey(selection);
   map.show(held ? comparedView(variant) : viewFor(selection));
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
@@ -564,6 +567,52 @@ function unitKeySwatch(entry: UnitRosterEntry): HTMLElement {
     bar.append(part);
   }
   return bar;
+}
+
+/**
+ * Stratum 1's key, on the paper — which colour the map has painted which answer with.
+ *
+ * The legend under the frame already says this, and says it in full; what it cannot do is say it
+ * where the reader is looking. A reader matching a district's colour to a mother tongue has to
+ * leave the map to do it, and on a shaded map that is the single most frequent thing they do. So
+ * the rows are repeated here, in the frame's top right under the division toggle, and *repeated* is
+ * the operative word: the entries are the same `motherTongueLegend` and `developmentLegend` the
+ * legend below is built from, so the two cannot key one fill two ways.
+ *
+ * What it deliberately leaves to the legend below is the language basis's six
+ * `namedButNowhereDominant` categories. This box keys the ground the map has actually painted; six
+ * swatches for six colours that appear on no district would be the on-paper key explaining a
+ * picture that is not there, which is the same rule the division swatch and the export band's key
+ * already follow.
+ *
+ * Empty — and gone, by `:empty` — under a basis that shades nothing, and at the baseline. It does
+ * not answer to compare, on the legend's and the unit key's own grounds: compare is a gesture over
+ * the map, and the proposal is still selected while it is held off the screen.
+ */
+function renderFillKey(active: Selection): void {
+  const mount = document.getElementById('fill-key');
+  if (mount === null) return;
+
+  const legend =
+    active === null
+      ? null
+      : active.basis === 'language'
+        ? motherTongueLegend(censusStatistics)
+        : active.basis === 'development'
+          ? developmentLegend(developmentIndexBundle)
+          : null;
+  if (active === null || legend === null) {
+    mount.innerHTML = '';
+    return;
+  }
+
+  // The basis's own name, from the artifact — this composes no heading of its own, exactly as the
+  // unit key takes its heading from `unitRoster` and the card takes every word from `lib/card.ts`.
+  const basis = scenarioBundle.bases[active.basis];
+  const rows = 'bands' in legend ? legend.bands : legend.onTheMap;
+  mount.innerHTML = `
+    <p class="fill-key-heading">${basis === undefined ? '' : basis.name}</p>
+    <div class="fill-key-list">${[...rows, ...legend.absences].map(item).join('')}</div>`;
 }
 
 function renderLegend(active: Selection, variant: VariantRecord | null): void {

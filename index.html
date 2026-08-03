@@ -30,6 +30,22 @@
           <div id="map-controls" class="map-controls"></div>
 
           <!--
+            Stratum 1's key, on the paper, under the division toggle: which colour is which mother
+            tongue, or which band of the development composite. The legend below the frame says the
+            same thing and says it in full — this is the half a reader matches to the ground while
+            still looking at the ground, which is what a fill key is for.
+
+            Empty and gone under a basis that shades nothing, exactly as the unit key is empty at
+            the baseline: three of the four bases can be selected and paint no district, and a key
+            to a fill the map never drew explains a picture that does not exist.
+
+            `aria-hidden` for the reason the unit key is: the legend under the frame carries these
+            same rows, in the same words, and a screen reader given both is given every colour
+            twice.
+          -->
+          <div id="fill-key" class="fill-key" aria-hidden="true"></div>
+
+          <!--
             The map's own key to stratum 3: how many units the active variant cuts the country
             into, and which unit is which, in its outline's own stroke. It sits on the paper
             because that is where the outlines are — the legend under the frame says what a stroke
