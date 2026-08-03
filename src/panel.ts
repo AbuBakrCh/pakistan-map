@@ -474,10 +474,11 @@ export function renderVariantCard(container: HTMLElement): CardHandle {
     /*
      * Three columns, in one DOM order and never in two.
      *
-     * The split is by *where the page puts them* and not by kind: on a wide screen the units and
-     * the scorecard sit beside the map, where a reader compares a figure against the ground it is
-     * about, and the argument and its small print go underneath, where there is a prose measure to
-     * set them at. On a narrow one all three stack inside the sheet in exactly this order — the
+     * The split is by *where the page puts them* and not by kind: on a wide screen all three sit
+     * in a block underneath the map — the argument at a prose measure, the units and the scorecard
+     * beside it, and what qualifies them to their right — so that the map keeps the whole width of
+     * the page, which is the one thing this page is for. On a narrow one all three stack inside
+     * the sheet in exactly this order — the
      * argument, then what it is made of, then what qualifies it — which is the card's own order
      * read top to bottom (#19) and the reason the placement is CSS's rather than this file's.
      *

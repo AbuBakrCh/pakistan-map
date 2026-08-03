@@ -1946,14 +1946,20 @@ body {
 }
 
 /*
- * The three-region layout (wide screens only).
+ * The two-region layout (wide screens only).
  *
  * The page stops being one column and becomes what a reader actually uses it as: the *controls*
- * down the left, the *map* in the middle, the *units and the scorecard* down the right, and the
- * argument with its small print underneath. The reason for the split is where a reader's eye has
- * to travel — a unit's population is read against the ground it covers, so it belongs beside the
- * map; the rationale, the opposition line, the footnotes and the sources are prose, and prose
- * belongs at a measure rather than in a 20rem rail.
+ * down the left, the *map* taking everything else, and the card's three blocks underneath it —
+ * the argument at a prose measure, the units and the scorecard beside it, and what qualifies them
+ * to their right.
+ *
+ * **The units and the scorecard used to be a rail beside the map, and are not any more.** The case
+ * for the rail was that a unit's population is read against the ground it covers; the case against
+ * it is that it cost the map a fifth of the page at every width, on a page whose whole subject is
+ * a boundary. The country is nearly square and the figures are a list — the list reads perfectly
+ * well below the map, and the map does not read perfectly well in four-fifths of a column. So the
+ * frame takes the rail's column outright, which it already did at the baseline (#19), and the
+ * bottom block gains the third column the rail gave up.
  *
  * It is placement and nothing else. The DOM order is the card's own order (#19) — the argument,
  * then the units and the scorecard, then what qualifies them — and every one of the three columns
@@ -1969,21 +1975,29 @@ body {
 @media (min-width: 1000px) {
   #app {
     display: grid;
-    /* The rails are bounded on both sides: a chip list wider than its longest variant name is
-     * empty paper, and a units list narrower than a population figure wraps every row. */
-    grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr) minmax(17rem, 21rem);
+    /*
+     * Four columns, and only the first is a rail. The controls are bounded on both sides — a chip
+     * list wider than its longest variant name is empty paper — and the two bottom columns are
+     * bounded so a units list is never narrower than a population figure and the sources never set
+     * a line nobody reads. The map takes columns 2 to 4 at every width, which is the whole of this
+     * change: there is no rail beside it to give up.
+     */
+    grid-template-columns:
+      minmax(12rem, 15rem) minmax(0, 1fr) minmax(17rem, 21rem)
+      minmax(17rem, 21rem);
     grid-template-areas:
-      'masthead masthead masthead'
-      'controls frame    rail'
-      'argument argument notes'
-      'colophon colophon colophon'
-      'about    about    about';
+      'masthead masthead masthead masthead'
+      'controls frame    frame    frame'
+      'argument argument detail   notes'
+      'colophon colophon colophon colophon'
+      'about    about    about    about';
     /* The map row takes what the viewport has left; everything below it is below the fold, which
      * is the point of moving it there. `min-height` rather than `height`, so the bottom block
      * lengthens the page instead of being clipped by it. */
     grid-template-rows: auto minmax(32rem, 1fr) auto auto auto;
     height: auto;
-    /* Three columns want more than the near-square country did on its own. */
+    /* A map three columns wide wants more than the near-square country did on its own — and the
+     * bottom block is three boxes across underneath it. */
     max-width: 1560px;
     min-height: 100%;
   }
@@ -1997,17 +2011,6 @@ body {
     /* The frame is a grid item in a sized row now, not a flex child of the page, so its floor is
      * a floor and no longer also its height. */
     min-height: 32rem;
-  }
-
-  /*
-   * The map takes the rail's column when there is no card in it — which is the baseline, where
-   * there is no proposal on screen and so nothing to list beside the country. A fifth of the page
-   * left as empty paper would read as a panel that failed to load, and the map is the thing the
-   * page is for. It gives the column back the moment a variant arrives, which is the same coming
-   * and going the card and the compare button already do (#19, #22).
-   */
-  #app:has(.card-well[hidden]) .frame {
-    grid-column: 2 / 4;
   }
 
   /*
@@ -2080,34 +2083,43 @@ body {
     padding: 0.8rem 1rem;
   }
 
+  /*
+   * The units and the scorecard, in the bottom block rather than beside the map.
+   *
+   * No `max-height` and no scroller any more, and that is a consequence rather than an oversight:
+   * the rail needed one because eighteen units is longer than Pakistan is tall and a list sized to
+   * its own content would have taken the map row down with it. Below the map there is no row to
+   * protect — the block lengthens the page, which is what a page does — so the list is simply as
+   * long as it is, and a reader is no longer scrolling a panel inside a page that also scrolls.
+   */
   .card-column-detail {
-    grid-area: rail;
-    /*
-     * The rail scrolls; it never grows the row.
-     *
-     * Eighteen units is longer than Pakistan is tall, and a rail sized to its own content would
-     * take the map row with it — the map is what the page is for, and pushing it down to a
-     * thumbnail to show a list that scrolls perfectly well is the wrong way round. Against the
-     * viewport rather than against the row, because a percentage here resolves against the row it
-     * is trying not to set.
-     */
-    max-height: calc(100dvh - 11rem);
-    overflow-y: auto;
+    grid-area: detail;
   }
 
   /*
-   * The two bottom boxes are each their own height. Stretched, the argument would be a short
+   * The three bottom boxes are each their own height. Stretched, the argument would be a short
    * column inside a box as tall as the footnotes beside it, which reads as prose that stopped.
    */
   .card-column-argument,
+  .card-column-detail,
   .card-column-notes {
     align-self: start;
   }
 
   .card-column-argument {
     grid-area: argument;
-    /* The prose measure, inside a two-column-wide area: a sentence set across 900px is a sentence
-     * nobody reads, and the space to its right is what keeps the block from filling the fold. */
+  }
+
+  /*
+   * The measure is put on the *lines*, not on the box.
+   *
+   * A sentence set across 840px is a sentence nobody reads, so the prose is capped — but capping
+   * the column meant the box itself stopped short of its own grid area, leaving a 200px hole
+   * between it and the units beside it that read as a panel that had failed to load. The box keeps
+   * the area the grid gave it and the paragraphs inside it keep the measure, which is what was
+   * wanted in the first place.
+   */
+  .card-column-argument > * {
     max-width: 68ch;
   }
 
@@ -2121,5 +2133,30 @@ body {
 
   .about-well {
     grid-area: about;
+  }
+}
+
+/*
+ * The bottom block at the narrow end of the wide layout.
+ *
+ * Three boxes across want about 1360px before the argument stops being prose: at 1100 the two
+ * bounded columns take 672 of a 1036px page and leave the rationale, the status and the two
+ * advocacy lines in a 340px trench. So under that width only the small print keeps a column of its
+ * own, and the argument and the units take the rest of the page one above the other — the
+ * argument still capped at its own measure, as it already is.
+ *
+ * The reading order does not change, because the areas do not reorder: it is still the argument,
+ * then what the proposal is made of, then what qualifies it (#19).
+ */
+@media (min-width: 1000px) and (max-width: 1359px) {
+  #app {
+    grid-template-areas:
+      'masthead masthead masthead masthead'
+      'controls frame    frame    frame'
+      'argument argument argument notes'
+      'detail   detail   detail   notes'
+      'colophon colophon colophon colophon'
+      'about    about    about    about';
+    grid-template-rows: auto minmax(32rem, 1fr) auto auto auto auto;
   }
 }

@@ -827,14 +827,29 @@ moves to the bottom left, on its own line above Compare and the export: the dock
 full-width opaque bar squared off against the top of the frame (#33) and would paint over it while
 still letting a tap through, which is an invisible live button — worse than a moved one.
 
-**Three regions on a wide screen.** Above 1000px the page is not one column but four areas: the
-**controls** down the left, the **map** in the middle, the **units and the scorecard** down the
-right, and the **argument with its footnotes and sources** underneath. The split is by where a
-reader's eye has to travel and not by what kind of thing each is — a unit's population is read
-against the ground it covers, so it belongs beside the map, while the rationale, the **Opposed by**
-line, the footnotes and the sources are prose and belong at a measure rather than in a 20rem rail.
-Below that width the page is the single column it always was, and below `--sheet` it is the bottom
-sheet (#33).
+**Two regions on a wide screen, and a block underneath.** Above 1000px the page is not one column:
+the **controls** run down the left, the **map takes everything else**, and the card's three blocks
+sit under it — the **argument** at a prose measure, the **units and the scorecard** beside it, and
+the **footnotes and sources** to their right. Below 1000px the page is the single column it always
+was, and below `--sheet` it is the bottom sheet (#33).
+
+**The units and the scorecard were a rail beside the map, and are not any more.** The case for the
+rail was that a unit's population is read against the ground it covers; the case against it is that
+it cost the map a fifth of the page at every width, on a page whose whole subject is a boundary.
+The country is nearly square and the figures are a list — a list reads perfectly well below the
+map, and a map does not read perfectly well in four-fifths of a column. So the frame takes the
+rail's column outright, which it already did at the baseline, and the bottom block gains the third
+column the rail gave up. At 1600px that is 1244px of map where it was 908.
+
+Two consequences rather than decisions. **Nothing scrolls inside the page any more**: the rail
+needed a `max-height` because eighteen units is longer than Pakistan is tall and a list sized to its
+own content would have taken the map row down with it — below the map there is no row to protect, so
+the list is simply as long as it is. And **the prose measure moved from the box to the lines**:
+capping the argument *column* at 68ch left it short of its own grid area, which read as a panel that
+had failed to load next to the units beside it, so the box keeps the area and the paragraphs keep the
+measure. Under 1360px three boxes across is one too many — the argument would set at 340px — so
+there the small print keeps its column and the argument and the units take the rest of the page one
+above the other.
 
 It is **placement and nothing else**. `panel.ts` still renders one card into one mount and knows
 nothing about where the page puts the pieces: the card is three columns in one DOM order — the
@@ -845,13 +860,10 @@ that hid its opposition line on a phone would read as an endorsement on a phone.
 added to the card later lands in the bottom block by construction, because that is where the column
 it is appended to is put.
 
-Two things follow from the geometry rather than being decided again. The **rail scrolls, it never
-grows the map row** — eighteen units is longer than Pakistan is tall, and sizing the row to a list
-that scrolls perfectly well would push the country down to a thumbnail. And at the baseline the
-**map takes the rail's column**, since there is no proposal on screen and so nothing to list beside
-it; the variant group and Compare are collapsed *away* there rather than left as reserved space,
-because the reason they were reserved — not moving the map under the pointer — is a fact about
-controls sitting *above* the map, and here they sit beside it.
+One thing follows from the geometry rather than being decided again: the variant group and Compare
+are collapsed *away* at the baseline rather than left as reserved space, because the reason they
+were reserved — not moving the map under the pointer — is a fact about controls sitting *above* the
+map, and here they sit beside it.
 
 **Selecting a basis:** current boundaries fade back, districts shade by that basis's data,
 the active variant's unit outlines draw prominently on top.
