@@ -41,7 +41,7 @@ Vocabulary: a proposed new province is a **unit**.
 ## Core model
 
 ```
-Base map (rendered):   Province └── Division      ← always; keeps the map uncluttered
+Base map (rendered):   Province └── Division      ← the division tier on request; see the toggle
 Building block:        District (136)             ← every unit is composed of these; 2023 census set
 Statistics join:       District                   ← the census publishes here; exact, never interpolated
 ```
@@ -749,6 +749,7 @@ What it holds:
 | Unit labels persist at 390px (#34) — every unit named at the bar, asked of **every variant** rather than of one, for the reason `units.test.ts` gives about the same ground: held over L1 alone it passed while H3 left three units unnamed, the *Northern Areas* among them, which is Gilgit-Baltistan under the name that variant gives it. The twenty-one this build cannot name — H3's *Northern Areas*, L7's two mother-tongue pockets, A1 to A3's fourteen rule-drawn units (#28) and H2's four (#30) — are listed one by one and explained rather than counted, and **every one shown to come back as soon as there is room**, which is what makes the gap a matter of pixels rather than of policy | `src/lib/labels.test.ts` |
 | Territories rank first inside the unit tier (#28) — asked at the seam where the rule is decided rather than of the picture it produces, and of **every variant**: every territory unit outranks every unit that is not one, and still ranks inside its own tier rather than over the map. Keyed on the kind the bundle records, so H3's renamed *Northern Areas* is caught and A5's two **promotions** are correctly not — asserted, not left to be inferred from an empty list. And the outcome held beside the rule: **no territory anonymous under any variant**, with the two exceptions — H3's *Northern Areas* and H2's *Gilgit Agency and Baltistan*, the longest unit name in the app — each shown to be a name running off the frame edge rather than a name outranked, since no priority reaches that and a coined short form is what the table refuses. The two failures are told apart by assertion rather than in prose | `src/lib/labels.test.ts` |
 | District names (#34) — every drawn district named exactly once and each anchor inside its own district; ranked **below every division**, checked against the largest district and the smallest division rather than on average, since Chagai is bigger than several divisions; and offered only past a zoom threshold that is itself past the one the district *lines* come in at | `src/lib/labels.test.ts` |
+| The division tier, drawn only when it is asked for — every division name withheld and **nothing else**, at the baseline and under a variant alike: the provinces, both territories and all seven seats survive it, since the answer to "show fewer names" must not be "show fewer places". A caller that says nothing gets the full set, because saying nothing is not asking for less. And the finding held beside it, per variant: turning the tier off rescues **not one** unit name at the 390px bar — the unit floor outranks every division outright, so the fourteen A1 to A3 cannot set are crowded out by each other and not by the base map | `labels.test.ts` |
 | Which divisions go unnamed at **default zoom** — named, not counted: **Poonch and Mardan**. Mardan is the stated price of qualifying the six rather than dropping them, since restoring `Peshawar Division` crowds northern KP; a change to this pair is a change to the opening view of the country and belongs in a diff | `src/lib/labels.test.ts` |
 | Tooltip — the three outcomes kept apart in words as they are in fill: a figure with its share and its table, Chitral's unnamed dominance quoted against **its own** residual, and the twenty AJK/GB districts saying the census does not cover them with no figures at all. Never a zero, never a blank, never `Others`; every figure badged with the release it came from. Placement clamped inside the frame from every pointer position, including a tooltip wider than the 390px bar | `src/lib/tooltip.test.ts` |
 | Stratum 3 — every unit drawable from the committed outlines, the pair refusing to be read against geometry it was not cut against, the ceasefire line held out of every unit outline and held out of **exactly** the two units it runs along — asked of **every variant**, because those two units are not always called the same thing and are not always the same *kind* of thing: H3 calls Gilgit-Baltistan the *Northern Areas* and A5 draws both territories as `proposed` provinces, so a renderer recognising the line by unit name or by unit kind would stroke it solid the moment a variant renamed a territory or argued for its promotion. Every drawn district owned by one unit and keyed on the district the map draws rather than the one the claim names; every unit's name anchored inside its own shape across every variant — 166 outlines now, the rule-drawn administrative units among them, which take whatever shape the arithmetic leaves them — which is where a crescent (North-West Frontier Province around the tribal districts) and a 261-polygon province (West Pakistan) would put a name on someone else's ground; and the legend keying only the kinds a variant contains, over H1, which genuinely has no `unchanged` unit rather than an edited one | `src/lib/units.test.ts` |
@@ -794,7 +795,37 @@ is no build to guard.
 
 ## Interaction
 
-**Default:** current provinces and divisions, named. Nothing else.
+**Default:** current provinces and territories, named, with the seven first-level seats and the
+ceasefire line. Nothing else.
+
+**The division tier is offered, not assumed — one toggle, top right of the map frame.** *Show all
+divisions* draws the ~39 divisions and their 37 names; off, which is how the page opens, the map is
+the first-level units, the seven dots and the dashed line. Three things about it are decisions
+rather than defaults.
+
+It goes **whole or not at all**: the boundaries are withheld by the stylesheet and the names by
+`lib/labels.ts`, and a division name floating over ground with no division boundary under it names
+a shape the map is no longer drawing. The **legend follows it** — the `Division` swatch is keyed
+only while the tier is drawn, on the same rule the export band's key already follows when it
+refuses to key a basis it has no fill for: a swatch for a line the map is not drawing explains a
+picture that does not exist. And it is **not in the URL and not in the browser's history**, exactly
+as the sheet's detent is not (#33): how much administrative detail a reader has switched on is a
+property of the device in their hand, and a shared link argues about a proposal rather than about
+the sender's detail setting.
+
+What it does **not** buy is asserted beside what it does, because the obvious reading is wrong. It
+rescues **not one** of the twenty unit names this build cannot set at 390px: the unit tier's floor
+outranks every division outright (`UNIT_FLOOR`), so a division has never been able to evict a unit
+and removing it frees nothing. Those units are crowded out by *each other* (#28), which is open
+item 5's problem and not this control's.
+
+It sits on the map rather than in the controls well because it changes the paper rather than the
+argument — the same reason Compare and the export sit apart from the two radio groups. A
+pressed-state `<button>` and not a checkbox, since every control on this page is a button and that
+is what `holdsCompare` relies on when it refuses `Space` to a focused control (#22). On a phone it
+moves to the bottom left, on its own line above Compare and the export: the docked tooltip is a
+full-width opaque bar squared off against the top of the frame (#33) and would paint over it while
+still letting a tap through, which is an invisible live button — worse than a moved one.
 
 **Three regions on a wide screen.** Above 1000px the page is not one column but four areas: the
 **controls** down the left, the **map** in the middle, the **units and the scorecard** down the
@@ -953,7 +984,8 @@ share a name with the division they administer — Karachi, Lahore, Peshawar, Qu
 Muzaffarabad. Setting the bare word twice inside one division leaves a reader unable to tell which
 of the two is being named; dropping the division name — which is what #8 first did — costs the
 default view the administrative structure it exists to show, against the base map's rule that
-provinces and divisions are drawn and named *always*. So both are set and the division says which
+provinces and divisions are drawn and named together wherever the division tier is drawn at all.
+So both are set and the division says which
 it is: **Lahore Division** beside **Lahore**. That is the unit's own full official style rather
 than a coinage of ours, so it needs no source it does not have, and it is applied **only** to the
 six that actually collide — suffixing all 37 would shout a distinction that matters six times.
@@ -1464,12 +1496,12 @@ in `src/lib/about.ts`, under test; `src/panel.ts` composes none, exactly as with
 
 ## Stack
 
-- **Vanilla TypeScript + Vite + D3.** No framework — runtime state is five values (active
-  basis, active variant, hovered district, compare-held, and on a phone the sheet's detent); no
-  async, no forms. Routing is the URL hash and nothing else (#23): one parser, one `hashchange`
+- **Vanilla TypeScript + Vite + D3.** No framework — runtime state is six values (active
+  basis, active variant, hovered district, compare-held, whether the division tier is drawn, and on
+  a phone the sheet's detent); no async, no forms. Routing is the URL hash and nothing else (#23): one parser, one `hashchange`
   listener, no router.
 
-  Two near-misses, counted deliberately. The sheet's detent (#33) **is** one of the five, but it is
+  Two near-misses, counted deliberately. The sheet's detent (#33) **is** one of the six, but it is
   kept out of the URL and out of `main.ts`: how far a reader has pulled the card open is a property
   of the device in their hand, not of the view being argued, and a shared link that restored it
   would move a stranger's sheet. The export button's busy state (#32) is **not** one at all — it

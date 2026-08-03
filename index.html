@@ -20,7 +20,15 @@
       <nav id="controls" class="controls-well" aria-label="What the map shows"></nav>
 
       <figure class="frame">
-        <div id="map" class="map-well"></div>
+        <div id="map" class="map-well">
+          <!--
+            The one control that sits on the map itself: whether the division tier is drawn. It is
+            here rather than in the controls well because it is not part of the selection — it does
+            not choose what is argued, only how much of the administrative map it is argued over —
+            and because a control that changes the paper belongs on the paper.
+          -->
+          <div id="map-controls" class="map-controls"></div>
+        </div>
         <figcaption class="legend" id="legend"></figcaption>
       </figure>
 

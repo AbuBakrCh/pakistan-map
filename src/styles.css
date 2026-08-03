@@ -423,6 +423,53 @@ body {
 }
 
 /*
+ * The division tier, withheld until the reader asks for it.
+ *
+ * `display: none` rather than `opacity: 0`, because the tier is not faded back — it is not being
+ * drawn, and a transparent line still answers `getBBox` and would drag the export crop out to a
+ * boundary nobody can see. The names are withheld in the layout rather than here (`lib/labels.ts`),
+ * so the two halves of the tier go together and the names a division was evicting come straight
+ * back rather than leaving a hole where one used to sit.
+ */
+.map:not([data-divisions='on']) .stratum-divisions {
+  display: none;
+}
+
+/*
+ * The one control that sits on the map rather than beside it (#18's well is for the selection).
+ *
+ * Top right, which on this projection is the corner with the least drawn land under it at zoom 1 —
+ * the Kashmir salient reaches it only at the very top, and the ceasefire line's own name is placed
+ * away from the frame edge. It is not seeded into the label layout the way the docked tooltip is
+ * (#33): the tooltip is opaque and lands over northern Pakistan on a phone, where this is a small
+ * translucent chip in a corner the names rarely reach, and putting it in `taken` would cost a name
+ * on every frame to protect ground it usually is not over.
+ */
+.map-controls {
+  position: absolute;
+  right: 0.6rem;
+  top: 0.6rem;
+  z-index: 1;
+}
+
+/*
+ * Set like the chips it is a sibling of in kind, but sitting on the paper rather than in the well,
+ * so it carries the paper's own background: a control over a map has to be readable over whatever
+ * the map has put under it.
+ */
+.chip-divisions {
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(2px);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+.chip-divisions:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/*
  * Stratum 3 — the active variant's units, drawn heavy and on top.
  *
  * Two paths per unit: a casing in the paper's own colour, then the outline over it. Without the
@@ -782,7 +829,9 @@ body {
  * regions unnamed for exactly the reader they are named for.
  */
 .regions,
-.readout {
+.readout,
+/* The division toggle's own state sentence, on the same terms and for the same reader. */
+.visually-hidden {
   clip-path: inset(50%);
   height: 1px;
   overflow: hidden;
@@ -1529,6 +1578,37 @@ body {
 
   .chip-compare,
   .chip-export {
+    box-shadow: 0 1px 6px rgb(51 41 29 / 22%);
+    min-height: var(--action-h);
+  }
+
+  /*
+   * The division toggle leaves the top right on a phone, and it is the tooltip that evicts it.
+   *
+   * Docked, the tooltip is a full-width opaque bar squared off against the top of the frame (#33) —
+   * it lands exactly where this control sits on a desktop, and it paints over it. The tooltip takes
+   * no pointer events, so the control would still answer a tap: an invisible live button, which is
+   * worse than a moved one.
+   *
+   * It goes to the bottom left instead, on its own line **above** the two actions rather than
+   * beside them: at this width the three chips measure 391px before their gaps, so a shared row
+   * either wraps or overlaps. Its own line is also the honest arrangement — Compare and the export
+   * are one pair because neither chooses what the map shows (#32, #33), and this one does.
+   *
+   * Seated the same distance above the sheet, and given the same transition, so all three rise
+   * together when the card is opened rather than the row moving out from under the chip.
+   */
+  .map-controls {
+    bottom: calc(var(--sheet-h) + 0.35rem + var(--action-h) + 0.35rem);
+    left: 0.7rem;
+    position: fixed;
+    right: auto;
+    top: auto;
+    transition: bottom var(--switch) ease;
+    z-index: 6;
+  }
+
+  .chip-divisions {
     box-shadow: 0 1px 6px rgb(51 41 29 / 22%);
     min-height: var(--action-h);
   }

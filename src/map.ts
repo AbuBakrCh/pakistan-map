@@ -66,6 +66,7 @@ import { regionRoster } from './lib/regions.ts';
 import { leavesWalk, walkOrder, walkTarget } from './lib/walk.ts';
 import { isTap, selectsByTap, tapResolves } from './lib/touch.ts';
 import { isSheetLayout } from './sheet.ts';
+import { DIVISIONS_SHOWN_BY_DEFAULT } from './lib/divisions.ts';
 
 /**
  * Must match `--font-serif` in styles.css: the canvas measures what the browser will draw.
@@ -190,6 +191,19 @@ export interface MapHandle {
   /** Draw a view. The transition between two views is a cross-fade, never a cut. */
   show(view: MapView): void;
   /**
+   * Draw the division tier, or stop drawing it.
+   *
+   * Not part of `MapView`, deliberately. A view is what the *selection* puts on the map, and this
+   * is not a selection: it is how much administrative detail the reader has asked to see, which
+   * survives every basis and every variant and is never written into the URL (see `lib/divisions.ts`).
+   * Folding it into the view would make every switch of variant have an opinion about it.
+   *
+   * Both halves of the tier answer to it — the interior boundaries in stratum 2 and the 37 names in
+   * the label layout — because a division name over ground with no division boundary under it names
+   * a shape the map is no longer drawing.
+   */
+  setDivisions(shown: boolean): void;
+  /**
    * Hold the map still and hand it to `take`, which photographs it (#32).
    *
    * A callback rather than a getter returning the node, because *stilling the map* and *reading the
@@ -234,6 +248,11 @@ export function renderMap(
 
   let view = initial;
   /**
+   * Whether the division tier is drawn (see `lib/divisions.ts`). The reader's, not the selection's,
+   * so it lives beside the view rather than inside it and survives every switch of variant.
+   */
+  let divisionsShown = DIVISIONS_SHOWN_BY_DEFAULT;
+  /**
    * The names on screen, and what each is. Recomputed only when the view changes: the anchors are
    * an interior search over 156-district unions, which is cheap once per variant and not once per
    * zoom frame.
@@ -255,10 +274,11 @@ export function renderMap(
     (districtSites ??= districtLabelSites(districts.features as never));
 
   function readSites(): void {
+    const tiers = { divisions: divisionsShown };
     sites =
       view.units === null
-        ? baselineLabelSites(geography, citySites)
-        : variantLabelSites(geography, view.units.features, citySites);
+        ? baselineLabelSites(geography, citySites, tiers)
+        : variantLabelSites(geography, view.units.features, citySites, tiers);
     tierOf = new Map(sites.map((site) => [site.key, site.tier]));
     unitKindOf = new Map(
       (view.units?.features ?? []).map((f) => [
@@ -1167,6 +1187,21 @@ export function renderMap(
    * Switch views. No re-projection and no re-layout of anything the change did not touch: the
    * district paths are already drawn, so a basis is a repaint, and a variant is one path join.
    */
+  /**
+   * Turn the division tier on or off.
+   *
+   * A re-layout and an attribute, and nothing else: no re-projection and no re-fit, because the
+   * country has not moved — only the number of names competing for it has. The names that were
+   * evicted by a division come straight back, which is the same mechanism zooming already uses.
+   */
+  function setDivisions(shown: boolean): void {
+    if (shown === divisionsShown) return;
+    divisionsShown = shown;
+    svg.attr('data-divisions', divisionsShown ? 'on' : null);
+    readSites();
+    drawLabels(zoomTransformOf());
+  }
+
   function show(next: MapView): void {
     view = next;
     // The tooltip on screen was answered for the previous view, and one of its three lines is
@@ -1270,8 +1305,9 @@ export function renderMap(
   }
 
   readSites();
+  svg.attr('data-divisions', divisionsShown ? 'on' : null);
   draw();
   new ResizeObserver(draw).observe(container);
   show(initial);
-  return { show, photograph };
+  return { show, setDivisions, photograph };
 }

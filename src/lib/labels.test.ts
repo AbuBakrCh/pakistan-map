@@ -22,6 +22,7 @@ import {
   variantLabelSites,
   type LabelBox,
   type LabelTier,
+  type TierOptions,
 } from './labels.ts';
 
 const { provinces, divisions } = readGeography(bundle as never);
@@ -75,6 +76,69 @@ describe('baselineLabelSites', () => {
       priority.get('division:Lahore') as number,
     );
   });
+});
+
+/**
+ * The division tier, offered rather than assumed — the map frame's own toggle.
+ *
+ * Two claims, and the second is the one worth having. The tier goes *whole*: a division name over
+ * ground with no division boundary under it names a shape the map is no longer drawing, so the
+ * names are withheld here and the lines are withheld by the stylesheet, and neither half may be
+ * withheld alone. And what the toggle does **not** buy is asserted beside what it does, because the
+ * obvious reading of "fewer names on the map" is that the crowded variants get their unit names
+ * back — and they do not, since the unit tier's floor already outranks every division outright.
+ */
+describe('the division tier, drawn only when it is asked for', () => {
+  it('withholds every division name, and nothing else, at the baseline', () => {
+    const withDivisions = baselineLabelSites({ provinces, divisions }, cities);
+    const without = baselineLabelSites({ provinces, divisions }, cities, { divisions: false });
+
+    expect(without.filter((s) => s.tier === 'division')).toEqual([]);
+    // The provinces, both territories and all seven seats survive it: those are what the map is
+    // left with, and the answer to "show fewer names" must not be "show fewer places".
+    expect(keys(without).sort()).toEqual(
+      keys(withDivisions.filter((s) => s.tier !== 'division')).sort(),
+    );
+    expect(without.filter((s) => s.tier === 'province')).toHaveLength(7);
+    expect(without.filter((s) => s.tier === 'city')).toHaveLength(7);
+  });
+
+  it('withholds them under a variant too, leaving the units and the seats', () => {
+    const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, 'l1');
+    const without = variantLabelSites({ divisions }, units.features, cities, { divisions: false });
+
+    expect(without.filter((s) => s.tier === 'division')).toEqual([]);
+    expect(without.filter((s) => s.tier === 'unit')).toHaveLength(units.features.length);
+    expect(without.filter((s) => s.tier === 'city')).toHaveLength(7);
+  });
+
+  it('offers them to a caller that says nothing, since saying nothing is not asking for less', () => {
+    // The default is the full set. The renderer states its own answer explicitly in both
+    // directions; this is what a caller that has expressed no opinion gets.
+    expect(baselineLabelSites({ provinces, divisions }, cities)).toEqual(
+      baselineLabelSites({ provinces, divisions }, cities, { divisions: true }),
+    );
+  });
+
+  /*
+   * The finding, held rather than assumed. Turning the divisions off does not name a single unit
+   * that was going unnamed: the unit tier's floor (`UNIT_FLOOR`) is above every division's priority
+   * outright, so a division has never been able to evict a unit and removing it frees nothing. The
+   * fourteen units A1 to A3 cannot name at the bar are crowded out by *each other* (#28), and that
+   * is still open item 5's problem rather than something this control answers.
+   *
+   * One case per variant, because the layout at the bar is the expensive question in this file and
+   * five of them in one case is a timeout rather than a failure.
+   */
+  for (const id of ['a1', 'a2', 'a3', 'h2', 'l7']) {
+    it(`rescues not one of ${id}'s unit names at the 390px bar`, () => {
+      const withDivisions = variantAt(id, BAR_390);
+      const without = layOutVariantAt(id, BAR_390, { divisions: false });
+      const unnamed = (drawn: { units: readonly string[]; placed: ReadonlySet<string> }) =>
+        drawn.units.filter((name) => !drawn.placed.has(labelKey('unit', name)));
+      expect(unnamed(without), id).toEqual(unnamed(withDivisions));
+    });
+  }
 });
 
 describe('baselineLabelSites, with the city dots on the map', () => {
@@ -287,7 +351,11 @@ const variantAt = (id: string, frame: { width: number; height: number }) => {
   return computed;
 };
 
-function layOutVariantAt(id: string, frame: { width: number; height: number }) {
+function layOutVariantAt(
+  id: string,
+  frame: { width: number; height: number },
+  tiers: TierOptions = {},
+) {
   const viewport = framed(frame);
   const project = fitProjection(provinces, viewport);
   const path = geoPath(project);
@@ -300,7 +368,7 @@ function layOutVariantAt(id: string, frame: { width: number; height: number }) {
     ...units.features.map((f) => [labelKey('unit', f.properties.name), width(f)] as const),
     ...divisions.features.map((f) => [labelKey('division', f.properties.name), width(f)] as const),
   ]);
-  const sites = variantLabelSites({ divisions }, units.features, cities);
+  const sites = variantLabelSites({ divisions }, units.features, cities, tiers);
   const measured = sites.flatMap((site) => {
     const point = project(site.anchor);
     if (point === null) return [];

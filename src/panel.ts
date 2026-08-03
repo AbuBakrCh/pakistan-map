@@ -17,6 +17,12 @@ import type { BasisId, ScenarioBundle } from './bundle.ts';
 import type { AboutBadge, AboutTheData } from './lib/about.ts';
 import type { CardList, CardScorecard, CardUnit, VariantCard } from './lib/card.ts';
 import { COMPARE_HINT, COMPARE_LABEL, COMPARE_TITLE } from './lib/compare.ts';
+import {
+  DIVISIONS_LABEL,
+  DIVISIONS_SHOWN_BY_DEFAULT,
+  DIVISIONS_TITLE,
+  divisionsState,
+} from './lib/divisions.ts';
 import { EXPORT_LABEL, EXPORT_TITLE, EXPORT_WORKING } from './lib/export-band.ts';
 import { rovingTarget, tabStop } from './lib/radio-group.ts';
 import {
@@ -310,6 +316,58 @@ export function renderControls(
 
   show(BASELINE, false);
   return { show, exportSettled };
+}
+
+/**
+ * The one control that sits on the map: whether the division tier is drawn.
+ *
+ * Not in the controls well with the two radio groups, because it is not one of a set and does not
+ * choose what the map argues — it decides how much of the administrative map the argument is drawn
+ * over. That is the same kind of control Compare and the export are (neither chooses what the map
+ * shows), and it is put on the paper rather than beside it because what it changes is the paper.
+ *
+ * A pressed-state button rather than a checkbox: every control on this page is a `<button>`, which
+ * is what `holdsCompare` relies on when it refuses `Space` to a focused control (#22) — a checkbox
+ * answers `Space` too, but nothing else here is one and a single exception is how that rule comes
+ * to have a hole in it. `aria-pressed` says which way it is, and the description says what that
+ * means for the map, since `role="img"` means the map itself can be asked nothing.
+ *
+ * Every word of it is `lib/divisions.ts`'s. This file composes none, exactly as it composes none of
+ * the card's.
+ */
+export interface DivisionsHandle {
+  /** Whether the tier is currently drawn — the button reflects state it does not itself own. */
+  show(shown: boolean): void;
+}
+
+export function renderMapControls(
+  container: HTMLElement,
+  onToggle: (shown: boolean) => void,
+): DivisionsHandle {
+  let shown = DIVISIONS_SHOWN_BY_DEFAULT;
+
+  const description = select(container)
+    .append('span')
+    .attr('class', 'visually-hidden')
+    .attr('id', 'divisions-state');
+
+  const button = select(container)
+    .append('button')
+    .attr('type', 'button')
+    .attr('class', 'chip chip-divisions')
+    .attr('title', DIVISIONS_TITLE)
+    .attr('aria-describedby', 'divisions-state')
+    .text(DIVISIONS_LABEL)
+    .on('click', () => onToggle(!shown));
+
+  function show(next: boolean): void {
+    shown = next;
+    button.attr('aria-pressed', shown ? 'true' : 'false');
+    description.text(divisionsState(shown));
+  }
+
+  show(shown);
+  return { show };
 }
 
 /**

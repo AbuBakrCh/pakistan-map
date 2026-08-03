@@ -207,12 +207,30 @@ export function baselineLabelSites(
     divisions: { features: readonly Shape[] };
   },
   cities: readonly CitySite[] = [],
+  { divisions = true }: TierOptions = {},
 ): LabelSite[] {
   return [
     ...sitesOf(geography.provinces.features, 'province', 10),
     ...citySites(cities),
-    ...divisionSites(geography, cities),
+    ...(divisions ? divisionSites(geography, cities) : []),
   ];
+}
+
+/**
+ * Which optional tiers the map is currently drawing.
+ *
+ * One entry: the division tier, which the reader turns on and off from the map frame. It is a
+ * property of what the reader has asked to see and not of the selection, so it is passed in here
+ * rather than carried on a variant — and it is the *whole* tier that goes, lines and names
+ * together, because a division name floating over ground with no division boundary under it names
+ * a shape the map is no longer drawing.
+ *
+ * Defaulting to `true` is deliberate: this function's answer is "every name the map can offer",
+ * and a caller that has said nothing about the divisions has not asked for them to be withheld.
+ * The renderer says so explicitly, in both directions.
+ */
+export interface TierOptions {
+  readonly divisions?: boolean;
 }
 
 /**
@@ -236,8 +254,13 @@ export function variantLabelSites(
   geography: { divisions: { features: readonly Shape[] } },
   units: readonly Shape[],
   cities: readonly CitySite[] = [],
+  { divisions = true }: TierOptions = {},
 ): LabelSite[] {
-  return [...unitSites(units), ...citySites(cities), ...divisionSites(geography, cities)];
+  return [
+    ...unitSites(units),
+    ...citySites(cities),
+    ...(divisions ? divisionSites(geography, cities) : []),
+  ];
 }
 
 /**

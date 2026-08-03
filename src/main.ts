@@ -59,13 +59,16 @@ import { variantCard } from './lib/card.ts';
 import { exportPng } from './export-image.ts';
 import { EXPORT_FAILED } from './lib/export-band.ts';
 import { renderMap, type MapView } from './map.ts';
-import { renderAbout, renderControls, renderVariantCard } from './panel.ts';
+import { renderAbout, renderControls, renderMapControls, renderVariantCard } from './panel.ts';
+import { DIVISIONS_SHOWN_BY_DEFAULT } from './lib/divisions.ts';
 import { attachSheet } from './sheet.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
 const controlMount = document.getElementById('controls');
 if (controlMount === null) throw new Error('#controls is missing from index.html');
+const mapControlMount = document.getElementById('map-controls');
+if (mapControlMount === null) throw new Error('#map-controls is missing from index.html');
 const cardMount = document.getElementById('card');
 if (cardMount === null) throw new Error('#card is missing from index.html');
 const aboutMount = document.getElementById('about');
@@ -203,6 +206,26 @@ const panel = renderControls(
   },
   download,
 );
+/**
+ * The third runtime value, and the one that is not a view (D20, #33's near-miss counted again).
+ *
+ * How much of the administrative map a reader has switched on is a property of the device in their
+ * hand rather than of the boundaries being argued, so it is kept out of the URL and out of the
+ * history exactly as the sheet's detent is — see `lib/divisions.ts`. It is held here rather than in
+ * the map because two surfaces answer to it: the map draws the tier, and the legend keys it, and a
+ * swatch keying a line nobody is drawing is the failure the About panel exists to prevent.
+ */
+let divisionsShown = DIVISIONS_SHOWN_BY_DEFAULT;
+
+const mapControls = renderMapControls(mapControlMount, (shown) => {
+  divisionsShown = shown;
+  map.setDivisions(shown);
+  mapControls.show(shown);
+  // The legend and nothing else: the card, the colophon and the selection say nothing about the
+  // division tier, and redrawing them would be the page moving under a control that moved the map.
+  renderLegend(selection, variantOf(scenarioBundle, selection));
+});
+
 const card = renderVariantCard(cardMount);
 /*
  * On a phone the card is a bottom sheet rather than a column (#33). Attached to the same element
@@ -463,7 +486,14 @@ function renderLegend(active: Selection, variant: VariantRecord | null): void {
       <span class="legend-item"><span class="swatch swatch-province"></span>Province</span>
       <span class="legend-item"><span class="swatch swatch-territory"></span>Territory — not
         constitutionally a province</span>
-      <span class="legend-item"><span class="swatch swatch-rule"></span>Division</span>
+      ${
+        // Keyed only while the tier is drawn. A swatch for a line the map is not drawing explains
+        // a picture that does not exist — which is the same rule the export band's key follows
+        // when it refuses to key a basis it has no fill for.
+        divisionsShown
+          ? '<span class="legend-item"><span class="swatch swatch-rule"></span>Division</span>'
+          : ''
+      }
       ${lineOfControlEntry}
     `;
     return;
