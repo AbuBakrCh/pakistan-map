@@ -2762,8 +2762,9 @@ const A5: Variant = {
  * Balochistan. Punjab is the case it is right about — the lower half is South Punjab plus the
  * Thal, and it picks up exactly the two districts L2's wider reading of the Seraiki claim adds.
  * Sindh and Balochistan come out differently: what separates in Sindh is the south-east rather
- * than the interior against Karachi, and in Balochistan the eastern belt rather than everything
- * outside Quetta. The rule is run to the end and reported, which is the same discipline L7 is
+ * than the interior against Karachi, and in Balochistan a belt running from the eastern districts
+ * south-west through the Kalat highlands, rather than everything outside Quetta. The rule is run
+ * to the end and reported, which is the same discipline L7 is
  * under: a rule tuned until it agrees with the claims it was meant to be independent of would have
  * nothing left to say about them.
  */
@@ -2988,8 +2989,10 @@ function developmentGradient(context: DerivationContext): Variant {
             : `, and it takes in ${foundNotClaimed.join(', ')} besides — among them the two ` +
               'districts the wider reading of that claim adds') +
           '. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the ' +
-          'south-east and not the interior against Karachi, and in Balochistan the eastern belt ' +
-          'and not everything outside Quetta. The rule is reported as it ran rather than tuned ' +
+          'south-east and not the interior against Karachi, and in Balochistan a belt running ' +
+          'from the eastern districts south-west through the Kalat highlands — not everything ' +
+          'outside Quetta, which keeps the west, the coast and Sibi. The rule is reported as it ' +
+          'ran rather than tuned ' +
           'until it agreed, because a rule adjusted to match the claims it is meant to be ' +
           'independent of has nothing left to say about them.',
         relatedVariants: ['l1', 'l2', 'l3'],

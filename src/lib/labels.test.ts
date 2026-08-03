@@ -578,8 +578,8 @@ describe('a variant at the 390px bar', () => {
    */
   const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
     a1: ['Karachi East', 'Gujranwala', 'Rawalpindi', 'Faisalabad', 'Mardan'],
-    a2: ['Gujranwala', 'Peshawar', 'Faisalabad'],
-    a3: ['Multan', 'Lahore', 'Rawalpindi', 'Bahawalnagar', 'Mardan'],
+    a2: ['Gujranwala', 'Lahore', 'Rawalpindi', 'Faisalabad'],
+    a3: ['Gujranwala', 'Multan', 'Rawalpindi', 'Faisalabad', 'Mardan'],
     // H2 draws seventeen units, eleven of them princely states of one to four districts (#30), so
     // it is the most crowded map in the app after A1. Three of the states lose the frame to a
     // neighbour: *Khairpur* to the Sindh names around it, and *Dir* and *Nagar* to *Chitral*,

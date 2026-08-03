@@ -191,11 +191,17 @@ export function indexFolds(
  * Relations to drop outright, with the reason. Being explicit here is the point: an unmatched
  * relation must be *classified*, never silently discarded, or the district set drifts without
  * anyone noticing.
+ *
+ * **Dropping removes ground, so it is only ever for ground that is not Pakistan's.** Karezat sat
+ * here for a year on the reading that a district abolished before the census date could not be a
+ * fold — its entry said "its area is inside Pishin", which is true of the territory and false of
+ * OSM, whose Pishin relation has Karezat cut out of it. Discarding the relation therefore
+ * discarded 3,504 km² of northern Balochistan and left an 85 km notch in the province outline.
+ * It is a fold now. The rule this table follows is the narrower one: a relation is dropped when
+ * it is somewhere else or is not a unit at all, never when it is Pakistani ground under a name
+ * the census does not carry. `reconcile.test.ts` holds it against the raw cache.
  */
 export const DROPPED_RELATIONS: Readonly<Record<number, string>> = {
-  // Abolished Nov 2022; OSM still carries it. Its area is inside Pishin.
-  // docs/research/balochistan-division-district-set.md
-  16632271: 'Karezat — district abolished November 2022, did not exist at census date',
   // A village mis-tagged admin_level=6, with no member geometry. Found by #2.
   18325503: 'Mehmood kot Hashim wala — village mis-tagged as a district',
   // Indian-administered Jammu & Kashmir, east of the Line of Control.

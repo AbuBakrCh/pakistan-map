@@ -184,8 +184,19 @@ describe('classifyDistrict', () => {
     expect(classifyDistrict(rel(10389554, 'Kupwara'))).toMatchObject({ kind: 'dropped' });
   });
 
-  it('drops a district abolished before the census date', () => {
-    expect(classifyDistrict(rel(16632271, 'Karezat District'))).toMatchObject({ kind: 'dropped' });
+  it('folds a district abolished before the census date rather than dropping its ground', () => {
+    // Karezat was created out of Pishin in June 2022 and abolished that November, so it has no
+    // census row and is never drawn as itself — which is a *fold*, not a drop. It was dropped
+    // for a year on the reading that a unit which no longer exists cannot fold into anything,
+    // and the cost was 3,504 km² of northern Balochistan missing from the map: OSM cut Karezat
+    // out of the Pishin relation when it added it, so the parent does not carry the child's
+    // ground. The two classifications differ in exactly that: a fold keeps the territory with
+    // the census-era parent, a drop throws it away.
+    expect(classifyDistrict(rel(16632271, 'Karezat District'))).toEqual({
+      kind: 'fold',
+      name: 'Pishin',
+      from: 'Karezat',
+    });
   });
 
   it('reports anything it cannot place rather than silently skipping it', () => {

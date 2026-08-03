@@ -75,6 +75,13 @@
       "note": "docs/research/balochistan-division-district-set.md"
     },
     {
+      "district": "Karezat",
+      "into": "Pishin",
+      "province": "Balochistan",
+      "note": "Carved out of Pishin by the cabinet of 7 June 2022 and abolished in November 2022, so it has no census row and is never drawn as itself. It was dropped outright until the notch it left was found: OSM cut Karezat's 3,504 km² *out* of the Pishin relation when it added it, so discarding the relation discarded the ground with it and left a hole 85 km deep in northern Balochistan, open at the Zhob-division end of the province boundary. Folding is what the vintage rule says to do with a unit the census did not count, and it is what puts the ground back: drawn Pishin goes from 2,219 km² to 5,723 against a published 6,218. The 'abolished, therefore drop' reading was the one thing here that assumed OSM's parent still covered the child.",
+      "source": "docs/research/balochistan-division-district-set.md"
+    },
+    {
       "district": "Quetta East",
       "into": "Quetta",
       "province": "Balochistan",

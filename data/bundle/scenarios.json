@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-02T18:27:11.691Z",
+    "generated": "2026-08-02T22:12:02.042Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -6046,7 +6046,7 @@
       "footnotes": [
         {
           "kind": "derived-boundary",
-          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — 12 units. Capitals are the most populous districts, no two of them sharing a border (relaxed in population order where the map has no room for another); each unit grows outward from its capital across shared district borders; at each step the unit with the fewest people takes the least populous district on its edge that the rule still admits, ties going to the lower district name and, between units, to the lower capital name. Populations are the PBS 2023 census district rows. It produces 12 units, the largest seated at Karachi East with 42,806,019 people and the smallest at Sargodha with 13,856,516 — a spread of 3.1 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
+          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — 12 units. Capitals are the most populous districts, no two of them sharing a border (relaxed in population order where the map has no room for another); each unit grows outward from its capital across shared district borders; at each step the unit with the fewest people takes the least populous district on its edge that the rule still admits, ties going to the lower district name and, between units, to the lower capital name. Populations are the PBS 2023 census district rows. It produces 12 units, the largest seated at Karachi East with 42,806,019 people and the smallest at Sargodha with 14,069,469 — a spread of 3.0 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
         },
         {
           "kind": "note",
@@ -6148,9 +6148,9 @@
           "smallest": {
             "unit": "sargodha",
             "name": "Sargodha",
-            "population": 13856516
+            "population": 14069469
           },
-          "ratio": 3.1
+          "ratio": 3
         },
         "populationWithheld": null,
         "outsideTheCensus": [
@@ -6318,122 +6318,6 @@
           }
         },
         {
-          "id": "multan",
-          "name": "Multan",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": null,
-          "claimed": [
-            "Bahawalpur",
-            "Jhang",
-            "Khanewal",
-            "Lodhran",
-            "Multan",
-            "Muzaffargarh"
-          ],
-          "districts": [
-            "Bahawalpur",
-            "Jhang",
-            "Khanewal",
-            "Lodhran",
-            "Multan",
-            "Muzaffargarh"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 23032690,
-          "uncounted": [],
-          "areaSqKm": 50092,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "dera-ghazi-khan",
-          "name": "Dera Ghazi Khan",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": null,
-          "claimed": [
-            "Bannu",
-            "Barkhan",
-            "Chagai",
-            "Chaman",
-            "Dera Ghazi Khan",
-            "Dera Ismail Khan",
-            "Duki",
-            "Harnai",
-            "Kachhi (Bolan)",
-            "Kalat",
-            "Kharan",
-            "Killa Abdullah",
-            "Killa Saifullah",
-            "Kohlu",
-            "Layyah",
-            "Loralai",
-            "Mastung",
-            "Musa Khel",
-            "Nushki",
-            "Pishin",
-            "Quetta",
-            "Rajanpur",
-            "Sherani",
-            "Sibi",
-            "South Waziristan",
-            "Surab",
-            "Tank",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
-          ],
-          "districts": [
-            "Bannu",
-            "Barkhan",
-            "Chagai",
-            "Chaman",
-            "Dera Ghazi Khan",
-            "Dera Ismail Khan",
-            "Duki",
-            "Harnai",
-            "Kachhi (Bolan)",
-            "Kalat",
-            "Kharan",
-            "Killa Abdullah",
-            "Killa Saifullah",
-            "Kohlu",
-            "Layyah",
-            "Loralai",
-            "Mastung",
-            "Musa Khel",
-            "Nushki",
-            "Pishin",
-            "Quetta",
-            "Rajanpur",
-            "Sherani",
-            "Sibi",
-            "South Waziristan",
-            "Surab",
-            "Tank",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 21628507,
-          "uncounted": [],
-          "areaSqKm": 246828,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
           "id": "gujranwala",
           "name": "Gujranwala",
           "alsoKnownAs": [],
@@ -6460,6 +6344,150 @@
           "population": 21508377,
           "uncounted": [],
           "areaSqKm": 18584,
+          "withoutPublishedArea": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "multan",
+          "name": "Multan",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Jhang",
+            "Khanewal",
+            "Layyah",
+            "Lodhran",
+            "Multan",
+            "Muzaffargarh"
+          ],
+          "districts": [
+            "Jhang",
+            "Khanewal",
+            "Layyah",
+            "Lodhran",
+            "Multan",
+            "Muzaffargarh"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 20850112,
+          "uncounted": [],
+          "areaSqKm": 31551,
+          "withoutPublishedArea": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "bahawalnagar",
+          "name": "Bahawalnagar",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Bahawalnagar",
+            "Bahawalpur",
+            "Pakpattan",
+            "Sahiwal",
+            "Toba Tek Singh",
+            "Vehari"
+          ],
+          "districts": [
+            "Bahawalnagar",
+            "Bahawalpur",
+            "Pakpattan",
+            "Sahiwal",
+            "Toba Tek Singh",
+            "Vehari"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 18795671,
+          "uncounted": [],
+          "areaSqKm": 47249,
+          "withoutPublishedArea": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "dera-ghazi-khan",
+          "name": "Dera Ghazi Khan",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Barkhan",
+            "Bhakkar",
+            "Chagai",
+            "Chaman",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Duki",
+            "Harnai",
+            "Kachhi (Bolan)",
+            "Kalat",
+            "Kharan",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohlu",
+            "Loralai",
+            "Mastung",
+            "Musa Khel",
+            "Nushki",
+            "Pishin",
+            "Quetta",
+            "Rajanpur",
+            "Sherani",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "districts": [
+            "Barkhan",
+            "Bhakkar",
+            "Chagai",
+            "Chaman",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Duki",
+            "Harnai",
+            "Kachhi (Bolan)",
+            "Kalat",
+            "Kharan",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohlu",
+            "Loralai",
+            "Mastung",
+            "Musa Khel",
+            "Nushki",
+            "Pishin",
+            "Quetta",
+            "Rajanpur",
+            "Sherani",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 18766733,
+          "uncounted": [],
+          "areaSqKm": 237200,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -6503,7 +6531,6 @@
             "Bajaur",
             "Batagram",
             "Buner",
-            "Charsadda",
             "Kolai Pallas Kohistan",
             "Lower Chitral",
             "Lower Dir",
@@ -6511,6 +6538,7 @@
             "Malakand",
             "Mardan",
             "Mohmand",
+            "Nowshera",
             "Shangla",
             "Swat",
             "Torghar",
@@ -6522,7 +6550,6 @@
             "Bajaur",
             "Batagram",
             "Buner",
-            "Charsadda",
             "Kolai Pallas Kohistan",
             "Lower Chitral",
             "Lower Dir",
@@ -6530,6 +6557,7 @@
             "Malakand",
             "Mardan",
             "Mohmand",
+            "Nowshera",
             "Shangla",
             "Swat",
             "Torghar",
@@ -6539,9 +6567,9 @@
           ],
           "folded": [],
           "excludes": [],
-          "population": 16891438,
+          "population": 16796639,
           "uncounted": [],
-          "areaSqKm": 45333,
+          "areaSqKm": 46085,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -6592,7 +6620,8 @@
           "kind": "proposed",
           "note": null,
           "claimed": [
-            "Attock",
+            "Bannu",
+            "Charsadda",
             "Hangu",
             "Karak",
             "Khyber",
@@ -6600,12 +6629,14 @@
             "Kurram",
             "Lakki Marwat",
             "North Waziristan",
-            "Nowshera",
             "Orakzai",
-            "Peshawar"
+            "Peshawar",
+            "South Waziristan",
+            "Tank"
           ],
           "districts": [
-            "Attock",
+            "Bannu",
+            "Charsadda",
             "Hangu",
             "Karak",
             "Khyber",
@@ -6613,47 +6644,16 @@
             "Kurram",
             "Lakki Marwat",
             "North Waziristan",
-            "Nowshera",
             "Orakzai",
-            "Peshawar"
+            "Peshawar",
+            "South Waziristan",
+            "Tank"
           ],
           "folded": [],
           "excludes": [],
-          "population": 15302781,
+          "population": 15944015,
           "uncounted": [],
-          "areaSqKm": 33079,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "bahawalnagar",
-          "name": "Bahawalnagar",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": null,
-          "claimed": [
-            "Bahawalnagar",
-            "Pakpattan",
-            "Sahiwal",
-            "Toba Tek Singh",
-            "Vehari"
-          ],
-          "districts": [
-            "Bahawalnagar",
-            "Pakpattan",
-            "Sahiwal",
-            "Toba Tek Singh",
-            "Vehari"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 14510707,
-          "uncounted": [],
-          "areaSqKm": 22419,
+          "areaSqKm": 36962,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -6696,7 +6696,7 @@
           "kind": "proposed",
           "note": null,
           "claimed": [
-            "Bhakkar",
+            "Attock",
             "Chiniot",
             "Hafizabad",
             "Jhelum",
@@ -6705,7 +6705,7 @@
             "Sargodha"
           ],
           "districts": [
-            "Bhakkar",
+            "Attock",
             "Chiniot",
             "Hafizabad",
             "Jhelum",
@@ -6715,9 +6715,9 @@
           ],
           "folded": [],
           "excludes": [],
-          "population": 13856516,
+          "population": 14069469,
           "uncounted": [],
-          "areaSqKm": 34957,
+          "areaSqKm": 33661,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -7220,6 +7220,80 @@
           }
         },
         {
+          "id": "dera-ghazi-khan",
+          "name": "Dera Ghazi Khan",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Barkhan",
+            "Bhakkar",
+            "Chagai",
+            "Chaman",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Duki",
+            "Harnai",
+            "Kalat",
+            "Kharan",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohlu",
+            "Layyah",
+            "Loralai",
+            "Mastung",
+            "Musa Khel",
+            "Nushki",
+            "Pishin",
+            "Quetta",
+            "Sherani",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "districts": [
+            "Barkhan",
+            "Bhakkar",
+            "Chagai",
+            "Chaman",
+            "Dera Ghazi Khan",
+            "Dera Ismail Khan",
+            "Duki",
+            "Harnai",
+            "Kalat",
+            "Kharan",
+            "Killa Abdullah",
+            "Killa Saifullah",
+            "Kohlu",
+            "Layyah",
+            "Loralai",
+            "Mastung",
+            "Musa Khel",
+            "Nushki",
+            "Pishin",
+            "Quetta",
+            "Sherani",
+            "Sibi",
+            "Surab",
+            "Washuk",
+            "Zhob",
+            "Ziarat"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 18045458,
+          "uncounted": [],
+          "areaSqKm": 225489,
+          "withoutPublishedArea": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
           "id": "lahore",
           "name": "Lahore",
           "alsoKnownAs": [],
@@ -7238,82 +7312,6 @@
           "population": 17088421,
           "uncounted": [],
           "areaSqKm": 5767,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "dera-ghazi-khan",
-          "name": "Dera Ghazi Khan",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": null,
-          "claimed": [
-            "Bannu",
-            "Barkhan",
-            "Chagai",
-            "Chaman",
-            "Dera Ghazi Khan",
-            "Duki",
-            "Harnai",
-            "Kalat",
-            "Kharan",
-            "Killa Abdullah",
-            "Killa Saifullah",
-            "Kohlu",
-            "Layyah",
-            "Loralai",
-            "Mastung",
-            "Musa Khel",
-            "Nushki",
-            "Pishin",
-            "Quetta",
-            "Sherani",
-            "Sibi",
-            "South Waziristan",
-            "Surab",
-            "Tank",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
-          ],
-          "districts": [
-            "Bannu",
-            "Barkhan",
-            "Chagai",
-            "Chaman",
-            "Dera Ghazi Khan",
-            "Duki",
-            "Harnai",
-            "Kalat",
-            "Kharan",
-            "Killa Abdullah",
-            "Killa Saifullah",
-            "Kohlu",
-            "Layyah",
-            "Loralai",
-            "Mastung",
-            "Musa Khel",
-            "Nushki",
-            "Pishin",
-            "Quetta",
-            "Sherani",
-            "Sibi",
-            "South Waziristan",
-            "Surab",
-            "Tank",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 16975035,
-          "uncounted": [],
-          "areaSqKm": 219494,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -7450,42 +7448,6 @@
           }
         },
         {
-          "id": "sargodha",
-          "name": "Sargodha",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": null,
-          "claimed": [
-            "Bhakkar",
-            "Chiniot",
-            "Hafizabad",
-            "Jhelum",
-            "Khushab",
-            "Mianwali",
-            "Sargodha"
-          ],
-          "districts": [
-            "Bhakkar",
-            "Chiniot",
-            "Hafizabad",
-            "Jhelum",
-            "Khushab",
-            "Mianwali",
-            "Sargodha"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 13856516,
-          "uncounted": [],
-          "areaSqKm": 34957,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
           "id": "mardan",
           "name": "Mardan",
           "alsoKnownAs": [],
@@ -7532,7 +7494,7 @@
           "kind": "proposed",
           "note": null,
           "claimed": [
-            "Dera Ismail Khan",
+            "Bannu",
             "Hangu",
             "Karak",
             "Khyber",
@@ -7540,10 +7502,12 @@
             "Lakki Marwat",
             "North Waziristan",
             "Orakzai",
-            "Peshawar"
+            "Peshawar",
+            "South Waziristan",
+            "Tank"
           ],
           "districts": [
-            "Dera Ismail Khan",
+            "Bannu",
             "Hangu",
             "Karak",
             "Khyber",
@@ -7551,13 +7515,49 @@
             "Lakki Marwat",
             "North Waziristan",
             "Orakzai",
-            "Peshawar"
+            "Peshawar",
+            "South Waziristan",
+            "Tank"
           ],
           "folded": [],
           "excludes": [],
-          "population": 11986803,
+          "population": 12873850,
           "uncounted": [],
-          "areaSqKm": 30817,
+          "areaSqKm": 32975,
+          "withoutPublishedArea": [],
+          "contiguity": {
+            "contiguous": true,
+            "pieces": 1,
+            "detached": []
+          }
+        },
+        {
+          "id": "sargodha",
+          "name": "Sargodha",
+          "alsoKnownAs": [],
+          "kind": "proposed",
+          "note": null,
+          "claimed": [
+            "Chiniot",
+            "Hafizabad",
+            "Jhelum",
+            "Khushab",
+            "Mianwali",
+            "Sargodha"
+          ],
+          "districts": [
+            "Chiniot",
+            "Hafizabad",
+            "Jhelum",
+            "Khushab",
+            "Mianwali",
+            "Sargodha"
+          ],
+          "folded": [],
+          "excludes": [],
+          "population": 11899046,
+          "uncounted": [],
+          "areaSqKm": 26804,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -7771,7 +7771,7 @@
       "footnotes": [
         {
           "kind": "derived-boundary",
-          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — No district more than 300 km from its unit's capital, measured centroid to centroid; 10 units is the fewest for which that holds. Capitals are chosen as far as possible from the capitals already chosen, starting from the most populous district; each unit grows outward from its capital across shared district borders; at each step the unit with the fewest people takes the least populous district on its edge that the rule still admits, ties going to the lower district name and, between units, to the lower capital name. Populations are the PBS 2023 census district rows. It produces 10 units, the largest seated at Lahore with 66,313,575 people and the smallest at Chagai with 1,015,470 — a spread of 65.3 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
+          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — No district more than 300 km from its unit's capital, measured centroid to centroid; 10 units is the fewest for which that holds. Capitals are chosen as far as possible from the capitals already chosen, starting from the most populous district; each unit grows outward from its capital across shared district borders; at each step the unit with the fewest people takes the least populous district on its edge that the rule still admits, ties going to the lower district name and, between units, to the lower capital name. Populations are the PBS 2023 census district rows. It produces 10 units, the largest seated at Lahore with 69,871,980 people and the smallest at Chagai with 1,015,470 — a spread of 68.8 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
         },
         {
           "kind": "note",
@@ -7873,14 +7873,14 @@
           "largest": {
             "unit": "lahore",
             "name": "Lahore",
-            "population": 66313575
+            "population": 69871980
           },
           "smallest": {
             "unit": "chagai",
             "name": "Chagai",
             "population": 1015470
           },
-          "ratio": 65.3
+          "ratio": 68.8
         },
         "populationWithheld": null,
         "outsideTheCensus": [
@@ -7926,6 +7926,7 @@
           "kind": "proposed",
           "note": null,
           "claimed": [
+            "Bhakkar",
             "Chiniot",
             "Faisalabad",
             "Gujranwala",
@@ -7934,7 +7935,6 @@
             "Jhang",
             "Kasur",
             "Lahore",
-            "Mandi Bahauddin",
             "Nankana Sahib",
             "Narowal",
             "Okara",
@@ -7942,9 +7942,11 @@
             "Sahiwal",
             "Sheikhupura",
             "Sialkot",
-            "Toba Tek Singh"
+            "Toba Tek Singh",
+            "Vehari"
           ],
           "districts": [
+            "Bhakkar",
             "Chiniot",
             "Faisalabad",
             "Gujranwala",
@@ -7953,7 +7955,6 @@
             "Jhang",
             "Kasur",
             "Lahore",
-            "Mandi Bahauddin",
             "Nankana Sahib",
             "Narowal",
             "Okara",
@@ -7961,13 +7962,14 @@
             "Sahiwal",
             "Sheikhupura",
             "Sialkot",
-            "Toba Tek Singh"
+            "Toba Tek Singh",
+            "Vehari"
           ],
           "folded": [],
           "excludes": [],
-          "population": 66313575,
+          "population": 69871980,
           "uncounted": [],
-          "areaSqKm": 57154,
+          "areaSqKm": 66998,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -7996,8 +7998,7 @@
             "Rahim Yar Khan",
             "Rajanpur",
             "Shikarpur",
-            "Sukkur",
-            "Vehari"
+            "Sukkur"
           ],
           "districts": [
             "Bahawalnagar",
@@ -8014,14 +8015,13 @@
             "Rahim Yar Khan",
             "Rajanpur",
             "Shikarpur",
-            "Sukkur",
-            "Vehari"
+            "Sukkur"
           ],
           "folded": [],
           "excludes": [],
-          "population": 47584466,
+          "population": 44154045,
           "uncounted": [],
-          "areaSqKm": 118615,
+          "areaSqKm": 114251,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -8038,7 +8038,6 @@
           "claimed": [
             "Attock",
             "Bannu",
-            "Bhakkar",
             "Chakwal",
             "Dera Ismail Khan",
             "Hangu",
@@ -8050,6 +8049,7 @@
             "Kohat",
             "Kurram",
             "Lakki Marwat",
+            "Mandi Bahauddin",
             "Mianwali",
             "North Waziristan",
             "Nowshera",
@@ -8057,13 +8057,11 @@
             "Rawalpindi",
             "Sargodha",
             "South Waziristan",
-            "Tank",
-            "Zhob"
+            "Tank"
           ],
           "districts": [
             "Attock",
             "Bannu",
-            "Bhakkar",
             "Chakwal",
             "Dera Ismail Khan",
             "Hangu",
@@ -8075,6 +8073,7 @@
             "Kohat",
             "Kurram",
             "Lakki Marwat",
+            "Mandi Bahauddin",
             "Mianwali",
             "North Waziristan",
             "Nowshera",
@@ -8082,14 +8081,13 @@
             "Rawalpindi",
             "Sargodha",
             "South Waziristan",
-            "Tank",
-            "Zhob"
+            "Tank"
           ],
           "folded": [],
           "excludes": [],
-          "population": 36637591,
+          "population": 36153915,
           "uncounted": [],
-          "areaSqKm": 111037,
+          "areaSqKm": 89570,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -8320,6 +8318,7 @@
             "Pishin",
             "Quetta",
             "Sherani",
+            "Zhob",
             "Ziarat"
           ],
           "districts": [
@@ -8335,13 +8334,14 @@
             "Pishin",
             "Quetta",
             "Sherani",
+            "Zhob",
             "Ziarat"
           ],
           "folded": [],
           "excludes": [],
-          "population": 6278376,
+          "population": 6634068,
           "uncounted": [],
-          "areaSqKm": 56363,
+          "areaSqKm": 72350,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -12203,7 +12203,7 @@
       "footnotes": [
         {
           "kind": "derived-boundary",
-          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — Each province is cut in two. The lower unit starts at the province’s lowest-scoring district and grows outward across shared district borders, taking at each step the lowest-scoring district on its edge, ties going to the lower district name — so every cut it can make is connected, and so is the rest of the province, which is checked. Of those cuts the rule takes the one-dimensional natural break: the split maximising the variance between the two halves, k(n−k)(mean high − mean low)² ÷ n², which is Fisher’s and Jenks’s own criterion for where a distribution divides most sharply rather than where one outlier sits. Scores are the development index — the unweighted mean of the 2023 census’s literacy, improved-drinking-water and flush-toilet rates. The cuts it makes are Khyber Pakhtunkhwa at Torghar (47.7%) against Batagram (61.6%), separating 5 districts from 30; Punjab at Layyah (82.2%) against Khanewal (82.4%), separating 15 districts from 21; Sindh at Sanghar (62.0%) against Tando Allah Yar (64.4%), separating 8 districts from 22; Balochistan at Kalat (46.6%) against Ziarat (48.8%), separating 12 districts from 22. Change the census and these lines move; nobody whose argument this is chose where they run."
+          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — Each province is cut in two. The lower unit starts at the province’s lowest-scoring district and grows outward across shared district borders, taking at each step the lowest-scoring district on its edge, ties going to the lower district name — so every cut it can make is connected, and so is the rest of the province, which is checked. Of those cuts the rule takes the one-dimensional natural break: the split maximising the variance between the two halves, k(n−k)(mean high − mean low)² ÷ n², which is Fisher’s and Jenks’s own criterion for where a distribution divides most sharply rather than where one outlier sits. Scores are the development index — the unweighted mean of the 2023 census’s literacy, improved-drinking-water and flush-toilet rates. The cuts it makes are Khyber Pakhtunkhwa at Torghar (47.7%) against Batagram (61.6%), separating 5 districts from 30; Punjab at Layyah (82.2%) against Khanewal (82.4%), separating 15 districts from 21; Sindh at Sanghar (62.0%) against Tando Allah Yar (64.4%), separating 8 districts from 22; Balochistan at Khuzdar (50.4%) against Washuk (41.3%), separating 16 districts from 18. Change the census and these lines move; nobody whose argument this is chose where they run."
         },
         {
           "kind": "note",
@@ -12225,7 +12225,7 @@
       "notes": [
         {
           "label": "What it agrees with, and what it does not",
-          "text": "In Punjab this line lands close to the Seraiki claim without being told anything about language: 9 of South Punjab’s 11 drawn districts fall in the lower half, Khanewal and Multan being the exceptions, and it takes in Bhakkar, Chiniot, Jhang, Khushab, Mianwali, Pakpattan besides — among them the two districts the wider reading of that claim adds. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the south-east and not the interior against Karachi, and in Balochistan the eastern belt and not everything outside Quetta. The rule is reported as it ran rather than tuned until it agreed, because a rule adjusted to match the claims it is meant to be independent of has nothing left to say about them.",
+          "text": "In Punjab this line lands close to the Seraiki claim without being told anything about language: 9 of South Punjab’s 11 drawn districts fall in the lower half, Khanewal and Multan being the exceptions, and it takes in Bhakkar, Chiniot, Jhang, Khushab, Mianwali, Pakpattan besides — among them the two districts the wider reading of that claim adds. Sindh and Balochistan are where the agreement stops: what separates in Sindh is the south-east and not the interior against Karachi, and in Balochistan a belt running from the eastern districts south-west through the Kalat highlands — not everything outside Quetta, which keeps the west, the coast and Sibi. The rule is reported as it ran rather than tuned until it agreed, because a rule adjusted to match the claims it is meant to be independent of has nothing left to say about them.",
           "relatedVariants": [
             "l1",
             "l2",
@@ -12703,11 +12703,11 @@
           }
         },
         {
-          "id": "jaffarabad",
-          "name": "Jaffarabad",
+          "id": "khuzdar",
+          "name": "Khuzdar",
           "alsoKnownAs": [],
           "kind": "proposed",
-          "note": "The lower half of Balochistan on the development index — 12 districts averaging 39.2%, against 57.9% across the rest of the province, and 3,643,803 people. Named for Jaffarabad, the most populous district in it.",
+          "note": "The lower half of Balochistan on the development index — 16 districts averaging 41.3%, against 60.1% across the rest of the province, and 5,566,444 people. Named for Khuzdar, the most populous district in it.",
           "claimed": [
             "Barkhan",
             "Dera Bugti",
@@ -12716,11 +12716,15 @@
             "Jhal Magsi",
             "Kachhi (Bolan)",
             "Kalat",
+            "Khuzdar",
+            "Killa Saifullah",
             "Kohlu",
             "Musa Khel",
             "Nasirabad",
             "Sherani",
-            "Sohbatpur"
+            "Sohbatpur",
+            "Zhob",
+            "Ziarat"
           ],
           "districts": [
             "Barkhan",
@@ -12730,17 +12734,21 @@
             "Jhal Magsi",
             "Kachhi (Bolan)",
             "Kalat",
+            "Khuzdar",
+            "Killa Saifullah",
             "Kohlu",
             "Musa Khel",
             "Nasirabad",
             "Sherani",
-            "Sohbatpur"
+            "Sohbatpur",
+            "Zhob",
+            "Ziarat"
           ],
           "folded": [],
           "excludes": [],
-          "population": 3643803,
+          "population": 5566444,
           "uncounted": [],
-          "areaSqKm": 56597,
+          "areaSqKm": 118096,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
@@ -12753,7 +12761,7 @@
           "name": "Quetta",
           "alsoKnownAs": [],
           "kind": "proposed",
-          "note": "The higher half of Balochistan on the development index — 22 districts averaging 57.9%, against 39.2% across the rest of the province, and 11,250,599 people. Named for Quetta, the most populous district in it.",
+          "note": "The higher half of Balochistan on the development index — 18 districts averaging 60.1%, against 41.3% across the rest of the province, and 9,327,958 people. Named for Quetta, the most populous district in it.",
           "claimed": [
             "Awaran",
             "Chagai",
@@ -12762,9 +12770,7 @@
             "Gwadar",
             "Kech",
             "Kharan",
-            "Khuzdar",
             "Killa Abdullah",
-            "Killa Saifullah",
             "Lasbela",
             "Loralai",
             "Mastung",
@@ -12774,9 +12780,7 @@
             "Quetta",
             "Sibi",
             "Surab",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
+            "Washuk"
           ],
           "districts": [
             "Awaran",
@@ -12786,9 +12790,7 @@
             "Gwadar",
             "Kech",
             "Kharan",
-            "Khuzdar",
             "Killa Abdullah",
-            "Killa Saifullah",
             "Lasbela",
             "Loralai",
             "Mastung",
@@ -12798,15 +12800,13 @@
             "Quetta",
             "Sibi",
             "Surab",
-            "Washuk",
-            "Zhob",
-            "Ziarat"
+            "Washuk"
           ],
           "folded": [],
           "excludes": [],
-          "population": 11250599,
+          "population": 9327958,
           "uncounted": [],
-          "areaSqKm": 290593,
+          "areaSqKm": 229094,
           "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,

@@ -10,16 +10,18 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { geoArea } from 'd3';
+import { geoArea, geoContains } from 'd3';
 import { describe, expect, it } from 'vitest';
 import { feature } from 'topojson-client';
 import type { Topology } from 'topojson-specification';
 import {
   CENSUS_DISTRICTS,
   CENSUS_DISTRICT_COUNT,
+  DROPPED_RELATIONS,
   ROSTER,
   ROSTER_DISTRICT_COUNT,
 } from './roster.ts';
+import { assemblePolygons, type OsmMember } from './rings.ts';
 import { TERRITORY_CLAIM_POLICY, universeDistricts } from './scenarios.ts';
 import { partitionByDominantLanguage } from './mother-tongue-partition.ts';
 import { GRADIENT_RULE, splitByDevelopmentGradient } from './development-partition.ts';
@@ -269,10 +271,118 @@ describe('bundle geometry', () => {
 
   it('excludes relations from India and Afghanistan', () => {
     const names = districts.map(nameOf);
-    for (const stray of ['Kupwara', 'Karnah', 'Karezat', 'Leh', 'Spin Boldak']) {
+    for (const stray of ['Kupwara', 'Karnah', 'Leh', 'Spin Boldak']) {
       expect(names).not.toContain(stray);
     }
+    // Karezat is in this file's other direction now. It is not a stray — it is Pakistani ground
+    // under a name the census does not carry, which is a fold. It is still absent as a district.
+    expect(names).not.toContain('Karezat');
   });
+
+  /**
+   * A dropped relation is ground removed from the map, so nothing Pakistan administers may be
+   * dropped.
+   *
+   * This is the check that was missing when Karezat was discarded on the reading that its area
+   * was "inside Pishin". It was inside Pishin the district and outside Pishin the OSM relation,
+   * so the drop took 3,504 km² of northern Balochistan with it and left an 85 km notch in the
+   * province outline, open at the Zhob-division end — a hole big enough to see at country zoom
+   * that no assertion here could see, because every count still came out right and Balochistan's
+   * area was already reading low against PBS for unrelated reasons.
+   *
+   * Asked of the raw cache against the drawn provinces rather than of the drop table's own
+   * prose: the entry said the right thing about the territory and the wrong thing about the
+   * geometry, and only the geometry can tell those apart.
+   *
+   * Measured as *how much* of the dropped relation the map draws, not whether any of it is
+   * touched, and the difference is what makes the check usable at all. Every stray in the table
+   * lies against Pakistan along a shared boundary — Kupwara and Karnah run down the Line of
+   * Control — and a boundary OSM's two sides do not agree on to the metre puts a point or two of
+   * one inside the other. So the test samples a grid across the relation's own footprint and
+   * asks what share of it the drawn provinces cover: a stray reads a few per cent along its
+   * shared edge, and Karezat read 100%. The bar is a fifth, an order of magnitude above the
+   * edge noise and far below anything that could be called a district.
+   */
+  it('drops no relation whose ground the map draws', () => {
+    const raw = JSON.parse(
+      readFileSync(resolve(ROOT, 'data/raw/osm-admin-level-6.json'), 'utf8'),
+    ) as { elements: { id: number; tags?: Record<string, string>; members?: OsmMember[] }[] };
+
+    // Bounding boxes first, so a probe is only put to the handful of districts that could hold
+    // it. Asked of the districts rather than of the provinces because the province multipolygons
+    // are the whole country's coastline and islands — a point-in-polygon test against Balochistan
+    // walks 8,000 vertices, and there are several hundred probes.
+    const boxed = districts.map((f) => {
+      const geometry = f.geometry as { type: string; coordinates: unknown };
+      const polygons = (
+        geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
+      ) as [number, number][][][];
+      let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+      for (const polygon of polygons) for (const ring of polygon) for (const [lon, lat] of ring) {
+        west = Math.min(west, lon); east = Math.max(east, lon);
+        south = Math.min(south, lat); north = Math.max(north, lat);
+      }
+      return { feature: f, west, south, east, north };
+    });
+    const isDrawn = ([lon, lat]: readonly [number, number]): boolean =>
+      boxed.some(
+        (b) =>
+          lon >= b.west && lon <= b.east && lat >= b.south && lat <= b.north &&
+          geoContains(b.feature as never, [lon, lat]),
+      );
+
+    /** Share of a dropped relation's own footprint that the drawn districts cover. */
+    const drawnShareOf = (polygons: readonly (readonly (readonly number[])[])[][]): number => {
+      const shape = { type: 'MultiPolygon' as const, coordinates: polygons as never };
+      let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+      for (const polygon of polygons) for (const ring of polygon)
+        for (const point of ring) {
+          const lon = point[0] as number;
+          const lat = point[1] as number;
+          west = Math.min(west, lon); east = Math.max(east, lon);
+          south = Math.min(south, lat); north = Math.max(north, lat);
+        }
+      const STEPS = 24;
+      let own = 0;
+      let drawn = 0;
+      for (let i = 0; i <= STEPS; i++) for (let j = 0; j <= STEPS; j++) {
+        const probe: [number, number] = [
+          west + ((east - west) * i) / STEPS,
+          south + ((north - south) * j) / STEPS,
+        ];
+        if (!geoContains(shape as never, probe)) continue;
+        own++;
+        if (isDrawn(probe)) drawn++;
+      }
+      return own === 0 ? 0 : drawn / own;
+    };
+
+    const covered: string[] = [];
+    for (const element of raw.elements) {
+      const reason = DROPPED_RELATIONS[element.id];
+      if (reason === undefined) continue;
+      const { polygons } = assemblePolygons(element.members ?? []);
+      if (polygons.length === 0) continue;
+      const share = drawnShareOf(polygons as never);
+      if (share > 0.2) {
+        covered.push(
+          `${element.id} ${element.tags?.['name:en'] ?? element.tags?.['name'] ?? ''} — dropped ` +
+            `as "${reason}", but the map draws ${(share * 100).toFixed(0)}% of its ground. ` +
+            `Pakistani ground under a name the census does not carry is a fold, not a drop.`,
+        );
+      }
+    }
+    expect(covered).toEqual([]);
+
+    // And the check is shown to have teeth on the relation that motivated it, since a rule that
+    // never fires passes perfectly. Karezat is a fold now, so it is not in the table above — but
+    // its footprint is the map's, which is exactly what the drop was denying.
+    const karezat = raw.elements.find((element) => element.id === 16632271);
+    expect(karezat).toBeDefined();
+    expect(drawnShareOf(assemblePolygons(karezat?.members ?? []).polygons as never)).toBeGreaterThan(
+      0.95,
+    );
+  }, 30_000);
 });
 
 /**
@@ -1563,7 +1673,7 @@ describe('bundle D1, the map service access draws (#31)', () => {
       'Lahore',
       'Sanghar',
       'Karachi East',
-      'Jaffarabad',
+      'Khuzdar',
       'Quetta',
     ]);
   });
@@ -1734,14 +1844,23 @@ describe('bundle D1, the map service access draws (#31)', () => {
     // Balochistan separates the eastern belt, not everything outside Quetta: Quetta's half is the
     // large one and holds the west and the coast, so the cut is not the capital against the rest.
     const withQuetta = new Set(unitHolding('Quetta'));
-    for (const far of ['Gwadar', 'Kech', 'Khuzdar', 'Chagai', 'Panjgur']) {
+    for (const far of ['Gwadar', 'Kech', 'Chagai', 'Panjgur', 'Washuk']) {
       expect([...withQuetta], `Balochistan: ${far} sits with Quetta`).toContain(far);
     }
-    const easternBelt = new Set(unitHolding('Kohlu'));
+    const lowerBelt = new Set(unitHolding('Kohlu'));
     for (const district of ['Barkhan', 'Dera Bugti', 'Musa Khel', 'Sherani', 'Jaffarabad']) {
-      expect([...easternBelt], `Balochistan: ${district} is in the eastern belt`).toContain(district);
+      expect([...lowerBelt], `Balochistan: ${district} is in the lower belt`).toContain(district);
     }
-    expect(easternBelt.has('Quetta')).toBe(false);
+    // The belt runs south-west out of the eastern districts through the Kalat highlands, which is
+    // what the card calls it and is not the same sentence as "everything outside Quetta": Kalat
+    // and Khuzdar are in it, Mastung and Sibi between them and Quetta are not.
+    for (const district of ['Kalat', 'Khuzdar']) {
+      expect([...lowerBelt], `Balochistan: ${district} is in the lower belt`).toContain(district);
+    }
+    for (const district of ['Mastung', 'Sibi', 'Loralai']) {
+      expect([...withQuetta], `Balochistan: ${district} sits with Quetta`).toContain(district);
+    }
+    expect(lowerBelt.has('Quetta')).toBe(false);
   });
 
   it('is unadvocated, opposed anyway, and says both in the schema’s own shapes', () => {

@@ -121,7 +121,7 @@ This is the operative output of this ticket. Anything below has **no district-le
 |---|---|---|---|---|
 | Usta Muhammad | district | cabinet 7 Jun 2022 | Jaffarabad | **Jaffarabad** |
 | Hub | district | cabinet 7 Jun 2022 | Lasbela | **Lasbela** |
-| Karezat | district | cabinet 7 Jun 2022, **abolished Nov 2022** | Pishin | **Pishin** (does not exist; drop) |
+| Karezat | district | cabinet 7 Jun 2022, **abolished Nov 2022** | Pishin | **Pishin** (fold — see the correction below) |
 
 Sources: [Express Tribune, 7 June 2022 — "Balochistan creates three new
 districts"](https://tribune.com.pk/story/2360394/balochistan-creates-three-new-districts)
@@ -267,15 +267,27 @@ logic.
 - **Districts**: OSM has 168 `admin_level=6` relations in Pakistan; 36 are in Balochistan. That
   is the 34 census districts **plus Hub (16659106) plus Karezat (16632271)**.
 - **Defect 1 — Karezat.** OSM carries a Karezat district relation. Karezat was abolished in
-  November 2022 and has no census row. Drop it; its area is inside Pishin.
+  November 2022 and has no census row, so it is never drawn as itself.
+
+  **Corrected: fold it into Pishin, do not drop it.** This section originally said "drop it; its
+  area is inside Pishin", which is true of the territory and false of the OSM relation — OSM cut
+  Karezat's 3,504 km² *out* of the Pishin polygon when it added the district, and never put it
+  back when the district was abolished. Dropping the relation therefore dropped the ground: the
+  shipped map had a hole 3,504 km² wide and 85 km deep in northern Balochistan, opening at the
+  Zhob-division end of the province boundary and reading as an unnatural dent in the outline.
+  Drawn Pishin was 2,219 km² against a published 6,218; folded, it is 5,723. The lesson is the
+  general one, and is now a rule in `scripts/lib/roster.ts` and an assertion in `bundle.test.ts`:
+  a relation is **dropped** only when its ground is not Pakistan's or it is not a unit at all,
+  and Pakistani ground under a name the census does not carry is a **fold**, whether the unit was
+  created after the census or abolished before it.
 - **Defect 2 — Usta Muhammad.** OSM does **not** carry Usta Muhammad as a district, so its area
   is already inside the Jaffarabad polygon. This happens to be exactly what our vintage rule
   wants — but it is a coincidence, not a guarantee, and should be re-checked each build.
 - **Defect 3 — stray member.** Relation 16667449 (`Nag Tehsil`, `admin_level=7`) is a direct
   member of the Rakhshan division relation. The build must filter division members to
   `admin_level=6`, or Nag will be picked up as a district.
-- **Consequence for the pipeline:** after dropping Karezat and merging Hub into Lasbela, OSM
-  yields exactly the 34-district census set. OSM's own division→district membership then agrees
+- **Consequence for the pipeline:** after folding Karezat into Pishin and merging Hub into
+  Lasbela, OSM yields exactly the 34-district census set. OSM's own division→district membership then agrees
   with Table B for all 34.
 
 ---
@@ -329,8 +341,10 @@ These are recorded as open, not guessed.
 
 5. **Karezat's abolition rests on Wikipedia alone.** No gazette or press report of the November
    2022 abolition was located. The June 2022 creation *is* sourced (Express Tribune). Since we
-   drop Karezat either way — abolished, or post-census and therefore folded into Pishin — this
-   does not change the output, but the stated reason is weakly sourced.
+   fold Karezat into Pishin either way — abolished, or post-census — this does not change the
+   output, but the stated reason is weakly sourced. (This item originally said "drop"; see the
+   correction under Defect 1. The two are not interchangeable: one keeps the ground, one loses
+   it.)
 
 6. **Usta Muhammad's parent.** One search summary asserted Usta Muhammad was carved from Killa
    Saifullah. That is wrong on the geography and is contradicted by the census, which lists
@@ -350,7 +364,7 @@ These are recorded as open, not guessed.
 ## What issue #3 should do
 
 - Render **8 divisions** and build from **34 districts** for Balochistan.
-- From the OSM extract: drop the `Karezat` relation; expect no `Usta Muhammad` relation, and
+- From the OSM extract: fold the `Karezat` relation into Pishin; expect no `Usta Muhammad` relation, and
   fail the build loudly if one appears (it would mean OSM has re-cut Jaffarabad and the geometry
   no longer matches the census).
 - Filter division members to `admin_level=6` so `Nag Tehsil` is not mistaken for a district.
