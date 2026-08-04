@@ -13,8 +13,9 @@
  * rationale, status, advocacy, opposition, footnotes and per-unit district lists all appear on
  * screen.
  *
- * All seventeen are expressed: the whole Language basis (L1 to L7), the whole Administrative one
- * (A1 to A5), the whole Historical one (H1 to H4) and the Development basis's D1.
+ * Every variant the draft approved that has not been retired is expressed: the whole Language
+ * basis (L1 to L7), the Administrative basis's one rule-drawn map (A6, which replaced A1 to A4 and
+ * outlived A5), the whole Historical one (H1 to H4) and the Development basis's D1.
  *
  * L1, L2 and L3 are one claim read three ways, and they are written to stay that way: each builds
  * its district list out of the one before it rather than restating it. A reading that differed by
@@ -46,6 +47,7 @@ import {
   type PartitionRule,
 } from './partitioner.ts';
 import { CENSUS_DISTRICTS, ROSTER } from './roster.ts';
+import { unitNames } from './unit-names.ts';
 import {
   intactProvince,
   nonEmpty,
@@ -939,8 +941,8 @@ const H1: Variant = {
 //
 // It is also the variant that asked CLAUDE.md open item 2b and got the second of its two
 // narrowings. Hunza and Nagar were princely states in their own right and are Gilgit-Baltistan
-// districts today; neither is a whole territory under its own name, so A5's promotion carve-out
-// does not reach them and should not. What admits them is `withoutModernFigures` in `scenarios.ts`:
+// districts today; neither is a whole territory under its own name, so `promotedTerritoryOf`'s
+// carve-out does not reach them and should not. What admits them is `withoutModernFigures`:
 // a variant with no population figures has no unit whose population can be short, which is the only
 // reason `forbid` was ever answered. `TERRITORY_CLAIM_POLICY` is untouched.
 // ---------------------------------------------------------------------------------------------
@@ -1524,8 +1526,8 @@ const H3: Variant = {
     },
     // The opposition line says that restoring the name Northern Areas would undo the provisional
     // provincial status "announced in 2020", which is a dated claim and was carried here with
-    // nothing in this list reaching the year (#47). A5 already states the sourced form of exactly
-    // that fact, so the same line is cited rather than a second wording invented for it.
+    // nothing in this list reaching the year (#47). The retired A5 stated the sourced form of
+    // exactly that fact, and the source is cited here rather than the wording being reinvented.
     {
       label:
         'Announcement of provisional provincial status for Gilgit-Baltistan by Prime Minister ' +
@@ -2153,8 +2155,10 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
 // link to `#/administrative/a1` now resolves to the baseline, because serving a stranger's link a
 // different proposal under the same address is the one substitution the deep-link rules refuse.
 //
-// A5 is not the engine's and does not pretend to be: it is a live proposal with a date, a document
-// and a government behind it, and it changes no boundary at all.
+// A5 was retired with them, later and for a different reason: it proposed no boundary at all —
+// it promoted Gilgit-Baltistan and Azad Jammu & Kashmir and moved not one district — so it argued
+// about constitutional standing on a basis about administrative size. Its id is retired on the
+// same terms as theirs, `#/administrative/a5` resolving to the baseline and never to A6.
 // ---------------------------------------------------------------------------------------------
 
 /** The one rule this basis draws, stated once so the card and the suite cannot state two. */
@@ -2197,8 +2201,8 @@ const withTerritories = (partition: GeneratedPartition): Variant['units'] =>
   nonEmpty(
     [
       ...proposedUnits(partition),
-      // Outside the rule because they are outside the census, exactly as in L7. Their standing is
-      // A5's subject; here nothing about them changes.
+      // Outside the rule because they are outside the census, exactly as in L7. Nothing about
+      // their standing changes here; this basis argues about administrative size.
       intactProvince('Azad Jammu & Kashmir'),
       intactProvince('Gilgit-Baltistan'),
     ],
@@ -2522,14 +2526,6 @@ function withinProvinces(context: DerivationContext): Variant {
     ],
     notes: [
       {
-        label: 'The other administrative variant',
-        text:
-          'The other map on this basis changes no boundary at all: it makes Gilgit-Baltistan and ' +
-          'Azad Jammu & Kashmir provinces and moves not a single district. It is a proposal with ' +
-          'a date and a document behind it, where this one is arithmetic.',
-        relatedVariants: ['a5'],
-      },
-      {
         label: 'The same districts, cut a different way',
         text:
           'The Development basis groups the districts the census serves alike, without regard to ' +
@@ -2549,214 +2545,6 @@ function withinProvinces(context: DerivationContext): Variant {
     ],
   };
 }
-
-/**
- * A5 — the one variant in this app that moves no district at all.
- *
- * Gilgit-Baltistan and Azad Jammu & Kashmir become provinces. Nothing is carved, nothing is
- * merged, and every boundary on screen is where it already is; what changes is the standing of two
- * first-level units, which is why the scorecard reads nought districts moved and why both units
- * still have no population figure — PBS published the 2023 census for the four provinces and
- * Islamabad and for neither of these (D25).
- *
- * They are drawn as `proposed` and not as `territory`, which is the whole content of the variant:
- * a card that argued for provincial status while the map went on hatching the ground as a
- * territory would be arguing with itself. That is admitted under `TERRITORY_CLAIM_POLICY` at
- * `forbid` because it is not a claim on territory — see `promotedTerritoryOf` in `scenarios.ts`.
- *
- * The two halves are **not equally sourced** and the card says so rather than levelling them. GB
- * has a dated announcement, a drafted amendment and a resolution of its own assembly; AJK has
- * none of those.
- */
-const A5: Variant = {
-  id: 'a5',
-  basis: 'administrative',
-  name: 'Constitutional regularisation',
-  tagline: 'the only map here on which no district changes hands',
-  rationale:
-    'Gilgit-Baltistan and Azad Jammu & Kashmir become full provinces. It is the only variant in ' +
-    'this app that redraws nothing: every boundary stays exactly where it is, the ceasefire line ' +
-    'included, and what changes is the constitutional standing of two units that Pakistan ' +
-    'administers and does not call provinces. It is also the only administrative variant with a ' +
-    'document behind it — the other four are boundaries this build computed, and this one is a ' +
-    'proposal with a date.',
-  status:
-    'Live for Gilgit-Baltistan and not for Azad Jammu & Kashmir. Provisional provincial status ' +
-    'for Gilgit-Baltistan was announced by Prime Minister Imran Khan on 1 November 2020, a draft ' +
-    'constitutional amendment was prepared, and the Gilgit-Baltistan Legislative Assembly passed ' +
-    'a resolution for it. No amendment has been laid before Parliament and passed, so the status ' +
-    'remains what the Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the ' +
-    'Government of Gilgit-Baltistan Order, 2018 make it. Azad Jammu & Kashmir has had no ' +
-    'equivalent announcement; it is governed under its own Interim Constitution Act, 1974 and ' +
-    'provincial status for it is not government policy.',
-  advocacy: {
-    kind: 'advocated',
-    by: [
-      'the Government of Pakistan as of November 2020, which announced provisional provincial ' +
-        'status for Gilgit-Baltistan',
-      'the Gilgit-Baltistan Legislative Assembly, which passed a resolution for provincial status',
-      'opinion across parties within Gilgit-Baltistan, for which the absence of representation in ' +
-        'Parliament is the grievance the demand is made from',
-    ],
-  },
-  opposedBy: [
-    'India, which rejects any change to the status of these territories and treats both as ' +
-      'territory under dispute',
-    'Kashmiri nationalist opinion on both sides of the ceasefire line, and the All Parties ' +
-      'Hurriyat Conference, for which absorbing Gilgit-Baltistan into Pakistan as a province ' +
-      'prejudices the plebiscite the dispute has never had',
-    'opinion within Pakistan that provincial status would weaken the country’s own position at ' +
-      'the United Nations, which rests on the whole of the former princely state being disputed ' +
-      'rather than settled',
-  ],
-  universe: 'drawn',
-  // Not the basis's `census · derived`, and the reason is the reason L1 and L4 carry their own
-  // badges. Nothing here was computed: the boundaries are the ones already on the map and the
-  // proposal is somebody's, with a date on it. A `derived` badge would credit a government's
-  // announcement to this build's arithmetic, which the validator refuses in so many words.
-  badges: ['documented'],
-  composition: {
-    kind: 'transcribed',
-    from:
-      'the announcement of 1 November 2020 and the Gilgit-Baltistan Legislative Assembly’s own ' +
-      'resolution — no boundary of which is new, the units being Gilgit-Baltistan and Azad Jammu ' +
-      '& Kashmir exactly as this map already draws them',
-  },
-  units: [
-    // Named exactly as the current map names them, and holding exactly the districts they already
-    // hold. Both are load-bearing: the districts-moved figure is decided on a unit's name, so a
-    // renaming here would report twenty districts changing hands when none does — and the
-    // validator refuses a renamed territory for that reason (`promotedTerritoryOf`).
-    {
-      id: 'gilgit-baltistan',
-      name: 'Gilgit-Baltistan',
-      kind: 'proposed',
-      claims: remainderOf('Gilgit-Baltistan'),
-      note:
-        'Proposed as Pakistan’s fifth province. The ten districts, the boundaries and the ' +
-        'ceasefire line along the eastern edge are exactly as the current map draws them; the ' +
-        'proposal is about standing and representation, not about ground.',
-    },
-    {
-      id: 'azad-jammu-kashmir',
-      name: 'Azad Jammu & Kashmir',
-      kind: 'proposed',
-      claims: remainderOf('Azad Jammu & Kashmir'),
-      note:
-        'Proposed as a province on the same reasoning, and on markedly weaker evidence — there ' +
-        'is no announcement, no drafted amendment and no assembly resolution for it. See the ' +
-        'footnote below, which says so at length rather than letting the two halves of this ' +
-        'variant look equally sourced.',
-    },
-    intactProvince('Punjab'),
-    intactProvince('Sindh'),
-    intactProvince('Khyber Pakhtunkhwa'),
-    intactProvince('Balochistan'),
-    intactProvince('Islamabad Capital Territory'),
-  ],
-  footnotes: [
-    {
-      kind: 'contested-edge',
-      text:
-        'The two halves of this variant are not equally sourced, and flattening them would be the ' +
-        'easiest mistake on this card. Gilgit-Baltistan has a dated announcement from a sitting ' +
-        'Prime Minister, a drafted constitutional amendment and a unanimous resolution of its own ' +
-        'legislative assembly. Azad Jammu & Kashmir has none of the three: it is governed under ' +
-        'its own Interim Constitution Act of 1974, its provincial status is not government ' +
-        'policy, and opinion within it is substantially against absorption on the grounds that ' +
-        'the territory’s claim is to the whole of the former princely state. It is drawn here ' +
-        'because the argument for regularising one is made about both — but the claim for it is ' +
-        'weaker, and this app does not adjudicate that by drawing them the same and saying ' +
-        'nothing.',
-    },
-    {
-      kind: 'note',
-      text:
-        'Nothing moves. Not one of the 156 districts this map draws changes the unit it belongs ' +
-        'to, and the scorecard reads nought districts moved for that reason rather than because a ' +
-        'figure is missing. It is the only variant in this app of which that is true, and it is ' +
-        'what makes the point the variant exists to make: the whole of the change here is a word ' +
-        'in the Constitution.',
-    },
-    {
-      kind: 'note',
-      text:
-        'Both units still carry no population, and that is the census’s coverage rather than a ' +
-        'gap this variant introduces. PBS published the 2023 census for 136 districts — the four ' +
-        'provinces and Islamabad — and for none of Azad Jammu & Kashmir’s ten or ' +
-        'Gilgit-Baltistan’s ten, so calling them provinces here does not conjure a figure for ' +
-        'them. They are set aside from the population spread by name, exactly as they are under ' +
-        'every other variant. Population for Azad Jammu & Kashmir exists only relayed via the AJK ' +
-        'Bureau of Statistics and never direct from PBS, and this app does not mix the two.',
-    },
-    {
-      kind: 'note',
-      text:
-        'The Line of Control is drawn dashed and labelled here as it is everywhere else in this ' +
-        'app, and that is deliberate rather than an omission. It is a ceasefire line and not an ' +
-        'international border, and a variant that made these two units provinces and then drew a ' +
-        'solid province boundary along it would be settling by rendering the question the ' +
-        'proposal itself leaves open. The northern end of the line, beyond NJ9842 in the Siachen ' +
-        'area, was never delimited even as a ceasefire line.',
-    },
-  ],
-  notes: [
-    {
-      label: 'Relationship to the 1970 restoration',
-      text:
-        'The Historical basis draws the same ground under its earlier name: until the 2009 Order, ' +
-        'Gilgit-Baltistan was the Northern Areas, administered federally and named after nobody. ' +
-        'Reading the two together is reading the whole of what has changed about this territory’s ' +
-        'standing in fifty years, which is a name and a provisional promise.',
-      relatedVariants: ['h3'],
-    },
-    {
-      label: 'The rule-drawn administrative map',
-      text:
-        'The other variant on this basis is a boundary this build computed from the census under ' +
-        'a stated rule, drawn inside the provinces that already exist. This one is the opposite ' +
-        'kind of thing — somebody’s proposal, with a date — and it is on the same basis because ' +
-        'the argument for it is administrative and constitutional rather than about language or ' +
-        'history.',
-      relatedVariants: ['a6'],
-    },
-  ],
-  sources: [
-    {
-      label:
-        'Announcement of provisional provincial status for Gilgit-Baltistan by Prime Minister ' +
-        'Imran Khan, 1 November 2020, and the drafted constitutional amendment prepared for it',
-    },
-    {
-      label:
-        'Gilgit-Baltistan Legislative Assembly — resolution seeking provincial status for ' +
-        'Gilgit-Baltistan',
-    },
-    {
-      label:
-        'Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the Government of ' +
-        'Gilgit-Baltistan Order, 2018 — the instruments that set the territory’s standing as it ' +
-        'is today',
-    },
-    {
-      label:
-        'Azad Jammu and Kashmir Interim Constitution Act, 1974 — the instrument under which Azad ' +
-        'Jammu & Kashmir is governed, and which no comparable proposal has sought to replace',
-    },
-    {
-      label:
-        'Ministry of External Affairs, India — the standing Indian position rejecting any change ' +
-        'to the status of these territories, which is this card’s opposition line',
-    },
-    {
-      label:
-        'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
-        'district set this partition is expressed in, and which lists Azad Jammu & Kashmir’s ten ' +
-        'districts and Gilgit-Baltistan’s ten without 2023 census results for either',
-      url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
-    },
-  ],
-};
 
 /**
  * D1 — the districts the census serves alike, grouped where they touch (#31).
@@ -2817,18 +2605,27 @@ function developmentGradient(context: DerivationContext): Variant {
 
   const percent = (share: number): string => `${(share * 100).toFixed(1)}%`;
 
-  /** One group of same-band, touching districts, as a unit. Named for its most populous district. */
+  /**
+   * One group of same-band, touching districts, as a unit. Named for its most populous district —
+   * through `unitName`, so a unit built around one of Karachi's four quarters is called Karachi
+   * rather than after the quarter, exactly as A6's is. The district it was named for is still said
+   * in the note, since that is the provenance and the name is only the label over the shape.
+   */
+  const names = unitNames(partition.units.map((unit) => unit.principal));
   const groups = partition.units.map(
-    (unit): Unit => ({
-      id: slug(unit.principal),
-      name: unit.principal,
+    (unit, index): Unit => ({
+      id: slug(names[index] as string),
+      name: names[index] as string,
       kind: 'proposed',
       claims: nonEmpty(unit.districts, `the ${unit.band.label} group around ${unit.principal}`),
       note:
         `${unit.districts.length} district${unit.districts.length === 1 ? '' : 's'} of ` +
         `${unit.province} in the ${unit.band.label} band, touching one another — averaging ` +
         `${percent(unit.mean)} on the development index, and ${group(unit.population)} people. ` +
-        `Named for ${unit.principal}, the most populous district in it.`,
+        `Named for ${unit.principal}, the most populous district in it` +
+        (names[index] === unit.principal
+          ? '.'
+          : `, and set as ${names[index]} — the city those districts are quarters of.`),
     }),
   );
 
@@ -3103,12 +2900,11 @@ export function variantsFrom(context: DerivationContext): readonly Variant[] {
     L5,
     pashtunBalochistan(context),
     motherTongueEverywhere(context),
-    // The Administrative group, rule-drawn first. A5 is last because it is a different kind of
-    // thing — a proposal with a date, on a basis whose other variant is arithmetic — and because
-    // it is the only map here that redraws nothing, which reads as the answer to the rule rather
-    // than as the introduction to it.
+    // The Administrative group. One rule, one map: the basis carried a second variant — a
+    // constitutional regularisation promoting Gilgit-Baltistan and Azad Jammu & Kashmir, moving no
+    // district — and it was retired with the four rule-drawn maps before it. Its id is retired
+    // with theirs and never reused, on the deep-link rule below.
     withinProvinces(context),
-    A5,
     // H1 stays first, and the ordering is otherwise chronological. A reader entering the Historical
     // basis lands on its first variant (D13), and that landing is One Unit rather than the states
     // of 1947 — the most dramatic map on the basis, and the one the other three are legible

@@ -262,7 +262,8 @@ const round = (value: number): number =>
  * a rename slipping past the condition written to catch renames, whereas here a suffix is noise
  * between a unit's name and the roster's. Exact is strictly narrower, so a unit the validator
  * admits as a promotion carries its territory forward here too and moves nought districts; the two
- * cannot disagree in that direction, which is the only direction A5 depends on.
+ * cannot disagree in that direction, which is the only direction a promotion depends on. A5 was the
+ * variant that relied on it and is retired; the relation between the two comparators is not.
  */
 export function districtsMoved(
   units: readonly ScorecardUnit[],

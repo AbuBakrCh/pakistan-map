@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-04T07:39:22.716Z",
+    "generated": "2026-08-04T10:42:49.267Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -13,9 +13,9 @@
       "development": "data/bundle/development-index.json — the composite D1's boundary is cut at, badged synthesized"
     },
     "counts": {
-      "variants": 14,
+      "variants": 13,
       "bases": 4,
-      "units": 162
+      "units": 155
     },
     "universes": {
       "drawn": 156,
@@ -4689,8 +4689,8 @@
           }
         },
         {
-          "id": "urdu-karachi-east",
-          "name": "Urdu (Karachi East)",
+          "id": "urdu-karachi",
+          "name": "Urdu (Karachi)",
           "alsoKnownAs": [],
           "kind": "proposed",
           "note": null,
@@ -5121,7 +5121,7 @@
       "footnotes": [
         {
           "kind": "derived-boundary",
-          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — Each province is partitioned on its own and no unit crosses a provincial boundary; 5 provinces come to 19 units, which is a finding and not an input. No unit above 25,000,000 people, and no district more than 300 km from its unit’s centre, measured centroid to centroid in a straight line rather than along a road. A centre is the headquarters of a division — the district carrying the division’s own name, or, where no district does, the most populous district in it — scoring at least 50% on the development index; centres are seeded most populous first, and where nothing left in a province qualifies, the most populous remaining district seeds the unit. Then each unit grows outward from its centre across shared district borders, taking the nearest unassigned district on its edge each time and stopping when neither limit admits another, ties going to the lower district name. Populations are the PBS 2023 census district rows. It produces 19 units, the largest seated at Karachi East with 24,998,174 people and the smallest at Chagai with 269,192 — a spread of 92.9 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
+          "text": "This boundary was computed, not copied from a proposal. Nobody publishes a district list for this rule, so the rule stands in for one — Each province is partitioned on its own and no unit crosses a provincial boundary; 5 provinces come to 19 units, which is a finding and not an input. No unit above 25,000,000 people, and no district more than 300 km from its unit’s centre, measured centroid to centroid in a straight line rather than along a road. A centre is the headquarters of a division — the district carrying the division’s own name, or, where no district does, the most populous district in it — scoring at least 50% on the development index; centres are seeded most populous first, and where nothing left in a province qualifies, the most populous remaining district seeds the unit. Then each unit grows outward from its centre across shared district borders, taking the nearest unassigned district on its edge each time and stopping when neither limit admits another, ties going to the lower district name. Populations are the PBS 2023 census district rows. It produces 19 units, the largest seated at Karachi with 24,998,174 people and the smallest at Chagai with 269,192 — a spread of 92.9 to 1. Change the census and these lines move; nobody whose argument this is chose where they run."
         },
         {
           "kind": "note",
@@ -5153,13 +5153,6 @@
         }
       ],
       "notes": [
-        {
-          "label": "The other administrative variant",
-          "text": "The other map on this basis changes no boundary at all: it makes Gilgit-Baltistan and Azad Jammu & Kashmir provinces and moves not a single district. It is a proposal with a date and a document behind it, where this one is arithmetic.",
-          "relatedVariants": [
-            "a5"
-          ]
-        },
         {
           "label": "The same districts, cut a different way",
           "text": "The Development basis groups the districts the census serves alike, without regard to which province they are in — the same 136 districts, cut by a question about service rather than about size, and the one place this app’s own composite draws a line instead of only gating one.",
@@ -5244,8 +5237,8 @@
           "units": 19,
           "total": 241499431,
           "largest": {
-            "unit": "karachi-east",
-            "name": "Karachi East",
+            "unit": "karachi",
+            "name": "Karachi",
             "population": 24998174
           },
           "smallest": {
@@ -5293,8 +5286,8 @@
       },
       "units": [
         {
-          "id": "karachi-east",
-          "name": "Karachi East",
+          "id": "karachi",
+          "name": "Karachi",
           "alsoKnownAs": [],
           "kind": "proposed",
           "note": null,
@@ -6104,679 +6097,6 @@
             "Astore",
             "Diamir"
           ],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        }
-      ]
-    },
-    {
-      "id": "a5",
-      "basis": "administrative",
-      "name": "Constitutional regularisation",
-      "tagline": "the only map here on which no district changes hands",
-      "badges": [
-        "documented"
-      ],
-      "rationale": "Gilgit-Baltistan and Azad Jammu & Kashmir become full provinces. It is the only variant in this app that redraws nothing: every boundary stays exactly where it is, the ceasefire line included, and what changes is the constitutional standing of two units that Pakistan administers and does not call provinces. It is also the only administrative variant with a document behind it — the other four are boundaries this build computed, and this one is a proposal with a date.",
-      "status": "Live for Gilgit-Baltistan and not for Azad Jammu & Kashmir. Provisional provincial status for Gilgit-Baltistan was announced by Prime Minister Imran Khan on 1 November 2020, a draft constitutional amendment was prepared, and the Gilgit-Baltistan Legislative Assembly passed a resolution for it. No amendment has been laid before Parliament and passed, so the status remains what the Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the Government of Gilgit-Baltistan Order, 2018 make it. Azad Jammu & Kashmir has had no equivalent announcement; it is governed under its own Interim Constitution Act, 1974 and provincial status for it is not government policy.",
-      "advocacy": {
-        "kind": "advocated",
-        "by": [
-          "the Government of Pakistan as of November 2020, which announced provisional provincial status for Gilgit-Baltistan",
-          "the Gilgit-Baltistan Legislative Assembly, which passed a resolution for provincial status",
-          "opinion across parties within Gilgit-Baltistan, for which the absence of representation in Parliament is the grievance the demand is made from"
-        ]
-      },
-      "opposedBy": [
-        "India, which rejects any change to the status of these territories and treats both as territory under dispute",
-        "Kashmiri nationalist opinion on both sides of the ceasefire line, and the All Parties Hurriyat Conference, for which absorbing Gilgit-Baltistan into Pakistan as a province prejudices the plebiscite the dispute has never had",
-        "opinion within Pakistan that provincial status would weaken the country’s own position at the United Nations, which rests on the whole of the former princely state being disputed rather than settled"
-      ],
-      "composition": {
-        "kind": "transcribed",
-        "from": "the announcement of 1 November 2020 and the Gilgit-Baltistan Legislative Assembly’s own resolution — no boundary of which is new, the units being Gilgit-Baltistan and Azad Jammu & Kashmir exactly as this map already draws them"
-      },
-      "footnotes": [
-        {
-          "kind": "contested-edge",
-          "text": "The two halves of this variant are not equally sourced, and flattening them would be the easiest mistake on this card. Gilgit-Baltistan has a dated announcement from a sitting Prime Minister, a drafted constitutional amendment and a unanimous resolution of its own legislative assembly. Azad Jammu & Kashmir has none of the three: it is governed under its own Interim Constitution Act of 1974, its provincial status is not government policy, and opinion within it is substantially against absorption on the grounds that the territory’s claim is to the whole of the former princely state. It is drawn here because the argument for regularising one is made about both — but the claim for it is weaker, and this app does not adjudicate that by drawing them the same and saying nothing."
-        },
-        {
-          "kind": "note",
-          "text": "Nothing moves. Not one of the 156 districts this map draws changes the unit it belongs to, and the scorecard reads nought districts moved for that reason rather than because a figure is missing. It is the only variant in this app of which that is true, and it is what makes the point the variant exists to make: the whole of the change here is a word in the Constitution."
-        },
-        {
-          "kind": "note",
-          "text": "Both units still carry no population, and that is the census’s coverage rather than a gap this variant introduces. PBS published the 2023 census for 136 districts — the four provinces and Islamabad — and for none of Azad Jammu & Kashmir’s ten or Gilgit-Baltistan’s ten, so calling them provinces here does not conjure a figure for them. They are set aside from the population spread by name, exactly as they are under every other variant. Population for Azad Jammu & Kashmir exists only relayed via the AJK Bureau of Statistics and never direct from PBS, and this app does not mix the two."
-        },
-        {
-          "kind": "note",
-          "text": "The Line of Control is drawn dashed and labelled here as it is everywhere else in this app, and that is deliberate rather than an omission. It is a ceasefire line and not an international border, and a variant that made these two units provinces and then drew a solid province boundary along it would be settling by rendering the question the proposal itself leaves open. The northern end of the line, beyond NJ9842 in the Siachen area, was never delimited even as a ceasefire line."
-        }
-      ],
-      "notes": [
-        {
-          "label": "Relationship to the 1970 restoration",
-          "text": "The Historical basis draws the same ground under its earlier name: until the 2009 Order, Gilgit-Baltistan was the Northern Areas, administered federally and named after nobody. Reading the two together is reading the whole of what has changed about this territory’s standing in fifty years, which is a name and a provisional promise.",
-          "relatedVariants": [
-            "h3"
-          ]
-        },
-        {
-          "label": "The rule-drawn administrative map",
-          "text": "The other variant on this basis is a boundary this build computed from the census under a stated rule, drawn inside the provinces that already exist. This one is the opposite kind of thing — somebody’s proposal, with a date — and it is on the same basis because the argument for it is administrative and constitutional rather than about language or history.",
-          "relatedVariants": [
-            "a6"
-          ]
-        }
-      ],
-      "sources": [
-        {
-          "label": "Announcement of provisional provincial status for Gilgit-Baltistan by Prime Minister Imran Khan, 1 November 2020, and the drafted constitutional amendment prepared for it"
-        },
-        {
-          "label": "Gilgit-Baltistan Legislative Assembly — resolution seeking provincial status for Gilgit-Baltistan"
-        },
-        {
-          "label": "Gilgit-Baltistan (Empowerment and Self-Governance) Order, 2009 and the Government of Gilgit-Baltistan Order, 2018 — the instruments that set the territory’s standing as it is today"
-        },
-        {
-          "label": "Azad Jammu and Kashmir Interim Constitution Act, 1974 — the instrument under which Azad Jammu & Kashmir is governed, and which no comparable proposal has sought to replace"
-        },
-        {
-          "label": "Ministry of External Affairs, India — the standing Indian position rejecting any change to the status of these territories, which is this card’s opposition line"
-        },
-        {
-          "label": "PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the district set this partition is expressed in, and which lists Azad Jammu & Kashmir’s ten districts and Gilgit-Baltistan’s ten without 2023 census results for either",
-          "url": "https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf"
-        }
-      ],
-      "statistics": {
-        "modernFigures": true
-      },
-      "partition": {
-        "universe": "drawn",
-        "districts": 156,
-        "claimed": 156
-      },
-      "counts": {
-        "units": 7,
-        "proposedUnits": 2,
-        "claimedDistricts": 20,
-        "drawnDistricts": 20,
-        "nonContiguousUnits": 0
-      },
-      "scorecard": {
-        "units": 7,
-        "proposedUnits": 2,
-        "area": {
-          "units": 5,
-          "total": 796096
-        },
-        "districtsMoved": {
-          "count": 0,
-          "of": 156,
-          "byOrigin": []
-        },
-        "population": {
-          "units": 5,
-          "total": 241499431,
-          "largest": {
-            "unit": "punjab",
-            "name": "Punjab",
-            "population": 127688922
-          },
-          "smallest": {
-            "unit": "islamabad-capital-territory",
-            "name": "Islamabad Capital Territory",
-            "population": 2363863
-          },
-          "ratio": 54
-        },
-        "populationWithheld": null,
-        "outsideTheCensus": [
-          {
-            "unit": "gilgit-baltistan",
-            "name": "Gilgit-Baltistan",
-            "districts": [
-              "Gilgit",
-              "Hunza",
-              "Nagar",
-              "Ghizer",
-              "Skardu",
-              "Kharmaung",
-              "Shigar",
-              "Ghanche",
-              "Astore",
-              "Diamir"
-            ]
-          },
-          {
-            "unit": "azad-jammu-kashmir",
-            "name": "Azad Jammu & Kashmir",
-            "districts": [
-              "Jhelum Valley",
-              "Muzaffarabad",
-              "Neelum",
-              "Bagh",
-              "Haveli",
-              "Sudhnoti",
-              "Poonch",
-              "Bhimber",
-              "Mirpur",
-              "Kotli"
-            ]
-          }
-        ]
-      },
-      "units": [
-        {
-          "id": "gilgit-baltistan",
-          "name": "Gilgit-Baltistan",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": "Proposed as Pakistan’s fifth province. The ten districts, the boundaries and the ceasefire line along the eastern edge are exactly as the current map draws them; the proposal is about standing and representation, not about ground.",
-          "claimed": [
-            "Gilgit",
-            "Hunza",
-            "Nagar",
-            "Ghizer",
-            "Skardu",
-            "Kharmaung",
-            "Shigar",
-            "Ghanche",
-            "Astore",
-            "Diamir"
-          ],
-          "districts": [
-            "Gilgit",
-            "Hunza",
-            "Nagar",
-            "Ghizer",
-            "Skardu",
-            "Kharmaung",
-            "Shigar",
-            "Ghanche",
-            "Astore",
-            "Diamir"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": null,
-          "uncounted": [
-            "Gilgit",
-            "Hunza",
-            "Nagar",
-            "Ghizer",
-            "Skardu",
-            "Kharmaung",
-            "Shigar",
-            "Ghanche",
-            "Astore",
-            "Diamir"
-          ],
-          "areaSqKm": null,
-          "withoutPublishedArea": [
-            "Gilgit",
-            "Hunza",
-            "Nagar",
-            "Ghizer",
-            "Skardu",
-            "Kharmaung",
-            "Shigar",
-            "Ghanche",
-            "Astore",
-            "Diamir"
-          ],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "azad-jammu-kashmir",
-          "name": "Azad Jammu & Kashmir",
-          "alsoKnownAs": [],
-          "kind": "proposed",
-          "note": "Proposed as a province on the same reasoning, and on markedly weaker evidence — there is no announcement, no drafted amendment and no assembly resolution for it. See the footnote below, which says so at length rather than letting the two halves of this variant look equally sourced.",
-          "claimed": [
-            "Jhelum Valley",
-            "Muzaffarabad",
-            "Neelum",
-            "Bagh",
-            "Haveli",
-            "Sudhnoti",
-            "Poonch",
-            "Bhimber",
-            "Mirpur",
-            "Kotli"
-          ],
-          "districts": [
-            "Jhelum Valley",
-            "Muzaffarabad",
-            "Neelum",
-            "Bagh",
-            "Haveli",
-            "Sudhnoti",
-            "Poonch",
-            "Bhimber",
-            "Mirpur",
-            "Kotli"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": null,
-          "uncounted": [
-            "Jhelum Valley",
-            "Muzaffarabad",
-            "Neelum",
-            "Bagh",
-            "Haveli",
-            "Sudhnoti",
-            "Poonch",
-            "Bhimber",
-            "Mirpur",
-            "Kotli"
-          ],
-          "areaSqKm": null,
-          "withoutPublishedArea": [
-            "Jhelum Valley",
-            "Muzaffarabad",
-            "Neelum",
-            "Bagh",
-            "Haveli",
-            "Sudhnoti",
-            "Poonch",
-            "Bhimber",
-            "Mirpur",
-            "Kotli"
-          ],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "punjab",
-          "name": "Punjab",
-          "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": null,
-          "claimed": [
-            "Attock",
-            "Rawalpindi",
-            "Jhelum",
-            "Chakwal",
-            "Sargodha",
-            "Bhakkar",
-            "Khushab",
-            "Mianwali",
-            "Faisalabad",
-            "Jhang",
-            "Chiniot",
-            "Toba Tek Singh",
-            "Gujranwala",
-            "Hafizabad",
-            "Gujrat",
-            "Mandi Bahauddin",
-            "Sialkot",
-            "Narowal",
-            "Lahore",
-            "Kasur",
-            "Sheikhupura",
-            "Nankana Sahib",
-            "Sahiwal",
-            "Okara",
-            "Pakpattan",
-            "Vehari",
-            "Multan",
-            "Lodhran",
-            "Khanewal",
-            "Dera Ghazi Khan",
-            "Rajanpur",
-            "Layyah",
-            "Muzaffargarh",
-            "Bahawalpur",
-            "Bahawalnagar",
-            "Rahim Yar Khan"
-          ],
-          "districts": [
-            "Attock",
-            "Rawalpindi",
-            "Jhelum",
-            "Chakwal",
-            "Sargodha",
-            "Bhakkar",
-            "Khushab",
-            "Mianwali",
-            "Faisalabad",
-            "Jhang",
-            "Chiniot",
-            "Toba Tek Singh",
-            "Gujranwala",
-            "Hafizabad",
-            "Gujrat",
-            "Mandi Bahauddin",
-            "Sialkot",
-            "Narowal",
-            "Lahore",
-            "Kasur",
-            "Sheikhupura",
-            "Nankana Sahib",
-            "Sahiwal",
-            "Okara",
-            "Pakpattan",
-            "Vehari",
-            "Multan",
-            "Lodhran",
-            "Khanewal",
-            "Dera Ghazi Khan",
-            "Rajanpur",
-            "Layyah",
-            "Muzaffargarh",
-            "Bahawalpur",
-            "Bahawalnagar",
-            "Rahim Yar Khan"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 127688922,
-          "uncounted": [],
-          "areaSqKm": 205345,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "sindh",
-          "name": "Sindh",
-          "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": null,
-          "claimed": [
-            "Jacobabad",
-            "Kashmore",
-            "Shikarpur",
-            "Larkana",
-            "Kambar Shahdadkot",
-            "Sukkur",
-            "Ghotki",
-            "Khairpur",
-            "Naushahro Feroze",
-            "Shaheed Benazirabad",
-            "Sanghar",
-            "Dadu",
-            "Jamshoro",
-            "Hyderabad",
-            "Matiari",
-            "Tando Allah Yar",
-            "Tando Mohammad Khan",
-            "Badin",
-            "Thatta",
-            "Sujawal",
-            "Mirpur Khas",
-            "Umerkot",
-            "Tharparkar",
-            "Karachi East",
-            "Karachi West",
-            "Karachi South",
-            "Karachi Central",
-            "Malir",
-            "Korangi",
-            "Keamari"
-          ],
-          "districts": [
-            "Jacobabad",
-            "Kashmore",
-            "Shikarpur",
-            "Larkana",
-            "Kambar Shahdadkot",
-            "Sukkur",
-            "Ghotki",
-            "Khairpur",
-            "Naushahro Feroze",
-            "Shaheed Benazirabad",
-            "Sanghar",
-            "Dadu",
-            "Jamshoro",
-            "Hyderabad",
-            "Matiari",
-            "Tando Allah Yar",
-            "Tando Mohammad Khan",
-            "Badin",
-            "Thatta",
-            "Sujawal",
-            "Mirpur Khas",
-            "Umerkot",
-            "Tharparkar",
-            "Karachi East",
-            "Karachi West",
-            "Karachi South",
-            "Karachi Central",
-            "Malir",
-            "Korangi",
-            "Keamari"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 55696147,
-          "uncounted": [],
-          "areaSqKm": 140914,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "khyber-pakhtunkhwa",
-          "name": "Khyber Pakhtunkhwa",
-          "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": null,
-          "claimed": [
-            "Upper Chitral",
-            "Lower Chitral",
-            "Upper Dir",
-            "Lower Dir",
-            "Swat",
-            "Shangla",
-            "Buner",
-            "Malakand",
-            "Bajaur",
-            "Upper Kohistan",
-            "Lower Kohistan",
-            "Kolai Pallas Kohistan",
-            "Mansehra",
-            "Torghar",
-            "Batagram",
-            "Abbotabad",
-            "Haripur",
-            "Mardan",
-            "Swabi",
-            "Charsadda",
-            "Peshawar",
-            "Nowshera",
-            "Khyber",
-            "Mohmand",
-            "Kohat",
-            "Hangu",
-            "Karak",
-            "Orakzai",
-            "Kurram",
-            "Bannu",
-            "Lakki Marwat",
-            "North Waziristan",
-            "Dera Ismail Khan",
-            "Tank",
-            "South Waziristan"
-          ],
-          "districts": [
-            "Upper Chitral",
-            "Lower Chitral",
-            "Upper Dir",
-            "Lower Dir",
-            "Swat",
-            "Shangla",
-            "Buner",
-            "Malakand",
-            "Bajaur",
-            "Upper Kohistan",
-            "Lower Kohistan",
-            "Kolai Pallas Kohistan",
-            "Mansehra",
-            "Torghar",
-            "Batagram",
-            "Abbotabad",
-            "Haripur",
-            "Mardan",
-            "Swabi",
-            "Charsadda",
-            "Peshawar",
-            "Nowshera",
-            "Khyber",
-            "Mohmand",
-            "Kohat",
-            "Hangu",
-            "Karak",
-            "Orakzai",
-            "Kurram",
-            "Bannu",
-            "Lakki Marwat",
-            "North Waziristan",
-            "Dera Ismail Khan",
-            "Tank",
-            "South Waziristan"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 40856097,
-          "uncounted": [],
-          "areaSqKm": 101741,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "balochistan",
-          "name": "Balochistan",
-          "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": null,
-          "claimed": [
-            "Quetta",
-            "Pishin",
-            "Killa Abdullah",
-            "Chaman",
-            "Chagai",
-            "Nushki",
-            "Kharan",
-            "Washuk",
-            "Loralai",
-            "Duki",
-            "Barkhan",
-            "Musa Khel",
-            "Killa Saifullah",
-            "Zhob",
-            "Sherani",
-            "Sibi",
-            "Harnai",
-            "Ziarat",
-            "Kohlu",
-            "Dera Bugti",
-            "Jaffarabad",
-            "Nasirabad",
-            "Kachhi (Bolan)",
-            "Jhal Magsi",
-            "Sohbatpur",
-            "Kalat",
-            "Surab",
-            "Mastung",
-            "Khuzdar",
-            "Awaran",
-            "Lasbela",
-            "Kech",
-            "Gwadar",
-            "Panjgur"
-          ],
-          "districts": [
-            "Quetta",
-            "Pishin",
-            "Killa Abdullah",
-            "Chaman",
-            "Chagai",
-            "Nushki",
-            "Kharan",
-            "Washuk",
-            "Loralai",
-            "Duki",
-            "Barkhan",
-            "Musa Khel",
-            "Killa Saifullah",
-            "Zhob",
-            "Sherani",
-            "Sibi",
-            "Harnai",
-            "Ziarat",
-            "Kohlu",
-            "Dera Bugti",
-            "Jaffarabad",
-            "Nasirabad",
-            "Kachhi (Bolan)",
-            "Jhal Magsi",
-            "Sohbatpur",
-            "Kalat",
-            "Surab",
-            "Mastung",
-            "Khuzdar",
-            "Awaran",
-            "Lasbela",
-            "Kech",
-            "Gwadar",
-            "Panjgur"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 14894402,
-          "uncounted": [],
-          "areaSqKm": 347190,
-          "withoutPublishedArea": [],
-          "contiguity": {
-            "contiguous": true,
-            "pieces": 1,
-            "detached": []
-          }
-        },
-        {
-          "id": "islamabad-capital-territory",
-          "name": "Islamabad Capital Territory",
-          "alsoKnownAs": [],
-          "kind": "unchanged",
-          "note": null,
-          "claimed": [
-            "Islamabad"
-          ],
-          "districts": [
-            "Islamabad"
-          ],
-          "folded": [],
-          "excludes": [],
-          "population": 2363863,
-          "uncounted": [],
-          "areaSqKm": 906,
-          "withoutPublishedArea": [],
           "contiguity": {
             "contiguous": true,
             "pieces": 1,
@@ -10630,11 +9950,11 @@
           }
         },
         {
-          "id": "karachi-east",
-          "name": "Karachi East",
+          "id": "karachi",
+          "name": "Karachi",
           "alsoKnownAs": [],
           "kind": "proposed",
-          "note": "7 districts of Sindh in the 80% and above band, touching one another — averaging 88.6% on the development index, and 20,382,881 people. Named for Karachi East, the most populous district in it.",
+          "note": "7 districts of Sindh in the 80% and above band, touching one another — averaging 88.6% on the development index, and 20,382,881 people. Named for Karachi East, the most populous district in it, and set as Karachi — the city those districts are quarters of.",
           "claimed": [
             "Karachi Central",
             "Karachi East",

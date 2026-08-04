@@ -46,6 +46,7 @@
 
 import { contiguityOf, type AdjacencyGraph } from './adjacency.ts';
 import { groupDigits } from './digits.ts';
+import { unitName } from './unit-names.ts';
 
 /**
  * What the rule is applied to.
@@ -180,8 +181,11 @@ export function partitionByDominantLanguage(scope: LanguageScope): LanguageParti
     partition: {
       regions: found.map((region) => ({
         ...region,
+        // Disambiguated by the district the region is named for, through `unitName`: two Urdu
+        // regions have to be told apart, and the one around Karachi is the one around the city,
+        // not the one around its eastern quarter.
         name: repeats.has(region.language)
-          ? `${region.language} (${region.principal})`
+          ? `${region.language} (${unitName(region.principal)})`
           : region.language,
       })),
       unnamed: unnamed.sort((a, b) => a.localeCompare(b)),

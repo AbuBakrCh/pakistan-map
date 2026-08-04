@@ -51,9 +51,9 @@ because the resolutions are cited by number elsewhere.
    rather than a shipped variant: **a unit that carries population figures and reaches into ground
    the census does not cover.** Nothing in the app does that, and the build would refuse it by name.
 
-   **A5 (#28) does not move it, and the reason is worth reading rather than assuming.** A5
-   promotes both territories to provinces, which looks like the case this policy forbids and is
-   not. The stated reason for `forbid` is arithmetic: those districts carry no PBS statistic, so a
+   **A5 (#28) did not move it, and the reason is worth reading rather than assuming — the variant
+   has since been retired and the narrowing it argued for has not.** A5 promoted both territories
+   to provinces, which looks like the case this policy forbids and is not. The stated reason for `forbid` is arithmetic: those districts carry no PBS statistic, so a
    unit holding *some* of them has a population short by an unknowable amount and looks exactly
    like a unit whose population is right. That reason does not reach a unit that is **one
    territory's whole district set under that territory's own name** — nothing is taken from
@@ -65,6 +65,12 @@ because the resolutions are cited by number elsewhere.
    districts are decided on a unit's name, so a territory promoted *and* renamed would read as ten
    districts changing hands when none has, and is refused rather than counted wrongly). The
    narrowing is a change to what counts as a *claim*, made out loud and tested at both seams.
+
+   **Retiring A5 leaves the carve-out exercised by nothing, and that is now asserted.** It stays,
+   because deleting it would answer a constitutional question by tidying up after an unrelated
+   content decision, and because both answers to 2b are meant to stay expressible. What the suite
+   holds instead is that **no shipped unit is a promotion** — so one arriving later arrives in a
+   diff somebody read, rather than by a variant quietly finding the door open.
 
    **H2 (#30) is the second, and it is the wider of the two.** It draws Hunza and Nagar as the
    princely states they were, and both are Gilgit-Baltistan districts today — two of ten, so

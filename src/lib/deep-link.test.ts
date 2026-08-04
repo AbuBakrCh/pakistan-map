@@ -110,10 +110,12 @@ describe('readRoute', () => {
       selection: { basis: 'administrative', variant: 'a6' },
       asWritten: false,
     });
-    // And the four ids the restated rule retired resolve to the baseline, not to the map that
-    // replaced them. A link carries a claim; answering it with a different proposal under the
-    // same address is the substitution this parser refuses by design.
-    for (const dead of ['a1', 'a2', 'a3', 'a4']) {
+    // And every id this basis has retired resolves to the baseline, not to the map that is still
+    // here. A link carries a claim; answering it with a different proposal under the same address
+    // is the substitution this parser refuses by design — which matters most for **a5**, the
+    // constitutional-regularisation map, since a reader who bookmarked the proposal that moves no
+    // district must not be handed the rule-drawn one that moves 135.
+    for (const dead of ['a1', 'a2', 'a3', 'a4', 'a5']) {
       expect(route(`#/administrative/${dead}`).selection, dead).toBeNull();
     }
   });

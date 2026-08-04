@@ -297,7 +297,7 @@ that pass — A1 to A3 among them, and H2, both of which had been this section's
 the layout did: A1 to A4 are retired, and the Administrative rule that replaced them draws inside
 the existing provinces (see `docs/derived-variants.md`). What is left is **D1 and A6**. D1 is the
 hard case — 35 units, eleven of them a single district, on a 369px-wide country, with *South
-Waziristan*, *Torghar*, *Lower Chitral*, *Upper Chitral*, *Hyderabad* and *Karachi East* unnamed,
+Waziristan*, *Torghar*, *Lower Chitral*, *Upper Chitral*, *Hyderabad* and *Karachi* unnamed,
 four in the northern cluster and two around the delta. **A6 loses exactly one**, and it is
 *Islamabad*: a unit of a single district, because the capital territory is a province of a single
 district in the census and a rule that partitions inside the provinces has nothing there to divide.
@@ -345,9 +345,11 @@ Baltistan* — have left the paragraph, the first when a callout stopped having 
 it names and the second when the leader stopped being rationed. What answers that third failure is
 `mustName` rather than a ranking, since no priority reaches it. And it is not free — A1 had been
 naming AJK by nudging it clear, and giving it the corner outright was part of why *Rawalpindi* and
-its neighbours were the last names on that variant's map to find room. A5 is the deliberate exception,
-its AJK and GB being *promotions*, recorded as `proposed`, argued as provinces and ranked as the
-proposals they are.
+its neighbours were the last names on that variant's map to find room. A5 was the deliberate
+exception — its AJK and GB were *promotions*, recorded as `proposed`, argued as provinces and ranked
+as the proposals they were — and it has been retired. The rule is keyed on the kind the bundle
+records and not on the name, so it needs no change to be ready for the next variant that promotes
+one: the suite asserts the exception list is empty rather than asserting a shrinking list of names.
 
 **The rule-drawn Administrative maps were this section's standing example, and the shape of the
 problem changed with them.** A1 to A3 were not transcribed proposals whose author chose the names —
@@ -370,7 +372,7 @@ being the smallest unit on the map.
 **D1 is where it is least met**, and it is a different problem rather than the same one moved. A6
 loses one name to a one-district unit; D1 draws **35 units**, eleven of them a single district, and
 eight of those are packed into northern Khyber Pakhtunkhwa where the country is at its narrowest. Six go unnamed at 390px — *South Waziristan*, *Torghar*, *Lower Chitral*, *Upper
-Chitral*, *Hyderabad* and *Karachi East* — listed one by one in the suite, since a floor that said
+Chitral*, *Hyderabad* and *Karachi* — listed one by one in the suite, since a floor that said
 "most of them" would let the next variant quietly lose another, and each shown to return at desktop
 size.
 
@@ -398,7 +400,7 @@ desktop must be named with the width it wants rather than allowed to raise the f
 
 **D1 was the variant that added none to that list, and it is now the longer of the two entries on
 it** (#31). It cut each province in two and drew eleven units, each half a province, so its *Rahim
-Yar Khan* and *Karachi East* had room where the rule-drawn units of the same names did not. Under
+Yar Khan* and *Karachi* had room where the rule-drawn units of the same names did not. Under
 the band rule it draws **35**, and the arithmetic reverses with it: the same paper, three times the
 names, eleven of them a district wide. That the list is two variants long rather than nine is a
 consequence of the labelling work; which variants are on it is a consequence of content changes.

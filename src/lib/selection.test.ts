@@ -77,7 +77,9 @@ describe('basisChoices', () => {
     const administrative = choices.find((c) => c.basis.id === 'administrative');
     expect(administrative?.available).toBe(true);
     expect(administrative?.missing).toEqual([]);
-    expect(administrative?.variants.map((v) => v.id)).toEqual(['a6', 'a5']);
+    // One variant: the basis's second — a constitutional regularisation that moved no district —
+    // has been retired, and a basis is offered on the variants it has rather than on a count.
+    expect(administrative?.variants.map((v) => v.id)).toEqual(['a6']);
     // `census` for the figure and `derived` for the geometry — the fill answers to the first of
     // the two, and nothing about the shading is this project's own number.
     expect(administrative?.basis.badges).toEqual(['census', 'derived']);

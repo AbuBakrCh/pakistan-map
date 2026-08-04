@@ -101,6 +101,7 @@ import { type AdjacencyGraph, contiguityOf } from './adjacency.ts';
 import { groupDigits as group } from './digits.ts';
 import { provinceOf } from './roster.ts';
 import { slug, type NonEmpty, type Unit } from './scenarios.ts';
+import { unitNames } from './unit-names.ts';
 
 /**
  * The stated rule, and all three numbers it is stated in.
@@ -341,6 +342,9 @@ function partitionProvince(
 
     const sorted = [...members].sort((a, b) => a.localeCompare(b));
     const [first, ...rest] = sorted;
+    // Named for its centre here, and renamed once the whole partition is known: whether a unit may
+    // take its city's short name depends on the other units (`unitNames`), which one province's
+    // growth cannot see.
     units.push({
       id: slug(centre),
       name: centre,
@@ -519,7 +523,17 @@ export function partitionByRule(rule: PartitionRule, input: PartitionInput): Gen
   }
   if (problems.length > 0) return { partition: null, problems };
 
-  const ordered = [...units].sort(
+  // Named now the whole partition exists, since `unitNames` shortens a name for its city only
+  // where no other unit wants the same one — a question about the set and not about a unit. The
+  // centre is untouched: it is the district the rule seated the unit at, and the card says it.
+  const names = unitNames(units.map((unit) => unit.centre));
+  const renamed = units.map((unit, index) => ({
+    ...unit,
+    id: slug(names[index] as string),
+    name: names[index] as string,
+  }));
+
+  const ordered = [...renamed].sort(
     (a, b) => b.population - a.population || a.centre.localeCompare(b.centre),
   );
   const [head, ...rest] = ordered;

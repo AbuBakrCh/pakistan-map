@@ -50,6 +50,7 @@ import {
 // The runtime's own card composer, imported here rather than reimplemented, so the unsourced-year
 // check (#47) asks its question of the fields a reader actually sees and picks up a new one by
 // construction. It is pure — no DOM, no fetch — and `panel.ts` renders it without adding a word.
+import { unitNames } from './unit-names.ts';
 import { variantCard, type VariantCard } from '../../src/lib/card.ts';
 import type { ScenarioBundle, VariantRecord } from '../../src/bundle.ts';
 import {
@@ -867,15 +868,23 @@ describe('bundle scenarios', () => {
       .flatMap(reachesIn);
     expect(claimed).toEqual([]);
 
-    // And neither carve-out is vacuous. A test that only ever proves an exclusion never fires is a
-    // test that would pass with the exclusion written wrongly — so both are held to firing for
-    // exactly the units they were written for, by name.
+    /*
+     * The promotion carve-out is **exercised by nothing in the shipped set**, and that is asserted
+     * rather than left unsaid.
+     *
+     * A5 was the one variant that used it — Gilgit-Baltistan and Azad Jammu & Kashmir promoted
+     * whole, under their own names — and it has been retired. The carve-out stays, tested at its
+     * own seam in `scenarios.test.ts`, because it is one of the two narrowings recorded against
+     * open item 2b and deleting it would answer a constitutional question by tidying. What must
+     * not happen quietly is a *new* unit starting to use it: a promotion is a change of standing
+     * and belongs in a diff a person read, so this fails the moment one appears.
+     */
     const promoted = variants.flatMap((variant) =>
       variant.units
         .filter((unit) => unit.kind === 'proposed' && promotes(unit))
         .map((unit) => `${variant.id} ${unit.name}`),
     );
-    expect(promoted).toEqual(['a5 Gilgit-Baltistan', 'a5 Azad Jammu & Kashmir']);
+    expect(promoted).toEqual([]);
 
     // H2 draws Hunza and Nagar as the princely states they were until 1974, and they are districts
     // of Gilgit-Baltistan today — two of ten, so neither is a promotion and `promotedTerritoryOf`
@@ -962,14 +971,21 @@ describe('bundle scenarios', () => {
       'd1',
     ];
     /*
-     * The four rule-drawn Administrative maps the draft approved were **retired**, not lost: the
-     * Administrative rule was restated to draw inside the existing provinces, and one rule draws
-     * one map. They are listed here rather than deleted from the approved set, because the point
-     * of this check is that nothing goes missing *silently* — a variant that vanished because
-     * somebody edited a registry would look exactly like this list getting shorter, and the
-     * difference between the two is a sentence somebody had to write.
+     * Five of the draft's Administrative maps were **retired**, not lost, and for two different
+     * reasons.
+     *
+     * A1 to A4 went when the rule was restated to draw inside the existing provinces: they
+     * partitioned the whole country from a bare population ceiling and drew units across
+     * provincial boundaries to do it, and one rule draws one map. **A5 went later** — it proposed
+     * no boundary at all, promoting Gilgit-Baltistan and Azad Jammu & Kashmir and moving not one
+     * district, which argues about constitutional standing on a basis about administrative size.
+     *
+     * They are listed here rather than deleted from the approved set, because the point of this
+     * check is that nothing goes missing *silently* — a variant that vanished because somebody
+     * edited a registry would look exactly like this list getting shorter, and the difference
+     * between the two is a sentence somebody had to write.
      */
-    const RETIRED = ['a1', 'a2', 'a3', 'a4'];
+    const RETIRED = ['a1', 'a2', 'a3', 'a4', 'a5'];
     const REPLACING = ['a6'];
     expect([...variants.map((v) => v.id)].sort()).toEqual(
       [...APPROVED_BY_THE_DRAFT.filter((id) => !RETIRED.includes(id)), ...REPLACING].sort(),
@@ -1029,15 +1045,14 @@ describe('bundle scenarios', () => {
      * Each is true and each wants a source line: A6 dates the current provincial map from 1970 in
      * its status line — the same sentence the four retired rule-drawn maps carried, so retiring
      * them moved the gap rather than closing it — and H1 mentions Karachi ceasing to be federal
-     * territory in 1961. The third surfaced when #47 widened the field set to every rendered one:
-     * A5's note is titled *Relationship to the 1970 restoration*, which is H3's own name, and A5
-     * cites nothing dated 1970 — the same class of gap as the other four, and closed the same way,
-     * by a source line rather than by loosening this list. The gap the widening was raised over —
-     * H3 asserting 2020 on its **Opposed by** line, the one line the working agreement is most
-     * insistent about — is *not* here: it is closed by citing the announcement A5 already names.
+     * territory in 1961. A third belonged to A5 and **went with it**: its note was titled
+     * *Relationship to the 1970 restoration*, H3's own name, and it cited nothing dated 1970. A gap
+     * closed by retiring the variant that carried it is closed for this check and for nothing else,
+     * which is why the list shortens and the reasoning stays. The gap #47's widening was raised
+     * over — H3 asserting 2020 on its **Opposed by** line, the one line the working agreement is
+     * most insistent about — is *not* here: it is closed by the announcement H3's own sources cite.
      */
     const KNOWN_GAPS: Readonly<Record<string, readonly string[]>> = {
-      a5: ['1970'],
       a6: ['1970'],
       h1: ['1961'],
     };
@@ -1422,14 +1437,15 @@ describe('bundle administrative variants', () => {
     }
   });
 
-  it('retires the ids of the four maps this rule replaced rather than reusing them', () => {
+  it('retires the ids of the five maps this basis has dropped rather than reusing them', () => {
     // A link to `#/administrative/a1` resolves to the baseline, which is what the deep-link rules
     // require of an id this build has never heard of. Serving a stranger's link a *different*
-    // proposal under the same address is the one substitution those rules refuse outright, so the
-    // old ids must be absent rather than re-pointed.
+    // proposal under the same address is the one substitution those rules refuse outright — A5's
+    // id included, since a reader who bookmarked the constitutional-regularisation map must not be
+    // shown the rule-drawn one under its address.
     const ids = variants.map((v) => v.id);
-    expect(ids.filter((id) => ['a1', 'a2', 'a3', 'a4'].includes(id))).toEqual([]);
-    expect(ids.filter((id) => id.startsWith('a')).sort()).toEqual(['a5', 'a6']);
+    expect(ids.filter((id) => ['a1', 'a2', 'a3', 'a4', 'a5'].includes(id))).toEqual([]);
+    expect(ids.filter((id) => id.startsWith('a')).sort()).toEqual(['a6']);
   });
 
   it('lets no unit cross a provincial boundary, which is the whole of what the rule changed', () => {
@@ -1520,77 +1536,32 @@ describe('bundle administrative variants', () => {
     expect([...(variant.badges ?? [])].sort()).toEqual(['census', 'derived', 'synthesized']);
   });
 
-  it('leaves every district exactly where it was in A5, which is the whole proposal', () => {
-    // The one variant in the app of which this is true. Nothing is carved, nothing merged, and
-    // both territories are still outside the census — so what the card argues for is a word in
-    // the Constitution, and the scorecard has to say so rather than reporting a redraw.
-    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
-    expect(a5.scorecard.districtsMoved.count).toBe(0);
-    expect(a5.scorecard.districtsMoved.byOrigin).toEqual([]);
-    expect(a5.scorecard.districtsMoved.of).toBe(ROSTER_DISTRICT_COUNT);
-    expect(variants.filter((v) => v.scorecard.districtsMoved.count === 0).map((v) => v.id)).toEqual([
-      'a5',
-    ]);
-
-    // Every unit is exactly one of today's first-level entities, holding exactly its districts.
-    const today = new Map(ROSTER.map((province) => [province.name, [...province.districts].sort()]));
-    for (const unit of a5.units) {
-      expect([...unit.districts].sort(), unit.name).toEqual(today.get(unit.name));
-    }
-    expect(a5.units.map((u) => u.name).sort()).toEqual([...today.keys()].sort());
+  /*
+   * A5 is retired, and the three checks that stood over it went with it.
+   *
+   * They held that it moved no district, that its two promoted territories were drawn as provinces
+   * and still carried no population, and that its card said the two halves were not equally
+   * sourced. None survives the variant and none is re-pointed at A6: they were about a proposal
+   * that promoted two territories, and A6 promotes nothing. What outlives it is held elsewhere on
+   * purpose — `promotedTerritoryOf` at its own seam in `scenarios.test.ts`, and the assertion above
+   * that **no shipped unit exercises it**, which is what catches a promotion arriving without
+   * anybody having decided to allow one.
+   */
+  it('has no variant left that moves nothing, which A5 was the only one of', () => {
+    // Worth asserting rather than dropping. "The map on which no district changes hands" was a real
+    // category and this app no longer has one, so a variant that starts reporting nought moved is
+    // either a new proposal of that kind or a scorecard that has stopped counting — and both want
+    // a person to look.
+    expect(variants.filter((v) => v.scorecard.districtsMoved.count === 0).map((v) => v.id)).toEqual(
+      [],
+    );
   });
 
-  it('draws the two territories as proposed provinces and still gives them no population', () => {
-    // The two halves of A5 that have to hold together. They are `proposed`, because a card
-    // arguing for provincial status over a map that went on calling them territories would be
-    // arguing with itself — and they still carry no figure, because PBS published none (D25) and
-    // calling a territory a province does not conjure one. Set aside by name, never as a zero.
-    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
-    const promoted = a5.units.filter((u) => u.kind === 'proposed');
-    expect(promoted.map((u) => u.name)).toEqual(['Gilgit-Baltistan', 'Azad Jammu & Kashmir']);
-    for (const unit of promoted) {
-      expect(unit.population, unit.name).toBeNull();
-      expect(unit.uncounted, unit.name).toHaveLength(10);
-    }
-    expect(a5.scorecard.outsideTheCensus.map((u) => u.name)).toEqual([
-      'Gilgit-Baltistan',
-      'Azad Jammu & Kashmir',
-    ]);
-    // A gap in a unit voids a variant's figures; the census's own coverage does not. A5 is the
-    // second kind, so the spread is over the five units that are inside the census.
-    expect(a5.scorecard.populationWithheld).toBeNull();
-    expect(a5.scorecard.population?.units).toBe(5);
-  });
-
-  it('says on A5’s card that the two halves are not equally sourced', () => {
-    // The thing this card could most easily get wrong. Gilgit-Baltistan has a dated announcement,
-    // a drafted amendment and a resolution of its own assembly; Azad Jammu & Kashmir has none of
-    // the three, and drawing the two the same and saying nothing would report a weaker claim as
-    // an equal one.
-    const a5 = variants.find((v) => v.id === 'a5') as EmittedVariant;
-    const words = `${a5.status}\n${a5.footnotes.map((f) => f.text).join('\n')}`;
-    expect(words).toContain('1 November 2020');
-    expect(words).toMatch(/Legislative Assembly/);
-    expect(words).toMatch(/Interim Constitution Act/);
-    expect(words).toMatch(/none of the three/);
-    // India's rejection is the opposition line the ticket names, and it is not the only one.
-    expect(a5.opposedBy.join('\n')).toMatch(/^India, which rejects/m);
-    expect(a5.opposedBy.length).toBeGreaterThan(1);
-    // And the ceasefire line is unchanged here, said on the card as well as held in `units.test.ts`
-    // against the arcs: a variant that promoted these two and then drew a solid province boundary
-    // along the Line of Control would settle by rendering the question the proposal leaves open.
-    expect(a5.footnotes.map((f) => f.text).join('\n')).toMatch(/dashed and labelled/);
-    // Transcribed, not derived — this boundary is nobody's arithmetic, least of all ours.
-    expect(a5.composition.kind).toBe('transcribed');
-    expect(a5.badges).toEqual(['documented']);
-  });
-
-  it('carries the whole basis, and every variant of it argues at the census’s vintage', () => {
+  it('carries the whole basis — one variant now — argued at the census’s vintage', () => {
     const administrative = variants.filter((v) => v.basis === 'administrative');
-    expect(administrative.map((v) => v.id)).toEqual(['a6', 'a5']);
-    // Neither dates its own boundary: the rule-drawn one reads the 2023 census and the other
-    // draws the district set as it stands, so both are argued at the basis's vintage and neither
-    // prints a date of its own.
+    expect(administrative.map((v) => v.id)).toEqual(['a6']);
+    // It does not date its own boundary: the rule reads the 2023 census, so the variant is argued
+    // at the basis's vintage and prints no date of its own.
     expect(administrative.filter((v) => v.vintage !== undefined)).toEqual([]);
     expect(scenarios.bases.administrative.vintage).toBe(scenarios.provenance.vintage);
   });
@@ -1725,8 +1696,13 @@ describe('bundle D1, the map service access draws (#31)', () => {
         .units.filter((u) => u.kind === 'proposed')
         .map((u) => [u.name, [...u.districts].sort()]),
     );
+    // Keyed on the shipped *name*, which is the principal's through `unitNames`: the unit around
+    // Karachi East is called Karachi, and the re-derivation has to compare the same units the map
+    // draws rather than the district each was named for.
     const derived = new Map(
-      partition.units.map((unit) => [unit.principal, [...unit.districts].sort()] as const),
+      unitNames(partition.units.map((unit) => unit.principal)).map(
+        (name, index) => [name, [...(partition.units[index]?.districts ?? [])].sort()] as const,
+      ),
     );
     expect([...shipped.keys()].sort()).toEqual([...derived.keys()].sort());
     for (const [name, districts] of shipped) {
@@ -1857,12 +1833,16 @@ describe('bundle D1, the map service access draws (#31)', () => {
     // tell which province one belongs to, which colour it is, or why two of the same colour in the
     // same province are two units. Every unit says all three on its own line.
     const partition = rerun();
-    for (const unit of partition.units) {
-      const shipped = d1().units.find((u) => u.name === unit.principal);
+    const names = unitNames(partition.units.map((unit) => unit.principal));
+    for (const [index, unit] of partition.units.entries()) {
+      const shipped = d1().units.find((u) => u.name === names[index]);
       expect(shipped?.note, unit.principal).toContain(`of ${unit.province} in the`);
       expect(shipped?.note, unit.principal).toContain(`${unit.band.label} band`);
       expect(shipped?.note, unit.principal).toContain(`${(unit.mean * 100).toFixed(1)}%`);
       expect(shipped?.note, unit.principal).toContain('touching one another');
+      // And the district it was named for is still said, which is where the provenance lives: the
+      // unit around Karachi East is called Karachi and its note names Karachi East.
+      expect(shipped?.note, unit.principal).toContain(`Named for ${unit.principal}`);
     }
   });
 

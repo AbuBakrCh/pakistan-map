@@ -746,7 +746,10 @@ describe('a variant at the 390px bar', () => {
       'Lower Chitral',
       'Upper Chitral',
       'Hyderabad',
-      'Karachi East',
+      // The unit around Karachi East, which is called Karachi: the four quarters are subdivisions
+      // of one city and a proposed province named for one of them reads as a claim about a
+      // quarter (`unit-names.ts`).
+      'Karachi',
     ],
   };
 

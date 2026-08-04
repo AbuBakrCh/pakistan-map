@@ -50,6 +50,23 @@ see exactly which district it chose and disagree with it. The seats of the first
 no clause of their own — every provincial capital is already the headquarters of the division it
 names, and Islamabad is the whole of its own pseudo-division (#3).
 
+**A rule-drawn unit is named for the district it is built around, and one city is the exception**
+(`scripts/lib/unit-names.ts`). Nobody has proposed these units, so nobody has named them: A6's take
+the name of their centre and D1's the name of their most populous district, because inventing one
+would be exactly the editorial voice a stated rule exists to keep out. That is right everywhere but
+Karachi, which PBS publishes as four districts carrying the city's own name — `Karachi East`,
+`Karachi West`, `Karachi South`, `Karachi Central`. A proposed **province** called *Karachi East*
+reads as a claim about the east side of the city, which is not what either rule drew, so a unit
+built around one of the four is called **Karachi** and the district it was named for is still said
+on the card, where the provenance belongs. The rule is stated on the city and not on a list of
+compass words: *South Waziristan* is a district in its own right and a unit drawn around it is about
+South Waziristan. Whether a unit may take the short name is a question about the **partition** and
+not about the unit — a tighter ceiling seats one unit at Karachi East and another at Karachi West,
+and two provinces called Karachi could not be told apart in the key, the card or the map — so where
+two would share it, each keeps its district's full name and the rest of the partition is unaffected.
+L7's region names take the same shortening for the same reason, in the parenthesis that tells two
+Urdu regions apart: *Urdu (Karachi)*, not *Urdu (Karachi East)*.
+
 **What it draws is 19 units, and where they fall is the finding** (#28). Punjab comes to 7, Sindh
 to 3, Khyber Pakhtunkhwa to 3, Balochistan to 5, and Islamabad Capital Territory to 1. **The two
 limits bind in different provinces, which is why the rule needs both.** Punjab's units run up
@@ -109,30 +126,28 @@ with a different proposal at the same address is the one substitution #23 refuse
 suite holds the draft-approved variant set against the built one with the retirement named, so a
 variant that went missing for any other reason still fails.
 
-**A5 is the variant that redraws nothing, and the one that settles open item 2b's near miss**
-(#28). Gilgit-Baltistan and Azad Jammu & Kashmir become provinces; every boundary stays where it
-is, the ceasefire line included, and the scorecard reads **nought districts moved** — the only
-variant in the app of which that is true. Their **units** are `proposed` rather than `territory`, so
-each takes the accent on its outline and on its name and is said to be a proposed province in the
-card, the tooltip and the legend — which is the whole of what A5 argues, and the reason the
-variant's scorecard counts nought districts moved rather than twenty.
+**A5 was the variant that redrew nothing, and it has been retired** (#28). *Constitutional
+regularisation* made Gilgit-Baltistan and Azad Jammu & Kashmir provinces; every boundary stayed
+where it was, the ceasefire line included, and its scorecard read **nought districts moved** — the
+only variant in the app of which that was ever true. It is retired because that is what it argues
+about: constitutional standing, on a basis about administrative size, beside a rule-drawn map of
+where a province's people can reach its headquarters. Its id is retired with A1 to A4's, on the same
+terms — `#/administrative/a5` resolves to the **baseline**, never to A6, since a reader who
+bookmarked the map that moves nothing must not be handed the map that moves 135 districts.
 
-**The hatched ground beneath them does not follow the unit kind, and this is a stated cost rather
-than a claim.** The hatch is stratum 1 and the territory stroke stratum 2, and both are keyed on the
-*geography bundle's* province kind — `land-${kind}` in `map.ts` against `.land-territory`, and the
-`province-territory` rule beneath it — which is a fact about what Pakistan administers today and is
-the same under every variant, exactly as the faded current boundaries are. So under A5 the two
-territories are outlined and named as proposed provinces over ground still textured as territory.
-The alternative is not obviously better: making the base map's texture answer to the active variant
-would make stratum 1 a function of the selection, which is what D14 exists to prevent, and it would
-mean the one variant that redraws nothing changed the drawing. It is left as it is, said here rather
-than in the prose of a card. That is admitted with `TERRITORY_CLAIM_POLICY` still at **`forbid`**:
-see open item 2b for why a promotion is not a claim. The two halves are **not equally sourced** and
-the card says so at length — GB has a dated announcement, a drafted amendment and a resolution of
-its own assembly; AJK has none of the three and provincial status for it is not government policy —
-because drawing them identically and saying nothing would report the weaker claim as an equal one.
-Both still carry no population, since PBS published none for either (D25): calling a territory a
-province does not conjure a figure, and both are set aside from the spread by name.
+**Three things it proved are kept, and none of them depends on it.** The renderer decides what to
+stroke solid from the **arcs** and never from a unit's kind or name, so a variant arguing for
+provincial status cannot put a solid international border along the Line of Control — held over
+every variant in `units.test.ts`, with H3's renamed *Northern Areas* and H2's *Gilgit Agency* as the
+live cases. The **hatched ground does not follow the unit kind**: the hatch is stratum 1 and the
+territory stroke stratum 2, both keyed on the *geography bundle's* province kind, which is a fact
+about what Pakistan administers today and is the same under every variant, exactly as the faded
+current boundaries are — making the base map's texture answer to the selection would make stratum 1
+a function of the variant, which is what D14 exists to prevent. And `promotedTerritoryOf` stays in
+`scenarios.ts` with `TERRITORY_CLAIM_POLICY` still at **`forbid`**: it is one of open item 2b's two
+recorded narrowings, and deleting it would settle a constitutional question by tidying up after a
+content decision. **No shipped unit exercises it**, and the suite asserts that emptiness rather than
+leaving it unsaid — so a promotion arriving later arrives in a diff somebody read.
 
 **H2 is the map with no figures on it, and that is what lets it draw 1947 at all** (#30). It is the
 oldest demarcation in the app — the four provinces with the eleven acceding princely states this
@@ -197,14 +212,15 @@ NWFP beside it already carried.
 gap in it.** "Moved" is decided on a unit's **name** and never on its kind, so Punjab's 33 remaining
 districts still carry the province forward and the count stays 59. Counting them would be the
 alternative `scorecard.ts` rejects by name — "calls the twenty-five districts left in Punjab moved
-when it is the province that shrank" — and it would break A5, whose two `proposed` units move nought
-districts and are asserted to. The independence of `kind` from "moved" is load-bearing in both
-directions and is now asserted from both ends.
+when it is the province that shrank" — and it would have broken A5, whose two `proposed` units
+moved nought districts and were asserted to. That variant is retired; the independence of `kind`
+from "moved" is load-bearing in both directions regardless, and is asserted from both ends still —
+Punjab carrying forward at `proposed`, and no variant left reporting nought moved.
 
 **That absence is also what admits Hunza and Nagar, and it is the second narrowing of open item
 2b.** Both were states in their own right and both are Gilgit-Baltistan districts today — two of
-ten, so neither is a whole territory under its own name and A5's `promotedTerritoryOf` correctly
-does not reach them. What admits them is `withoutModernFigures` in `scenarios.ts`, on the same
+ten, so neither is a whole territory under its own name and `promotedTerritoryOf` correctly does
+not reach them. What admits them is `withoutModernFigures` in `scenarios.ts`, on the same
 shape of argument #28 used: the *stated* reason `TERRITORY_CLAIM_POLICY` is `forbid` is arithmetic —
 a unit holding *some* uncounted districts has a population short by an unknowable amount and looks
 exactly like a unit whose population is right — and that reason cannot reach a variant with no
@@ -263,15 +279,15 @@ sentence of its own.
 a citation rather than by a wider list. H3's second **Opposed by** entry says that restoring the name
 *Northern Areas* would undo "the provisional provincial status announced in 2020", and nothing in
 H3's sources reached 2020 — the one piece of card copy where a variant could assert any year with
-nothing checking it. A5 already carries the sourced form of that same fact, so H3 now cites **the
-same line**: the announcement by Prime Minister Imran Khan of 1 November 2020 and the drafted
-amendment prepared for it. Three gaps remain and each is named with the year it asserts: **A6** and
-**A5** assert 1970, H1 asserts 1961. A6 inherited its 1970 from the retired rule-drawn maps, whose
-status line it carries; retiring them moved the gap rather than closing it. A5's is the one the
-widening added — its note is titled
-*Relationship to the 1970 restoration*, which is H3's own name, and A5 cites nothing dated 1970. It
-is the same class as the other four, a content edit on somebody else's variant, and is left named
-rather than tidied away by loosening the check.
+nothing checking it. The sourced form of that same fact was already in the app on A5's card, so H3
+cites **the same line**: the announcement by Prime Minister Imran Khan of 1 November 2020 and the
+drafted amendment prepared for it — a citation of H3's own now that A5 is gone. Two gaps remain and
+each is named with the year it asserts: **A6** asserts 1970 and **H1** asserts 1961. A6 inherited
+its 1970 from the retired rule-drawn maps, whose status line it carries; retiring them moved the gap
+rather than closing it. The third gap the widening added was A5's — its note was titled
+*Relationship to the 1970 restoration*, H3's own name, and it cited nothing dated 1970 — and it
+went with the variant. A gap closed by retiring what carried it is closed for the check and for
+nothing else, which is why the reasoning stays here and only the list is shorter.
 
 **The mother-tongue rule engine draws the two Language variants nobody published** (#26).
 `scripts/lib/mother-tongue-partition.ts` assigns each district to the region of its dominant

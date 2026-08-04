@@ -694,10 +694,11 @@ export function variantLabelSites(
  * giving it the corner outright is what puts *Rawalpindi* off that variant's map. That price is
  * named in the suite rather than absorbed into a count.
  *
- * A5 is the deliberate exception. Its two units are AJK and GB **promoted** — argued as provinces,
- * recorded as `proposed`, and ranked as the proposals they are, which is what a promotion is. It
- * draws seven units and names all seven, and that it does is asserted per variant rather than
- * assumed here.
+ * A **promotion** is the deliberate exception, and the rule is written for it rather than for the
+ * one variant that had one. A promoted territory is argued as a province, recorded as `proposed`,
+ * and ranked as the proposal it is — keyed on the kind the bundle records and never on the name, so
+ * it works for a variant that has not been written yet. A5 was the variant that had two; it is
+ * retired, and nothing here needed changing when it went.
  */
 const UNIT_FLOOR = 20;
 const TERRITORY_FLOOR = 21;

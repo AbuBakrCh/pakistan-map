@@ -262,9 +262,9 @@ to which, and the per-variant record of what is nameable at 390px — is in
   emptiness rather than as a shrinking list.
 - **District names are the one tier with a zoom threshold** — not laid out at all below **6×**
   (#34); a reader gets a district by tapping it.
-- **The 390px bar** is met by sixteen of the seventeen variants. **D1 and only D1** falls short —
-  six of its thirty-five unit names go unset, each listed by name in the suite and each shown to
-  return at desktop size.
+- **The 390px bar** is met by eleven of the thirteen variants. **D1 and A6** fall short — six of
+  D1's thirty-five unit names go unset and one of A6's (*Islamabad*, a unit of a single district),
+  each listed by name in the suite and each shown to return at desktop size.
 
 ### Compare and export
 

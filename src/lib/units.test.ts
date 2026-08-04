@@ -193,13 +193,11 @@ describe('unitBoundaries', () => {
       // the rule sees only the 136 districts the census covers, and both are carried through as
       // themselves — which is why the line runs along the same two units here as everywhere else.
       a6: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
-      // A5 is the variant this assertion was waiting for. It draws both territories as *proposed
-      // provinces* — the whole content of the proposal — and the ceasefire line is held out of
-      // their outlines exactly as it is everywhere else. A renderer that decided what to stroke
-      // solid from a unit's `kind` rather than from the arcs would draw an international border
-      // along the Line of Control the moment a variant argued for provincial status, which is the
-      // single thing #28 asked to be sure of.
-      a5: ['Gilgit-Baltistan', 'Azad Jammu & Kashmir'],
+      // A5 was the variant this assertion was waiting for — it drew both territories as *proposed
+      // provinces* — and it has been retired. The property it proved is not: the renderer decides
+      // what to stroke solid from the *arcs* and never from a unit's `kind` or name, which is why
+      // H3's Northern Areas and H2's Gilgit Agency below still hold the line out. A variant that
+      // argues for provincial status again would need no change here, which was #28's whole point.
       h1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       // H2 (#30) is the third name this ground goes by in the shipped set, and the first variant
       // that does not hold the territory in one piece: Hunza and Nagar are drawn out of it as the
