@@ -335,6 +335,14 @@ export function renderControls(
  * to have a hole in it. `aria-pressed` says which way it is, and the description says what that
  * means for the map, since `role="img"` means the map itself can be asked nothing.
  *
+ * **It wears a switch, because `aria-pressed` is not visible.** The chip's filled state is the same
+ * fill an active basis chip carries, and a control that reads as *chosen* is not the same claim as
+ * one that reads as *on* — a reader looking at the corner could not tell whether the words named a
+ * state or an action. So the button carries a track and a knob that slide, `aria-hidden` because
+ * the state is already said twice in words (`aria-pressed` and the description). It is a glyph and
+ * not a second control: the whole chip is still the one hit target, and the switch takes no events
+ * of its own.
+ *
  * Every word of it is `lib/divisions.ts`'s. This file composes none, exactly as it composes none of
  * the card's.
  */
@@ -360,8 +368,10 @@ export function renderMapControls(
     .attr('class', 'chip chip-divisions')
     .attr('title', DIVISIONS_TITLE)
     .attr('aria-describedby', 'divisions-state')
-    .text(DIVISIONS_LABEL)
     .on('click', () => onToggle(!shown));
+
+  button.append('span').attr('class', 'switch-track').attr('aria-hidden', 'true');
+  button.append('span').text(DIVISIONS_LABEL);
 
   function show(next: boolean): void {
     shown = next;

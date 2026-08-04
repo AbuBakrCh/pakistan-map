@@ -260,7 +260,21 @@ item 5's problem and not this control's.
 It sits on the map rather than in the controls well because it changes the paper rather than the
 argument — the same reason Compare and the export sit apart from the two radio groups. A
 pressed-state `<button>` and not a checkbox, since every control on this page is a button and that
-is what `holdsCompare` relies on when it refuses `Space` to a focused control (#22). On a phone it
+is what `holdsCompare` relies on when it refuses `Space` to a focused control (#22).
+
+**But `aria-pressed` is not a picture, so the button wears a switch.** Pressed, the chip is filled
+in the ink — which is the same styling an active *basis* chip carries, and those say different
+things: one is one of a set, this one is on or off. The words cannot carry the difference either,
+since *Show all divisions* reads as an instruction whichever way the tier is currently drawn. So a
+track and a knob sit before the label and the knob **slides** rather than swapping, because the
+movement is what says the two positions are one control. It is `aria-hidden` — the state is already
+said twice in words — takes no events of its own, and is sized in `em` against the chip's own type,
+so it is the height of the word beside it at the 390px bar where the chip grows to `--action-h` and
+the type does not, and the chip's height, which the fill key's offset is measured against, is
+unchanged. Its two colour pairs are the chip's own two states and not a third: off, the paper and
+the province rule; on, the paper against the ink the chip has just been filled with.
+
+On a phone it
 moves to the bottom left, on its own line above Compare and the export: the docked tooltip is a
 full-width opaque bar squared off against the top of the frame (#33) and would paint over it while
 still letting a tap through, which is an invisible live button — worse than a moved one.

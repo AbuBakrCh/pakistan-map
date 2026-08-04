@@ -626,10 +626,70 @@ body {
  * the map has put under it.
  */
 .chip-divisions {
+  align-items: center;
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(2px);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
+}
+
+/*
+ * The switch on the division toggle — a track and a knob, and the only thing on this page that is
+ * drawn rather than written.
+ *
+ * `aria-pressed` styles this chip exactly as a *chosen* basis chip is styled, filled in the ink,
+ * and those are different claims: one control is one of a set and this one is on or off. The words
+ * cannot carry the difference either — "Show all divisions" reads as an instruction whichever way
+ * the tier is currently drawn. So the state is drawn in the one idiom a reader already knows for
+ * it, and the knob *slides* rather than swapping, since the movement is what says the two positions
+ * are the same control.
+ *
+ * Sized in `em` against the chip's own small-caps, so it stays the height of the word beside it at
+ * the 390px bar where the chip grows to `--action-h` and the type does not. It is shorter than the
+ * line box, so the chip's height — which the fill key's top offset is measured against — is
+ * unchanged. Centred rather than on the chip's baseline: a box has no baseline worth sharing.
+ *
+ * Its colours are the chip's two states and not a third pair. Off, the track is the paper it sits
+ * on and the knob the province rule; on, the chip is filled with ink and both become the paper, so
+ * the switch is legible against whatever the chip has just become without either state needing a
+ * colour of its own.
+ */
+.switch-track {
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule-province);
+  border-radius: 999px;
+  flex: none;
+  height: 0.86em;
+  position: relative;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+  width: 1.6em;
+}
+
+.switch-track::after {
+  background: var(--rule-province);
+  border-radius: 50%;
+  content: '';
+  height: 0.5em;
+  left: 0.16em;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition:
+    background-color 120ms ease,
+    left 120ms ease;
+  width: 0.5em;
+}
+
+.chip-divisions[aria-pressed='true'] .switch-track {
+  background: color-mix(in srgb, var(--paper) 32%, transparent);
+  border-color: var(--paper);
+}
+
+.chip-divisions[aria-pressed='true'] .switch-track::after {
+  background: var(--paper);
+  left: calc(100% - 0.66em);
 }
 
 .chip-divisions:focus-visible {

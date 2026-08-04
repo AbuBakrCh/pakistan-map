@@ -84,7 +84,9 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   all**, the **legend follows it**, and it is **not in the URL and not in history** (as the
   sheet's detent is not). It rescues **not one** of the unit names this build cannot set at
   390px: `UNIT_FLOOR` outranks every division outright. A pressed-state `<button>`, not a
-  checkbox, since that is what `holdsCompare` relies on (#22); bottom left on a phone.
+  checkbox, since that is what `holdsCompare` relies on (#22); bottom left on a phone. **It wears a
+  sliding switch**, because a filled chip is how an active *basis* is drawn and *chosen* is not the
+  same claim as *on* — a glyph, `aria-hidden`, taking no events of its own.
 - **Two regions on a wide screen, and a block underneath.** Above 1000px: controls left, map takes
   everything else, the card's three blocks under it — argument at a prose measure, units and
   scorecard beside it, footnotes and sources right. Below 1000px one column; below `--sheet` the
