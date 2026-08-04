@@ -187,10 +187,46 @@ export interface UnitRosterEntry {
   readonly fills: readonly UnitFillSegment[];
 }
 
+/**
+ * The proposed units of one current province, where the variant leaves that province's edge alone.
+ *
+ * The province is named as the census names it, which is the only place this app has a district's
+ * province from — so the heading is `Islamabad Capital Territory` and not a short form of it, and
+ * nothing here calls it a province in words. The grouping *is* the claim: these units are what this
+ * province would be cut into.
+ */
+export interface UnitRosterGroup {
+  /** The current province the units below it are carved out of, in the census's own name for it. */
+  readonly province: string;
+  readonly entries: readonly UnitRosterEntry[];
+}
+
 export interface UnitRoster {
   /** How many units the variant cuts the country into, in the words the map sets. */
   readonly heading: string;
   readonly entries: readonly UnitRosterEntry[];
+  /**
+   * The same entries under their current provinces, or **null** where the variant crosses one.
+   *
+   * A grouping is offered only where it is true of every row: a variant that redraws inside the
+   * provinces that already exist is answering *what would this province become*, and a flat list of
+   * nineteen names makes the reader do that arithmetic off the map. A variant that crosses a
+   * provincial boundary — L3, L7, H1, H2 — has no such answer, and grouping the rows it can group
+   * would report a partition as provincial that is not.
+   *
+   * Every entry appears under exactly one group, in `entries`' own order, so the paper and the card
+   * still read as one list; the groups come in the order their first unit does, since nothing in
+   * the bundle ranks Sindh against Balochistan.
+   */
+  readonly groups: readonly UnitRosterGroup[] | null;
+  /**
+   * How many lines the key actually sets — the rows plus a heading for each group.
+   *
+   * The count the columns are struck from, and it is not `entries.length` once the rows are
+   * grouped: a province heading takes a line of the column exactly as a unit does, and columns
+   * struck from the rows alone would push the last group's tail below the box.
+   */
+  readonly rows: number;
   /**
    * How many columns the rows are set in, so the whole key is on the paper at once.
    *
@@ -214,8 +250,10 @@ export interface UnitRoster {
  * sea and the ground west of Balochistan — deep and narrow. A column of eighteen is what the
  * shortest desktop frame holds under the heading, and holding to two of them keeps the widest key
  * this build sets narrower than that empty strip, where three columns of twelve reached across the
- * country itself. Two columns of eighteen hold thirty-six rows and the longest key here is D1's
- * thirty-two; the cap is what stops a hypothetical fortieth from marching over Pakistan to be read.
+ * country itself. Two columns of eighteen hold thirty-six lines, and the longest key here is D1's
+ * thirty-two units under their four provinces — thirty-six exactly, which is why the grouping is
+ * what gives way rather than the fold when the two collide (`unitRoster`). The cap is what stops a
+ * hypothetical thirty-seventh line from marching over Pakistan to be read.
  */
 export const KEY_ROWS_PER_COLUMN = 18;
 export const KEY_MAX_COLUMNS = 2;
@@ -270,6 +308,46 @@ function fillsUnder(
 }
 
 /**
+ * The proposed units under their current provinces, or **null** where the variant crosses one.
+ *
+ * The question is asked of the variant rather than of the basis, and that is the whole point of it
+ * being derived here: *the Administrative and Development bases draw inside the provinces that
+ * already exist* is a fact about A6's and D1's district lists, and a variant added tomorrow that
+ * broke it would have to break this check first. It is answered district by district — a unit whose
+ * districts sit in two provinces crosses one, and so does a unit reaching ground the census does
+ * not publish a province for, since a group headed by a province this app had to guess would be
+ * exactly the unsourced surface the working agreement forbids.
+ *
+ * All or nothing. A partition half of whose units respect the provinces is a partition that does
+ * not, and grouping the obedient half would say otherwise on the paper.
+ */
+function unitsByProvince(
+  units: readonly UnitRecord[],
+  entries: readonly UnitRosterEntry[],
+  provinceOf: ReadonlyMap<string, string> | null,
+): readonly UnitRosterGroup[] | null {
+  if (provinceOf === null || units.length === 0) return null;
+
+  const grouped = new Map<string, UnitRosterEntry[]>();
+  for (const [index, unit] of units.entries()) {
+    const provinces = new Set(unit.districts.map((district) => provinceOf.get(district)));
+    // One province, and one this app has a name for. A unit of no districts has no province either
+    // and is not evidence that the partition respects them.
+    if (provinces.size !== 1) return null;
+    const [province] = [...provinces];
+    if (province === undefined) return null;
+    const entry = entries[index];
+    if (entry === undefined) return null;
+    const rows = grouped.get(province);
+    if (rows === undefined) grouped.set(province, [entry]);
+    else rows.push(entry);
+  }
+  // Insertion order, which is the order the units are already in — so the groups read down the key
+  // in the order the card reads down the page.
+  return [...grouped.entries()].map(([province, rows]) => ({ province, entries: rows }));
+}
+
+/**
  * The roster the map frame carries in its own corner, beside the boundaries it names.
  *
  * `unitLegend` says what the three strokes *mean*; this says which unit is which, on the paper,
@@ -292,23 +370,47 @@ function fillsUnder(
  * stroke, which says whether the unit is proposed — the accent means that and nothing else (D14) —
  * and the ground beneath it, which is the basis's data and belongs to no unit. Handed the fills
  * rather than reaching for them, so this module knows nothing about which basis is active.
+ *
+ * **And where the variant redraws inside the provinces that already exist, the rows are grouped
+ * under them.** Nineteen names in a column is a list; the same nineteen under Punjab, Sindh, Khyber
+ * Pakhtunkhwa, Balochistan and Islamabad Capital Territory is the proposal's own structure, and it
+ * is the structure the reader is looking at, since every one of those outer edges is still on the
+ * map in the boundary stratum's own weight. Handed the district's province rather than reaching for
+ * it, exactly as the fills are: this module knows nothing about the census.
  */
 export function unitRoster(
   variant: VariantRecord,
   fills: ReadonlyMap<string, DistrictFill> | null = null,
+  provinceOf: ReadonlyMap<string, string> | null = null,
 ): UnitRoster {
   const units = unitsProposedFirst(variant).filter((unit) => unit.kind === 'proposed');
+  const entries = units.map((unit) => ({
+    name: unit.name,
+    swatch: `unit-${unit.kind}` as UnitSwatch,
+    fills: fillsUnder(unit, fills),
+  }));
+
+  // Grouped where it is true of every unit, and then only where the headings still fit on the paper:
+  // a province heading costs a line, and the key's first obligation is that nothing is below a fold
+  // (`keyColumns`). Where the two collide the grouping is what gives way, because it is an
+  // improvement to a key that already worked and a row out of sight is a partition misreported.
+  const grouped = unitsByProvince(units, entries, provinceOf);
+  const groups =
+    grouped !== null && entries.length + grouped.length <= KEY_ROWS_PER_COLUMN * KEY_MAX_COLUMNS
+      ? grouped
+      : null;
+  const rows = entries.length + (groups?.length ?? 0);
+
   return {
     // The count of the *proposal*, which is what the rows below it are and what the word `proposed`
     // in it says: the key would otherwise lead with a number none of its own rows accounts for.
-    // The partition's own count is the scorecard's and the card's, printed in full on both.
+    // The partition's own count is the scorecard's and the card's, printed in full on both. The
+    // headings below it are not units and are not counted here.
     heading: `${units.length} proposed ${units.length === 1 ? 'unit' : 'units'}`,
-    entries: units.map((unit) => ({
-      name: unit.name,
-      swatch: `unit-${unit.kind}` as UnitSwatch,
-      fills: fillsUnder(unit, fills),
-    })),
-    columns: keyColumns(units.length),
+    entries,
+    groups,
+    rows,
+    columns: keyColumns(rows),
   };
 }
 

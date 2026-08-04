@@ -53,6 +53,34 @@ one row headed by l1's eight leads with a number none of its own rows accounts f
 whole partition. That figure is the card's and the scorecard's, printed in full on both, along with
 the units the variant leaves alone and each one's population.
 
+**Where a variant redraws inside the provinces that already exist, the rows are grouped under
+them.** A6 cuts five current units into nineteen and D1 cuts four into thirty-two; nineteen names in
+a column is a list, and the same nineteen under *Punjab*, *Sindh*, *Khyber Pakhtunkhwa*,
+*Balochistan* and *Islamabad Capital Territory* is the proposal's own structure. It is the structure
+the reader is looking at, too: every one of those outer edges is still drawn on the map, in the
+boundary stratum's own weight, because the variant did not touch it. Without the headings the reader
+has to do that grouping off the map to answer the question the proposal is actually making — *what
+would this province become*.
+
+**It is asked of the variant, never of the basis.** "The Administrative and Development bases do not
+cross provincial boundaries" is a fact about A6's and D1's district lists rather than a property of
+the bases they are filed under, so the key derives it from the districts, district by district, and a
+variant added tomorrow that crossed an edge would have to break that check first. Four variants
+answer no today — **L3**, the one transcribed proposal whose province crosses an existing provincial
+boundary, and L7, H1 and H2 — and their keys are the flat list they always were. It is **all or
+nothing**: a partition half of whose units respect the provinces is a partition that does not, and
+grouping the obedient half would report a provincial structure the other half contradicts.
+
+Three things about how it is drawn. The province is named **as the census names it**, which is the
+only place this app has a district's province from — so the heading is `Islamabad Capital Territory`
+in full and the word *province* appears nowhere in it, because nothing calls Islamabad a province. A
+unit reaching ground the census publishes no province for — AJK or Gilgit-Baltistan (D25) — is not
+grouped and **takes the whole key flat with it**, since a heading this app had to guess is exactly
+the unsourced surface the working agreement forbids. And grouping is the one thing on this box
+allowed to move a row: it moves them **as little as it can**, keeping the card's order inside each
+province and taking the provinces in the order their first unit comes in, so the key and the card
+still meet the units in the same order within any ground they share.
+
 **Nothing is below a fold, and this is the decision the shape of the box is built around.** The key
 does not scroll. It used to: it was capped at 60% of the frame with a standing scrollbar, on the
 argument that a bar which fades asks a reader to discover by accident that the key continues. But a
@@ -60,7 +88,11 @@ standing bar only advertises the problem — a key a reader has to scroll is one
 whole proposal until they happen to scroll it, and a key that misreports the partition is the one
 thing this box exists to prevent. So the rows run **down before across**: eighteen to a column and
 never more than two columns (`unitRoster.columns`, arithmetic rather than a media query, and under
-test), which holds the longest key this build has — D1's thirty-two proposed units — whole. Down
+test), which holds the longest key this build has — D1's thirty-two proposed units under their four
+provinces, thirty-six lines exactly, since **a province heading takes a line of a column as a unit
+does** — whole. Where the two collide the **grouping** is what gives way and never the fold: the
+headings are an improvement to a key that already worked, and a row out of sight is the partition
+misreported, which is what this box exists to prevent. Down
 before across, because the corner the box stands in is the sea and the ground west of Balochistan:
 deep and narrow. Three columns of twelve fit the same rows and reached across the country itself. The count is set
 inline by the renderer because the box is shrink-to-fit: a multi-column box with no column count
@@ -81,7 +113,10 @@ back by the same change that put the rows in columns.
 `unitsProposedFirst`, so the key is the card's own opening rows name for name; inside a kind the
 partition's own order stands, since nothing in the bundle ranks Sindh against Balochistan. The two
 lists are read one after the other, and a unit third on the paper and seventh in the card reads as
-two different units.
+two different units. The grouping above is the **one** thing allowed to depart from it, and it
+departs by the least it can: the same rows, every one of them once, in the card's order inside each
+province and with the provinces in the order their first unit comes in — so nothing here ranks Sindh
+against Balochistan either.
 
 **It takes part in the label layout, unlike the division toggle beside it.** That chip is small and
 translucent in a corner the names rarely reach; this is a solid box of up to eighteen lines and up

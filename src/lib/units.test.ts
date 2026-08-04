@@ -355,6 +355,151 @@ describe('unitRoster', () => {
     expect(keyColumns(KEY_ROWS_PER_COLUMN + 1)).toBe(2);
   });
 
+  /**
+   * The grouping, which is a property of the *variant* and never of the basis it is filed under.
+   *
+   * "The Administrative and Development bases redraw inside the provinces that already exist" is a
+   * fact about A6's and D1's district lists, so it is asserted as one: the check is run over every
+   * variant in the bundle and each is held to the answer its own districts give. A variant added
+   * tomorrow that crossed a provincial edge would fail here rather than quietly picking up a
+   * heading it has not earned.
+   */
+  describe('grouped by the provinces it redraws inside', () => {
+    const byName = (a: UnitRosterEntry, b: UnitRosterEntry): number => a.name.localeCompare(b.name);
+    const provinceOf: ReadonlyMap<string, string> = new Map(
+      Object.entries(censusStatistics.districts).map(([d, r]) => [d, r.province]),
+    );
+    /** Whether a variant's proposed units each sit inside one province the census names. */
+    const respectsProvinces = (variant: (typeof variants)[number]): boolean =>
+      variant.units
+        .filter((u) => u.kind === 'proposed')
+        .every((u) => new Set(u.districts.map((d) => provinceOf.get(d))).size === 1
+          && u.districts.every((d) => provinceOf.has(d)));
+
+    it('groups exactly the variants whose units stay inside one province, and no others', () => {
+      for (const variant of variants) {
+        const roster = unitRoster(variant, null, provinceOf);
+        expect(roster.groups !== null, variant.id).toBe(respectsProvinces(variant));
+      }
+
+      // Named as well as derived, because these are the sentences a reader would dispute. A6 cuts
+      // five current units into nineteen and D1 four into thirty-two; L3 is the one *transcribed*
+      // proposal whose province crosses an existing provincial boundary, and L7, H1 and H2 cross
+      // one too — none of them has a provincial structure to report.
+      const groupsOf = (id: string): readonly string[] | null => {
+        const variant = variants.find((v) => v.id === id);
+        if (variant === undefined) throw new Error(`${id} is not in the bundle`);
+        return unitRoster(variant, null, provinceOf).groups?.map((g) => g.province) ?? null;
+      };
+      expect(groupsOf('a6')).toEqual([
+        'Sindh',
+        'Punjab',
+        'Khyber Pakhtunkhwa',
+        'Balochistan',
+        'Islamabad Capital Territory',
+      ]);
+      expect(groupsOf('d1')).toEqual(['Khyber Pakhtunkhwa', 'Punjab', 'Sindh', 'Balochistan']);
+      for (const id of ['l3', 'l7', 'h1', 'h2']) expect(groupsOf(id), id).toBeNull();
+    });
+
+    it('puts every row under exactly one province, and keeps the card’s order inside each', () => {
+      // Grouping is the one thing that may move a row, and it moves it as little as it can: the
+      // rows are the flat list's own rows, every one of them exactly once, and inside a province
+      // the card's order stands. So a reader reading the key and then the card meets the units in
+      // a different arrangement but never in a different order within the ground they share.
+      for (const variant of variants) {
+        const roster = unitRoster(variant, null, provinceOf);
+        if (roster.groups === null) continue;
+        const rows = roster.groups.flatMap((g) => g.entries);
+        expect([...rows].sort(byName), variant.id).toEqual([...roster.entries].sort(byName));
+        expect(rows, variant.id).toHaveLength(roster.entries.length);
+        const flat = roster.entries.map((e) => e.name);
+        for (const group of roster.groups) {
+          const order = group.entries.map((e) => flat.indexOf(e.name));
+          expect(order, `${variant.id} / ${group.province}`).toEqual(
+            [...order].sort((a, b) => a - b),
+          );
+        }
+        // And the groups themselves come in the order their first unit does, so nothing here ranks
+        // Sindh against Balochistan — the bundle does not, and inventing a rank would be this app
+        // ordering the provinces by something no source states.
+        const firsts = roster.groups.map((g) => flat.indexOf(g.entries[0]?.name ?? ''));
+        expect(firsts, variant.id).toEqual([...firsts].sort((a, b) => a - b));
+        // And each group's province is the province of every district under it, off the census.
+        const units = variant.units.filter((u) => u.kind === 'proposed');
+        for (const group of roster.groups) {
+          for (const entry of group.entries) {
+            const unit = units.find((u) => u.name === entry.name);
+            expect(unit, entry.name).toBeDefined();
+            for (const district of unit?.districts ?? []) {
+              expect(provinceOf.get(district), `${entry.name} / ${district}`).toBe(group.province);
+            }
+          }
+        }
+      }
+    });
+
+    it('refuses to group a unit reaching ground the census names no province for', () => {
+      // A unit over AJK or Gilgit-Baltistan has no province in `statistics.json` (D25), and a
+      // heading this app had to guess would be exactly the unsourced surface the working agreement
+      // forbids. So the whole key falls back to the flat list rather than grouping what it can.
+      const a6 = variants.find((v) => v.id === 'a6');
+      if (a6 === undefined) throw new Error('a6 is not in the bundle');
+      expect(unitRoster(a6, null, provinceOf).groups).not.toBeNull();
+
+      const reaching = {
+        ...a6,
+        units: a6.units.map((u, i) =>
+          i === 0 && u.kind === 'proposed' ? { ...u, districts: [...u.districts, 'Skardu'] } : u,
+        ),
+      };
+      expect(provinceOf.has('Skardu')).toBe(false);
+      expect(unitRoster(reaching, null, provinceOf).groups).toBeNull();
+    });
+
+    it('is not offered at all where nothing tells it which province a district is in', () => {
+      // The default, and what every other assertion in this file is asked under: the roster is
+      // handed the answer rather than reaching for it, exactly as it is handed the fills.
+      for (const variant of variants) {
+        expect(unitRoster(variant).groups, variant.id).toBeNull();
+        expect(unitRoster(variant).rows, variant.id).toBe(unitRoster(variant).entries.length);
+      }
+    });
+
+    it('counts a province heading as a line, and gives the grouping up before the fold', () => {
+      // A heading takes a row of the column exactly as a unit does, so the columns are struck from
+      // the two together — D1 is thirty-two units under four provinces, thirty-six lines, which is
+      // precisely what two columns of eighteen hold.
+      for (const variant of variants) {
+        const roster = unitRoster(variant, null, provinceOf);
+        expect(roster.rows, variant.id).toBe(roster.entries.length + (roster.groups?.length ?? 0));
+        expect(roster.columns, variant.id).toBeLessThanOrEqual(KEY_MAX_COLUMNS);
+        expect(roster.columns * KEY_ROWS_PER_COLUMN, variant.id).toBeGreaterThanOrEqual(roster.rows);
+      }
+      const d1 = variants.find((v) => v.id === 'd1');
+      if (d1 === undefined) throw new Error('d1 is not in the bundle');
+      expect(unitRoster(d1, null, provinceOf).rows).toBe(KEY_ROWS_PER_COLUMN * KEY_MAX_COLUMNS);
+
+      // And where one more line would put a row out of sight, the *grouping* is what gives way: it
+      // is an improvement to a key that already worked, and a row below the fold is a partition
+      // misreported. A thirty-third unit in a fifth province is thirty-eight lines, so the key is
+      // set flat at thirty-three and every one of them is still on the paper.
+      const proposed = d1.units.find((u) => u.kind === 'proposed');
+      if (proposed === undefined) throw new Error('d1 proposes nothing');
+      const overflowing = {
+        ...d1,
+        units: [
+          ...d1.units,
+          { ...proposed, id: 'spare', name: 'Spare', districts: ['Islamabad'] },
+        ],
+      };
+      const flat = unitRoster(overflowing, null, provinceOf);
+      expect(flat.groups).toBeNull();
+      expect(flat.rows).toBe(33);
+      expect(flat.columns).toBe(2);
+    });
+  });
+
   it('shades each unit with the ground the map actually paints under it, in proportion', () => {
     const fills = motherTongueFills(censusStatistics);
     // Over l1 with every unit proposed, so the swatch arithmetic is asked of the whole partition

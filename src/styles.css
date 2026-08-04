@@ -675,6 +675,43 @@ body {
   padding: 0;
 }
 
+/*
+ * The provinces, where the variant redraws inside the ones that already exist.
+ *
+ * A group is deliberately *not* `break-inside: avoid`. Two columns of eighteen lines hold D1's
+ * thirty-two units and their four provinces exactly, and a group forbidden to break would pack
+ * those four blocks into two columns unevenly and push the tail out of the box — which is the one
+ * failure this arrangement exists to prevent. So a long province may continue in the next column,
+ * and only its heading is held to the first row of it: a heading alone at the foot of a column
+ * names a province whose units are somewhere else.
+ */
+.unit-key-group {
+  break-inside: auto;
+}
+
+.unit-key-province {
+  break-after: avoid;
+  color: var(--ink);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+  /* Not the heading's size and not a unit's colour: it is the ground the units below it are cut
+   * out of, and the accent means *a proposed province* and nothing else (D14). */
+  margin: 0.15rem 0 0.2rem;
+  /* Runs the width of the column, so the names below it read as sitting under it. */
+  border-bottom: 1px solid var(--land-hatch);
+}
+
+/* The first province needs no space above it: the roster's own heading is already there. */
+.unit-key-group:first-child .unit-key-province {
+  margin-top: 0;
+}
+
+.unit-key-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .unit-key-item {
   align-items: center;
   color: var(--ink-soft);

@@ -99,6 +99,18 @@ const FILLS: Partial<Record<BasisId, ReadonlyMap<string, DistrictFill>>> = {
 const SHADEABLE = new Set(Object.keys(FILLS) as BasisId[]);
 
 /**
+ * Which current province each district sits in, for the unit key's grouping.
+ *
+ * The census's own column and the only place this app has the answer from, which is why it stops at
+ * the 136 districts PBS published (D25): a unit reaching AJK or Gilgit-Baltistan has no province
+ * here, and the roster reads that absence as *this variant does not respect the provinces* rather
+ * than as a heading to invent. Assembled once, since it answers to nothing on the page.
+ */
+const PROVINCE_OF: ReadonlyMap<string, string> = new Map(
+  Object.entries(censusStatistics.districts).map(([district, record]) => [district, record.province]),
+);
+
+/**
  * What the Development basis's fill *is*, per district, for the tooltip (#31).
  *
  * The one basis whose shading is a figure nobody published, so the one basis whose shading has to
@@ -519,7 +531,11 @@ function renderUnitKey(active: Selection, variant: VariantRecord | null): void {
 
   // The same fill map the map itself is drawing with — read from `FILLS` rather than recomputed, so
   // a swatch in the key and the ground under the outline cannot be two different answers.
-  const roster = unitRoster(variant, active === null ? null : (FILLS[active.basis] ?? null));
+  const roster = unitRoster(
+    variant,
+    active === null ? null : (FILLS[active.basis] ?? null),
+    PROVINCE_OF,
+  );
   // A variant proposing nothing has nothing to key, and a heading over an empty list is a caption
   // with nothing to caption — the same reason the baseline empties the box rather than hiding it.
   if (roster.entries.length === 0) return;
@@ -535,18 +551,42 @@ function renderUnitKey(active: Selection, variant: VariantRecord | null): void {
   // to be wide enough — the stylesheet states the column's width and can state nothing about how
   // many of them a variant needs.
   list.style.columnCount = `${roster.columns}`;
-  for (const entry of roster.entries) {
-    const row = document.createElement('li');
-    // The unit's name is set in its own outline's colour, which is what the map does with unit
-    // names: the accent says *proposed* and says it in the one place a reader is already reading.
-    row.className = `unit-key-item unit-key-${entry.swatch}`;
-    row.append(unitKeySwatch(entry));
-    const name = document.createElement('span');
-    name.textContent = entry.name;
-    row.append(name);
-    list.append(row);
+  // Grouped where the variant redraws inside the provinces that already exist, flat where it
+  // crosses one — the roster's answer, never this file's, so the paper cannot claim a partition is
+  // provincial that the district lists say is not.
+  if (roster.groups === null) {
+    for (const entry of roster.entries) list.append(unitKeyRow(entry));
+  } else {
+    for (const group of roster.groups) {
+      const item = document.createElement('li');
+      item.className = 'unit-key-group';
+      const province = document.createElement('p');
+      province.className = 'unit-key-province';
+      // The province's own name and nothing added to it: the heading says which ground these units
+      // cut up, and calling Islamabad Capital Territory a province is what the card already refuses.
+      province.textContent = group.province;
+      item.append(province);
+      const rows = document.createElement('ul');
+      rows.className = 'unit-key-rows';
+      for (const entry of group.entries) rows.append(unitKeyRow(entry));
+      item.append(rows);
+      list.append(item);
+    }
   }
   mount.append(list);
+}
+
+/** One row of the key: the ground under a unit, then its name in its own outline's colour. */
+function unitKeyRow(entry: UnitRosterEntry): HTMLElement {
+  const row = document.createElement('li');
+  // The unit's name is set in its own outline's colour, which is what the map does with unit
+  // names: the accent says *proposed* and says it in the one place a reader is already reading.
+  row.className = `unit-key-item unit-key-${entry.swatch}`;
+  row.append(unitKeySwatch(entry));
+  const name = document.createElement('span');
+  name.textContent = entry.name;
+  row.append(name);
+  return row;
 }
 
 /**

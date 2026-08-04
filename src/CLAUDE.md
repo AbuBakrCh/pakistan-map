@@ -25,15 +25,27 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   ones a reader cannot name off the map they already know — and **counts what it names**, in the
   word *proposed*, so the figure is never taken for the partition's. The whole partition, with each
   unit's population, is the card's and the scorecard's.
+- **Where a variant redraws inside the provinces that already exist, the rows are grouped under
+  them** — A6's nineteen under five, D1's thirty-two under four. Asked of the **variant's district
+  lists** and never of its basis, so a variant that crossed an edge would fail the check rather than
+  inherit a heading; **all or nothing**, since grouping the obedient half of a partition reports a
+  provincial structure the other half contradicts. Four variants answer no — **L3**, L7, H1, H2 —
+  and their keys are flat. The province is named **as the census names it** (`Islamabad Capital
+  Territory`, and the word *province* nowhere in the heading), and a unit reaching ground the census
+  publishes no province for takes the whole key flat with it rather than being given a guessed one.
 - **Nothing is below a fold.** The key does **not scroll**: the rows run into a second column
   (`unitRoster.columns`, eighteen rows to a column and two columns at most — **down before
   across**, since the corner it stands in is a deep, narrow strip of sea and of the ground west of
   Balochistan), because a key a reader has to discover the rest of is one they take for the whole
-  proposal until they do.
+  proposal until they do. **A province heading is a line of the column as a unit is** — D1 is
+  thirty-six lines, exactly what two columns hold — and where the two collide the **grouping** gives
+  way, never the fold.
 - Three things it does not do: **no populations and no printed district counts** (the scorecard's,
   #20), **it does not answer to compare**, and it takes **no pointer events at all** — there is
   nothing to click, drag or scroll, so the map pans and zooms straight through that corner.
-- **The order is the card's** — one `unitsProposedFirst`, not two orders that agree today.
+- **The order is the card's** — one `unitsProposedFirst`, not two orders that agree today. The
+  grouping is the one departure and is the least one: the card's order inside each province, and the
+  provinces in the order their first unit comes in.
 - **It takes part in the label layout**, seeded into the same `occupied` set as the docked
   tooltip. **It is not drawn at 390px**, a decision rather than a fallback. **And it is
   `aria-hidden`**, because `lib/regions.ts` already names every region in words (#35).
