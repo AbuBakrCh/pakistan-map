@@ -13,6 +13,7 @@ import {
   BASELINE,
   BASIS_ORDER,
   basisChoices,
+  offeredBases,
   mapDescription,
   refusalLines,
   selectBasis,
@@ -85,50 +86,52 @@ describe('basisChoices', () => {
     expect(administrative?.basis.badges).toEqual(['census', 'derived']);
   });
 
-  it('refuses the one that is left, and says which half of it is missing', () => {
-    // "Coming soon" is the one answer that tells a reader nothing. Historical has its four
-    // variants written and no fill behind them, which is a different refusal from the one
-    // Development and Administrative used to get, and the control says which applies.
-    const refused = choices.filter((c) => !c.available);
-    expect(refused.map((c) => c.basis.id)).toEqual(['historical']);
-    for (const choice of refused) expect(choice.unavailable).toContain(choice.basis.name);
+  it('withholds Historical from the menu, and keeps it in the bundle it was withheld from', () => {
+    // The one basis this build does not offer. Hiding it is a decision about the menu and about
+    // nothing else: the variants are still written, still under their basis here, and still on the
+    // audit panel — so a reader who follows an old link or reads `about.ts` finds the basis
+    // accounted for rather than vanished.
+    const historical = choices.find((c) => c.basis.id === 'historical');
+    expect(historical?.hidden).toBe(true);
+    expect(historical?.available).toBe(false);
+    expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h2', 'h3', 'h4']);
+    // What it is short of stays on the record. The withholding is not a claim about the data, so
+    // hiding a basis must not quietly erase the reason it could not be drawn either.
+    expect(historical?.missing).toEqual(['no shading is built yet']);
+    expect(historical?.unavailable).toBe('Historical: not offered in this build.');
 
-    const missing = Object.fromEntries(refused.map((c) => [c.basis.id, c.missing]));
-    expect(missing['historical']).toEqual(['no shading is built yet']);
+    expect(offeredBases(choices).map((c) => c.basis.id)).toEqual([
+      'language',
+      'administrative',
+      'development',
+    ]);
+    expect(offeredBases(choices).every((c) => c.available)).toBe(true);
   });
 
-  it('prints the refusal on screen, grouped by reason and naming every basis it applies to', () => {
-    // On screen and not only in a `title`: a `title` needs a hovering mouse, a disabled control
-    // takes no tap, and the hard bar is a 390px phone. Grouped by what is actually missing, so
-    // Historical — which is only short of its fill — is not filed under a sentence saying nobody
-    // has written its variants.
-    expect(refusalLines(choices)).toEqual([
-      'Historical is not selectable yet — no shading is built yet.',
-    ]);
+  it('prints no refusal line at all, since every basis on the strip can be pressed', () => {
+    // A refusal line exists to say why a dimmed chip is dimmed, and the only basis that had one is
+    // now off the strip entirely. Advertising the withholding here would put the gap in the one
+    // place a reader can do nothing about it.
+    expect(refusalLines(choices)).toEqual([]);
+    expect(choices.filter((c) => !c.available && !c.hidden)).toEqual([]);
   });
 
   it('says "are" of several refused bases, and nothing at all when none is refused', () => {
-    // Held on a stubbed pair rather than on the shipped one, since the shipped refusal is now a
-    // single basis: the sentence still has to agree with itself in number, and the plural case is
-    // the one the app has just left rather than one it can no longer reach.
-    const pair = basisChoices(bundle, new Set<BasisId>(['language', 'development']));
+    // Held on a stub, since no shipped basis is refused on screen any more: the sentence still has
+    // to agree with itself in number, and Historical is excluded from it by being hidden rather
+    // than by being drawable — which is exactly the confusion this test now guards.
+    const pair = basisChoices(bundle, new Set<BasisId>(['development']));
     expect(refusalLines(pair)).toEqual([
-      'Administrative and Historical are not selectable yet — no shading is built yet.',
+      'Language / dialect and Administrative are not selectable yet — no shading is built yet.',
     ]);
     expect(refusalLines(choices.filter((c) => c.available))).toEqual([]);
   });
 
   it('refuses a basis whose variants exist but whose shading does not', () => {
-    // No longer hypothetical: Historical carries the whole basis now — H1 to H4, four complete
-    // partitions the build has already dissolved, and there is no fill behind them. It must not be
-    // selectable, because a basis that fades the boundaries back and shades nothing is a proposal
-    // drawn against no evidence at all (D14). The order is the module's own: H1 stays first, so a
-    // reader entering the basis lands on One Unit rather than on the 1947 states (D13).
-    const historical = choices.find((c) => c.basis.id === 'historical');
-    expect(historical?.available).toBe(false);
-    expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h2', 'h3', 'h4']);
-    expect(historical?.unavailable).toBe('Historical: no shading is built yet.');
-
+    // The rule Historical used to be the live case of, and it is held over an offered basis rather
+    // than a hidden one so that it keeps testing the shading and not the withholding: a basis that
+    // fades the boundaries back and shades nothing is a proposal drawn against no evidence at all
+    // (D14), whether or not this build happens to offer it.
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     const language = unshaded.find((c) => c.basis.id === 'language');
     expect(language?.available).toBe(false);
@@ -156,8 +159,9 @@ describe('selectBasis', () => {
     // Louder than a silent baseline, which would look like a dead control. Both refusals are held
     // — the shipped one, where the variants exist and the fill does not, and the other half, which
     // no basis is in today and which a new basis with no variants written would be.
-    expect(() => selectBasis(choices, 'historical')).toThrow(/historical cannot be selected/);
-    expect(() => selectBasis(choices, 'historical')).toThrow(/no shading is built/);
+    const unshadedLanguage = basisChoices(bundle, new Set<BasisId>());
+    expect(() => selectBasis(unshadedLanguage, 'language')).toThrow(/language cannot be selected/);
+    expect(() => selectBasis(unshadedLanguage, 'language')).toThrow(/no shading is built/);
 
     const unwritten = basisChoices(
       { ...bundle, variants: bundle.variants.filter((v) => v.basis !== 'development') },
@@ -165,6 +169,14 @@ describe('selectBasis', () => {
     );
     expect(() => selectBasis(unwritten, 'development')).toThrow(/development cannot be selected/);
     expect(() => selectBasis(unwritten, 'development')).toThrow(/no variant is written/);
+  });
+
+  it('refuses a withheld basis by name rather than answering with a baseline', () => {
+    // The panel gives it no chip and `readRoute` gives it no route, so arriving here means a
+    // caller went round both. A silent baseline would hide that — and would look, from the
+    // outside, exactly like a basis that had been drawn and found empty.
+    expect(() => selectBasis(choices, 'historical')).toThrow(/historical cannot be selected/);
+    expect(() => selectBasis(choices, 'historical')).toThrow(/not offered in this build/);
   });
 });
 

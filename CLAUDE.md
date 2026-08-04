@@ -12,7 +12,10 @@ the map (#22), a **deep link** per view (#23), the **About the data** panel (#21
 adaptation** (#33), the **Development basis** (#31), the **Administrative fill** and the **method
 note** saying in prose how the map on screen was built (#52) — **three of the four bases are drawable**,
 and Historical is short of both a shading and a method summary, which are now the same basis's two
-gaps.
+gaps. **That basis is withheld from the UI**: rather than offering a chip nobody can press, the menu
+now carries only the three that are live (`HIDDEN_BASES` in `src/lib/selection.ts`). The withholding
+is the menu entry and nothing else — H1 to H4 stay in the bundle, in the suite, and on the About
+panel, and `#/historical/…` still resolves the way it did.
 
 Four of the thirteen boundaries this build **derives rather than transcribes**, every one
 re-derived by the suite: L6 and L7 from census plurality, **A6** from the rule engine's

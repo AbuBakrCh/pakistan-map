@@ -9,7 +9,15 @@
 import { describe, expect, it } from 'vitest';
 import { rovingTarget, tabStop } from './radio-group.ts';
 
-/** The basis group as it actually ships: Current, Language, Administrative, Historical, Development. */
+/**
+ * A basis group with most of its options dimmed — five chips, three of them `disabled`.
+ *
+ * Not the group as it ships: the strip currently offers Current and three live bases and disables
+ * none of them, since the one basis that could not be drawn is now withheld from the menu outright
+ * rather than dimmed on it. The stub is kept, and kept this lopsided on purpose — the skipping is
+ * what breaks silently, and a group with nothing to skip would stop testing it the moment the app
+ * stopped needing it.
+ */
 const BASES = { count: 5, skip: [2, 3, 4] };
 
 describe('rovingTarget', () => {
@@ -37,8 +45,8 @@ describe('rovingTarget', () => {
   });
 
   it('steps over options that cannot take focus, rather than at them', () => {
-    // The three bases with no variants and no shading are `disabled`, so the browser refuses them
-    // focus. Landing on one makes the arrow key look broken — the ring appears to swallow it.
+    // A basis chip that cannot be selected is `disabled`, so the browser refuses it focus. Landing
+    // on one makes the arrow key look broken — the ring appears to swallow it.
     expect(rovingTarget('ArrowRight', { from: 1, ...BASES })).toBe(0);
     expect(rovingTarget('ArrowLeft', { from: 0, ...BASES })).toBe(1);
     expect(rovingTarget('End', { from: 0, ...BASES })).toBe(1);

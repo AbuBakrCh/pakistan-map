@@ -101,13 +101,25 @@ the active variant's unit outlines draw prominently on top.
 one-of-N and the alternatives *are* the product. The baseline sits first among the bases, because
 returning to the real map is the same kind of act as choosing one. **A basis is never active on
 its own** — selecting one selects its first variant (D13), so there is no state that means
-"shaded, with nothing proposed over it". All four bases are always offered, **three of them are
-live** — Language, Development (#31) and Administrative — and the one that cannot yet be drawn is
-**refused out loud**: the control says whether the variants are missing, the shading is missing, or
-both; Historical has its four variants written and wants only a fill, and no basis is now short of
-both. Said on being pressed and not only on hover, since `disabled`
-takes no tap and the hard bar is a 390px phone. Which bases can be shaded is a property of the renderer, not of
-the bundle, and is stated once in `main.ts` so the menu and the map cannot disagree.
+"shaded, with nothing proposed over it". **Three bases are offered and all three are live** —
+Language, Development (#31) and Administrative — so the basis strip currently carries no dimmed
+chip at all.
+
+**Historical is withheld, and withholding is not the same act as refusing.** A basis short of its
+variants or its shading is still offered and **refused out loud**: the control says whether the
+variants are missing, the shading is missing, or both, said on being pressed and not only on hover,
+since `disabled` takes no tap and the hard bar is a 390px phone. That machinery stays and is still
+held over a stub, because it is what a basis arriving half-built gets. Historical instead comes off
+the strip entirely — `HIDDEN_BASES` in `lib/selection.ts`, one named set — so it takes no chip, no
+tab stop, no arrow key and **no refusal line**, a line whose whole job is explaining a chip a reader
+can see. What is withheld is the *menu entry* and nothing else: H1 to H4 stay in the bundle and
+under their basis in `basisChoices`, the suite still holds them, `about.ts` still sources the basis
+on the audit panel, and the id stays a basis this app has heard of — which is what keeps
+`#/historical/l1` a link that corrects itself to L1 rather than a malformed one. A hidden basis is
+**unavailable**, so a control or a URL that still asks for it is refused **by name** exactly as an
+unshaded one is, never answered with a silent baseline. Which bases can be shaded is a property of
+the renderer, not of the bundle, and is stated once in `main.ts` so the menu and the map cannot
+disagree.
 
 Switching is a **cross-fade, never a cut**: outlines join on the unit's own id, so a unit both
 variants contain keeps its element, and an edge that moves is swapped at the *trough* of a
@@ -132,7 +144,7 @@ because it is a view and not the absence of one — it is what every variant is 
 What an *unreadable* hash does is the decision here, and only one substitution is made. A hash
 naming a **basis alone** resolves to that basis's first variant, because D13 says a basis is never
 active on its own and there is no state to fall back to. A hash naming a variant this build has
-never heard of — or a basis it cannot yet shade, which is three of the four — resolves to the
+never heard of — or a basis it cannot put on screen, which is Historical, withheld — resolves to the
 **baseline**, never to the nearest variant: substituting one proposal for another puts a claim on
 screen that the link did not make, and a reader arriving from a stranger's URL cannot tell the two
 apart. Nothing throws; the parser is handed strings typed by strangers and truncated by mailers,

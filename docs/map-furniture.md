@@ -193,8 +193,10 @@ carries one variant — A6, D1 — the basis's rule *is* that map's, and nothing
 basis with nothing written draws no box at all rather than a heading over a placeholder, on the unit
 key's own `:empty` rule: an invented summary would be this app's editorial voice on the one surface
 whose every other sentence is sourced. Historical is the basis still short of a fill (`src/CLAUDE.md`)
-and it is now the basis short of a summary too, and the suite names it — the four variants are on the
-map and none of them yet says how it was arrived at.
+and it is now the basis short of a summary too, and the suite names it — the four variants are in the
+bundle and none of them yet says how it was arrived at. That basis is **withheld from the menu**, so
+the absence is unreachable today rather than gone: the rule stays asserted, because a basis returns
+to the strip by having its fill written and not by having this rule quietly lapse.
 
 **Nothing here composes a sentence.** The words are `src/lib/method.ts`'s, written and reviewed in
 that file exactly as the card's are written in `lib/card.ts`, and `main.ts` sets them with

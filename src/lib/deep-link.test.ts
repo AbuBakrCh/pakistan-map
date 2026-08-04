@@ -40,8 +40,8 @@ describe('hashFor', () => {
     // Both directions, over the real set: a hash that reads back as a different variant would be
     // a link that draws a proposal its sender never had on screen. Restricted to the variants
     // this build can *reach*, which is not the same as the variants it ships — the Historical
-    // basis has four written and no shading built, and a link to one of those is answered with
-    // the baseline on purpose, asserted by name below. `#/development/d1` is on this list rather
+    // basis has four written and is withheld from the menu, and a link to one of those is answered
+    // with the baseline on purpose, asserted by name below. `#/development/d1` is on this list rather
     // than that one as of #31, which is the whole of what that ticket changed about linking.
     const selections = [
       BASELINE,
@@ -135,12 +135,11 @@ describe('readRoute', () => {
     });
   });
 
-  it('refuses a link to a variant whose basis has variants but no shading', () => {
-    // The case that used to be hypothetical and now ships: H1, H3 and H4 are written, complete
-    // and drawable, and the Historical basis has no fill behind it yet. A link to one must land on
-    // the baseline, because a proposal drawn against no evidence is the failure stratum 1 exists to
-    // prevent (D14) — named rather than counted, since these are the three URLs a reader is most
-    // likely to have been sent before the shading lands.
+  it('refuses a link to a variant whose basis this build does not offer', () => {
+    // H1, H3 and H4 are written, complete and drawable, and Historical is withheld from the menu.
+    // A link to one must land on the baseline: the URL is not a way in through the back of a
+    // control that does not offer the basis at all — named rather than counted, since these are
+    // the URLs a reader is most likely to have been sent while the basis was still on the strip.
     for (const id of ['h1', 'h3', 'h4']) {
       expect(route(`#/historical/${id}`).selection, id).toBeNull();
       expect(route(`#/historical/${id}`).asWritten, id).toBe(false);

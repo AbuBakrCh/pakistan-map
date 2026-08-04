@@ -8,11 +8,19 @@
  * the basis *is* the overlay). A basis with the shading on and no unit outlines over it would be
  * a data map wearing a proposal's clothes, and there is no state in this app that means that.
  *
- * **A basis nobody has written a variant for is offered and refused, not hidden.** All four are
- * listed under every state, because the four are the argument the app is making about what a
- * boundary can be argued from; a basis quietly missing from the menu reads as a basis that does
- * not exist. What it says instead is which half is missing — the variants, the shading, or both
- * — because "coming soon" is the one answer that tells a reader nothing.
+ * **A basis nobody has written a variant for is offered and refused, not hidden.** A basis short of
+ * its variants or its shading is still listed, because the bases are the argument the app is making
+ * about what a boundary can be argued from; one quietly missing from the menu reads as a basis that
+ * does not exist. What it says instead is which half is missing — the variants, the shading, or
+ * both — because "coming soon" is the one answer that tells a reader nothing.
+ *
+ * **Withholding a basis is a separate act, and a louder one.** `HIDDEN_BASES` takes a basis off the
+ * menu altogether, which is not the refusal above and must never be reached by drifting into it: a
+ * basis is hidden because this build has decided not to offer it, not because a fill is late. So it
+ * is named as data here rather than expressed as an absence, it is `hidden` on the choice rather
+ * than a missing row, and it is *unavailable* — a hidden basis that a control or a URL still asks
+ * for is refused by name, exactly as an unshaded one is. What it does not do is print a refusal
+ * line: a chip that is not on the strip has nothing to explain.
  */
 
 import type { BasisId, BasisRecord, ScenarioBundle, VariantRecord } from '../bundle.ts';
@@ -30,6 +38,18 @@ export const BASIS_ORDER: readonly BasisId[] = [
   'development',
 ];
 
+/**
+ * The bases this build does not offer at all.
+ *
+ * Historical is here. It is the only basis still short of a fill, and the refusal it was getting
+ * said so out loud on a chip nobody could press; the decision is to withhold the basis rather than
+ * to advertise the gap. It stays in `BASIS_ORDER` and in the bundle: H1 to H4 are written, the
+ * suite still holds them, `about.ts` still sources the basis on the audit panel, and a hash naming
+ * it is still a hash naming something this app has heard of — which is what keeps `#/historical/l1`
+ * a correctable link rather than a malformed one.
+ */
+export const HIDDEN_BASES: ReadonlySet<BasisId> = new Set<BasisId>(['historical']);
+
 export interface VariantChoice {
   readonly id: string;
   readonly name: string;
@@ -39,7 +59,9 @@ export interface VariantChoice {
 export interface BasisChoice {
   readonly basis: BasisRecord;
   readonly variants: readonly VariantChoice[];
-  /** Selectable: something to draw, and something to shade it against. */
+  /** Withheld from the menu by this build (`HIDDEN_BASES`), whatever it is or is not short of. */
+  readonly hidden: boolean;
+  /** Selectable: offered at all, with something to draw and something to shade it against. */
   readonly available: boolean;
   /**
    * What it is short of, one clause per missing half. Empty when it is available. Written without
@@ -72,18 +94,38 @@ export function basisChoices(
     if (variants.length === 0) missing.push('no variant is written yet');
     if (!shadeable.has(id)) missing.push('no shading is built yet');
 
+    // A hidden basis keeps whatever it is short of on the record — the withholding is this build's
+    // decision and says nothing about the data — but it is not selectable and its sentence is about
+    // the withholding, since that is the reason a caller reaching it was wrong.
+    const hidden = HIDDEN_BASES.has(id);
+    const refusal = hidden
+      ? `${basis.name}: not offered in this build.`
+      : missing.length === 0
+        ? null
+        : `${basis.name}: ${missing.join(', and ')}.`;
+
     return {
       basis,
       variants,
       missing,
-      available: missing.length === 0,
-      unavailable: missing.length === 0 ? null : `${basis.name}: ${missing.join(', and ')}.`,
+      hidden,
+      available: !hidden && missing.length === 0,
+      unavailable: refusal,
     };
   });
 }
 
+/** The bases the menu actually offers — every one this build has not withheld. */
+export function offeredBases(choices: readonly BasisChoice[]): readonly BasisChoice[] {
+  return choices.filter((choice) => !choice.hidden);
+}
+
 /**
  * The refusals as sentences to print, one per distinct reason, naming the bases it applies to.
+ *
+ * A hidden basis contributes nothing: the line exists to say why a chip on the strip is dimmed, and
+ * a basis this build does not offer has no chip. Printing one would advertise the withholding in
+ * the one place a reader could do nothing about it.
  *
  * On screen and not only in a `title`, because a `title` is reachable by a hovering mouse and by
  * nothing else — and this app's hard bar is a 390px phone, where there is no hover and a disabled
@@ -93,7 +135,7 @@ export function basisChoices(
 export function refusalLines(choices: readonly BasisChoice[]): readonly string[] {
   const byReason = new Map<string, string[]>();
   for (const choice of choices) {
-    if (choice.available) continue;
+    if (choice.available || choice.hidden) continue;
     const reason = choice.missing.join(', and ');
     byReason.set(reason, [...(byReason.get(reason) ?? []), choice.basis.name]);
   }

@@ -27,6 +27,7 @@ import { EXPORT_LABEL, EXPORT_TITLE, EXPORT_WORKING } from './lib/export-band.ts
 import { rovingTarget, tabStop } from './lib/radio-group.ts';
 import {
   BASELINE,
+  offeredBases,
   refusalLines,
   selectBasis,
   selectVariant,
@@ -80,7 +81,9 @@ export function renderControls(
       title: 'The map as it stands: provinces, territories and divisions, and nothing proposed.',
       available: true,
     },
-    ...choices.map((choice) => ({
+    // The bases this build offers, which is not every basis it knows: a withheld one is off the
+    // strip entirely rather than dimmed, so it takes no chip, no tab stop and no arrow key.
+    ...offeredBases(choices).map((choice) => ({
       id: choice.basis.id,
       label: choice.basis.name,
       // The source is on the button itself, not only on the card: a reader choosing what to argue
