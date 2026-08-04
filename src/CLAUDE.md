@@ -162,6 +162,48 @@ writes cannot loop, while every back, forward and hand-edited address does.
 Parsing and serialising are pure and live in `src/lib/deep-link.ts` under test; `main.ts` holds
 only the three history calls, which have no DOM seam to be asserted in.
 
+### Waiting
+
+**Two pauses, one look, and neither is a spinner.** Nothing here is fetched — the whole bundle is
+`import`ed into the module graph (D19) — so a rotating disc would be the vocabulary of the wrong
+problem. What the app is doing is *drawing*, and what it says while it draws is a line of serif
+type and a hairline rule travelling under it, in the interface's own ink.
+
+- **The boot note is markup in `index.html`, not something the script writes**, and that is the
+  whole of why it works: the pause it covers is the browser fetching, compiling and evaluating a
+  three-megabyte script, and nothing the app could write would be on screen for any of it. It is
+  the first paint's own content. `main.ts` **removes** it — not hides it — in the frame the country
+  first appears in, which is deliberately *after* the first render and not before.
+- **`styles.css` is `<link>`ed from `index.html`, not `import`ed by `main.ts`**, and that is the
+  same rule reaching one step further back. Imported, the stylesheet is extracted in a production
+  build and *injected by the module* in development — by the very script the note exists to cover —
+  so what a reader met while waiting was an unstyled document: a Times-Roman masthead and the note
+  in the top-left corner of a blank page. Linked, it is a parallel request that lands long before
+  the script, and the frame, the paper and the note are dressed by the first paint. Anything moved
+  back into the module's own graph puts the boot state back on the wrong side of the wait.
+- **The redraw's state is `data-busy` on the map well, and it costs two frames.** A busy state is
+  worth nothing unless the browser can paint it, and it cannot paint inside the synchronous task
+  that does the work — so `renderOnce` sets the attribute, concedes two frames, then renders, and
+  clears it in a `finally`. Coalesced, because `render` reads the current selection rather than one
+  passed to it: an arrow key held through eight variants redraws where the reader stopped, once.
+- **It is delayed 200ms in the stylesheet, so a quick switch shows nothing at all.** A page that
+  blinks reads as broken where a page that pauses reads as busy. The delay and the pulse are both
+  **compositor animations** (`transform`, `opacity`) for the same reason the two frames exist: they
+  have to keep their promises while the main thread is inside the work.
+- **Only the two selection changes come through it.** Compare (#22) calls `render` directly and must
+  — it is a key held down, answered in the frame it arrives in, and a waiting state flashing on
+  press and release would be the page moving under a reader looking at the map. The division toggle
+  does not come through it either.
+- Under `prefers-reduced-motion` the rule stands still and everything else stays. **The delay is
+  not removed**: it exists to stop a quick switch flashing, which is a motion complaint of exactly
+  the kind that query is answering.
+
+**What actually made switching quick is upstream of all of it**, and is worth knowing before
+touching `labels.ts`: the interior search behind `labelAnchor` sieves its grid with the planar
+`contains` and confirms only the winner with `geoContains`; `labelPolygon` measures each polygon
+once and memoises; and the ceasefire line's *clear paper* test is asked planar, of projected rings,
+rather than spherically per candidate per zoom frame. Each is argued at its own site.
+
 ### The strata
 
 **Three visual strata** — over a ground of context that is not one of them. The neighbour

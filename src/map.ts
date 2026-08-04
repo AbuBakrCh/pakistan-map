@@ -25,7 +25,7 @@
  * draws the Line of Control solid underneath its own dash — see `tierArcs` in `lib/geography.ts`.
  */
 
-import { geoContains, geoPath, pointer, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
+import { geoPath, pointer, select, zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { Topology } from 'topojson-specification';
 import type { CensusStatistics, UnitKind } from './bundle.ts';
 import { readCities, readSilhouettes } from './lib/context.ts';
@@ -55,6 +55,7 @@ import {
   calloutReserve,
   type CitySite,
   layoutLabels,
+  pointInRings,
   measureLabel,
   variantLabelSites,
   type LabelBox,
@@ -610,6 +611,16 @@ export function renderMap(
    * pushed through the transform per frame, on the same reasoning as the anchors and the rings.
    */
   let landRings: readonly Ring[] = [];
+  /**
+   * Everything with paper under it — the country **and** the four silhouettes — in unzoomed
+   * screen px, for the one question that is about the picture rather than about Pakistan.
+   *
+   * The ceasefire line's name wants *clear paper*, which since #8 means neither Pakistani ground
+   * nor a neighbour's: India is drawn on the far side of the line, and a placement scored as clear
+   * against the provinces alone would be sitting on a silhouette. Held here, projected once per
+   * refit, because that question used to be put to `geoContains` per candidate per frame.
+   */
+  let drawnRings: readonly Ring[] = [];
 
   /**
    * The ceasefire line's name, laid along whichever part of the line is on screen.
@@ -628,7 +639,7 @@ export function renderMap(
       }),
     );
     // Never over another name; preferably not over drawn land either. Ground is asked of the
-    // geography rather than of the DOM, and both are asked only until a candidate answers.
+    // geometry rather than of the DOM, and both are asked only until a candidate answers.
     //
     // "Clear paper" has to mean paper, not merely ground outside Pakistan. Until #8 the far side
     // of the ceasefire line was blank, so the two were the same question and asking only about
@@ -636,19 +647,22 @@ export function renderMap(
     // in fact be sitting on a silhouette — the top-ranked spot would be the one over foreign
     // ground rather than the one over none. Both sides are asked, so the ordering means again
     // what CLAUDE.md says it means.
+    //
+    // Asked **planar, in the screen space the candidate is already in**, and that is a speed
+    // decision with a number behind it. This walks the line trying placement after placement, and
+    // it is re-run on every zoom frame; `geoContains` over the country and the four silhouettes at
+    // full resolution was half a second of the second-and-a-bit a variant switch took, and the
+    // same cost again on each frame of a pan. The rings are the projected ones the callout routing
+    // already works against, pushed through the same transform, so the two halves of the layout now
+    // agree about where the paper is instead of asking two different models.
+    const drawn = drawnRings.map((ring) =>
+      ring.map((p) => transform.apply([p[0], p[1]]) as Point),
+    );
     const form = (text: string) => ({
       text,
       permits: (candidate: PlacedLineLabel) =>
         !taken.some((other) => overlaps(footprint(candidate, text), other)),
-      prefers: (candidate: PlacedLineLabel) => {
-        const ground = project.invert?.(transform.invert([candidate.x, candidate.y]));
-        return (
-          ground === undefined ||
-          ground === null ||
-          (!geoContains(geography.provinces as never, ground) &&
-            !geoContains(silhouettes as never, ground))
-        );
-      },
+      prefers: (candidate: PlacedLineLabel) => !pointInRings(drawn, [candidate.x, candidate.y]),
     });
 
     return labelAlongLine(projected, {
@@ -1502,10 +1516,9 @@ export function renderMap(
    * inside it. Units are measured alongside the tiers because they are named on the same terms:
    * an abbreviation fires for "Khyber Pakhtunkhwa" whether it is a province or a unit.
    */
-  function measureShapes(path: ReturnType<typeof geoPath>): void {
-    shapeWidth.clear();
-    unitRings.clear();
-    landRings = geography.provinces.features.flatMap((f) => {
+  /** Every ring of a feature set, in unzoomed screen px. */
+  function ringsOf(features: readonly { geometry: unknown }[]): readonly Ring[] {
+    return features.flatMap((f) => {
       const geometry = f.geometry as { type: string; coordinates: unknown };
       const polygons = (
         geometry.type === 'Polygon'
@@ -1521,6 +1534,13 @@ export function renderMap(
         ),
       );
     });
+  }
+
+  function measureShapes(path: ReturnType<typeof geoPath>): void {
+    shapeWidth.clear();
+    unitRings.clear();
+    landRings = ringsOf(geography.provinces.features);
+    drawnRings = [...landRings, ...ringsOf(silhouettes.features)];
     for (const f of view.units?.features ?? []) {
       unitRings.set(
         labelKey('unit', f.properties.name),

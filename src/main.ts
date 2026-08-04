@@ -18,7 +18,8 @@
  * with the map by being written once at load.
  */
 
-import './styles.css';
+// The stylesheet is linked from `index.html` rather than imported here, so that it is not
+// waiting on this module — see the note beside the link.
 import {
   censusStatistics,
   contextProvenance,
@@ -152,6 +153,32 @@ const locArcs = arcsOf(geographyTopology.objects['lineOfControl'] as never);
 
 const choices = basisChoices(scenarioBundle, SHADEABLE);
 
+/**
+ * The drawn geometry of each variant, kept once it has been read.
+ *
+ * Not a speed trick so much as the thing that makes the caches downstream work at all. Both
+ * functions are pure and neither is slow, but they mint **fresh objects** every call, and
+ * `labelAnchor` and `labelPolygon` memoise weakly on the object they were handed — so a reader
+ * switching back to a variant they have already seen was paying its interior search again, having
+ * thrown away the identical answer on the way out. Keyed by variant id and never invalidated,
+ * because the bundle is a committed artifact and cannot change under a running page (D19).
+ *
+ * Bounded by the bundle: thirteen entries at most, one per variant, and only the ones actually
+ * looked at.
+ */
+const drawn = new Map<string, { units: MapView['units']; boundaries: MapView['boundaries'] }>();
+
+function geometryOf(variantId: string): { units: MapView['units']; boundaries: MapView['boundaries'] } {
+  const held = drawn.get(variantId);
+  if (held !== undefined) return held;
+  const read = {
+    units: readUnitOutlines(geographyTopology, unitOutlineBundle, variantId),
+    boundaries: unitBoundaries(geographyTopology, unitOutlineBundle, variantId, locArcs),
+  };
+  drawn.set(variantId, read);
+  return read;
+}
+
 /** Everything a selection puts on the map, assembled in one place so no half-view can exist. */
 function viewFor(selection: Selection): MapView {
   const variant = variantOf(scenarioBundle, selection);
@@ -168,11 +195,12 @@ function viewFor(selection: Selection): MapView {
   }
 
   const owner = unitByDistrict(variant);
+  const { units, boundaries } = geometryOf(variant.id);
   return {
     fill: FILLS[selection.basis] ?? null,
     shadingOf: SHADING[selection.basis] ?? null,
-    units: readUnitOutlines(geographyTopology, unitOutlineBundle, variant.id),
-    boundaries: unitBoundaries(geographyTopology, unitOutlineBundle, variant.id, locArcs),
+    units,
+    boundaries,
     membershipOf: (district): UnitMembership => {
       const unit = owner.get(district);
       return {
@@ -364,7 +392,7 @@ function go(next: Selection, waypoint = false): void {
      */
     window.history[waypoint ? 'replaceState' : 'pushState'](null, '', hash);
   }
-  render();
+  renderOnce();
 }
 
 /**
@@ -385,8 +413,53 @@ window.addEventListener('hashchange', () => {
   selection = route.selection;
   compare.interrupt();
   if (!route.asWritten) window.history.replaceState(null, '', hashFor(route.selection));
-  render();
+  renderOnce();
 });
+
+/**
+ * A redraw the reader is waiting for, with the map marked busy while it runs.
+ *
+ * Redrawing is synchronous — the interior searches, the whole label layout, the path join — and on
+ * the heaviest variants it is long enough to be felt. A busy state is worth nothing unless the
+ * browser gets a chance to *paint* it, and the browser gets no such chance inside the task that
+ * does the work: setting the attribute and calling `render()` in one breath marks the map busy and
+ * unmarks it having never drawn a frame between the two. So the attribute goes on, two frames are
+ * conceded — the first ends with the busy state on screen, the second is where the work goes — and
+ * it comes off in a `finally`, because a redraw that threw would otherwise leave the map wearing a
+ * scrim for the rest of the session.
+ *
+ * Two frames of latency added to every switch, which is a real cost and a small one against the
+ * one it buys back: the stylesheet holds the overlay invisible for the first fifth of a second, so
+ * a switch quick enough not to need it shows nothing at all and pays only the frames.
+ *
+ * **Only the two selection changes come through here.** Compare (#22) calls `render` directly and
+ * must go on doing so: it is a key held down, the map has to answer it in the frame the key
+ * arrives in, and a gesture that flashed a waiting state on press and release would be the page
+ * moving under a reader who is looking at the map. The same goes for the division toggle, which
+ * does not come through here at all.
+ */
+let pendingRender = 0;
+
+/** The map's own well, which is what wears the busy state. Found once; it never moves. */
+const mapWell: HTMLElement = mount;
+
+function renderOnce(): void {
+  // Coalesced, because `render` always reads the current `selection` rather than one passed to it:
+  // a reader holding an arrow key through eight variants needs one redraw of where they stopped,
+  // not eight of where they passed through.
+  if (pendingRender !== 0) return;
+  mapWell.setAttribute('data-busy', '');
+  pendingRender = window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      pendingRender = 0;
+      try {
+        render();
+      } finally {
+        mapWell.removeAttribute('data-busy');
+      }
+    });
+  });
+}
 
 function render(): void {
   const variant = variantOf(scenarioBundle, selection);
@@ -1030,6 +1103,21 @@ function developmentProvenance(): string {
 }
 
 render();
+
+/*
+ * The waiting note comes off, and it comes off *after* the first render rather than before it.
+ *
+ * The order is the whole of it. The note is the document's own markup (`index.html`), standing in
+ * the frame from the first paint through the compile and evaluation of a script carrying every
+ * boundary and every census figure in the app — which is the pause a reader meets before anything
+ * of ours has run. Removed at the top of this module it would go while the frame was still empty
+ * and hand the reader a blank rectangle for the longest part of the wait; removed here, it goes
+ * in the same frame the country appears in.
+ *
+ * Removed rather than hidden, on the two keys' own rule: there is nothing left to say, and a box
+ * kept on the paper with nothing in it is furniture the label layout would go on measuring.
+ */
+document.getElementById('boot')?.remove();
 
 // The address bar is brought into line with what is actually drawn — a bare `#/language` expanded
 // to the variant it means, a dead variant id dropped for the baseline, and a first visit with no

@@ -326,6 +326,153 @@ body {
   position: relative;
 }
 
+/*
+ * Waiting, in the map's own register.
+ *
+ * Two states and one look. `.boot` is the document's own markup, standing in the empty frame until
+ * the first render takes it away; `.map-well[data-busy]` is the same treatment laid over a map
+ * that is already drawn while it is being drawn again. They share everything but their lifetime,
+ * which is why they share a rule: a reader who meets both should meet one idea twice, not two
+ * spinners.
+ *
+ * That the boot state can be dressed from this file at all is why the stylesheet is **linked from
+ * `index.html` rather than imported by `main.ts`** — see the note beside the link. Imported, this
+ * file arrived with the very script the note exists to cover, and the note stood unstyled for
+ * exactly as long as it was on screen.
+ *
+ * No spinner, in either. A rotating disc is the vocabulary of an app fetching from a server, and
+ * this one fetches nothing at all — everything it draws is in the page already (D19). What it is
+ * doing is *drawing*, so what it says is a line of type and a rule travelling under it, in the
+ * hairline the rest of the interface is ruled with.
+ */
+.boot {
+  align-items: center;
+  background: var(--paper-sunk);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  inset: 0;
+  justify-content: center;
+  /* The two lines are wider than the phone frame, so they are kept off its rules rather than
+   * allowed to sit against them — the 390px bar applies to the first thing on screen too. */
+  padding: 0 1.5rem;
+  position: absolute;
+  text-align: center;
+  /* Above the furniture and below nothing: the keys and the toggle are rendered into the same
+   * well and are empty at this point, but a variant deep-link fills them within the same frame
+   * the map is drawn in, and a key standing over the waiting note reads as a half-drawn page. */
+  z-index: 5;
+}
+
+/*
+ * The title is set at the dek's weight rather than the masthead's, and that is deliberate: it is
+ * the first thing on screen and it is about to be replaced by the map, so a heading loud enough to
+ * compete with `Pakistan` above it would read as the page's own headline and then vanish. It says
+ * what the reader is waiting for, at the size of something being said.
+ */
+.boot-title {
+  color: var(--ink);
+  font-size: 1.15rem;
+  line-height: 1.35;
+  margin: 0;
+  max-width: 30rem;
+}
+
+.boot-tagline {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 32rem;
+}
+
+/*
+ * The travelling rule, above the line. A pseudo-element on each of the two wrappers, so the markup
+ * in `index.html` stays two paragraphs and the redraw needs no markup at all.
+ *
+ * `transform` and nothing else, because that is the point: a transform animation is run by the
+ * compositor, so it goes on moving while the main thread is blocked doing the very work the
+ * reader is waiting for. An animation of `width` or `left` would need the main thread and would
+ * sit frozen for exactly as long as there was something to say.
+ */
+.boot::before,
+.map-well[data-busy]::before {
+  animation: waiting 1.1s ease-in-out infinite;
+  background: var(--rule-province);
+  content: '';
+  height: 1px;
+  order: -1;
+  width: 4rem;
+}
+
+/* The redraw's rule stands where the boot's does — centred in the frame — but has no paragraphs
+ * to be centred against, so it places itself. */
+.map-well[data-busy]::before {
+  left: 50%;
+  margin-left: -2rem;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+}
+
+@keyframes waiting {
+  0%,
+  100% {
+    transform: scaleX(0.25);
+  }
+
+  50% {
+    transform: scaleX(1);
+  }
+}
+
+/*
+ * The redraw. Same treatment, and **delayed on purpose**.
+ *
+ * Switching basis or variant is synchronous work — the interior searches, the label layout, the
+ * path join — and most of it lands well inside the frame budget a reader would ever notice. A
+ * waiting state that appeared for every switch would flash on the ones that did not need it,
+ * which is worse than no state at all: a page that blinks reads as broken where a page that
+ * pauses reads as busy. So the overlay is painted transparent the moment the work begins and
+ * fades in only if it is still going a fifth of a second later — again on the compositor, so the
+ * delay is honoured while the main thread is inside the redraw.
+ *
+ * Translucent rather than opaque, unlike the boot: there *is* a map underneath, and hiding a
+ * picture the reader has already read to tell them it is being redrawn takes more away than it
+ * gives.
+ */
+.map-well::after {
+  background: color-mix(in srgb, var(--paper-sunk) 82%, transparent);
+  content: '';
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  visibility: hidden;
+  z-index: 4;
+}
+
+.map-well[data-busy]::after {
+  animation: arriving 180ms ease 200ms forwards;
+  visibility: visible;
+}
+
+/* The rule waits behind the same delay as the scrim it stands on, or a switch too quick to need
+ * either would still blink a line at the reader. */
+.map-well[data-busy]::before {
+  animation:
+    waiting 1.1s ease-in-out infinite,
+    arriving 180ms ease 200ms forwards;
+  opacity: 0;
+}
+
+@keyframes arriving {
+  to {
+    opacity: 1;
+  }
+}
+
 .map {
   display: block;
   height: 100%;
@@ -1856,6 +2003,24 @@ body {
 
   * {
     transition-duration: 0ms !important;
+  }
+
+  /*
+   * The waiting rule stops travelling and simply stands there. A reader who has asked for
+   * less motion is not asking to be told less — the rule, the note and the scrim all stay, and
+   * only the pulse goes. The delay before the redraw's overlay appears is deliberately *not*
+   * removed: it is there to keep a quick switch from flashing, which is a motion complaint of
+   * exactly the kind this query is answering.
+   */
+  .boot::before {
+    animation: none;
+  }
+
+  /* The whole shorthand rather than `animation-name`, because the two animations here carry two
+   * durations and two delays: dropping one name off the front would leave the survivor wearing
+   * the other's timing, and the delay is the part that must not be lost. */
+  .map-well[data-busy]::before {
+    animation: arriving 1ms linear 200ms forwards;
   }
 }
 

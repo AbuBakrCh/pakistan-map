@@ -25,11 +25,35 @@ const polygonsOf = (shape: Shape): Polygon[] =>
  * in is asked of the *same* polygon, because a name anchored on the mainland and measured against
  * a bounding box that includes an island would be told it has room the ground under it does not
  * have. Exported so the renderer and the suite project the same ring set.
+ *
+ * **Each polygon is measured once**, which is arithmetic rather than taste. A `reduce` comparing
+ * `geoArea(polygon) > geoArea(biggest)` re-measures the running biggest at every step, and the
+ * running biggest is the mainland — so Balochistan, which the dissolve leaves as 199 polygons
+ * around one large one, measured that one 199 times and cost half a second to answer a question
+ * about which of them is largest.
+ *
+ * **Memoised weakly**, on `labelAnchor`'s own reasoning and for a caller it does not have: which
+ * polygon is the largest is a pure fact about the geometry that no zoom, re-fit or basis can
+ * change, and `measureShapes` asks it of every unit on every redraw — so a window drag was paying
+ * the search again per frame.
  */
+const largestPolygons = new WeakMap<object, Polygon>();
+
 export function labelPolygon(shape: Shape): Polygon {
-  return polygonsOf(shape).reduce((biggest, polygon) =>
-    geoArea(polygon) > geoArea(biggest) ? polygon : biggest,
-  );
+  const cached = largestPolygons.get(shape);
+  if (cached !== undefined) return cached;
+  const polygons = polygonsOf(shape);
+  let largest = polygons[0] as Polygon;
+  let largestArea = -Infinity;
+  for (const polygon of polygons) {
+    const area = geoArea(polygon);
+    if (area > largestArea) {
+      largestArea = area;
+      largest = polygon;
+    }
+  }
+  largestPolygons.set(shape, largest);
+  return largest;
 }
 
 /** Grid resolution of the interior search. 24×24 over the bbox resolves Pakistan's thinnest arm. */
@@ -65,13 +89,26 @@ export function labelAnchor(shape: Shape): [number, number] {
 function computeAnchor(shape: Shape): [number, number] {
   const largest = labelPolygon(shape);
   const vertices = largest.coordinates.flat();
-  const clearanceAt = (point: readonly [number, number]): number => {
+  /**
+   * Distance to the nearest boundary vertex, abandoned as soon as it cannot beat `floor`.
+   *
+   * The floor is what makes the grid search affordable. Every candidate is measured against every
+   * vertex of the ring — 19,382 of them on H1's West Pakistan — and the search keeps only the
+   * furthest-from-anything point, so a candidate that has already come within the best clearance
+   * found so far cannot win however the remaining vertices fall. Ranking is unchanged: the answer
+   * is the same point, arrived at without finishing the sums for the candidates that lose.
+   */
+  const clearanceAt = (point: readonly [number, number], floor = -Infinity): number => {
     let clearance = Infinity;
     for (const vertex of vertices) {
-      clearance = Math.min(
-        clearance,
-        Math.hypot((vertex[0] as number) - point[0], (vertex[1] as number) - point[1]),
+      const distance = Math.hypot(
+        (vertex[0] as number) - point[0],
+        (vertex[1] as number) - point[1],
       );
+      if (distance < clearance) {
+        clearance = distance;
+        if (clearance <= floor) return clearance;
+      }
     }
     return clearance;
   };
@@ -97,7 +134,31 @@ function computeAnchor(shape: Shape): [number, number] {
   if (geoContains(largest, centroid) && clearanceAt(centroid) >= comfortable) return centroid;
 
   const [[west, south], [east, north]] = geoBounds(largest);
-  let best: [number, number] = centroid;
+
+  /*
+   * The grid is sieved planar and the winner is confirmed spherical, which is the whole of what
+   * made this search affordable.
+   *
+   * `geoContains` is the honest question — it is the sphere's own answer, it is what the suite
+   * holds every anchor to, and it is what decides the answer here as well. What it is not is a
+   * question to ask 529 times: it re-streams the ring through a spherical clip per call, at
+   * roughly a millisecond and a half on West Pakistan's 19,382 vertices, and the grid searches
+   * were costing 0.3–2.2 seconds *per variant switch* on that alone — the single largest thing
+   * this app does between a reader pressing a chip and the map answering.
+   *
+   * So the sieve is `contains`, the same planar even-odd test the room and the box fit already
+   * use, run over the ring in lon/lat rather than in screen px. Planar is the wrong model for a
+   * sphere and right for this: Pakistan spans 15° of longitude, nowhere near a pole or the
+   * antimeridian, and the two tests can disagree only within a rounding of the boundary — where a
+   * candidate is worthless to a label anyway. The grid resolves the shape's arms, not its edges.
+   *
+   * The disagreement is still not *assumed* away. Whatever the sieve returns is put to
+   * `geoContains` before it is kept, and a point the sphere rejects is passed over for the next
+   * best — so a planar false positive costs one wasted candidate and can never put a name on
+   * ground outside the shape it names, which is the one claim a footnote cannot take back.
+   */
+  const rings = largest.coordinates as unknown as readonly Ring[];
+  const candidates: { point: [number, number]; clearance: number }[] = [];
   let bestClearance = -Infinity;
 
   for (let i = 1; i < SEARCH_STEPS; i++) {
@@ -106,16 +167,24 @@ function computeAnchor(shape: Shape): [number, number] {
         west + ((east - west) * i) / SEARCH_STEPS,
         south + ((north - south) * j) / SEARCH_STEPS,
       ];
-      if (!geoContains(largest, point)) continue;
-      const clearance = clearanceAt(point);
-      if (clearance > bestClearance) {
-        bestClearance = clearance;
-        best = point;
-      }
+      if (!contains(rings, point)) continue;
+      // The floor is the best clearance *seen*, not the best confirmed: a candidate the sphere
+      // later rejects has still proved that anything closer in than it is not worth finishing.
+      const clearance = clearanceAt(point, bestClearance);
+      if (clearance <= bestClearance) continue;
+      bestClearance = clearance;
+      candidates.push({ point, clearance });
     }
   }
 
-  return best;
+  // Best first, so the confirmation stops at the first point the sphere agrees with. The list is
+  // the running maxima and nothing else, so it is short — a handful of entries, not 529.
+  candidates.sort((a, b) => b.clearance - a.clearance);
+  for (const candidate of candidates) {
+    if (geoContains(largest, candidate.point)) return candidate.point;
+  }
+
+  return centroid;
 }
 
 /**
@@ -268,7 +337,21 @@ export function landSpanAt(rings: readonly Ring[], y: number): [number, number] 
   return Number.isFinite(min) ? [min, max] : null;
 }
 
-/** Even-odd containment against the same rings the room is measured from. */
+/**
+ * Even-odd containment against the same rings the room is measured from.
+ *
+ * Exported because the ceasefire line's name asks the same question of the whole drawn picture and
+ * must not ask it of `geoContains`: that placement walks the length of the line testing candidate
+ * after candidate, it is re-run on **every zoom frame**, and a spherical containment test over the
+ * country and the four silhouettes at full resolution was costing half a second each time the map
+ * relaid its names. Planar is the model the placement is already working in — the candidate is a
+ * point in screen px and the rings are projected — so this asks the question where it is asked
+ * rather than inverting back to the sphere to ask it.
+ */
+export function pointInRings(rings: readonly Ring[], point: Point): boolean {
+  return contains(rings, point);
+}
+
 function contains(rings: readonly Ring[], [x, y]: Point): boolean {
   let inside = false;
   for (const ring of rings) {

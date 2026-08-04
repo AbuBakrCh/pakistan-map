@@ -8,6 +8,23 @@
       name="description"
       content="The administrative map of Pakistan as it stands — provinces, territories and divisions, pinned to the 2023 census — and curated, sourced proposals to redraw it, each drawn against its own evidence."
     />
+
+    <!--
+      The stylesheet, linked here rather than `import`ed by `main.ts`.
+
+      It used to be the module's, which cost nothing in a production build — Vite extracts it and
+      the browser fetches both in parallel — and cost everything in development, where the CSS is
+      injected *by the script*. That is the same three-megabyte script the waiting note below
+      exists to cover, so the page a reader met while waiting for it was the page with no styles
+      at all: a Times-Roman masthead and the note in the top-left corner of a blank document.
+
+      Linked, it is a second request the browser starts in the same breath as the script and
+      finishes long before it, so the frame, the paper and the note are dressed by the first
+      paint. It is also render-blocking, which is the trade and is the right way round here: the
+      stylesheet is small, and the alternative is showing the reader an unstyled page rather than
+      showing them nothing for a few more milliseconds.
+    -->
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <main id="app">
@@ -21,6 +38,40 @@
 
       <figure class="frame">
         <div id="map" class="map-well">
+          <!--
+            What stands in the frame until the map is drawn.
+
+            It is written here, in the document, rather than by the script — which is the whole of
+            why it works. The bundle is `import`ed into the module graph (D19), so the boundaries,
+            the census join and every variant arrive as one script the browser must fetch, compile
+            and evaluate before a single line of the app runs; nothing the app itself could write
+            would be on screen for any of it. This is markup the first paint already has, and
+            `main.ts` takes it away once the country is actually drawn.
+
+            `aria-live="polite"` rather than `role="status"` on a spinner: what a reader without
+            the picture needs is the sentence, said once, when it arrives — and the sentence says
+            what the page is, because "Loading" on a page about Pakistan's provinces tells a reader
+            nothing they could not see.
+
+            What it says is the page's own subject rather than a report on the machinery. The wait
+            is the one moment this app has a reader's whole attention and nothing to show them, so
+            it spends it saying what they are about to be looking at — which is also the only
+            place that sentence appears: the masthead above is a name and a dek, and neither says
+            the map is comparable across more than one ground.
+
+            It names **the three bases a reader can actually press**, and Historical is left out
+            for the reason it is off the basis strip at all (`HIDDEN_BASES` in `lib/selection.ts`):
+            it has its four variants and no shading, so promising it here would be the first
+            sentence of the app advertising a chip that is not on the next screen. The withholding
+            is the menu entry, so H1 to H4 stay in the bundle, on the About panel and at their own
+            URLs — but nothing that reads as a menu may list them, and this reads as one.
+          -->
+          <div id="boot" class="boot" aria-live="polite">
+            <p class="boot-title">Explore alternative provincial configurations of Pakistan</p>
+            <p class="boot-tagline">Compare language, administrative, and development models on a
+              single interactive map.</p>
+          </div>
+
           <!--
             The one control that sits on the map itself: whether the division tier is drawn. It is
             here rather than in the controls well because it is not part of the selection — it does
