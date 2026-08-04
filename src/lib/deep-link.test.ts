@@ -18,7 +18,7 @@ import { BASELINE, basisChoices } from './selection.ts';
 
 const bundle = scenarios as unknown as ScenarioBundle;
 /** What this build can actually shade. `main.ts` derives the same set from its fill table. */
-const SHADEABLE = new Set<BasisId>(['language', 'development']);
+const SHADEABLE = new Set<BasisId>(['language', 'administrative', 'development']);
 const choices = basisChoices(bundle, SHADEABLE);
 
 const route = (hash: string) => readRoute(hash, bundle, choices);
@@ -92,13 +92,24 @@ describe('readRoute', () => {
   });
 
   it('falls back for a basis this build cannot draw, rather than fading the map for nothing', () => {
-    // The URL is not a way in through the back of a control that already refuses these out loud:
-    // the two unshaded bases are unreachable by link for exactly as long as they are unreachable
-    // by chip, and the two cannot drift because both read the same `choices`.
-    for (const basis of ['administrative', 'historical']) {
-      expect(route(`#/${basis}`).selection, basis).toBeNull();
-      expect(route(`#/${basis}/x1`).selection, basis).toBeNull();
-    }
+    // The URL is not a way in through the back of a control that already refuses it out loud: the
+    // one unshaded basis is unreachable by link for exactly as long as it is unreachable by chip,
+    // and the two cannot drift because both read the same `choices`.
+    expect(route('#/historical').selection).toBeNull();
+    expect(route('#/historical/x1').selection).toBeNull();
+  });
+
+  it('reaches the administrative basis by link, and enters it on its first variant', () => {
+    // The two URLs whose answer changed when the population fill landed: a reader sent either of
+    // these before it did came out on the country instead.
+    expect(route('#/administrative/a1')).toEqual({
+      selection: { basis: 'administrative', variant: 'a1' },
+      asWritten: true,
+    });
+    expect(route('#/administrative')).toEqual({
+      selection: { basis: 'administrative', variant: 'a1' },
+      asWritten: false,
+    });
   });
 
   it('reaches the development basis by link, and enters it on its one variant', () => {

@@ -22,9 +22,10 @@
  * - **A vintage that was inherited says it was inherited.** A variant may date its own boundary
  *   (H2 draws 1947); where it does not, it is read at its basis's and the band says so — printing
  *   the census's year flat against a 1947 boundary is the exact failure #21 exists to prevent.
- * - **The legend is derived, never transcribed.** It is built from the same `unitLegend` and
- *   `motherTongueLegend` the on-screen key is built from, so a band that keys a colour the map no
- *   longer draws is impossible rather than merely unlikely.
+ * - **The legend is derived, never transcribed.** It is built from the same `unitLegend`,
+ *   `motherTongueLegend`, `populationLegend` and `developmentLegend` the on-screen key is built
+ *   from, so a band that keys a colour the map no longer draws is impossible rather than merely
+ *   unlikely.
  * - **The attribution names no figure source the variant does not use** (#49). The licence line
  *   credited every picture's figures to the 2023 census and stamped it "pinned to" that vintage,
  *   H2's included — a variant that publishes no figure at all precisely because 2023 numbers do not
@@ -42,6 +43,7 @@ import type {
   UnitKind,
   VariantRecord,
 } from '../bundle.ts';
+import { populationLegend } from './administrative.ts';
 import { provenanceBadge, type CardBadge } from './card.ts';
 import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
@@ -225,24 +227,27 @@ export function bandLegend(
   }
 
   if (shadedBy !== null) {
-    // Named basis by basis rather than assumed. Two of the four have a fill in the renderer, and a
-    // band that answered every shadeable basis with the mother-tongue key would print the wrong
+    // Named basis by basis rather than assumed. Three of the four have a fill in the renderer, and
+    // a band that answered every shadeable basis with the mother-tongue key would print the wrong
     // key under the right badge — a legend that keys data the map is not drawing is worse than no
-    // legend, because it is checkable and wrong. The third and fourth still fail by name here.
+    // legend, because it is checkable and wrong. The fourth still fails by name here.
     // Each legend is built once and then read twice. Building it per half would derive the same
     // key twice from the same bundle to concatenate the two halves of it, which is work for
     // nothing and, worse, two chances for one basis to answer a question differently.
     const language = shadedBy === 'language' ? motherTongueLegend(statistics) : null;
-    // The bands and the one absence, in the order the scale is read. The lead sentence — that no
-    // published source states this figure — is not a key entry: it is the badge's gloss, and the
-    // band already prints that under `Provenance`.
+    // The bands and the one absence, in the order the scale is read. The lead sentence — whose
+    // figure it is, and that no published source states the composite — is not a key entry: it is
+    // the badge's gloss, and the band already prints that under `Provenance`.
+    const population = shadedBy === 'administrative' ? populationLegend(statistics) : null;
     const composite = shadedBy === 'development' ? developmentLegend(development) : null;
     const shaded =
       language !== null
         ? [...language.onTheMap, ...language.absences]
-        : composite !== null
-          ? [...composite.bands, ...composite.absences]
-          : null;
+        : population !== null
+          ? [...population.bands, ...population.absences]
+          : composite !== null
+            ? [...composite.bands, ...composite.absences]
+            : null;
     if (shaded === null) {
       throw new Error(
         `The map is shaded by the ${shadedBy} basis and this band has no key for it. A key is ` +

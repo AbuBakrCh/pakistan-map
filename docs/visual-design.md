@@ -1,8 +1,8 @@
 # Visual direction — the detail
 
 Root `CLAUDE.md` carries the direction in a paragraph and the rules that follow from it.
-This file carries the three that needed more than a line: the boundary hierarchy, the palette
-gates, the Development ramp, and the phone bar. How the map, card, selectors, labels and tooltip
+This file carries the ones that needed more than a line: the boundary hierarchy, the palette
+gates, the two sequential ramps, and the phone bar. How the map, card, selectors, labels and tooltip
 *behave* is `src/CLAUDE.md`'s.
 
 ## Editorial atlas, light
@@ -35,8 +35,8 @@ when any two swatches sit side by side are named in `palette.ts` rather than lef
 
 ## The Development ramp
 
-**The Development ramp is the one sequential scale, and it is held to a sequential scale's
-criteria** (#31). Lightness falls and chroma rises monotonically from the lowest band to the
+**The Development ramp was the first of the app's two sequential scales, and it is held to a
+sequential scale's criteria** (#31). Lightness falls and chroma rises monotonically from the lowest band to the
 highest along a green-to-blue path — the order *is* the encoding, and a reader reads it against
 the legend in order rather than by recalling an absolute hue. It has about **0.14 of OKLab
 lightness to spend**, bounded below by the rule that a fill must clear 3:1 against the unit accent
@@ -47,6 +47,41 @@ smoothed over: the weakest step is named, the ends of the ramp clear every gate 
 dichromats, and the relief is that every band is labelled with its own numbers in the legend and
 the tooltip prints the district's composite *and* its three components. It is also why there are
 four bands and not five.
+
+## The population ramp, and why it is not the Development ramp reused
+
+The Administrative basis shades districts by their **2023 census population**, banded — an ordered
+quantity, so an ordered scale, so a **second** sequential ramp. The line that used to stand here
+said there was exactly one, and it was doing real work: a second ramp is a second thing a reader
+has to learn, so the first question asked was whether the Development ramp's four hexes could
+simply be reused under a different heading.
+
+**They cannot, and the reason is the legend rather than the map.** One basis is drawn at a time
+(D9), so a development band and a population band are never on one map — but they are on one
+*page*, a click apart, with the key redrawing beneath them. A reader who learns *blue means well
+served* under one basis and meets that same blue meaning *thirteen million people* under the next
+has been taught a colour that means two things, and the PNG export would key both with the same
+swatches under different headings. So the population ramp is **its own path on the wheel** —
+violet → pink → rose → coral, hue 320° through 35°, where Development runs 165° to 255° — and the
+suite holds **every band of one past the ΔE 15 categorical floor from every band of the other**,
+which is a stronger separation than either ramp achieves internally. That is the right way round:
+the two scales are further from each other than their own steps are, because confusing two *scales*
+is the worse error.
+
+**Both ends of it sit at their gate rather than inside it**, and that is the finding rather than a
+compromise. This path runs through the warm half of the wheel, which is where the paper is: `LAND`
+is a warm off-white, and the search returns *nothing* paler than the first band that still steps
+cleanly to the second — so the lightest band sits **ΔE 10.0 from the land tone, which is the floor
+itself**, and the darkest clears the unit accent by **3.04:1** against a floor of 3. There is no
+slack left in the window, which is the same arithmetic that gives the other ramp four bands and not
+five, arriving from the other side.
+
+Adjacent steps run ΔE 6.0–6.9 for unimpaired vision and so do not clear the categorical bar, exactly
+as the Development ramp's do not; the weakest step is named in `palette.ts` and asserted. The relief
+is the same too, and here it costs nothing: every band is labelled with its own figures in the
+legend, and **the tooltip already printed the district's population** — this is the one basis whose
+shading needed no new tooltip line to be checkable, because the figure was on it before the basis
+could be drawn.
 
 ## The phone is not the degraded case
 

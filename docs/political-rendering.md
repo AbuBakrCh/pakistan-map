@@ -84,14 +84,16 @@ but the rule for finding one ("stated per variant, not shared"), so H1, H3 and H
 of this proposal's own source* and point at the Source line, where 1947, 1955 and 1970 actually
 are; quoting the deferral after "Vintage:" would put a sentence on the image saying the date is
 stated per variant, on a variant that states none. **The key is derived, never transcribed**,
-from the same `unitLegend`, `motherTongueLegend` and — since #31 — `developmentLegend` the
-on-screen legend is built from, less the six categories dominant in no district, which on a band
-would push the nine that matter onto a line of their own. It still **refuses by name** a basis it
-has no fill for: two of the four have one now and two do not, and a band that answered every
-shadeable basis with the mother-tongue key would print the wrong legend under the right badge.
-The development key is the four bands and the one absence, in the order the scale is read; the
-sentence saying no published source states the figure is deliberately *not* a key entry, because
-it is the badge's gloss and the band already prints that under Provenance. And **the badges are
+from the same `unitLegend`, `motherTongueLegend`, `populationLegend` and — since #31 —
+`developmentLegend` the on-screen legend is built from, less the six categories dominant in no
+district, which on a band would push the nine that matter onto a line of their own. It still
+**refuses by name** a basis it has no fill for: three of the four have one now and Historical does
+not, and a band that answered every shadeable basis with the mother-tongue key would print the
+wrong legend under the right badge. The two ramps are each four bands and one absence, in the order
+the scale is read, and each must reach for **its own** legend — they are the same shape, so a band
+that took the wrong one would look right and print the wrong figures under it. Neither lead sentence
+is a key entry: whose figure it is, and that no published source states the composite, are the
+badges' gloss and the band already prints that under Provenance. And **the badges are
 glossed in the image**, because a PNG has no hover and a provenance word a reader cannot check is
 a claim. And **the small print names no figure source the variant does not use** (#49): the licence
 line credited every picture's figures to the 2023 census and stamped it *pinned to* that vintage,

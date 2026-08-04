@@ -119,8 +119,9 @@ export const motherTongueFill: Readonly<Record<MotherTongue, string>> = {
 };
 
 /**
- * The Development basis's ramp (#31) — the app's one **sequential** scale, and a different kind of
- * palette from everything above.
+ * The Development basis's ramp (#31) — the first of the app's two **sequential** scales, and a
+ * different kind of palette from everything above. The second is `POPULATION_BAND_FILL` below,
+ * which is a separate path on the wheel and argues there for why it is not these four hexes reused.
  *
  * The composite it keys is ordered, so the encoding is the order: lightness falls and chroma rises
  * monotonically from the lowest band to the highest, along the green-to-blue path a reader will
@@ -168,6 +169,59 @@ export const DEVELOPMENT_BAND_FILL: Readonly<Record<string, string>> = {
  * a lapse. This is the worst of them, at ΔE 3.9.
  */
 export const WEAKEST_BAND_STEP = '50-65↔65-80 under tritanopia';
+
+/**
+ * The Administrative basis's ramp — district population, and the app's **second** sequential scale.
+ *
+ * `visual-design.md` said for a long while that there was exactly one, and the sentence was doing
+ * real work: a second ramp is a second thing a reader has to learn, and the first question asked of
+ * this one was whether it could borrow the Development ramp's four hexes rather than earn its own.
+ * It cannot. One basis is drawn at a time (D9), so the two are never on one map — but they are on
+ * one *page*, and the legend redraws with the selection, so a reader who learns *blue means well
+ * served* under one basis and meets the same blue meaning *thirteen million people* under the next
+ * has been taught a colour that means two things. Two scales are the honest cost of a second
+ * ordered basis; one set of hexes doing double duty is not a saving, it is a false economy paid by
+ * the reader.
+ *
+ * So this is a separate path on the wheel, searched the same way and against the same gates:
+ * **violet → pink → rose → coral**, hue 320° through 35°, where Development runs 165° to 255°. No
+ * band of one is within ΔE 17 of any band of the other, which is past the categorical floor —
+ * the two ramps are further apart from each other than either is internally separated, which is
+ * exactly the right way round.
+ *
+ * ## The pale end is pinned by the paper and the dark end by the accent
+ *
+ * The same 0.14 of lightness the Development ramp lives in, and the same two rules closing it —
+ * but this path runs through the warm half of the wheel, where the *paper* is, so the first of them
+ * binds much harder. `LAND` is a warm off-white at hue 83°, and a pale warm fill beside it reads as
+ * a district the basis did not reach — twenty of them genuinely are (D25). **The palest band sits
+ * ΔE 10.0 from the land tone, which is the floor itself**: the search returns nothing at all above
+ * it that still steps cleanly to the band below. At the other end **the darkest band clears the
+ * unit accent by 3.04:1**, against a floor of 3. Both ends are at their gate rather than
+ * comfortably inside it, and that is the finding — a ramp on this paper in these hues has no slack
+ * left to spend, which is why there are four bands and no fifth here either.
+ *
+ * ## Adjacent bands do not clear the categorical gates, exactly as the other ramp's do not
+ *
+ * Steps run ΔE 6.0 to 6.9 for unimpaired vision — above this ramp's own floors, below the ΔE 15 a
+ * categorical pair is held to, and no hue rotation inside the window changes that. What carries the
+ * reading is what carries it on the other ramp: the scale is *ordered* and read against its legend
+ * in order, every band is labelled with its own figures there, and **the tooltip prints the
+ * district's population in full** — which this basis gets for free, because the population was
+ * already on it. The ends are ΔE 18.8 apart and clear every gate, dichromats included.
+ */
+export const POPULATION_BAND_FILL: Readonly<Record<string, string>> = {
+  'under-500k': '#f5cbff', // pale lilac
+  '500k-1.5m': '#fcb5dc', // pink
+  '1.5m-3m': '#fda1af', // rose
+  '3m-plus': '#f5937a', // coral
+};
+
+/**
+ * The population ramp's weakest step, named for the reason `WEAKEST_BAND_STEP` is: the two most
+ * populous bands, under tritanopia, at ΔE 4.9. Asserted exactly, so it is derived from the hexes.
+ */
+export const WEAKEST_POPULATION_STEP = '1.5m-3m↔3m-plus under tritanopia';
 
 /**
  * The pairs this palette does not separate — below the ΔE 8 dichromat target, the ΔE 6 tritan

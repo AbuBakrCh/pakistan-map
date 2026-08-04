@@ -14,14 +14,17 @@ import statistics from '../../data/bundle/statistics.json';
 import type { CensusStatistics } from '../bundle.ts';
 import { contrastRatio, deltaE, dichromatSeparation, lightnessChroma } from './colour-vision.ts';
 import { motherTongueFills } from './mother-tongue.ts';
+import { POPULATION_BANDS } from './administrative.ts';
 import { INDEX_BANDS } from '../../scripts/lib/development-index.ts';
 import {
   ACCENT,
   DEVELOPMENT_BAND_FILL,
   LAND,
   MOTHER_TONGUE_CATEGORIES,
+  POPULATION_BAND_FILL,
   UNSEPARATED_PAIRS,
   WEAKEST_BAND_STEP,
+  WEAKEST_POPULATION_STEP,
   motherTongueFill,
   type MotherTongue,
 } from './palette.ts';
@@ -181,6 +184,101 @@ describe('the development ramp, which is a sequential scale and not a categorica
     // One basis at a time (D9), so a band and a mother-tongue category are never on one map. They
     // are on one *page* — the legend redraws with the selection — so a band exactly equal to a
     // language's fill would teach a reader a colour that means two things.
+    const shared = ramp.filter((hex) =>
+      MOTHER_TONGUE_CATEGORIES.some((category) => motherTongueFill[category] === hex),
+    );
+    expect(shared).toEqual([]);
+  });
+});
+
+describe('the population ramp, the app’s second sequential scale', () => {
+  const bands = POPULATION_BANDS.map((band) => band.id);
+  const ramp = bands.map((id) => POPULATION_BAND_FILL[id] as string);
+
+  it('covers every band the module can produce, and invents none', () => {
+    // Read off the bands the fill applies, not typed: a fifth band added there without a colour
+    // here would render as an absence — the map saying "not counted" about a district PBS
+    // published in full.
+    expect(Object.keys(POPULATION_BAND_FILL).sort()).toEqual([...bands].sort());
+    expect(new Set(ramp).size).toBe(ramp.length);
+  });
+
+  it('is ordered, which is what a reader actually reads it by', () => {
+    const steps = ramp.map((hex) => lightnessChroma(hex));
+    for (const [i, step] of steps.entries()) {
+      const next = steps[i + 1];
+      if (next === undefined) continue;
+      expect(next.lightness, `${bands[i]} → ${bands[i + 1]} lightness`).toBeLessThan(step.lightness);
+      expect(next.chroma, `${bands[i]} → ${bands[i + 1]} chroma`).toBeGreaterThan(step.chroma);
+    }
+  });
+
+  it('keeps every band clear of the land tone and legible under a unit outline', () => {
+    // Both ends of this ramp sit *at* their gate rather than inside it, which is the finding the
+    // module states: the pale end is bounded by warm paper and the dark end by the accent, and a
+    // fifth band would have to come out of a window that has no room left in it.
+    for (const [i, hex] of ramp.entries()) {
+      const label = `${bands[i]} ${hex}`;
+      expect(deltaE(hex, LAND), `${label} against unshaded land`).toBeGreaterThanOrEqual(LAND_FLOOR);
+      expect(contrastRatio(hex, ACCENT), `${label} against the unit accent`).toBeGreaterThanOrEqual(3);
+      expect(deltaE(hex, ACCENT), `${label} against the accent`).toBeGreaterThanOrEqual(NORMAL_FLOOR);
+      expect(lightnessChroma(hex).chroma, `${label} chroma`).toBeLessThanOrEqual(0.125);
+    }
+  });
+
+  it('separates the ends of the scale, which is the comparison a reader makes', () => {
+    const [lowest, highest] = [ramp[0] as string, ramp[ramp.length - 1] as string];
+    expect(deltaE(lowest, highest)).toBeGreaterThanOrEqual(NORMAL_FLOOR);
+    expect(dichromatSeparation(lowest, highest)).toBeGreaterThanOrEqual(CVD_TARGET);
+    expect(deltaE(lowest, highest, 'tritan')).toBeGreaterThanOrEqual(TRITAN_FLOOR);
+  });
+
+  it('names its weakest step, rather than passing a gate quietly loosened to fit it', () => {
+    // The development ramp's rule, held at the development ramp's own floors: no adjacent step
+    // reaches the categorical bar and none is asked to, but every one of them clears the floors
+    // stated here — so a ramp re-picked into something worse fails rather than sliding under a bar
+    // that had been moved for it.
+    let weakest: { step: string; delta: number } | null = null;
+    for (const [i, hex] of ramp.entries()) {
+      const next = ramp[i + 1];
+      if (next === undefined) continue;
+      const step = `${bands[i]}↔${bands[i + 1]}`;
+      expect(deltaE(hex, next), `${step} for unimpaired vision`).toBeGreaterThanOrEqual(6);
+      expect(dichromatSeparation(hex, next), `${step} for a dichromat`).toBeGreaterThanOrEqual(5);
+      expect(deltaE(hex, next, 'tritan'), `${step} under tritanopia`).toBeGreaterThanOrEqual(3.5);
+      for (const [view, delta] of [
+        ['for unimpaired vision', deltaE(hex, next)],
+        ['for a dichromat', dichromatSeparation(hex, next)],
+        ['under tritanopia', deltaE(hex, next, 'tritan')],
+      ] as const) {
+        if (weakest === null || delta < weakest.delta) weakest = { step: `${step} ${view}`, delta };
+      }
+      expect(deltaE(hex, next), `${step} against the categorical floor`).toBeLessThan(NORMAL_FLOOR);
+    }
+    expect(weakest?.step).toBe(WEAKEST_POPULATION_STEP);
+  });
+
+  it('is not confusable with the other sequential scale, which is the point of it existing', () => {
+    /*
+     * The whole argument for a second ramp rather than the first one reused. One basis is drawn at
+     * a time (D9), so a population band and a development band are never on one map — they are on
+     * one *page*, a click apart, with the legend redrawing under them. So this is held at more than
+     * "not the same hex": every band of one is past the **categorical** floor from every band of the
+     * other, which is a stronger separation than either ramp achieves internally, and deliberately.
+     */
+    for (const [i, hex] of ramp.entries()) {
+      for (const [j, other] of Object.values(DEVELOPMENT_BAND_FILL).entries()) {
+        expect(deltaE(hex, other), `population ${bands[i]} against development band ${j + 1}`)
+          .toBeGreaterThanOrEqual(NORMAL_FLOOR);
+      }
+    }
+  });
+
+  it('spends no fill the categorical palette is already using', () => {
+    // Weaker than the check above, and it is the right strength: a mother tongue and a population
+    // band are also never on one map, and the categorical palette has no room left to be held at
+    // arm's length from a whole ramp — the development ramp runs as close as ΔE 2.8 to a category
+    // it never appears beside. What must not happen is one hex meaning two things exactly.
     const shared = ramp.filter((hex) =>
       MOTHER_TONGUE_CATEGORIES.some((category) => motherTongueFill[category] === hex),
     );

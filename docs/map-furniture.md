@@ -84,13 +84,13 @@ the map a reader checks most often and the half the paper explains least: an out
 it is drawn, and a fill is named 500px below the country in the legend under the frame. So the same
 rows are repeated on the paper — every colour the map has actually painted, beside the answer it
 stands for: nine mother tongues under the language basis, four bands of the composite under
-Development, and in both cases the two absences (#17), because a stipple and a hatch a reader cannot
-key are two greys they will read as one.
+Development, four bands of district population under Administrative, and in every case the absences
+(#17), because a stipple and a hatch a reader cannot key are two greys they will read as one.
 
-**Repeated is the operative word.** The entries are `motherTongueLegend`'s and
-`developmentLegend`'s — the same two functions the legend under the frame is built from, and the same
-two the export band derives its key from (#32) — so the three surfaces cannot key one fill three
-ways. Nothing here composes a label, and the heading is the basis's own `name` off the artifact.
+**Repeated is the operative word.** The entries are `motherTongueLegend`'s, `populationLegend`'s and
+`developmentLegend`'s — the same three functions the legend under the frame is built from, and the
+same three the export band derives its key from (#32) — so the three surfaces cannot key one fill
+three ways. Nothing here composes a label, and the heading is the basis's own `name` off the artifact.
 
 **It keys the ground the map painted, and only that.** The language basis's six categories that are
 named by the census and dominant in no district stay below the frame, where they are grouped and

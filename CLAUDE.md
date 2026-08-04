@@ -9,7 +9,8 @@ its **three strata with the basis and variant selectors** (#18) over its **neigh
 and city dots** (#8), the **variant card** beside it (#19), the **adjacency graph** flagging each
 unit's contiguity (#16), the **scorecard** (#20), the **compare gesture** holding a proposal off
 the map (#22), a **deep link** per view (#23), the **About the data** panel (#21), the **phone
-adaptation** (#33), and the **Development basis** (#31) — **two of the four bases are drawable**.
+adaptation** (#33), the **Development basis** (#31) and the **Administrative fill** — **three of
+the four bases are drawable**, and only Historical is still short of a shading.
 
 Seven of the seventeen boundaries this build **derives rather than transcribes**, every one
 re-derived by the suite: L6 and L7 from census plurality, A1–A4 from the rule engine's population
@@ -65,7 +66,7 @@ Basis (4)  →  Variant (17 total)  →  Units  →  Districts
 |---|---|---|
 | **Current** (default view) | Official administrative geography | `official` |
 | **Language / dialect** | PBS 2023 Census Table 11, mother tongue by district | `census` · `proxy` |
-| **Administrative** | 2023 census population + derived geometry | `census` · `derived` |
+| **Administrative** | 2023 census population + derived geometry — shaded by **district population**, in four fixed bands | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
 | **Development** | PBS 2023 Census Tables 12, 23, 24 — literacy (10+), improved drinking water, households with a flush toilet — shaded by **the unweighted mean of the three** | `census` · `synthesized` (#31) |
 
@@ -303,17 +304,22 @@ first — is in **`docs/political-rendering.md`**. Read it before changing any o
   the suite (`src/lib/colour-vision.ts` + `palette.test.ts`), re-derived from the hexes on every
   run. Fifteen categories is past what any categorical palette separates pairwise, so **the gate
   is held on the pairs that actually share a border on the map**.
-- **The Development ramp is the one sequential scale**, held to a sequential scale's criteria
-  (#31): monotonic lightness and chroma along a green-to-blue path, four bands and not five.
-  **No two adjacent bands reach the ΔE the categorical palette is held to** — stated in
-  `palette.ts` and asserted in the suite rather than smoothed over.
+- **Two sequential scales, and neither borrows the other's hexes.** The Development ramp (#31)
+  runs green-to-blue and the Administrative one — district population — runs violet-to-coral; both
+  are monotonic in lightness and chroma, both four bands and not five. One basis is drawn at a time
+  (D9) so they never share a map, but they share a *page*, so the suite holds **every band of one
+  past the categorical floor from every band of the other** — a stronger separation than either
+  reaches internally, deliberately. **No two adjacent bands of either reach the ΔE the categorical
+  palette is held to** — stated in `palette.ts` and asserted in the suite rather than smoothed over.
+  Both ends of the population ramp sit *at* their gate: the pale end is bounded by the warm paper
+  and the dark end by the accent, which is where its fourth band's worth of room ran out.
 - **Responsive, and the phone is not the degraded case** (#33). Hard bar: **map legible and
   variant switching functional at 390px** — Pakistan's internet is overwhelmingly mobile-first.
   Sixteen of the seventeen variants meet it outright; **D1 and only D1** does not, with six of its
   thirty-five unit names unset at that size, each listed in the suite. The breakpoint is stated
   **once, in the stylesheet** (`--sheet`) and read from there by `sheet.ts`.
 
-The reasoning behind the last four — the boundary hierarchy, the palette gates, the ramp's
+The reasoning behind the last four — the boundary hierarchy, the palette gates, the two ramps'
 lightness budget and the phone bar — is in **`docs/visual-design.md`**.
 
 ---

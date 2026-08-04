@@ -22,7 +22,7 @@ import {
 
 const bundle = scenarios as unknown as ScenarioBundle;
 /** What this build can actually shade. `main.ts` derives the same set from its fill table. */
-const SHADEABLE = new Set<BasisId>(['language', 'development']);
+const SHADEABLE = new Set<BasisId>(['language', 'administrative', 'development']);
 const choices = basisChoices(bundle, SHADEABLE);
 
 describe('basisChoices', () => {
@@ -70,19 +70,29 @@ describe('basisChoices', () => {
     expect(development?.basis.badges).toEqual(['census', 'synthesized']);
   });
 
-  it('refuses the other two, and says which half of each is missing rather than one reason for both', () => {
-    // "Coming soon" is the one answer that tells a reader nothing. Administrative and Historical
-    // both have their variants written and no fill behind them, which is a different refusal from
-    // the one Development used to get, and the control says which applies.
+  it('makes the administrative basis selectable, on the population its own rules are drawn from', () => {
+    // The third of the four to open, and the one whose fill needed no new artifact: A1 to A3 are
+    // partitions of the 2023 census population, and the shading is that same published figure
+    // banded — so those boundaries are drawn over the quantity they were cut at.
+    const administrative = choices.find((c) => c.basis.id === 'administrative');
+    expect(administrative?.available).toBe(true);
+    expect(administrative?.missing).toEqual([]);
+    expect(administrative?.variants.map((v) => v.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
+    // `census` for the figure and `derived` for the geometry — the fill answers to the first of
+    // the two, and nothing about the shading is this project's own number.
+    expect(administrative?.basis.badges).toEqual(['census', 'derived']);
+  });
+
+  it('refuses the one that is left, and says which half of it is missing', () => {
+    // "Coming soon" is the one answer that tells a reader nothing. Historical has its four
+    // variants written and no fill behind them, which is a different refusal from the one
+    // Development and Administrative used to get, and the control says which applies.
     const refused = choices.filter((c) => !c.available);
-    expect(refused.map((c) => c.basis.id)).toEqual(['administrative', 'historical']);
+    expect(refused.map((c) => c.basis.id)).toEqual(['historical']);
     for (const choice of refused) expect(choice.unavailable).toContain(choice.basis.name);
 
     const missing = Object.fromEntries(refused.map((c) => [c.basis.id, c.missing]));
     expect(missing['historical']).toEqual(['no shading is built yet']);
-    // #28 moved Administrative from the second group to the first: A1 to A5 are written and
-    // dissolved, and what is still missing is the fill.
-    expect(missing['administrative']).toEqual(['no shading is built yet']);
   });
 
   it('prints the refusal on screen, grouped by reason and naming every basis it applies to', () => {
@@ -91,17 +101,17 @@ describe('basisChoices', () => {
     // Historical — which is only short of its fill — is not filed under a sentence saying nobody
     // has written its variants.
     expect(refusalLines(choices)).toEqual([
-      'Administrative and Historical are not selectable yet — no shading is built yet.',
+      'Historical is not selectable yet — no shading is built yet.',
     ]);
   });
 
-  it('says "is" of a single refused basis, and nothing at all when none is refused', () => {
-    // Held on a set of one rather than on the shipped pair, since the shipped refusal is now two
-    // bases short of the same thing: the sentence still has to agree with itself in number, and
-    // the case where it would not is the case a future ticket closing one of the two produces.
-    const alone = basisChoices(bundle, new Set<BasisId>(['language', 'development', 'historical']));
-    expect(refusalLines(alone)).toEqual([
-      'Administrative is not selectable yet — no shading is built yet.',
+  it('says "are" of several refused bases, and nothing at all when none is refused', () => {
+    // Held on a stubbed pair rather than on the shipped one, since the shipped refusal is now a
+    // single basis: the sentence still has to agree with itself in number, and the plural case is
+    // the one the app has just left rather than one it can no longer reach.
+    const pair = basisChoices(bundle, new Set<BasisId>(['language', 'development']));
+    expect(refusalLines(pair)).toEqual([
+      'Administrative and Historical are not selectable yet — no shading is built yet.',
     ]);
     expect(refusalLines(choices.filter((c) => c.available))).toEqual([]);
   });
@@ -116,15 +126,6 @@ describe('basisChoices', () => {
     expect(historical?.available).toBe(false);
     expect(historical?.variants.map((v) => v.id)).toEqual(['h1', 'h2', 'h3', 'h4']);
     expect(historical?.unavailable).toBe('Historical: no shading is built yet.');
-
-    // And the same for Administrative, which #28 put in exactly this position: five complete
-    // partitions, four of them boundaries this build computed, and no fill to argue any of them
-    // against. The order is the order the module writes them in — the rule-drawn maps first and
-    // the one sourced proposal last.
-    const administrative = choices.find((c) => c.basis.id === 'administrative');
-    expect(administrative?.available).toBe(false);
-    expect(administrative?.variants.map((v) => v.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
-    expect(administrative?.unavailable).toBe('Administrative: no shading is built yet.');
 
     const unshaded = basisChoices(bundle, new Set<BasisId>());
     const language = unshaded.find((c) => c.basis.id === 'language');
@@ -153,10 +154,8 @@ describe('selectBasis', () => {
     // Louder than a silent baseline, which would look like a dead control. Both refusals are held
     // — the shipped one, where the variants exist and the fill does not, and the other half, which
     // no basis is in today and which a new basis with no variants written would be.
-    expect(() => selectBasis(choices, 'administrative')).toThrow(
-      /administrative cannot be selected/,
-    );
-    expect(() => selectBasis(choices, 'administrative')).toThrow(/no shading is built/);
+    expect(() => selectBasis(choices, 'historical')).toThrow(/historical cannot be selected/);
+    expect(() => selectBasis(choices, 'historical')).toThrow(/no shading is built/);
 
     const unwritten = basisChoices(
       { ...bundle, variants: bundle.variants.filter((v) => v.basis !== 'development') },

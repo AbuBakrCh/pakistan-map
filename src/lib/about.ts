@@ -256,7 +256,13 @@ function sourcesOf(inputs: AboutInputs): readonly AboutSource[] {
       caveat: `${context.cities.why} ${context.cities.omits}`,
     },
     {
-      what: 'Population — every district figure, and every unit total summed from them',
+      // Three jobs now, and the row names the third: it is the figure every unit total is summed
+      // from, the figure the tooltip prints, and — since the Administrative fill — the figure that
+      // shades the map under that basis, in four fixed bands. Fixed rather than quantiles, which is
+      // the caveat worth carrying here: a band is a property of the district and not of the set.
+      what:
+        'Population — every district figure, every unit total summed from them, and the ground ' +
+        'the Administrative basis shades by, in four fixed bands',
       source: `${census.provenance.sources['census'] ?? ''}; extracted from ${census.provenance.sources['censusPackage'] ?? ''}; checked against ${census.provenance.sources['publishedTotals'] ?? ''}`,
       vintage: censusVintage,
       badges: badges('census'),

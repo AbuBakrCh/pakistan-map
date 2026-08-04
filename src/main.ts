@@ -43,6 +43,7 @@ import { hashFor, readRoute } from './lib/deep-link.ts';
 import { shortFormExpansions } from './lib/labels.ts';
 import { arcsOf, readLineOfControl } from './lib/line-of-control.ts';
 import type { DistrictFill, LegendEntry } from './lib/fill.ts';
+import { POPULATION_BANDS, populationFills, populationLegend } from './lib/administrative.ts';
 import { bandPaint, developmentFills, developmentLegend } from './lib/development.ts';
 import { motherTongueFills, motherTongueLegend } from './lib/mother-tongue.ts';
 import {
@@ -85,13 +86,14 @@ if (aboutMount === null) throw new Error('#about is missing from index.html');
  * What each basis shades districts with — and, by being the same object, which bases may be
  * selected at all.
  *
- * Two entries. The administrative and historical bases have their variants in the bundle and no
- * fill in the renderer, and the selector says exactly that rather than offering a basis that would
- * shade nothing. Stated once so the menu and the map cannot disagree: a basis offered here and
- * unshaded there is a basis that switches the boundaries back and explains nothing.
+ * Three entries. Historical has its four variants in the bundle and no fill in the renderer, and
+ * the selector says exactly that rather than offering a basis that would shade nothing. Stated once
+ * so the menu and the map cannot disagree: a basis offered here and unshaded there is a basis that
+ * switches the boundaries back and explains nothing.
  */
 const FILLS: Partial<Record<BasisId, ReadonlyMap<string, DistrictFill>>> = {
   language: motherTongueFills(censusStatistics),
+  administrative: populationFills(censusStatistics),
   development: developmentFills(developmentIndexBundle, censusStatistics),
 };
 const SHADEABLE = new Set(Object.keys(FILLS) as BasisId[]);
@@ -598,9 +600,11 @@ function renderFillKey(active: Selection): void {
       ? null
       : active.basis === 'language'
         ? motherTongueLegend(censusStatistics)
-        : active.basis === 'development'
-          ? developmentLegend(developmentIndexBundle)
-          : null;
+        : active.basis === 'administrative'
+          ? populationLegend(censusStatistics)
+          : active.basis === 'development'
+            ? developmentLegend(developmentIndexBundle)
+            : null;
   if (active === null || legend === null) {
     mount.innerHTML = '';
     return;
@@ -648,9 +652,11 @@ function renderLegend(active: Selection, variant: VariantRecord | null): void {
   const fill =
     active.basis === 'language'
       ? motherTongueKey()
-      : active.basis === 'development'
-        ? developmentKey()
-        : { key: '', grouped: '' };
+      : active.basis === 'administrative'
+        ? populationKey()
+        : active.basis === 'development'
+          ? developmentKey()
+          : { key: '', grouped: '' };
   // The grouped categories go last, after the line's own entry: they are the six a reader never
   // has to match to the map, and putting them mid-legend pushes the ones they do off the end.
   legend.innerHTML = `${units}${fill.key}${lineOfControlEntry}${fill.grouped}`;
@@ -665,6 +671,26 @@ function motherTongueKey(): { key: string; grouped: string } {
       <span class="legend-group">
         <span class="legend-group-label">Named by the census, dominant in no district</span>
         ${namedButNowhereDominant.map(item).join('')}
+      </span>`,
+  };
+}
+
+/**
+ * Stratum 1's key under the Administrative basis, smallest band first — the order the scale is
+ * read in, and the same shape the development key takes.
+ *
+ * The lead sentence goes in the `grouped` slot for the development key's reason: it says whose
+ * figure this is and which figure it is — the count, not a density — and a legend row repeating
+ * that per band would say it four times. It is a shorter obligation than the composite's, because
+ * this one is PBS's own column rather than an index of ours.
+ */
+function populationKey(): { key: string; grouped: string } {
+  const legend = populationLegend(censusStatistics);
+  return {
+    key: `${legend.bands.map(item).join('')}${legend.absences.map(item).join('')}`,
+    grouped: `
+      <span class="legend-group">
+        <span class="legend-group-label">${legend.lead}</span>
       </span>`,
   };
 }
@@ -717,6 +743,7 @@ function renderColophon(active: Selection, variant: VariantRecord | null): void 
       .join(' · ')}. Names are shortened only where the full name is wider than the ground it
       names, and only to the form the unit uses for itself.</p>
     ${active?.basis === 'language' ? motherTongueProvenance() : ''}
+    ${active?.basis === 'administrative' ? populationProvenance() : ''}
     ${active?.basis === 'development' ? developmentProvenance() : ''}
     <p><strong>Sources</strong> ${sources['boundaries']} · roster: PBS.</p>
   `;
@@ -804,6 +831,28 @@ function motherTongueProvenance(): string {
       ${gap} below Table 1's population, a difference PBS shares with Table 10 and does not
       explain, so it is stated and not closed. Khowar has no column, so the census names no
       dominant language in Chitral and the map says so rather than guessing one.</p>`;
+}
+
+/**
+ * The population fill's own line — a published column, so the shortest of the three, and it says
+ * the two things a banded count is most often misread as.
+ *
+ * The bands are **fixed cuts and not quantiles**, so a district's colour does not move because
+ * another district's did; and the figure is **the count and not a density**, so a large empty
+ * district and a small crowded one carrying the same fill hold the same number of people and not
+ * the same number per km². The area PBS publishes beside the population is in the bundle and is
+ * printed on the scorecard where it is needed (#49); it is deliberately not what this basis shades.
+ */
+function populationProvenance(): string {
+  const { sources } = censusStatistics.provenance;
+  const bands = POPULATION_BANDS.map((band) => band.label.toLowerCase()).join('; ');
+  return `
+    <p><strong>Population</strong> <span class="badge">census</span> Each district shaded by its
+      2023 census population, as published — the count itself, not a density and not a share.
+      ${POPULATION_BANDS.length} fixed bands, the same at every vintage rather than quantiles of
+      this one: ${bands}. A band is therefore a figure a reader can check against the district's own
+      population on the tooltip, and no district's colour depends on any other district's.
+      <span class="source">${sources['publishedTotals'] ?? ''}</span></p>`;
 }
 
 /**

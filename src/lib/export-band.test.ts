@@ -41,6 +41,7 @@ import {
   type BandStyle,
 } from './export-band.ts';
 import developmentIndex from '../../data/bundle/development-index.json';
+import { populationLegend } from './administrative.ts';
 import { developmentLegend, type DevelopmentIndexBundle } from './development.ts';
 import { motherTongueLegend } from './mother-tongue.ts';
 import { figuresWithheld } from './tooltip.ts';
@@ -358,8 +359,22 @@ describe('the legend is derived from the map, never transcribed beside it', () =
     for (const entry of [...onTheMap, ...absences]) expect(keyed).toContain(entry.label);
   });
 
+  it('keys the population ramp under the basis whose fill is a published count', () => {
+    // The second of the two ramps, and it must key its own four bands rather than the other's:
+    // both are four swatches in the same shape, so a band that reached for the wrong legend would
+    // produce a picture that looks right and says the wrong figures under it.
+    const legend = populationLegend(census);
+    const keyed = bandLegend(census, variantNamed('a1'), 'administrative', development).map(
+      (entry) => entry.label,
+    );
+    for (const entry of [...legend.bands, ...legend.absences]) expect(keyed).toContain(entry.label);
+    expect(keyed).not.toContain(legend.lead);
+    // And not the other ramp's rows, which is the failure this is really guarding.
+    for (const entry of developmentLegend(development).bands) expect(keyed).not.toContain(entry.label);
+  });
+
   it('keys the development ramp under the basis whose fill nobody published', () => {
-    // Two of the four bases have a fill and the band derives each from the same function the
+    // Three of the four bases have a fill and the band derives each from the same function the
     // screen's legend is built from. The lead sentence — that no published source states this
     // figure — is deliberately not a key entry: it is the badge's gloss, and the band prints that
     // under Provenance, where a reader looks for exactly that claim.
@@ -382,13 +397,13 @@ describe('the legend is derived from the map, never transcribed beside it', () =
   });
 
   it('refuses to key a basis it has no fill for, rather than printing the wrong key', () => {
-    // Two of the four have a fill. A band that answered every shadeable basis with the
+    // Three of the four have a fill. A band that answered every shadeable basis with the
     // mother-tongue key would print the wrong legend under the right badge — checkable, and wrong,
-    // on the copy that travels with no page. The other two still fail by name.
-    expect(() => bandLegend(census, variantNamed('l1'), 'administrative', development)).toThrow(
-      /administrative/,
+    // on the copy that travels with no page. The fourth still fails by name.
+    expect(() => bandLegend(census, variantNamed('h1'), 'historical', development)).toThrow(
+      /historical/,
     );
-    expect(() => bandLegend(census, variantNamed('l1'), 'historical', development)).toThrow(
+    expect(() => bandLegend(census, variantNamed('h1'), 'historical', development)).toThrow(
       /has no key for it/,
     );
   });

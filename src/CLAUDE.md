@@ -33,7 +33,8 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   `aria-hidden`**, because `lib/regions.ts` already names every region in words (#35).
 - **The map keys its own colours too, top right, under the division toggle** — stratum 1's key, on
   the paper: every fill the map has actually painted beside the answer it stands for, and both
-  absences with it (#17). The rows are `motherTongueLegend`'s and `developmentLegend`'s, the same two
+  absences with it (#17). The rows are `motherTongueLegend`'s, `populationLegend`'s and
+  `developmentLegend`'s, the same three
   the legend under the frame and the export band are built from, so no fill is keyed two ways; the
   heading is the basis's own name. It keys **only the ground the map painted** — the six categories
   dominant in no district stay below the frame — and is emptied, and taken off the paper by `:empty`,
@@ -61,11 +62,11 @@ the active variant's unit outlines draw prominently on top.
 one-of-N and the alternatives *are* the product. The baseline sits first among the bases, because
 returning to the real map is the same kind of act as choosing one. **A basis is never active on
 its own** — selecting one selects its first variant (D13), so there is no state that means
-"shaded, with nothing proposed over it". All four bases are always offered, **two of them are live**
-— Language and, since #31, Development — and the two that cannot yet be drawn are **refused out
-loud**: the control says whether the variants are missing, the shading is missing, or both;
-Administrative and Historical have their variants written and want only a fill, and no basis is now
-short of both. Said on being pressed and not only on hover, since `disabled`
+"shaded, with nothing proposed over it". All four bases are always offered, **three of them are
+live** — Language, Development (#31) and Administrative — and the one that cannot yet be drawn is
+**refused out loud**: the control says whether the variants are missing, the shading is missing, or
+both; Historical has its four variants written and wants only a fill, and no basis is now short of
+both. Said on being pressed and not only on hover, since `disabled`
 takes no tap and the hard bar is a 390px phone. Which bases can be shaded is a property of the renderer, not of
 the bundle, and is stated once in `main.ts` so the menu and the map cannot disagree.
 
@@ -155,7 +156,31 @@ omission** (#31). A district falls in one of four **bands** of the composite, or
 unshaded baseline because PBS published none of the three rates for it — the same twenty. There is
 no stipple, because a mean of three published rates always has a value where a dominant mother
 tongue is an answer the census can fail to name; the vocabulary is shared (`lib/fill.ts`) so that
-the two bases cannot draw the same absence two ways.
+the bases cannot draw the same absence two ways.
+
+**Under the Administrative basis it carries the same two, over the plainest figure of the three.** A
+district falls in one of four **fixed bands of its 2023 census population** — under 500,000;
+500,000–1,500,000; 1,500,000–3,000,000; 3,000,000 and above — or it is left at the unshaded
+baseline, the same twenty. Four things about it, each argued in `lib/administrative.ts`:
+
+- **Population and not density**, because population is what the basis is argued from: A1 to A3 are
+  partitions of exactly this figure, so those boundaries are drawn over the quantity they were cut
+  at. Density would be the tidier choropleth and the evidence for nothing on top of it. The cost —
+  a count on a choropleth over-reads big empty districts — is answered by the legend's figures and
+  by the tooltip, not hidden.
+- **Fixed cuts, never quantiles**, on the composite's reasoning: a quantile band makes a district's
+  colour a function of every *other* district's population, so a district could change colour at the
+  next census without one person moving into it.
+- **Banded at runtime rather than baked**, which is where it differs from the composite. The figure
+  is PBS's own and already in `statistics.json`; only the banding is this module's, and **no boundary
+  anywhere in the app is drawn from these four cuts** — the two reasons #31 bakes its own.
+- **The lowest band is not where an absence goes.** The lowest band is *under 500,000*, and twenty
+  districts with no census row painted into it would read as the emptiest ground in Pakistan on the
+  strength of a question PBS never asked there (D25).
+
+It is also the one shaded basis needing **no `DistrictShading` of its own**: that machinery exists
+because the development composite is a figure nobody published and a colour is the only thing
+explaining it, and here the population was already on the tooltip with its source.
 
 **Stratum 3's line work is thinned at the bar**, and only its absolute weights are. The strokes are
 `non-scaling-stroke`, so they are the same screen px on a 369px-wide country as on a 1200px one —
