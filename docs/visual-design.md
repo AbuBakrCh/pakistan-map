@@ -88,7 +88,7 @@ could be drawn.
 **Responsive** (#33). Hard bar: **map legible and variant switching functional at 390px.**
 Pakistan's internet is overwhelmingly mobile-first, so this is where most of the audience meets
 the app. Panel becomes a bottom sheet; hover becomes tap; `Space` becomes a button. **Sixteen of
-the seventeen variants now meet it outright**, A1 to A3 among them — the rule-drawn partitions
+the fourteen variants now meet it outright** — including A6, the one rule-drawn partition
 that were the standing example of the bar going unmet — and so does H2, whose *Gilgit Agency and
 Baltistan* is the longest unit name in the app. It was twenty-one names across nine variants
 before #51 and seven across four after it. What is left is **D1 and only D1**, whose thirty-five

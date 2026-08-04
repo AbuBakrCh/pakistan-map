@@ -71,13 +71,13 @@ describe('basisChoices', () => {
   });
 
   it('makes the administrative basis selectable, on the population its own rules are drawn from', () => {
-    // The third of the four to open, and the one whose fill needed no new artifact: A1 to A3 are
-    // partitions of the 2023 census population, and the shading is that same published figure
-    // banded — so those boundaries are drawn over the quantity they were cut at.
+    // The third of the four to open, and the one whose fill needed no new artifact: A6 is a
+    // partition bounded by the 2023 census population, and the shading is that same published
+    // figure banded — so the boundary is drawn over the quantity it was cut at.
     const administrative = choices.find((c) => c.basis.id === 'administrative');
     expect(administrative?.available).toBe(true);
     expect(administrative?.missing).toEqual([]);
-    expect(administrative?.variants.map((v) => v.id)).toEqual(['a1', 'a2', 'a3', 'a4', 'a5']);
+    expect(administrative?.variants.map((v) => v.id)).toEqual(['a6', 'a5']);
     // `census` for the figure and `derived` for the geometry — the fill answers to the first of
     // the two, and nothing about the shading is this project's own number.
     expect(administrative?.basis.badges).toEqual(['census', 'derived']);

@@ -1,25 +1,55 @@
 /**
- * The administrative rule engine (#27) — partitions of Pakistan drawn by a stated rule rather
- * than by us.
+ * The administrative rule engine (#27, rewritten) — a partition of Pakistan drawn by a stated rule
+ * rather than by us, and drawn **inside the provinces that already exist**.
  *
  * Every other basis in this app carries somebody else's line. The Language variants transcribe
  * what a movement published, the Historical ones transcribe what a commission drew, and where a
  * boundary is derived instead of transcribed the card has to say so (`composition.kind`). The
- * Administrative basis has no such line to transcribe: nobody publishes a district list for "no
- * province above 25 million people". So the boundary is computed here, and the thing that keeps it
- * from being *our* boundary is that the rule is stated, the arithmetic is reproducible, and the
- * same rule always yields the same map. A partition a reader cannot re-derive is an editorial
- * opinion wearing a `derived` badge.
+ * Administrative basis has no such line to transcribe: nobody publishes a district list for
+ * "no province above 25 million people, seated at a divisional headquarters". So the boundary is
+ * computed here, and the thing that keeps it from being *our* boundary is that the rule is stated,
+ * the arithmetic is reproducible, and the same rule always yields the same map. A partition a
+ * reader cannot re-derive is an editorial opinion wearing a `derived` badge.
  *
- * Three rules, exactly the three the ticket names, and each one fully determines a partition:
+ * ## The rule, in the order it runs
  *
- *  - `unit-count` — how many provinces there should be. The published argument at 240 million is
- *    twelve to fourteen; the rule takes the number and draws it.
- *  - `population-ceiling` — no province above N people, and the fewest provinces for which that
- *    holds. Punjab is ~128 million governed from Lahore, which is the whole of the argument.
- *  - `distance-to-capital` — no district more than N km from the seat that administers it, and
- *    the fewest provinces for which that holds. Balochistan's districts are the case: 14.9 million
- *    people spread over the largest province in the country, where population says nothing.
+ * 1. **The province is the frame.** Each of the four provinces and the capital territory is
+ *    partitioned on its own, and **no unit crosses a provincial boundary**. That is the change
+ *    from the engine this replaces, and it is the one assumption that most narrows what the rule
+ *    can say: a map that redrew across provincial lines would be answering a question about
+ *    administrative load with a rearrangement of the federation, and every real proposal in this
+ *    app argues inside one province at a time.
+ * 2. **A centre is a divisional headquarters that the census finds well enough served** — the
+ *    development index at or above the stated floor. Seeds are taken in population order, the
+ *    most populous qualifying centre first.
+ * 3. **The unit grows outward across shared district borders** — the adjacency graph #16 derives
+ *    from the arcs the map is drawn from — taking the **nearest unassigned district** on its edge
+ *    each time, so a unit is connected at every step by construction and compact around its own
+ *    centre. A district is admitted only while both limits hold: the unit stays **at or below the
+ *    population ceiling**, and the district is **within the distance limit of the centre**.
+ * 4. **When neither limit admits anything more, the unit is closed** and the next centre is seeded
+ *    from what is left of the province. The province is finished when nothing is left.
+ *
+ * The ceiling is a limit and not a target: a district that would carry the unit past it is
+ * refused, so every unit lands at or below the figure rather than at or just above it. Both halves
+ * are stated on the card in those words.
+ *
+ * ## Two costs, stated rather than smoothed
+ *
+ * **"Travel distance" is measured as a straight line, centroid to centroid.** There is no road
+ * network in this bundle and no routing source at this project's vintage, and inventing one would
+ * put an unsourced number under a boundary. So the limit is a great-circle distance and the card
+ * says so in those words rather than calling it travel time — a straight line is shorter than any
+ * road, which makes the limit the more generous of the two readings, and a centroid is not where
+ * anybody lives.
+ *
+ * **Sequential seeding strands districts, and a stranded district becomes a unit.** A unit closed
+ * by the distance limit can leave a pocket of the province with no qualifying centre left in it;
+ * the fallback then seeds on the **most populous remaining district**, whatever its development
+ * index and whether or not it is a headquarters, because a rule that refused would leave part of a
+ * province in no unit and a partition with a hole in it is not a partition (D6). Every unit seeded
+ * that way is recorded, so the card can name them rather than let a one-district province pass as
+ * an intended output.
  *
  * ## What a rule can and cannot see
  *
@@ -32,55 +62,39 @@
  * partitions the 136 and carries AJK and Gilgit-Baltistan through as themselves — which is what
  * `TERRITORY_CLAIM_POLICY` already requires of every other variant (open item 2b).
  *
+ * The development index is refused on the same terms and for a sharper reason: the floor is a
+ * *threshold*, so a missing score read as zero would not fail loudly, it would quietly disqualify
+ * a headquarters and move a boundary.
+ *
  * `scorecard.ts` reaches the same conclusion from the other end and states it the same way: never
  * a zero standing in for an absence.
  *
- * ## How a unit is grown, and why it is contiguous
+ * ## Where the centres come from
  *
- * Every unit starts at a capital and grows **outward across shared district borders** — the
- * adjacency graph #16 derived from the arcs the map is drawn from — so a unit is connected at
- * every step by construction and cannot be otherwise. That is the reason contiguity is a property
- * of the method here rather than a filter applied afterwards: a partitioner that assigned
- * districts freely and then discarded the broken results would be choosing between maps, and
- * choosing is the thing this module exists not to do. `contiguityOf` is nonetheless run over the
- * finished units and names any that is not whole, because a guarantee nothing checks is a comment.
+ * A rule that says a unit is grown around an administrative centre still has to say which
+ * districts hold one, and this is the one place the engine makes a choice, so it is made in the
+ * open and stated on the card. **A division's headquarters is the district that carries the
+ * division's own name**; where no district does, it is the **most populous district in the
+ * division**. That is a rule and not a transcription, deliberately — PBS publishes the division
+ * each district belongs to and does not publish a seat column, and typing one out of a provincial
+ * gazetteer would put the one unsourced table in this repo underneath every Administrative
+ * boundary. Twenty-seven of the thirty-one divisions are named after a district and resolve by
+ * name; four are not, and the card names all four and the district the rule seats each at.
  *
- * At each step the unit with the **fewest people** takes the next district, and it takes the
- * smallest one available to it. Ties go to the lower district name and the lower capital name, so
- * nothing depends on the order the caller happened to hand anything over. That is the whole of the
- * determinism claim, and `partitioner.test.ts` holds it against a shuffled input rather than
- * against this paragraph.
- *
- * ## Where the capitals come from
- *
- * A rule that says how many provinces there are still has to say where they start, and this is the
- * one place the engine makes a choice, so it is made in the open and stated on the card:
- *
- *  - For the two population rules, capitals are **the most populous districts, no two of them
- *    sharing a border** — a province is administered from its largest city, and two capitals in
- *    adjacent districts are one metropolis with two governments. Where the non-adjacency cannot be
- *    honoured (more capitals wanted than the map has room for) it is relaxed, in population order,
- *    rather than the rule failing.
- *  - For the distance rule, capitals are **as far as possible from the capitals already chosen**,
- *    starting from the most populous district — because the rule is about distance, and seating
- *    every capital in Punjab would answer a question about Balochistan with a fact about Lahore.
- *
- * The cost is stated rather than hidden: population-ranked capitals are Punjab-heavy, because
- * Punjab is where the people are, so a `unit-count` partition can hand Balochistan's western
- * districts to a unit seated a very long way away. That is what a population rule *says*, and it
- * is why the distance rule exists beside it rather than instead of it.
+ * The seats of the first-level units need no clause of their own: every provincial capital is
+ * already the headquarters of the division it names, and Islamabad is the whole of its own
+ * pseudo-division (#3).
  *
  * ## What this module does not do
  *
- * It does not name a province. A generated unit carries the name of its capital, because the
- * engine has no source for a name and inventing one would be exactly the editorial voice the rule
- * is here to keep out; the variants that ship (#28) rename them in reviewed copy. It does not
- * decide which rule is interesting, and it does not tune one until the map looks right — the
- * number of units is either stated by the rule or is the fewest the constraint admits, and nothing
- * in between is available to be chosen.
+ * It does not name a province. A generated unit carries the name of its centre, because the engine
+ * has no source for a name and inventing one would be exactly the editorial voice the rule is here
+ * to keep out. It does not decide which rule is interesting, and it does not tune one until the
+ * map looks right — the number of units is a *finding*, never an input, and nothing in between is
+ * available to be chosen.
  *
  * Pure, like its neighbours: no filesystem, no geometry, no bundle. The caller supplies the
- * districts, the graph, the census and — for the distance rule — the centroids.
+ * districts, the graph, the census, the divisions, the development index and the centroids.
  */
 
 import { type AdjacencyGraph, contiguityOf } from './adjacency.ts';
@@ -88,17 +102,33 @@ import { groupDigits as group } from './digits.ts';
 import { provinceOf } from './roster.ts';
 import { slug, type NonEmpty, type Unit } from './scenarios.ts';
 
-/** The stated rule. Three kinds, each of which determines a partition on its own. */
-export type PartitionRule =
-  /** Exactly this many units. The number is the argument. */
-  | { readonly kind: 'unit-count'; readonly units: number }
-  /** No unit above this many people, in the fewest units for which that holds. */
-  | { readonly kind: 'population-ceiling'; readonly ceiling: number }
-  /** No district further than this from its capital, in the fewest units for which that holds. */
-  | { readonly kind: 'distance-to-capital'; readonly km: number };
+/**
+ * The stated rule, and all three numbers it is stated in.
+ *
+ * One kind rather than a union, because the three parameters are one rule: a ceiling with no
+ * distance limit would run a unit the length of Balochistan, and a distance limit with no ceiling
+ * would put half of Punjab in one unit. `kind` is kept so a statement, a failure and a test all
+ * name the rule the same way.
+ */
+export interface PartitionRule {
+  readonly kind: 'within-province-centres';
+  /** No unit may exceed this many people. A limit, never a target. */
+  readonly ceiling: number;
+  /** No district may be further than this from its unit's centre, in kilometres. */
+  readonly km: number;
+  /** A centre must score at least this on the development index — a proportion in 0 to 1. */
+  readonly developmentFloor: number;
+}
 
 /** A district centroid, longitude then latitude, as `d3.geoCentroid` returns it. */
 export type Centroid = readonly [number, number];
+
+/** How a unit's centre was arrived at, which is the one thing about it worth saying on a card. */
+export type CentreKind =
+  /** A divisional headquarters clearing the development floor — what the rule is stated in. */
+  | 'headquarters'
+  /** Nothing left in the province qualified, so the most populous remainder seeded the unit. */
+  | 'fallback';
 
 export interface PartitionInput {
   /** The districts to partition. Every one of them ends up in exactly one unit, or nothing does. */
@@ -107,18 +137,35 @@ export interface PartitionInput {
   readonly neighbours: AdjacencyGraph;
   /** District -> 2023 census population. A district the census does not reach is **absent**. */
   readonly populations: ReadonlyMap<string, number>;
-  /** Required by `distance-to-capital` and unused by the others. */
-  readonly centroids?: ReadonlyMap<string, Centroid>;
+  /**
+   * District -> the province it is in, which is the frame the whole rule is drawn inside.
+   *
+   * Supplied rather than read off the roster this module already imports, because the frame is the
+   * rule's central claim: a caller partitioning some other set of districts has to say what the
+   * provinces of that set are, and an engine that answered the question for itself would silently
+   * draw the wrong frame the first time it was handed a scope the roster does not describe.
+   */
+  readonly provinces: ReadonlyMap<string, string>;
+  /** District -> the division PBS files it under, which is where the headquarters rule looks. */
+  readonly divisions: ReadonlyMap<string, string>;
+  /** District -> its development index. A district the composite does not reach is **absent**. */
+  readonly development: ReadonlyMap<string, number>;
+  /** District centroids, longitude then latitude. The distance limit is measured against these. */
+  readonly centroids: ReadonlyMap<string, Centroid>;
 }
 
 export interface GeneratedUnit {
-  /** Slug of the capital, so a unit's identity survives a rename in #28's copy. */
+  /** Slug of the centre, so a unit's identity survives a rename in reviewed copy. */
   readonly id: string;
-  /** The capital's name, until a reviewed one replaces it. See the module note. */
+  /** The centre's name, until a reviewed one replaces it. See the module note. */
   readonly name: string;
-  /** The district the unit was grown from, and the seat the distance rule measures against. */
-  readonly capital: string;
-  /** The unit's districts, ascending. The capital is one of them. */
+  /** The district the unit was grown from, and the seat the distance limit measures against. */
+  readonly centre: string;
+  /** How that centre was arrived at — the rule's own test, or the fallback. */
+  readonly centreKind: CentreKind;
+  /** The province the unit lies wholly inside. No unit spans two. */
+  readonly province: string;
+  /** The unit's districts, ascending. The centre is one of them. */
   readonly districts: NonEmpty<string>;
   /** The sum of its districts' census rows. Never a partial sum — see `problems`. */
   readonly population: number;
@@ -128,10 +175,10 @@ export interface GeneratedPartition {
   readonly rule: PartitionRule;
   /**
    * The rule in words, for `composition.rule` and the card. Carries the number of units the rule
-   * arrived at, because for two of the three rules that number is a *finding* and not an input.
+   * arrived at, because that number is a *finding* and not an input.
    */
   readonly statement: string;
-  /** Ordered largest population first, ties on the capital's name. */
+  /** Ordered largest population first, ties on the centre's name. */
   readonly units: NonEmpty<GeneratedUnit>;
 }
 
@@ -155,7 +202,7 @@ const EARTH_RADIUS_KM = 6371;
  *
  * A sphere and not the ellipsoid: the rule it serves is a limit of hundreds of kilometres stated
  * as a round number, and the ~0.3% the flattening would move it is far inside the precision of
- * "no district more than 300 km from its capital". Spelling the ellipsoid out would suggest the
+ * "no district more than 300 km from its centre". Spelling the ellipsoid out would suggest the
  * rule is exact to a metre, which it is not — it is measured centroid to centroid, and a centroid
  * is not where anybody lives.
  */
@@ -181,237 +228,155 @@ const byPopulationDescending = (
   );
 
 /**
- * The most populous districts, no two of them sharing a border.
- *
- * Two passes, and the second one is the honest part: the non-adjacency constraint caps how many
- * capitals the map has room for, and a rule asking for more of them should get them rather than
- * fail on a preference. So the first pass honours the constraint, and the second fills the
- * remainder in the same population order, relaxing it.
+ * A division's name and a district's name compared the way this repo compares two spellings of one
+ * place: on letters alone, so *D. G. Khan* and *Dera Ghazi Khan* are not asked to match by accident
+ * and *Sukkur* and *Sukkur* are not kept apart by a stray point.
  */
-export function capitalsByPopulation(
-  scope: readonly string[],
-  neighbours: AdjacencyGraph,
-  populations: ReadonlyMap<string, number>,
-  wanted: number,
-): readonly string[] {
-  const ranked = byPopulationDescending(scope, populations);
-  const chosen: string[] = [];
-  const taken = new Set<string>();
-  const adjacentToChosen = new Set<string>();
-
-  for (const district of ranked) {
-    if (chosen.length === wanted) break;
-    if (adjacentToChosen.has(district)) continue;
-    chosen.push(district);
-    taken.add(district);
-    for (const other of neighbours.get(district) ?? []) adjacentToChosen.add(other);
-  }
-  for (const district of ranked) {
-    if (chosen.length === wanted) break;
-    if (taken.has(district)) continue;
-    chosen.push(district);
-    taken.add(district);
-  }
-  return chosen;
-}
+const letters = (name: string): string => name.toLowerCase().replace(/[^a-z]/g, '');
 
 /**
- * Capitals spread as far apart as they can be — the greedy farthest-point choice, from the most
- * populous district outward.
+ * The divisional headquarters of every division the scope touches.
  *
- * Population picks the first one because *something* has to, and the largest city is the least
- * arbitrary something available. Every capital after it is the district furthest from the nearest
- * capital already chosen, which is the only seeding that answers the question the distance rule
- * asks: seating capitals by population puts them all in Punjab and leaves Chagai 500 km from one.
+ * The district carrying the division's own name, and where no district does, the most populous
+ * district in the division — a stated rule rather than a transcribed seat column, for the reason
+ * in the module note. Divisions are keyed by province *and* name, because two provinces may file
+ * a division under the same word and a headquarters is a fact about one of them.
  */
-export function capitalsByDistance(
+export function divisionalHeadquarters(
   scope: readonly string[],
-  centroids: ReadonlyMap<string, Centroid>,
+  divisions: ReadonlyMap<string, string>,
+  provinces: ReadonlyMap<string, string>,
   populations: ReadonlyMap<string, number>,
-  wanted: number,
-): readonly string[] {
-  const ranked = byPopulationDescending(scope, populations);
-  const first = ranked[0];
-  if (first === undefined || wanted < 1) return [];
-
-  const chosen: string[] = [first];
-  const nearest = new Map<string, number>();
-  // A missing centroid is refused by name rather than defaulted, and the reason is specific to
-  // this rule: zero would make the district *maximally near* every capital, so farthest-point
-  // seeding would never pick it and it would drop out of the seeding silently — the one failure
-  // mode that looks exactly like a working answer. `partitionByRule` gates this already; these two
-  // seeding functions are exported and callable without it, so they carry their own refusal.
-  const distanceFrom = (capital: string, district: string): number => {
-    const a = centroids.get(capital);
-    const b = centroids.get(district);
-    if (a === undefined) throw new Error(`${named(capital)} has no centroid to measure from`);
-    if (b === undefined) throw new Error(`${named(district)} has no centroid to measure to`);
-    return haversineKm(a, b);
-  };
-  for (const district of scope) nearest.set(district, distanceFrom(first, district));
-
-  while (chosen.length < wanted) {
-    let pick: string | null = null;
-    let best = -1;
-    // Walked in name order rather than the caller's, and taken on a strict improvement, so two
-    // districts equally far from everything chosen resolve to the lower name and the order the
-    // scope arrived in cannot move a capital.
-    for (const district of [...scope].sort((a, b) => a.localeCompare(b))) {
-      if (chosen.includes(district)) continue;
-      const found = nearest.get(district) ?? 0;
-      if (found > best) {
-        best = found;
-        pick = district;
-      }
-    }
-    if (pick === null) break;
-    chosen.push(pick);
-    for (const district of scope) {
-      nearest.set(district, Math.min(nearest.get(district) ?? 0, distanceFrom(pick, district)));
-    }
-  }
-  return chosen;
-}
-
-/** Whether a unit may take a district — the constraint, and the only thing a rule contributes. */
-type Admits = (capital: string, population: number, district: string) => boolean;
-
-interface Grown {
-  /** District -> the capital of the unit holding it. */
-  readonly assignment: ReadonlyMap<string, string>;
-  /** Districts the rule could not place, named and ascending. */
-  readonly unplaced: readonly string[];
-}
-
-/**
- * Grow every unit outward from its capital until no unit has a legal move left.
- *
- * The unit with the fewest people moves first and takes the smallest district available to it,
- * which is what makes the result balanced under a ceiling and even under a bare count: a unit that
- * has fallen behind catches up, and a unit that has run out of room simply stops having moves. A
- * district only ever joins a unit it *borders*, so every unit is one connected piece at every step
- * and at the end.
- */
-function grow(
-  scope: readonly string[],
-  neighbours: AdjacencyGraph,
-  populations: ReadonlyMap<string, number>,
-  capitals: readonly string[],
-  admits: Admits,
-): Grown {
-  const inScope = new Set(scope);
-  const assignment = new Map<string, string>();
-  const members = new Map<string, string[]>();
-  const population = new Map<string, number>();
-
-  for (const capital of capitals) {
-    assignment.set(capital, capital);
-    members.set(capital, [capital]);
-    population.set(capital, populations.get(capital) ?? 0);
+): ReadonlySet<string> {
+  const grouped = new Map<string, { readonly division: string; readonly members: string[] }>();
+  for (const district of [...scope].sort((a, b) => a.localeCompare(b))) {
+    const division = divisions.get(district);
+    if (division === undefined) continue;
+    const key = `${provinces.get(district) ?? ''} ${division}`;
+    const found = grouped.get(key);
+    // The division's own spelling is carried beside the key rather than parsed back out of it:
+    // province names have spaces in them, and a key a reader has to split is one that will
+    // eventually be split wrong.
+    if (found === undefined) grouped.set(key, { division, members: [district] });
+    else found.members.push(district);
   }
 
-  for (;;) {
-    const order = [...capitals].sort(
-      (a, b) => (population.get(a) ?? 0) - (population.get(b) ?? 0) || a.localeCompare(b),
-    );
-    let moved = false;
+  const seats = new Set<string>();
+  for (const [, { division, members }] of [...grouped].sort(([a], [b]) => a.localeCompare(b))) {
+    const eponymous = members
+      .filter((district) => letters(district) === letters(division))
+      .sort((a, b) => a.localeCompare(b))[0];
+    const seat = eponymous ?? byPopulationDescending(members, populations)[0];
+    if (seat !== undefined) seats.add(seat);
+  }
+  return seats;
+}
 
-    for (const capital of order) {
-      const candidates = new Set<string>();
-      for (const member of members.get(capital) ?? []) {
+/** The centres of a province, in the order the rule seeds them. Excludes nothing; ranks only. */
+const centresIn = (
+  remaining: ReadonlySet<string>,
+  seats: ReadonlySet<string>,
+  development: ReadonlyMap<string, number>,
+  populations: ReadonlyMap<string, number>,
+  floor: number,
+): readonly string[] =>
+  byPopulationDescending(
+    [...remaining].filter((district) => seats.has(district) && (development.get(district) ?? 0) >= floor),
+    populations,
+  );
+
+/** One province's worth of the partition, grown unit by unit until nothing is left of it. */
+function partitionProvince(
+  province: string,
+  scope: readonly string[],
+  rule: PartitionRule,
+  input: PartitionInput,
+  seats: ReadonlySet<string>,
+): readonly GeneratedUnit[] {
+  const { neighbours, populations, development, centroids } = input;
+  const remaining = new Set(scope);
+  const units: GeneratedUnit[] = [];
+
+  const distance = (from: string, to: string): number =>
+    haversineKm(centroids.get(from) as Centroid, centroids.get(to) as Centroid);
+
+  while (remaining.size > 0) {
+    const qualifying = centresIn(remaining, seats, development, populations, rule.developmentFloor);
+    const centre = qualifying[0] ?? byPopulationDescending([...remaining], populations)[0];
+    if (centre === undefined) break;
+    const centreKind: CentreKind = qualifying[0] === undefined ? 'fallback' : 'headquarters';
+
+    const members = [centre];
+    remaining.delete(centre);
+    let population = populations.get(centre) ?? 0;
+
+    for (;;) {
+      // The unit's own edge: every unassigned district of this province that borders something it
+      // already holds. Confined to the province, which is what makes the frame a frame rather
+      // than a preference the growth could grow out of.
+      const edge = new Set<string>();
+      for (const member of members) {
         for (const other of neighbours.get(member) ?? []) {
-          if (inScope.has(other) && !assignment.has(other)) candidates.add(other);
+          if (remaining.has(other)) edge.add(other);
         }
       }
-      const legal = [...candidates]
-        .filter((district) => admits(capital, population.get(capital) ?? 0, district))
-        .sort(
-          (a, b) => (populations.get(a) ?? 0) - (populations.get(b) ?? 0) || a.localeCompare(b),
-        );
-      const take = legal[0];
-      if (take === undefined) continue;
+      // Nearest first, ties on the lower district name. Nearest and not least populous, because
+      // the rule is stated as a distance from a centre: taking the far side of a province before
+      // the near one would satisfy the same limit and draw a different, worse-shaped map, and the
+      // card has to be a sentence a reader can redraw the map from.
+      const admissible = [...edge]
+        .filter(
+          (district) =>
+            population + (populations.get(district) ?? 0) <= rule.ceiling &&
+            distance(centre, district) <= rule.km,
+        )
+        .sort((a, b) => distance(centre, a) - distance(centre, b) || a.localeCompare(b));
 
-      assignment.set(take, capital);
-      members.get(capital)?.push(take);
-      population.set(capital, (population.get(capital) ?? 0) + (populations.get(take) ?? 0));
-      moved = true;
-      break;
+      const take = admissible[0];
+      if (take === undefined) break;
+      members.push(take);
+      remaining.delete(take);
+      population += populations.get(take) ?? 0;
     }
 
-    if (!moved) break;
+    const sorted = [...members].sort((a, b) => a.localeCompare(b));
+    const [first, ...rest] = sorted;
+    units.push({
+      id: slug(centre),
+      name: centre,
+      centre,
+      centreKind,
+      province,
+      districts: [first as string, ...rest] as NonEmpty<string>,
+      population,
+    });
   }
 
-  return {
-    assignment,
-    unplaced: scope.filter((district) => !assignment.has(district)).sort((a, b) => a.localeCompare(b)),
-  };
+  return units;
 }
 
-/** Turn a finished assignment into units, ordered largest first. */
-function unitsOf(
-  capitals: readonly string[],
-  assignment: ReadonlyMap<string, string>,
-  populations: ReadonlyMap<string, number>,
-): readonly GeneratedUnit[] {
-  const members = new Map<string, string[]>(capitals.map((capital) => [capital, []]));
-  for (const [district, capital] of assignment) members.get(capital)?.push(district);
+const CENTRE_RULE =
+  'A centre is the headquarters of a division — the district carrying the division’s own name, ' +
+  'or, where no district does, the most populous district in it — scoring at least ' +
+  'DEVELOPMENT_FLOOR on the development index; centres are seeded most populous first, and where ' +
+  'nothing left in a province qualifies, the most populous remaining district seeds the unit.';
 
-  return [...members]
-    .map(([capital, districts]) => {
-      const sorted = [...districts].sort((a, b) => a.localeCompare(b));
-      const [first, ...rest] = sorted;
-      return {
-        id: slug(capital),
-        name: capital,
-        capital,
-        districts: [first as string, ...rest] as NonEmpty<string>,
-        population: sorted.reduce((n, district) => n + (populations.get(district) ?? 0), 0),
-      };
-    })
-    .sort((a, b) => b.population - a.population || a.capital.localeCompare(b.capital));
-}
-
-/**
- * The growth half of every rule statement, and it is spelled out to the tie-break on purpose.
- *
- * The ticket's premise is that the Administrative boundaries are the rule's and not ours, and a
- * reader can only hold us to that if the sentence on the card is enough to redraw the map from.
- * "The unit with the fewest people takes the next district" is half a rule — *which* district it
- * takes is the other half, and it is the half that actually decides where a boundary lands. The
- * name tie-breaks are here for the same reason: they are what makes the output the same map twice,
- * and a reader who cannot see them has to take determinism on trust.
- */
 const GROWTH_RULE =
-  'each unit grows outward from its capital across shared district borders; at each step the unit ' +
-  'with the fewest people takes the least populous district on its edge that the rule still ' +
-  'admits, ties going to the lower district name and, between units, to the lower capital name.';
-
-const CAPITAL_RULE_POPULATION =
-  'Capitals are the most populous districts, no two of them sharing a border (relaxed in ' +
-  `population order where the map has no room for another); ${GROWTH_RULE}`;
-
-const CAPITAL_RULE_DISTANCE =
-  'Capitals are chosen as far as possible from the capitals already chosen, starting from the ' +
-  `most populous district; ${GROWTH_RULE}`;
+  'each unit grows outward from its centre across shared district borders, taking the nearest ' +
+  'unassigned district on its edge each time and stopping when neither limit admits another, ' +
+  'ties going to the lower district name.';
 
 const CENSUS = 'Populations are the PBS 2023 census district rows.';
 
-function statementFor(rule: PartitionRule, units: number): string {
-  switch (rule.kind) {
-    case 'unit-count':
-      return `${units} units. ${CAPITAL_RULE_POPULATION} ${CENSUS}`;
-    case 'population-ceiling':
-      return (
-        `No unit above ${group(rule.ceiling)} people; ${units} units is the fewest for which ` +
-        `that holds. ${CAPITAL_RULE_POPULATION} ${CENSUS}`
-      );
-    case 'distance-to-capital':
-      return (
-        `No district more than ${group(rule.km)} km from its unit's capital, measured centroid ` +
-        `to centroid; ${units} units is the fewest for which that holds. ` +
-        `${CAPITAL_RULE_DISTANCE} ${CENSUS}`
-      );
-  }
+function statementFor(rule: PartitionRule, units: number, provinces: number): string {
+  const floor = `${(rule.developmentFloor * 100).toFixed(0)}%`;
+  return (
+    `Each province is partitioned on its own and no unit crosses a provincial boundary; ` +
+    `${provinces} provinces come to ${units} units, which is a finding and not an input. No unit ` +
+    `above ${group(rule.ceiling)} people, and no district more than ${group(rule.km)} km from its ` +
+    `unit’s centre, measured centroid to centroid in a straight line rather than along a road. ` +
+    `${CENTRE_RULE.replace('DEVELOPMENT_FLOOR', floor)} Then ${GROWTH_RULE} ${CENSUS}`
+  );
 }
 
 /** Everything wrong with the inputs before a rule is allowed to run. Each names its district. */
@@ -426,6 +391,19 @@ function inputProblems(rule: PartitionRule, input: PartitionInput): readonly str
   const duplicated = input.scope.filter((district, i) => input.scope.indexOf(district) !== i);
   for (const district of [...new Set(duplicated)].sort((a, b) => a.localeCompare(b))) {
     problems.push(`${named(district)} appears twice in the scope; a district is in one unit.`);
+  }
+
+  if (!(rule.ceiling > 0)) {
+    problems.push(`a ceiling of ${rule.ceiling} people admits no district at all.`);
+  }
+  if (!(rule.km > 0)) {
+    problems.push(`a limit of ${rule.km} km leaves every district outside its own centre.`);
+  }
+  if (!(rule.developmentFloor >= 0 && rule.developmentFloor <= 1)) {
+    problems.push(
+      `a development floor of ${rule.developmentFloor} is not a proportion; the index is a mean ` +
+        `of three published rates and runs from 0 to 1.`,
+    );
   }
 
   for (const district of [...input.scope].sort((a, b) => a.localeCompare(b))) {
@@ -446,57 +424,38 @@ function inputProblems(rule: PartitionRule, input: PartitionInput): readonly str
           `districts and carry the territories through as themselves.`,
       );
     }
-  }
-
-  switch (rule.kind) {
-    case 'unit-count':
-      if (!Number.isInteger(rule.units) || rule.units < 1) {
-        problems.push(`a partition of ${rule.units} units is not a number of units.`);
-      } else if (rule.units > input.scope.length) {
-        problems.push(
-          `the rule asks for ${rule.units} units out of ${input.scope.length} districts. A unit ` +
-            `is made of districts, so there is nothing for the last ${
-              rule.units - input.scope.length
-            } of them to be made of.`,
-        );
-      }
-      break;
-    case 'population-ceiling': {
-      if (!(rule.ceiling > 0)) {
-        problems.push(`a ceiling of ${rule.ceiling} people admits no district at all.`);
-        break;
-      }
-      const over = [...input.scope]
-        .filter((district) => (input.populations.get(district) ?? 0) > rule.ceiling)
-        .sort((a, b) => a.localeCompare(b));
-      for (const district of over) {
-        problems.push(
-          `${named(district)} has ${group(input.populations.get(district) ?? 0)} people on its ` +
-            `own, above the ceiling of ${group(rule.ceiling)}. A district is the atom here ` +
-            `(D23) and cannot be split, so no partition satisfies this ceiling.`,
-        );
-      }
-      break;
+    if (!input.divisions.has(district)) {
+      problems.push(
+        `${named(district)} is filed under no division, so the headquarters rule has nothing to ` +
+          `seat a unit at. Every census district belongs to a division; ICT's is the pseudo-` +
+          `division the roster injects so the hierarchy is total (#3).`,
+      );
     }
-    case 'distance-to-capital': {
-      if (!(rule.km > 0)) {
-        problems.push(`a limit of ${rule.km} km leaves every district outside its own capital.`);
-        break;
-      }
-      const centroids = input.centroids;
-      if (centroids === undefined) {
-        problems.push(
-          'a distance rule was given no district centroids; distance to a capital cannot be ' +
-            'measured without them.',
-        );
-        break;
-      }
-      for (const district of [...input.scope].sort((a, b) => a.localeCompare(b))) {
-        if (!centroids.has(district)) {
-          problems.push(`${named(district)} has no centroid, so its distance to a capital is unknown.`);
-        }
-      }
-      break;
+    if (!input.development.has(district)) {
+      problems.push(
+        `${named(district)} has no development index, so the centre test cannot be applied to ` +
+          `it. A missing score is not a score of zero — read as zero it would silently ` +
+          `disqualify a headquarters and move a boundary, which is the one failure here that ` +
+          `looks exactly like a working answer.`,
+      );
+    }
+    if (!input.centroids.has(district)) {
+      problems.push(`${named(district)} has no centroid, so its distance to a centre is unknown.`);
+    }
+    if (!input.provinces.has(district)) {
+      problems.push(
+        `${district} is in no province, and the province is the frame this rule is drawn inside. ` +
+          `A district with no province could not be partitioned without crossing the boundary ` +
+          `the rule exists to respect.`,
+      );
+    }
+    const population = input.populations.get(district) ?? 0;
+    if (population > rule.ceiling) {
+      problems.push(
+        `${named(district)} has ${group(population)} people on its own, above the ceiling of ` +
+          `${group(rule.ceiling)}. A district is the atom here (D23) and cannot be split, so no ` +
+          `partition satisfies this ceiling.`,
+      );
     }
   }
 
@@ -504,97 +463,81 @@ function inputProblems(rule: PartitionRule, input: PartitionInput): readonly str
 }
 
 /**
- * Draw the partition a rule states.
+ * Draw the partition the rule states.
  *
- * For `unit-count` there is one attempt and the count is the rule. For the other two the count is
- * a *finding*: the engine starts at the fewest units the constraint could conceivably be met with
- * and adds one until it is, which is what makes "no province above 25 million" a complete
- * instruction rather than half of one. The search is bounded by the scope — a unit per district
- * satisfies any ceiling that no single district already breaks, and any distance at all — so it
- * terminates, and it terminates on the smallest answer because it counts upward.
+ * There is no search here and nothing to tune: the province set is given, the centres follow from
+ * the divisions and the index, and the growth is deterministic, so the rule has exactly one
+ * output. The number of units is whatever the two limits cost — which is why the statement says
+ * the count is a finding, and why the engine cannot be asked for a different one.
  */
 export function partitionByRule(rule: PartitionRule, input: PartitionInput): Generation {
   const problems = [...inputProblems(rule, input)];
   if (problems.length > 0) return { partition: null, problems };
 
-  const { scope, neighbours, populations } = input;
-  const centroids = input.centroids ?? new Map<string, Centroid>();
+  const seats = divisionalHeadquarters(
+    input.scope,
+    input.divisions,
+    input.provinces,
+    input.populations,
+  );
 
-  const admits: Admits = (capital, population, district) => {
-    switch (rule.kind) {
-      case 'unit-count':
-        return true;
-      case 'population-ceiling':
-        return population + (populations.get(district) ?? 0) <= rule.ceiling;
-      case 'distance-to-capital': {
-        const a = centroids.get(capital);
-        const b = centroids.get(district);
-        return a !== undefined && b !== undefined && haversineKm(a, b) <= rule.km;
-      }
-    }
-  };
-
-  const total = scope.reduce((n, district) => n + (populations.get(district) ?? 0), 0);
-  const first =
-    rule.kind === 'unit-count'
-      ? rule.units
-      : rule.kind === 'population-ceiling'
-        ? Math.max(1, Math.ceil(total / rule.ceiling))
-        : 1;
-  const last = rule.kind === 'unit-count' ? rule.units : scope.length;
-
-  let lastUnplaced: readonly string[] = [];
-  for (let wanted = first; wanted <= last; wanted += 1) {
-    const capitals =
-      rule.kind === 'distance-to-capital'
-        ? capitalsByDistance(scope, centroids, populations, wanted)
-        : capitalsByPopulation(scope, neighbours, populations, wanted);
-    const { assignment, unplaced } = grow(scope, neighbours, populations, capitals, admits);
-    lastUnplaced = unplaced;
-    if (unplaced.length > 0) continue;
-
-    const units = unitsOf(capitals, assignment, populations);
-    // Contiguity is guaranteed by growing across borders and is checked anyway: a guarantee
-    // nothing looks at is a comment, and the one thing this engine must never do quietly is hand
-    // #28 a province in two pieces.
-    for (const unit of units) {
-      const contiguity = contiguityOf(neighbours, unit.districts);
-      if (contiguity.contiguous) continue;
-      problems.push(
-        `${unit.name} came out in ${contiguity.pieces} pieces — ` +
-          contiguity.detached.map((piece) => piece.join(', ')).join('; ') +
-          ` touch none of it. A unit is grown outward from its capital across shared borders and ` +
-          `cannot be in two pieces, so the graph and the growth disagree.`,
-      );
-    }
-    if (problems.length > 0) return { partition: null, problems };
-
-    const [head, ...rest] = units;
-    if (head === undefined) {
-      return { partition: null, problems: ['the rule placed every district in no unit at all.'] };
-    }
-    return {
-      partition: {
-        rule,
-        statement: statementFor(rule, units.length),
-        units: [head, ...rest],
-      },
-      problems: [],
-    };
+  const byProvince = new Map<string, string[]>();
+  for (const district of [...input.scope].sort((a, b) => a.localeCompare(b))) {
+    const province = input.provinces.get(district) as string;
+    const found = byProvince.get(province);
+    if (found === undefined) byProvince.set(province, [district]);
+    else found.push(district);
   }
 
-  problems.push(
-    rule.kind === 'unit-count'
-      ? `${rule.units} units leave ${lastUnplaced.map(named).join(', ')} in no unit: they border ` +
-        `nothing the rule placed, so the districts given to it are not all connected.`
-      : `no partition of up to ${last} units satisfies the rule; the last attempt left ` +
-        `${lastUnplaced.map(named).join(', ')} unplaced.`,
+  const units: GeneratedUnit[] = [];
+  for (const [province, districts] of [...byProvince].sort(([a], [b]) => a.localeCompare(b))) {
+    units.push(...partitionProvince(province, districts, rule, input, seats));
+  }
+
+  const placed = new Set(units.flatMap((unit) => unit.districts));
+  const unplaced = input.scope.filter((district) => !placed.has(district)).sort((a, b) => a.localeCompare(b));
+  if (unplaced.length > 0) {
+    problems.push(
+      `${unplaced.map(named).join(', ')} ended in no unit. Every district seeds a unit of its own ` +
+        `rather than being left out, so a district with nowhere to go means the province grouping ` +
+        `and the scope disagree.`,
+    );
+  }
+
+  // Contiguity is guaranteed by growing across borders and is checked anyway: a guarantee nothing
+  // looks at is a comment, and the one thing this engine must never do quietly is hand a variant a
+  // province in two pieces.
+  for (const unit of units) {
+    const contiguity = contiguityOf(input.neighbours, unit.districts);
+    if (contiguity.contiguous) continue;
+    problems.push(
+      `${unit.name} came out in ${contiguity.pieces} pieces — ` +
+        contiguity.detached.map((piece) => piece.join(', ')).join('; ') +
+        ` touch none of it. A unit is grown outward from its centre across shared borders and ` +
+        `cannot be in two pieces, so the graph and the growth disagree.`,
+    );
+  }
+  if (problems.length > 0) return { partition: null, problems };
+
+  const ordered = [...units].sort(
+    (a, b) => b.population - a.population || a.centre.localeCompare(b.centre),
   );
-  return { partition: null, problems };
+  const [head, ...rest] = ordered;
+  if (head === undefined) {
+    return { partition: null, problems: ['the rule placed every district in no unit at all.'] };
+  }
+  return {
+    partition: {
+      rule,
+      statement: statementFor(rule, ordered.length, byProvince.size),
+      units: [head, ...rest],
+    },
+    problems: [],
+  };
 }
 
 /**
- * The generated units as the scenario schema wants them, so #28 writes a variant and not a loop.
+ * The generated units as the scenario schema wants them, so a variant is written and not a loop.
  *
  * Every one of them is `proposed` — that is what a generated boundary is — and the claim is the
  * 2023 districts themselves, so nothing here needs the fold table: the engine only ever saw

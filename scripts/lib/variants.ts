@@ -38,6 +38,7 @@ import {
 import { groupDigits as group } from './digits.ts';
 import { partitionByDominantLanguage, soleRegionOf } from './mother-tongue-partition.ts';
 import {
+  divisionalHeadquarters,
   partitionByRule,
   proposedUnits,
   type Centroid,
@@ -1711,17 +1712,27 @@ export interface DerivationContext {
   readonly dominant: ReadonlyMap<string, string | null>;
   readonly populations: ReadonlyMap<string, number>;
   /**
-   * District centroids from the geometry the map is drawn with, which A4's distance rule measures
-   * against. Longitude then latitude, as `d3.geoCentroid` returns it.
+   * District -> the division PBS files it under, which the Administrative rule seats every unit
+   * from: a centre is a divisional headquarters, and without the division tier there is nothing to
+   * be the headquarters of.
+   *
+   * The census's own field, read off `statistics.json` rather than re-derived from the roster —
+   * the roster carries a province per district and the division alias tables, not a district's
+   * division, and a second answer to which division a district is in is a second district set.
+   */
+  readonly divisions: ReadonlyMap<string, string>;
+  /**
+   * District centroids from the geometry the map is drawn with, which the Administrative rule's
+   * distance limit measures against. Longitude then latitude, as `d3.geoCentroid` returns it.
    *
    * Required rather than optional, though only one variant reads it: an absent centroid map would
-   * make A4 undrawable at exactly the moment a caller forgot to supply one, and the failure would
-   * arrive as "a variant could not be derived" rather than as a missing argument.
+   * make the variant undrawable at exactly the moment a caller forgot to supply one, and the
+   * failure would arrive as "a variant could not be derived" rather than as a missing argument.
    */
   readonly centroids: ReadonlyMap<string, Centroid>;
   /**
    * District -> its development index, read off `data/bundle/development-index.json`, which D1's
-   * rule cuts each province at (#31).
+   * rule cuts each province at (#31) and which the Administrative rule gates its centres on.
    *
    * Read from the committed artifact rather than recomputed from the three rates here, for the
    * reason that artifact exists at all: a composite computed twice is two composites, and the one
@@ -1752,6 +1763,28 @@ export function dominantTongues(statistics: {
       typeof record.motherTongue?.dominant === 'string' ? record.motherTongue.dominant : null,
     ]),
   );
+}
+
+/**
+ * `divisions`, read off the same committed `statistics.json`.
+ *
+ * A sibling of `dominantTongues` and shared for the same reason: the Administrative rule seats
+ * every unit at a divisional headquarters, so the division tier holds up a boundary, and a build
+ * that read it one way while the suite read it another would re-derive a different map and pass.
+ * A district the census does not file under a division is **absent**, never given an empty string
+ * — the engine refuses it by name, and a district quietly filed under `''` would be seated in a
+ * pseudo-division shared with every other district the field was missing for.
+ */
+export function districtDivisions(statistics: {
+  readonly districts: Readonly<Record<string, { readonly division?: unknown }>>;
+}): ReadonlyMap<string, string> {
+  const found = new Map<string, string>();
+  for (const [district, record] of Object.entries(statistics.districts)) {
+    if (typeof record.division === 'string' && record.division !== '') {
+      found.set(district, record.division);
+    }
+  }
+  return found;
 }
 
 /** Balochistan's 34 census districts, which is the scope L6's rule is applied to. */
@@ -2105,17 +2138,32 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The Administrative basis (#28) — four maps drawn by a stated rule, and one change of standing.
+// The Administrative basis — one map drawn by a stated rule, and one change of standing.
 //
-// A1 to A4 are the rule engine's (#27), and they are here for the reason L6 and L7 are: nobody
-// publishes a district list for "no province above 25 million people", and a partition somebody
-// has to take on trust is an editorial opinion wearing a `derived` badge. So each states its rule
-// in words a reader can redraw the map from, the arithmetic is re-run by the suite against the
-// committed census and the committed borders, and the card says the line was computed.
+// A6 is the rule engine's (#27), and it is here for the reason L6 and L7 are: nobody publishes a
+// district list for "no province above 25 million people, seated at a divisional headquarters",
+// and a partition somebody has to take on trust is an editorial opinion wearing a `derived` badge.
+// So it states its rule in words a reader can redraw the map from, the arithmetic is re-run by the
+// suite against the committed census, the committed borders and the committed composite, and the
+// card says the line was computed.
+//
+// It replaces the four maps this basis used to carry — a ceiling, twelve units, fourteen units and
+// a distance to a capital — which drew across provincial boundaries and answered a question about
+// administrative load by rearranging the federation. Their ids are retired rather than reused: a
+// link to `#/administrative/a1` now resolves to the baseline, because serving a stranger's link a
+// different proposal under the same address is the one substitution the deep-link rules refuse.
 //
 // A5 is not the engine's and does not pretend to be: it is a live proposal with a date, a document
 // and a government behind it, and it changes no boundary at all.
 // ---------------------------------------------------------------------------------------------
+
+/** The one rule this basis draws, stated once so the card and the suite cannot state two. */
+export const ADMINISTRATIVE_RULE: PartitionRule = {
+  kind: 'within-province-centres',
+  ceiling: 25_000_000,
+  km: 300,
+  developmentFloor: 0.5,
+};
 
 /** The rule engine, run over the 136 districts PBS published 2023 results for. */
 function drawnByRule(id: string, rule: PartitionRule, context: DerivationContext): GeneratedPartition {
@@ -2126,6 +2174,16 @@ function drawnByRule(id: string, rule: PartitionRule, context: DerivationContext
     scope: CENSUS_DISTRICTS,
     neighbours: context.graph,
     populations: context.populations,
+    // The frame, out of the roster this module already partitions by: the rule draws inside the
+    // provinces that exist, so the province of every district is an input to it rather than
+    // something the engine works out for itself.
+    provinces: new Map(
+      ROSTER.flatMap((province) =>
+        province.districts.map((district) => [district, province.name] as const),
+      ),
+    ),
+    divisions: context.divisions,
+    development: context.development,
     centroids: context.centroids,
   });
   if (partition === null) {
@@ -2161,14 +2219,105 @@ function spreadOf(partition: GeneratedPartition): string {
   );
 }
 
+/** How many units the rule drew in each province, in the words the card lists them in. */
+function perProvince(partition: GeneratedPartition): string {
+  const counted = new Map<string, number>();
+  for (const unit of partition.units) counted.set(unit.province, (counted.get(unit.province) ?? 0) + 1);
+  return [...counted]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([province, units]) => `${province} ${units}`)
+    .join(', ');
+}
+
 /**
- * The three things every rule-drawn card has to say, and says the same way.
+ * The units the headquarters test could not seat, named rather than counted.
  *
- * Written once because they are properties of the *engine* rather than of any one rule, and a
- * reader comparing A1 against A4 should not have to work out whether a difference in the wording
- * is a difference in the method. Only the first carries the rule's own numbers.
+ * A one-district unit is a real output of this rule and not a defect, but it is also the output a
+ * reader is most likely to read as one — so the card says which units the fallback drew and why,
+ * rather than leaving a province looking as though the engine gave up on it.
  */
-function ruleFootnotes(partition: GeneratedPartition): readonly Footnote[] {
+function fallbackNote(partition: GeneratedPartition): string {
+  const fallen = partition.units.filter((unit) => unit.centreKind === 'fallback');
+  if (fallen.length === 0) {
+    return (
+      'Every unit on this map is seated at a divisional headquarters that clears the development ' +
+      'floor. The rule provides for a fallback — the most populous remaining district seeds a ' +
+      'unit where nothing left in a province qualifies — and on this census it never fires.'
+    );
+  }
+  return (
+    `${fallen.length} of the ${partition.units.length} units are not seated at a qualifying ` +
+    `headquarters: ` +
+    fallen
+      .map(
+        (unit) =>
+          `${unit.name} (${unit.province}, ${unit.districts.length} ` +
+          `district${unit.districts.length === 1 ? '' : 's'})`,
+      )
+      .join(', ') +
+    `. Growing units one at a time strands pockets of a province behind the distance limit, and ` +
+    `when nothing left in a province is both a headquarters and above the development floor the ` +
+    `most populous remaining district seeds the unit instead. The alternative was to leave those ` +
+    `districts in no unit at all, and a partition with a hole in it is not a partition (D6).`
+  );
+}
+
+/**
+ * The divisional headquarters the development floor refuses, named and counted.
+ *
+ * A gate that turns nothing away is a gate a reader should be told about, and so is one that
+ * turns districts away without moving a line. Both are computed here rather than asserted in
+ * prose, so the sentence on the card is a description of this census and not of the one the copy
+ * was written against.
+ */
+function belowTheFloor(context: DerivationContext): readonly string[] {
+  const seats = divisionalHeadquarters(
+    CENSUS_DISTRICTS,
+    context.divisions,
+    new Map(
+      ROSTER.flatMap((province) =>
+        province.districts.map((district) => [district, province.name] as const),
+      ),
+    ),
+    context.populations,
+  );
+  return [...seats]
+    .filter((seat) => (context.development.get(seat) ?? 0) < ADMINISTRATIVE_RULE.developmentFloor)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+/** The divisions no district is named after, which is where the headquarters rule needs its second clause. */
+function unnamedDivisions(context: DerivationContext): string {
+  const letters = (name: string): string => name.toLowerCase().replace(/[^a-z]/g, '');
+  const members = new Map<string, string[]>();
+  for (const district of CENSUS_DISTRICTS) {
+    const division = context.divisions.get(district);
+    if (division === undefined) continue;
+    const found = members.get(division);
+    if (found === undefined) members.set(division, [district]);
+    else found.push(district);
+  }
+  const seated = [...members]
+    .filter(([division, districts]) => !districts.some((d) => letters(d) === letters(division)))
+    .map(([division, districts]) => {
+      const seat = [...districts].sort(
+        (a, b) =>
+          (context.populations.get(b) ?? 0) - (context.populations.get(a) ?? 0) || a.localeCompare(b),
+      )[0];
+      return `${division} at ${seat ?? '—'}`;
+    })
+    .sort((a, b) => a.localeCompare(b));
+  return seated.join(', ');
+}
+
+/**
+ * The things a rule-drawn card has to say, and says the same way.
+ *
+ * Written apart from the copy because they are properties of the *engine* rather than of the
+ * particular numbers it was given, and because every one of them is a cost rather than a feature:
+ * a reader should meet them in the same words whatever the rule is next stated at.
+ */
+function ruleFootnotes(partition: GeneratedPartition, context: DerivationContext): readonly Footnote[] {
   return [
     {
       kind: 'derived-boundary',
@@ -2181,50 +2330,82 @@ function ruleFootnotes(partition: GeneratedPartition): readonly Footnote[] {
     {
       kind: 'note',
       text:
-        'Each unit is named for the district its capital sits in, which is a description of an ' +
+        'The distance limit is a straight line and the card does not call it anything else. There ' +
+        'is no road network in this app’s data and no routing source at its vintage, so 300 km is ' +
+        'measured great-circle from one district centroid to another — shorter than any road ' +
+        'between the same two places, which makes the limit the more generous reading of the two, ' +
+        'and measured to a centroid, which is not where anybody lives. Calling it travel distance ' +
+        'would be a figure with no source under every boundary on this map.',
+    },
+    {
+      kind: 'note',
+      text:
+        'A centre is the headquarters of a division, and which district that is follows from a ' +
+        'rule rather than from a table somebody typed: the district carrying the division’s own ' +
+        'name, or, where no district does, the most populous district in the division. PBS ' +
+        'publishes the division each district belongs to and publishes no seat column, and a ' +
+        'transcribed one would be the only unsourced table in this app holding up a boundary. ' +
+        `Four divisions are not named after a district and are seated by the second clause — ` +
+        `${unnamedDivisions(context)}. Where that clause fires the seat is the rule’s and not ` +
+        'necessarily the gazetted headquarters, which this app has no published source for; the ' +
+        'rule is stated so a reader can see exactly which district it chose and disagree with it.',
+    },
+    {
+      kind: 'note',
+      text: fallbackNote(partition),
+    },
+    {
+      kind: 'note',
+      text:
+        'The development floor is this project’s own composite — the unweighted mean of literacy, ' +
+        'improved drinking water and households with a flush toilet — and it is the one input to ' +
+        'this rule that nobody published, which is why this variant carries a synthesized badge ' +
+        'beside its derived one. It is not a poverty measure: the census asks about service ' +
+        'access and attainment and does not ask about income, consumption or nutrition. On the ' +
+        `2023 census the floor turns away ${belowTheFloor(context).length} of the 31 divisional ` +
+        `headquarters — ${belowTheFloor(context).join(', ')}, every one of them in Balochistan — ` +
+        'and **moves no boundary at all**: each of those divisions falls inside a unit seated ' +
+        'elsewhere before its own seat would have been reached, and removing the floor entirely ' +
+        'draws the identical map. That is reported rather than quietly dropped, because a ' +
+        'constraint that binds nothing is exactly the kind of thing a rule is believed to have ' +
+        'done work it did not do.',
+    },
+    {
+      kind: 'note',
+      text:
+        'Each unit is named for the district its centre sits in, which is a description of an ' +
         'output and not a name anybody uses for a province. The engine has no source for a name, ' +
-        'and inventing one is the editorial voice the rule exists to keep out — the more so ' +
-        'because a unit is not the same unit from rule to rule: the one seated at Lahore is two ' +
-        'districts under one of these variants and seventeen under another, so a reviewed name ' +
-        'would be a conclusion drawn about a shape that changes.',
+        'and inventing one is the editorial voice the rule exists to keep out.',
     },
     {
       kind: 'note',
       text:
         'Every district the census covers changes hands here, because not one of them stays ' +
-        'inside a unit carrying the name of the province it is in today. That is what redrawing ' +
-        'the whole country means and not an artefact of how the figure is counted. Islamabad is ' +
-        'inside a generated unit for the same reason: the rule partitions the 136 districts PBS ' +
-        'published results for and the capital is one of them, so nothing here preserves it as a ' +
-        'federal territory. Azad Jammu & Kashmir and Gilgit-Baltistan are outside the rule ' +
-        'entirely — the census does not reach their twenty districts, so a rule stated in people ' +
-        'cannot see them — and are drawn and named exactly as they are today.',
+        'inside a unit carrying the name of the province it is in today — even though no unit ' +
+        'leaves the province it was drawn in. That is what the count of districts moved measures ' +
+        'and not an artefact of the rule. Islamabad is a unit of its own for the same reason it ' +
+        'is a province of its own in the census, and nothing here preserves it as a federal ' +
+        'territory. Azad Jammu & Kashmir and Gilgit-Baltistan are outside the rule entirely — the ' +
+        'census does not reach their twenty districts, so a rule stated in people cannot see ' +
+        'them — and are drawn and named exactly as they are today.',
     },
   ];
 }
 
-/**
- * Where a rule-drawn boundary came from, which for three of the four is the same two inputs.
- *
- * A `composition.from` is a provenance line and is printed on the card; four copies of one string
- * is four places for a fifth input to be added to three of them.
- */
+/** Where a rule-drawn boundary came from, printed on the card as a provenance line. */
 const RULE_INPUTS =
-  'PBS 2023 Digital Census district populations, and the district adjacency graph in ' +
-  'data/bundle/adjacency.json';
+  'PBS 2023 Digital Census district populations and the division each district is filed under, ' +
+  'the district adjacency graph in data/bundle/adjacency.json, district centroids taken from the ' +
+  'geometry in data/bundle/geography.topojson.json, and the development composite in ' +
+  'data/bundle/development-index.json';
 
-/** A4 measures a distance as well, so its boundary is a function of the drawn geometry too. */
-const RULE_INPUTS_WITH_CENTROIDS =
-  'PBS 2023 Digital Census district populations, the district adjacency graph in ' +
-  'data/bundle/adjacency.json, and district centroids taken from the geometry in ' +
-  'data/bundle/geography.topojson.json';
-
-/** What every rule-drawn card cites, since all four read the same three files. */
+/** What the rule-drawn card cites, which is one file per input the rule actually reads. */
 const RULE_SOURCES: NonEmpty<Source> = [
   {
     label:
-      'PBS 2023 Digital Census, district table — the population of every district, which is the ' +
-      'only quantity any of these rules is stated in',
+      'PBS 2023 Digital Census, district table — the population of every district, which the ' +
+      'ceiling is stated in, and the division each district belongs to, which the centre rule ' +
+      'is stated in',
   },
   {
     label:
@@ -2234,18 +2415,28 @@ const RULE_SOURCES: NonEmpty<Source> = [
   },
   {
     label:
-      'scripts/lib/partitioner.ts — the engine that draws these boundaries, whose rule statement ' +
-      'is quoted on this card in full',
+      'data/bundle/geography.topojson.json — the district geometry this build draws, from which ' +
+      'every centroid the distance limit is measured between is taken',
+  },
+  {
+    label:
+      'data/bundle/development-index.json — this project’s own composite of three published PBS ' +
+      'rates, which decides which districts may seat a unit',
+  },
+  {
+    label:
+      'scripts/lib/partitioner.ts — the engine that draws this boundary, whose rule statement is ' +
+      'quoted on this card in full',
   },
   {
     label:
       'PBS — List of Administrative Districts by Division & Province (as on 01-03-2023), the ' +
-      'district set this partition is expressed in',
+      'district set this partition is expressed in and the division each is filed under',
     url: 'https://www.pbs.gov.pk/wp-content/uploads/2020/07/List-of-Administrative-Districts-2023.pdf',
   },
 ];
 
-/** The opposition every rule-drawn map runs into, which is the same opposition each time. */
+/** The opposition a rule-drawn map runs into. */
 const RULE_OPPOSITION: Variant['opposedBy'] = [
   'those for whom a province is a people and not a population — the Seraiki, Hazara, Karachi and ' +
     'Pashtun Balochistan claims elsewhere in this app are all arguments a rule stated in ' +
@@ -2256,40 +2447,61 @@ const RULE_OPPOSITION: Variant['opposedBy'] = [
   'those who argue that new provinces are an administrative expense before they are anything ' +
     'else — a secretariat, a high court bench, a public service commission and a share of the ' +
     'divisible pool for each',
+  'those for whom the provincial frame is the flaw rather than the safeguard: a rule that may ' +
+    'not cross a provincial boundary cannot answer the case of a district better served from a ' +
+    'city in the next province, which is a real argument this map is built not to make',
 ];
 
-/** A1 — a ceiling on how many people one province may hold. */
-function populationCeiling(context: DerivationContext): Variant {
-  const partition = drawnByRule('a1', { kind: 'population-ceiling', ceiling: 25_000_000 }, context);
+/**
+ * A6 — the rule drawn inside the provinces that already exist.
+ *
+ * The one Administrative map this app computes. Every unit lies wholly inside one of the four
+ * provinces or the capital territory, is grown outward from a divisional headquarters the census
+ * finds well enough served, and is closed by whichever of the two limits binds first — 25 million
+ * people, or 300 km from its centre.
+ */
+function withinProvinces(context: DerivationContext): Variant {
+  const partition = drawnByRule('a6', ADMINISTRATIVE_RULE, context);
+  const provinces = new Set(partition.units.map((unit) => unit.province)).size;
   return {
-    id: 'a1',
+    id: 'a6',
     basis: 'administrative',
-    name: 'No province above 25 million',
-    tagline: 'a ceiling, and the number of provinces it turns out to take',
+    name: 'Provinces subdivided at their own headquarters',
+    tagline: 'a ceiling, a distance, and no unit that crosses a provincial line',
     rationale:
-      'No unit holding more than 25 million people, in the fewest units for which that holds — ' +
-      `which the 2023 census makes ${partition.units.length}. The ceiling is the whole argument, ` +
-      'and it is an argument about size rather than about who lives where: Punjab alone is ' +
-      '127,688,922 people governed from Lahore, more than all but a dozen countries on earth, ' +
-      'while Balochistan, the largest province in the country by area, is 14,894,402. The number ' +
-      'of units is a finding here and not an input — it is whatever the ceiling costs.',
+      'Each existing province is partitioned on its own, and no new unit crosses a provincial ' +
+      `boundary — ${provinces} provinces come to ${partition.units.length} units. A unit is ` +
+      'grown outward from a divisional headquarters the census finds well enough served, taking ' +
+      'the nearest district on its edge each time, and it stops when it would either pass 25 ' +
+      'million people or reach further than 300 km from its own centre. Both limits are the ' +
+      'administrative argument stated as arithmetic: Punjab alone is 127,688,922 people governed ' +
+      'from Lahore, more than all but a dozen countries on earth, and Balochistan is 14,894,402 ' +
+      'people spread across the largest province in the country, where population says nothing ' +
+      'and distance says everything. The number of units is a finding and not an input.',
     status:
       'Not a proposal, and not a demarcation that has ever existed. The argument that Pakistan’s ' +
-      'provinces are too large to administer is made widely and across parties; no party has ' +
-      'published a boundary for it, and no constitutional amendment creating any province has ' +
-      'passed since 1970.',
+      'provinces are too large to administer is made widely and across parties, and the argument ' +
+      'that new provinces should be carved inside the existing ones rather than across them is ' +
+      'the form nearly every real proposal in this app takes; no party has published a boundary ' +
+      'for it, and no constitutional amendment creating any province has passed since 1970.',
     advocacy: {
       kind: 'unadvocated',
       note:
         'Nobody advocates this map. The case behind it is real and is argued across Pakistani ' +
         'politics — that four provinces and a capital territory are too few administrative units ' +
-        'for 241,499,431 people — but that case is made about the size of a province and not ' +
-        'about where any particular line should run, and this partition is the arithmetic that ' +
-        'follows from stating it as a ceiling. It is drawn so the attributed claims elsewhere in ' +
-        'this app can be read against what population alone would say.',
+        'for 241,499,431 people, and that a province is administered from a city its districts ' +
+        'can reach — but that case is made about the size of a province and not about where any ' +
+        'particular line should run. This partition is the arithmetic that follows from stating ' +
+        'it, drawn so the attributed claims elsewhere in this app can be read against what a ' +
+        'stated rule would say.',
     },
     opposedBy: RULE_OPPOSITION,
     universe: 'drawn',
+    // The basis shades `census · derived`; this variant adds `synthesized`, because its centres
+    // are gated on this project's own composite and a reader re-deriving the boundary needs that
+    // figure. The badge says an input is ours even though, on this census, the gate moves no line
+    // — which the footnote states rather than letting the badge imply more than it did.
+    badges: ['census', 'derived', 'synthesized'],
     composition: {
       kind: 'derived',
       rule: partition.statement,
@@ -2297,25 +2509,34 @@ function populationCeiling(context: DerivationContext): Variant {
     },
     units: withTerritories(partition),
     footnotes: [
-      ...ruleFootnotes(partition),
+      ...ruleFootnotes(partition, context),
       {
         kind: 'note',
         text:
-          'A ceiling and a count are not the same instruction, and this app carries both so the ' +
-          'difference can be seen. Stating the rule as a ceiling produces a more even map than ' +
-          'stating it as a number of provinces does, at a comparable number of units, because a ' +
-          'ceiling binds the largest unit directly and a count only bounds the average.',
+          `The rule draws ${perProvince(partition)}. Those are counts and not quotas: nothing in ` +
+          'the rule says how many units a province should have, and the number each gets is what ' +
+          'its population and its geography cost under the two limits. Balochistan is the case ' +
+          'the distance limit exists for — its units are closed by the 300 km limit long before ' +
+          'the ceiling comes near — and Punjab is the case the ceiling exists for.',
       },
     ],
     notes: [
       {
-        label: 'The other administrative rules',
+        label: 'The other administrative variant',
         text:
-          'The same engine draws three more maps from three more rules: twelve units, fourteen ' +
-          'units, and a limit on how far a district may be from the seat that administers it. ' +
-          'They are different maps because they are different questions, and the app draws one ' +
-          'at a time.',
-        relatedVariants: ['a2', 'a3', 'a4'],
+          'The other map on this basis changes no boundary at all: it makes Gilgit-Baltistan and ' +
+          'Azad Jammu & Kashmir provinces and moves not a single district. It is a proposal with ' +
+          'a date and a document behind it, where this one is arithmetic.',
+        relatedVariants: ['a5'],
+      },
+      {
+        label: 'The same districts, cut a different way',
+        text:
+          'The Development basis groups the districts the census serves alike, without regard to ' +
+          'which province they are in — the same 136 districts, cut by a question about service ' +
+          'rather than about size, and the one place this app’s own composite draws a line ' +
+          'instead of only gating one.',
+        relatedVariants: ['d1'],
       },
     ],
     sources: [
@@ -2324,216 +2545,6 @@ function populationCeiling(context: DerivationContext): Variant {
         label:
           'PBS Census-2023 Table 1 (national) — 241,499,431 people, and the province totals this ' +
           'card quotes for Punjab and Balochistan',
-      },
-    ],
-  };
-}
-
-/** A2 — twelve, the low end of the published administrative argument. */
-function twelveUnits(context: DerivationContext): Variant {
-  const partition = drawnByRule('a2', { kind: 'unit-count', units: 12 }, context);
-  return {
-    id: 'a2',
-    basis: 'administrative',
-    name: 'Twelve provinces',
-    tagline: 'the number stated, and the map that follows from it',
-    rationale:
-      'Twelve units, as evenly populated as growing them outward from twelve capitals allows. ' +
-      'Where A1 states a ceiling and lets the count fall out of it, this states the count and ' +
-      'lets the spread fall out of that — the two orderings of the same argument, and they do not ' +
-      'produce the same map. Twelve is the low end of the figure usually named when Pakistanis ' +
-      'argue that the federation has too few units for its size.',
-    status:
-      'Not a proposal. Twelve is a number people say; it is not a boundary anybody has published. ' +
-      'No constitutional amendment creating a province has passed since 1970.',
-    advocacy: {
-      kind: 'unadvocated',
-      note:
-        'Nobody advocates this map. What is argued for is the number — that a federation of 241 ' +
-        'million people administered as four provinces and a capital territory should have ' +
-        'something closer to a dozen units — and a number is not a map. The districts each unit ' +
-        'is made of here were chosen by a rule and by nobody.',
-    },
-    opposedBy: RULE_OPPOSITION,
-    universe: 'drawn',
-    composition: {
-      kind: 'derived',
-      rule: partition.statement,
-      from: RULE_INPUTS,
-    },
-    units: withTerritories(partition),
-    footnotes: ruleFootnotes(partition),
-    notes: [
-      {
-        label: 'Twelve against fourteen',
-        text:
-          'The same rule at fourteen units is a separate variant, and the pair is worth reading ' +
-          'together: adding two provinces does not make the map more even. Where the extra ' +
-          'capitals are seated decides that, and the capitals are the one choice the engine ' +
-          'makes.',
-        relatedVariants: ['a3'],
-      },
-      {
-        label: 'The other administrative rules',
-        text:
-          'A ceiling on a province’s population and a limit on the distance to its capital are ' +
-          'the two rules that state a constraint rather than a count, and for both the number of ' +
-          'units is a finding.',
-        relatedVariants: ['a1', 'a4'],
-      },
-    ],
-    sources: RULE_SOURCES,
-  };
-}
-
-/** A3 — fourteen, the high end of the same argument. */
-function fourteenUnits(context: DerivationContext): Variant {
-  const partition = drawnByRule('a3', { kind: 'unit-count', units: 14 }, context);
-  return {
-    id: 'a3',
-    basis: 'administrative',
-    name: 'Fourteen provinces',
-    tagline: 'two more than twelve, and less even for it',
-    rationale:
-      'Fourteen units, drawn by the same rule as the twelve. It is here because the pair says ' +
-      'something neither says alone: two more provinces do not make a more even country. The ' +
-      'capitals are the most populous districts no two of which share a border, so the ' +
-      'thirteenth and fourteenth are seated where the population is thinnest, so the units they ' +
-      'seed come out smaller than anything twelve produced while the largest gives up much less ' +
-      'than they take.',
-    status:
-      'Not a proposal. Fourteen is the upper end of the number usually named in the ' +
-      'administrative argument; no party has published a boundary for it, and no constitutional ' +
-      'amendment creating a province has passed since 1970.',
-    advocacy: {
-      kind: 'unadvocated',
-      note:
-        'Nobody advocates this map, for the same reason nobody advocates the twelve-unit one: ' +
-        'the argument is about how many provinces a country of this size should have, and this ' +
-        'is what a rule does with that number. The districts are the rule’s and the politics are ' +
-        'somebody else’s.',
-    },
-    opposedBy: RULE_OPPOSITION,
-    universe: 'drawn',
-    composition: {
-      kind: 'derived',
-      rule: partition.statement,
-      from: RULE_INPUTS,
-    },
-    units: withTerritories(partition),
-    footnotes: [
-      ...ruleFootnotes(partition),
-      {
-        kind: 'note',
-        text:
-          'This is the least even of the three population maps in this app, and it is not the ' +
-          'one with the fewest units — the ceiling rule reaches sixteen and is the most even of ' +
-          'the three. That is not a defect in the arithmetic: a count says how many provinces ' +
-          'there are and says nothing about how big any of them may be, so where the extra ' +
-          'capitals land decides everything, and only a ceiling binds the largest unit directly.',
-      },
-    ],
-    notes: [
-      {
-        label: 'Twelve against fourteen',
-        text:
-          'The twelve-unit map is the same rule with a smaller number, and comparing the two ' +
-          'scorecards is the point of carrying both.',
-        relatedVariants: ['a2'],
-      },
-      {
-        label: 'The other administrative rules',
-        text:
-          'The two rules that state a constraint rather than a count — a population ceiling and ' +
-          'a distance to the capital — find their own number of units.',
-        relatedVariants: ['a1', 'a4'],
-      },
-    ],
-    sources: RULE_SOURCES,
-  };
-}
-
-/** A4 — the rule that is not about population at all. */
-function distanceToCapital(context: DerivationContext): Variant {
-  const partition = drawnByRule('a4', { kind: 'distance-to-capital', km: 300 }, context);
-  return {
-    id: 'a4',
-    basis: 'administrative',
-    name: 'No district more than 300 km from its capital',
-    tagline: 'what a province costs when distance is the argument',
-    rationale:
-      'No district further than 300 kilometres from the seat that administers it, in the fewest ' +
-      `units for which that holds — which is ${partition.units.length}. Population says nothing ` +
-      'about Balochistan: 14,894,402 people over the largest province in the country by area, ' +
-      'where every argument about governability is ' +
-      'about the journey rather than the crowd — a citizen in Gwadar is 635 kilometres from ' +
-      'Quetta on this map’s own geometry. So this rule seats its capitals as far apart as it can ' +
-      'rather than where the people are, and the map it draws is by a long way the most uneven ' +
-      'the Administrative basis produces.',
-    status:
-      'Not a proposal. Distance to the provincial capital is a real strand of the administrative ' +
-      'argument, particularly in Balochistan and southern Khyber Pakhtunkhwa; nobody has ' +
-      'published a boundary stated in kilometres.',
-    advocacy: {
-      kind: 'unadvocated',
-      note:
-        'Nobody advocates this map. The argument it comes from is made — that a province a day’s ' +
-        'travel across is not administered from its capital in any sense a citizen would ' +
-        'recognise — but it is made as a complaint rather than as a boundary, and 300 kilometres ' +
-        'is a round number chosen here to state it, not a threshold anybody has published.',
-    },
-    opposedBy: [
-      ...RULE_OPPOSITION,
-      'anyone for whom a federation’s units should be comparable in weight — this rule produces ' +
-        'the widest population spread of the four rule-drawn maps here, and a legislature ' +
-        'apportioned across these units would be a different country from one apportioned across ' +
-        'the 25 million ceiling’s',
-    ],
-    universe: 'drawn',
-    composition: {
-      kind: 'derived',
-      rule: partition.statement,
-      from: RULE_INPUTS_WITH_CENTROIDS,
-    },
-    units: withTerritories(partition),
-    footnotes: [
-      ...ruleFootnotes(partition),
-      {
-        kind: 'note',
-        text:
-          'The distance is measured centroid to centroid on a sphere, which is an approximation ' +
-          'and is stated rather than dressed up: a centroid is not where anybody lives, and 300 ' +
-          'kilometres of Balochistan is not 300 kilometres of central Punjab. What the rule ' +
-          'answers exactly is how far one district’s middle is from another’s; what it stands in ' +
-          'for is a journey it cannot see.',
-      },
-      {
-        kind: 'note',
-        text:
-          'This is the trade-off the Administrative basis exists to show. Contiguity costs ' +
-          'nothing under any of these rules — every unit is grown outward across shared district ' +
-          'borders and cannot be in two pieces — so what a rule actually trades away is ' +
-          'population parity, and a rule that binds distance abandons it entirely. Read this ' +
-          'scorecard against A1’s: the same country, the same census, and two maps that could ' +
-          'not be apportioned by the same formula.',
-      },
-    ],
-    notes: [
-      {
-        label: 'The other administrative rules',
-        text:
-          'The three population rules — a 25 million ceiling, twelve units and fourteen — are ' +
-          'the same engine asked a different question, and they seat their capitals differently ' +
-          'because of it: by population, rather than as far apart as possible.',
-        relatedVariants: ['a1', 'a2', 'a3'],
-      },
-    ],
-    sources: [
-      ...RULE_SOURCES,
-      {
-        label:
-          'data/bundle/geography.topojson.json — the district geometry this build draws, from ' +
-          'which every centroid the distance rule measures is taken',
       },
     ],
   };
@@ -2700,13 +2711,14 @@ const A5: Variant = {
       relatedVariants: ['h3'],
     },
     {
-      label: 'The rule-drawn administrative maps',
+      label: 'The rule-drawn administrative map',
       text:
-        'The other four variants on this basis are boundaries this build computed from the census ' +
-        'under a stated rule. This one is the opposite kind of thing — somebody’s proposal, with ' +
-        'a date — and it is on the same basis because the argument for it is administrative and ' +
-        'constitutional rather than about language or history.',
-      relatedVariants: ['a1', 'a2', 'a3', 'a4'],
+        'The other variant on this basis is a boundary this build computed from the census under ' +
+        'a stated rule, drawn inside the provinces that already exist. This one is the opposite ' +
+        'kind of thing — somebody’s proposal, with a date — and it is on the same basis because ' +
+        'the argument for it is administrative and constitutional rather than about language or ' +
+        'history.',
+      relatedVariants: ['a6'],
     },
   ],
   sources: [
@@ -3013,10 +3025,11 @@ function developmentGradient(context: DerivationContext): Variant {
       {
         label: 'The other rules this app draws',
         text:
-          'Four Administrative variants partition the same 136 districts from population and ' +
-          'distance, and two Language ones from the census’s dominant mother tongue. They are ' +
-          'different maps because they are different questions, and the app draws one at a time.',
-        relatedVariants: ['a1', 'a4', 'l7'],
+          'An Administrative variant partitions the same 136 districts from population and ' +
+          'distance inside the provinces that already exist, and two Language ones from the ' +
+          'census’s dominant mother tongue. They are different maps because they are different ' +
+          'questions, and the app draws one at a time.',
+        relatedVariants: ['a6', 'l7'],
       },
     ],
     sources: [
@@ -3090,15 +3103,11 @@ export function variantsFrom(context: DerivationContext): readonly Variant[] {
     L5,
     pashtunBalochistan(context),
     motherTongueEverywhere(context),
-    // The Administrative group, rule-drawn first and in the order the rules escalate: a ceiling,
-    // then the two counts, then the one rule that is not about population at all. A5 is last
-    // because it is a different kind of thing — a proposal with a date, on a basis whose other
-    // four variants are arithmetic — and because it is the only one that redraws nothing, which
-    // reads as the answer to the four rather than as the introduction to them.
-    populationCeiling(context),
-    twelveUnits(context),
-    fourteenUnits(context),
-    distanceToCapital(context),
+    // The Administrative group, rule-drawn first. A5 is last because it is a different kind of
+    // thing — a proposal with a date, on a basis whose other variant is arithmetic — and because
+    // it is the only map here that redraws nothing, which reads as the answer to the rule rather
+    // than as the introduction to it.
+    withinProvinces(context),
     A5,
     // H1 stays first, and the ordering is otherwise chronological. A reader entering the Historical
     // basis lands on its first variant (D13), and that landing is One Unit rather than the states

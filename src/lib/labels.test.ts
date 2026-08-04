@@ -136,13 +136,13 @@ describe('the division tier, drawn only when it is asked for', () => {
    * The finding, held rather than assumed. Turning the divisions off does not name a single unit
    * that was going unnamed: the unit tier's floor (`UNIT_FLOOR`) is above every division's priority
    * outright, so a division has never been able to evict a unit and removing it frees nothing. The
-   * fourteen units A1 to A3 cannot name at the bar are crowded out by *each other* (#28), and that
-   * is still open item 5's problem rather than something this control answers.
+   * unit A6 cannot name at the bar is crowded out by *other units* (#28), and that is still open
+   * item 5's problem rather than something this control answers.
    *
    * One case per variant, because the layout at the bar is the expensive question in this file and
    * five of them in one case is a timeout rather than a failure.
    */
-  for (const id of ['a1', 'a2', 'a3', 'h2', 'l7']) {
+  for (const id of ['a6', 'd1', 'h2', 'l7']) {
     it(
       `rescues not one of ${id}'s unit names at the 390px bar`,
       () => {
@@ -708,11 +708,11 @@ describe('a variant at the 390px bar', () => {
   /**
    * The units this build cannot name at 390px — listed, because a count would hide which.
    *
-   * **The 390px bar is now met by sixteen of the seventeen variants.** It was twenty-one names
-   * across nine variants before #51, seven across four after it, and six on one variant now — A1 to
-   * A3, whose rule-drawn units in central Punjab were the standing example of the bar going unmet,
-   * name every unit at the bar, and so does H2, whose *Gilgit Agency and Baltistan* is the longest
-   * unit name in the app. Four levers did that, and each is a different one:
+   * **The 390px bar is now met by twelve of the fourteen variants.** It was twenty-one names
+   * across nine variants before #51, and seven across four after it. The four rule-drawn maps whose
+   * units in central Punjab were the standing example of the bar going unmet are retired, and the
+   * one rule that replaced them leaves a single name unset. Four levers got it this far, and each
+   * is a different one:
    *
    *  - A name that does not fit on one line is **broken between its words** (`wrappedLines`), so a
    *    three-word name is as wide as its wider half rather than as wide as the sum.
@@ -723,17 +723,23 @@ describe('a variant at the 390px bar', () => {
    *    other and pass under a name — the pass that turns "every unit is named" from an aspiration
    *    into a property.
    *
-   * What is left is **D1 and only D1**: 35 units, eleven of them a single district, and at the bar
-   * the country is 369px wide. Six names are lost — four in the northern cluster, where eight units
-   * the size of a district compete for the same few rows of margin, and Karachi East and Hyderabad
-   * in the south, where the same thing happens around the delta. Every one of them is on the map, in
-   * the key beside it, in the card and in the tooltip; what they lack is a name on the ground at
-   * this one size.
+   * What is left is **D1 and A6**. D1 is the harder of the two: 35 units, eleven of them a single
+   * district, and at the bar the country is 369px wide, so names are lost in the northern cluster
+   * where units the size of a district compete for the same few rows of margin, and around the
+   * delta in the south where the same thing happens.
+   *
+   * A6 loses exactly one, and it is **Islamabad** — a unit of one district, because the capital
+   * territory is a province of one district in the census and a rule that partitions inside the
+   * provinces has nothing there to divide. It is the smallest ground any unit in that variant
+   * stands on, wedged between Rawalpindi's unit and Punjab's northern edge. Every lost name is on
+   * the map, in the key beside it, in the card and in the tooltip; what they lack is a name on the
+   * ground at this one size.
    *
    * The list is what makes this honest rather than a silent floor, and the test after it is what
    * makes it bearable: not one of them is lost for good.
    */
   const UNNAMEABLE_AT_390: Readonly<Record<string, readonly string[]>> = {
+    a6: ['Islamabad'],
     d1: [
       'South Waziristan',
       'Torghar',
@@ -829,23 +835,20 @@ describe('a variant at the 390px bar', () => {
        * be named at *any* size would be a unit this app cannot draw honestly, and would belong in
        * the open items rather than in a layout test. It is the whole warrant for the list.
        *
-       * Four of them want a wider desktop than the rest, and each is named with the width it wants
-       * rather than allowed to raise the frame for everybody: **A3's *Gujranwala*** comes back at
-       * 1440px, and **A1's, A2's and A3's *Lahore*** at 1920px. All four are the tightest ground in
-       * the app — a rule-drawn unit of two or three districts in central Punjab, with rule-drawn
-       * units on every side of it and all of them out on leaders into the same paper — so they are
-       * the last names to find room, which is what being last means. That it is *Lahore* in three
-       * of the four is the engine's doing rather than a coincidence: the ceiling and the count
-       * rules each seat a capital there, and the unit around it is small because the population is
-       * not. A frame raised quietly to 1920 for the whole list would have hidden which four needed
-       * it, and how much.
+       * The table is **empty as it stands**, and that is a finding rather than a default: every name
+       * on the list above comes back at an ordinary 1200px desktop. It was four entries until the
+       * Administrative rule was restated — A3's *Gujranwala* at 1440px and A1's, A2's and A3's
+       * *Lahore* at 1920px, all four of them rule-drawn units of two or three districts in central
+       * Punjab with rule-drawn units on every side competing for the same paper. Those maps are
+       * retired; the rule that replaced them draws inside the existing provinces and puts nothing
+       * that tight in Punjab, so nothing now needs a frame wider than the ordinary one.
+       *
+       * It is kept rather than deleted because the mechanism is the point: a name that wanted a
+       * wider desktop is named with the width it wants rather than being allowed to raise the frame
+       * for everybody, since a frame raised quietly to 1920 for the whole list would hide which
+       * names needed it and how much.
        */
-      const RETURNS_AT: Readonly<Record<string, { width: number; height: number }>> = {
-        'a1:Lahore': { width: 1920, height: 1200 },
-        'a2:Lahore': { width: 1920, height: 1200 },
-        'a3:Lahore': { width: 1920, height: 1200 },
-        'a3:Gujranwala': { width: 1440, height: 900 },
-      };
+      const RETURNS_AT: Readonly<Record<string, { width: number; height: number }>> = {};
       for (const [id, units] of Object.entries(UNNAMEABLE_AT_390)) {
         for (const unit of units) {
           const frame = RETURNS_AT[`${id}:${unit}`] ?? { width: 1200, height: 800 };
@@ -875,7 +878,7 @@ describe('a unit name sits inside the unit it names', () => {
     point: readonly [number, number],
   ) => project.invert?.([point[0], point[1]]) ?? null;
 
-  for (const id of ['l1', 'l7', 'a1', 'h2', 'd1']) {
+  for (const id of ['l1', 'l7', 'a6', 'h2', 'd1']) {
     it(`keeps every one of ${id}'s names off its neighbours' ground`, () => {
       const drawn = variantAt(id, BAR_390);
       const units = readUnitOutlines(bundle as never, outlines as unknown as UnitOutlineBundle, id);

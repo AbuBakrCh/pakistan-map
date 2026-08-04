@@ -186,10 +186,10 @@ describe('unitBoundaries', () => {
       // L7 replaces every province with a language region and still leaves the two territories as
       // themselves, because the census reaches neither and the rule has nothing to sort them by.
       l7: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
-      a1: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
-      a2: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
-      a3: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
-      a4: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
+      // A6 partitions inside the existing provinces and so never reaches the territories at all:
+      // the rule sees only the 136 districts the census covers, and both are carried through as
+      // themselves — which is why the line runs along the same two units here as everywhere else.
+      a6: ['Azad Jammu & Kashmir', 'Gilgit-Baltistan'],
       // A5 is the variant this assertion was waiting for. It draws both territories as *proposed
       // provinces* — the whole content of the proposal — and the ceasefire line is held out of
       // their outlines exactly as it is everywhere else. A renderer that decided what to stroke

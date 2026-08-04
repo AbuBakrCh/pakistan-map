@@ -82,8 +82,10 @@ because the resolutions are cited by number elsewhere.
 3. **Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
 
 4. ~~**`SCENARIOS-DRAFT.md` is temporary.**~~ — **resolved (#36).** The typed data module
-   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) carries all seventeen variants,
-   D1 last (#31), and the markdown is **deleted** — recoverable at
+   (`scripts/lib/variants.ts`, schema in `scripts/lib/scenarios.ts`) carried all seventeen variants
+   when this was resolved — fourteen now, the four rule-drawn Administrative maps having been
+   retired for the one that draws inside the existing provinces — D1 last (#31), and the markdown is
+   **deleted** — recoverable at
    `git show 20c2f67:SCENARIOS-DRAFT.md`, deleted in `728faf0`. Keeping both would have been two
    sources of truth, and the draft had already drifted from the build in the one place it mattered
    most: it named the third development indicator "improved sanitation", which is a column PBS does
@@ -95,7 +97,9 @@ because the resolutions are cited by number elsewhere.
    alternative names, units, footnotes and sources — and separates the three outcomes by name.
    *Carried*, which is nearly all of it. *Drift*, nine places where the two disagree and the module
    is right, each recorded rather than "restored", since restoring a falsehood is not migration:
-   the sanitation column above, A1's "~9 units" against the 16 the ceiling actually costs, D1's
+   the sanitation column above, A1's "~9 units" against the 16 the ceiling actually cost — a
+   drift recorded against a variant since retired, and kept here because the record is of what the
+   draft said rather than of what is currently built — D1's
    claim to reproduce three regions when it reproduces one, five unit counts that counted only the
    units their prose was about (H1, H3, H4, A5 and L7, the last also predicting three Balochi
    regions where the rule finds two), L7's badge,
@@ -127,13 +131,17 @@ because the resolutions are cited by number elsewhere.
    form: the engine names each after its most populous district, so *South Waziristan* and *Karachi
    East* are already the shortest true names those units have. Nothing is outstanding — thirty-five
    units on a 369px-wide country is more than the paper holds, which is stated where the labelling
-   doctrine is rather than left waiting on a source that does not exist. A1 to A3 were this
-   paragraph's example until the labelling pass above, and name every unit at the bar now.
+   doctrine is rather than left waiting on a source that does not exist. **A6's one unnamed unit is
+   not this item either, and for the same reason twice over**: *Islamabad* is a rule-drawn unit with
+   no advocates, and it is already the shortest true name that ground has.
 
 ---
 
-**Scenario content: 17 variants approved, 17 built** — Language 7, Administrative 5, Historical 4,
-Development 1. Nothing is outstanding, and `SCENARIOS-DRAFT.md` is deleted (#36): the typed module
+**Scenario content: 17 variants approved, 14 built** — Language 7, Administrative 2, Historical 4,
+Development 1. The three the count is short by are A2, A3 and A4, retired alongside A1 when the
+Administrative rule was restated to draw inside the existing provinces; the suite holds the
+approved set against the built one with the retirement named, so nothing goes missing quietly.
+Nothing else is outstanding, and `SCENARIOS-DRAFT.md` is deleted (#36): the typed module
 is the only source of scenario content, and `docs/research/scenario-migration.md` is the
 variant-by-variant record of what the draft said and where it went. H2 omits Amb and Phulra (sub-district, cannot be drawn
 without inventing a boundary) and names both on the card. Karachi and Pashtun Balochistan are

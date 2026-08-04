@@ -77,7 +77,8 @@ anchor and keeps the nearest crossing, so a hole, a neighbour's bite out of a cr
 edge all stop it alike; the usable box is twice the shorter reach on each axis, less a few px of
 clearance, so a name never touches its own boundary either. That is the fast question and not the
 exact one — a diagonal boundary can leave both rays clear and still take a *corner* of the name, as
-Sindh's, A1's Hyderabad's and D1's Quetta's did — so the box's whole perimeter is then checked
+Sindh's and D1's Quetta's did, and a retired rule-drawn *Hyderabad* did before them — so the box's
+whole perimeter is then checked
 against the same rings. The name is also **centred in the room rather than on the anchor** where the
 two differ, which is the one displacement `layoutLabels` allows: the midpoint of the interior span is
 inside the same unit the anchor is, so the name cannot walk onto a neighbour however far it slides.
@@ -117,8 +118,8 @@ to a lopsided shape, and in every case better than the alternatives it replaces:
 into a neck, or outside the unit altogether on a line.
 
 Finding this out cost the **anchor** a correction of its own. `labelAnchor` took the centroid
-wherever `geoContains` said it was inside, and D1's Khuzdar and A4's Killa Abdullah have centroids a
-*tenth of a pixel* from their own boundary — a hairline of polygon left by the dissolve, technically
+wherever `geoContains` said it was inside, and D1's Khuzdar has a centroid a *tenth of a pixel*
+from its own boundary — as did a retired rule-drawn *Killa Abdullah* — a hairline of polygon left by the dissolve, technically
 interior and no use to anybody. Invisible while a name was measured against a box, and fatal once it
 has to fit the room. The centroid now has to be **comfortable** as well as inside, and where it is
 not the pole of inaccessibility answers instead, which is the case that search already existed for.
@@ -289,12 +290,19 @@ A3's *Rahim Yar Khan*, which used to be named and now wants paper its neighbours
 levers again, and each a different one: the **word wrap**, so a three-word name is as wide as its
 wider half; the **6.5px floor**; the **removal of the cap** on ground a leader may cross, which had
 been a quota on which units got named; and the **five-pass ladder** ending in one that lets leaders
-cross rather than lose a name. Sixteen of the seventeen variants now name every unit at the bar —
-A1 to A3 among them, and H2, both of which had been this section's standing examples — and what is
-left is **D1 and only D1**: 35 units, eleven of them a single district, on a 369px-wide country.
-*South Waziristan*, *Torghar*, *Lower Chitral*, *Upper Chitral*, *Hyderabad* and *Karachi East* go
-unnamed there, four of them in the northern cluster and two around the delta, and each is listed in
-the suite and shown to return at desktop size.
+cross rather than lose a name. Sixteen of the seventeen variants named every unit at the bar after
+that pass — A1 to A3 among them, and H2, both of which had been this section's standing examples.
+
+**Twelve of the fourteen do now**, and the count changed because the content did rather than because
+the layout did: A1 to A4 are retired, and the Administrative rule that replaced them draws inside
+the existing provinces (see `docs/derived-variants.md`). What is left is **D1 and A6**. D1 is the
+hard case — 35 units, eleven of them a single district, on a 369px-wide country, with *South
+Waziristan*, *Torghar*, *Lower Chitral*, *Upper Chitral*, *Hyderabad* and *Karachi East* unnamed,
+four in the northern cluster and two around the delta. **A6 loses exactly one**, and it is
+*Islamabad*: a unit of a single district, because the capital territory is a province of a single
+district in the census and a rule that partitions inside the provinces has nothing there to divide.
+It is the smallest ground any unit in that variant stands on, wedged between Rawalpindi's unit and
+Punjab's northern edge. Each is listed in the suite and shown to return at desktop size.
 
 **H2's *Gilgit Agency and Baltistan* left that list**, and it is the one departure worth reading on
 its own, because it was the last **territory** on it. The same ground under the name it carried in
@@ -317,9 +325,12 @@ and Gilgit-Baltistan are the smallest first-level ground on the map, so ranking 
 two names this app is least free to drop at the bottom of a tier of sixteen. At the baseline the
 tiers already handled it — a territory is a province-tier name and the provinces outrank the cities
 and divisions outright — so the failure could only appear under a variant crowded enough for units
-to evict each other, and #28's rule-drawn partitions are the first that are: at 390px A2 and A3
+to evict each other, and #28's rule-drawn partitions were the first that were: at 390px A2 and A3
 dropped **Azad Jammu & Kashmir**, whose own `AJK` is 31px of type over 29px of ground, to make room
-for *Rawalpindi*, which is 103px of type over 42px. A territory drawn and anonymous is a claim about
+for *Rawalpindi*, which is 103px of type over 42px. Those variants are retired and the rule that
+replaced them is not that crowded, so the case no longer arises on any shipped map — which is
+exactly why the floor is asserted as an **emptiness** rather than as a list of the variants that
+once needed it. A territory drawn and anonymous is a claim about
 Pakistan-administered ground that nobody here decided to make; a proposed unit that gives way is a
 legibility cost that returns on zoom. So the tier has two floors. It is keyed on **the kind the
 bundle records and never on the name** — H3 calls Gilgit-Baltistan the *Northern Areas* and H2 calls
@@ -333,26 +344,32 @@ neither, and both territories that stood here — H3's *Northern Areas* and H2's
 Baltistan* — have left the paragraph, the first when a callout stopped having to sit over the ground
 it names and the second when the leader stopped being rationed. What answers that third failure is
 `mustName` rather than a ranking, since no priority reaches it. And it is not free — A1 had been
-naming AJK by nudging it clear, and giving it the corner outright is part of why *Rawalpindi* and
-its neighbours are the last names on that variant's map to find room. A5 is the deliberate exception,
+naming AJK by nudging it clear, and giving it the corner outright was part of why *Rawalpindi* and
+its neighbours were the last names on that variant's map to find room. A5 is the deliberate exception,
 its AJK and GB being *promotions*, recorded as `proposed`, argued as provinces and ranked as the
 proposals they are.
 
-**The bar is met by A1, A2 and A3 now, and was not for three passes.** They are not transcribed
-proposals whose author chose the names — they are what the rule engine draws (#27), and a rule stated
-as "no province above 25 million" produces fourteen to sixteen units, most of them packed into
-Punjab and upper Sindh and each named after its capital district. At the bar the country is 369px
-across and central Punjab about 120px of it, while *Bahawalnagar* alone is 124px of type; there is
-no packing of six such names into that ground, no attested abbreviation for any of them, and
-inventing one is the thing the short-form table exists to refuse. It was thirteen names across the
-three, then six, and it is **none**: the units are out on leaders into the paper beside the country,
-and what closed the last six was the leader being allowed to travel and the ladder being allowed to
-let two lines cross rather than lose a name.
+**The rule-drawn Administrative maps were this section's standing example, and the shape of the
+problem changed with them.** A1 to A3 were not transcribed proposals whose author chose the names —
+they were what the rule engine drew (#27), and a rule stated as "no province above 25 million"
+across the whole country produced fourteen to sixteen units, most of them packed into Punjab and
+upper Sindh and each named after its capital district. At the bar the country is 369px across and
+central Punjab about 120px of it, while *Bahawalnagar* alone is 124px of type; there was no packing
+of six such names into that ground, no attested abbreviation for any of them, and inventing one is
+the thing the short-form table exists to refuse. It went from thirteen names across the three to
+six to none, and what closed the last six was the leader being allowed to travel and the ladder
+being allowed to let two lines cross rather than lose a name.
 
-**D1 is where it is not met**, and it is a different problem rather than the same one moved. A1
-strands six rule-drawn units in central Punjab; D1 draws **35 units**, eleven of them a single
-district, and eight of those are packed into northern Khyber Pakhtunkhwa where the country is at its
-narrowest. Six go unnamed at 390px — *South Waziristan*, *Torghar*, *Lower Chitral*, *Upper
+**A6 inherits none of that**, because it does not put fourteen units in Punjab: the province is the
+frame, and Punjab comes to seven units rather than to most of the map's. Its one unset name is
+*Islamabad* — a single district with Rawalpindi's much larger unit wrapped around its north and
+west, so there is neither ground inside it for the name nor an uncontested direction to take a
+leader in. It is not the crowded-Punjab problem in a new place; it is the smallest unit on the map
+being the smallest unit on the map.
+
+**D1 is where it is least met**, and it is a different problem rather than the same one moved. A6
+loses one name to a one-district unit; D1 draws **35 units**, eleven of them a single district, and
+eight of those are packed into northern Khyber Pakhtunkhwa where the country is at its narrowest. Six go unnamed at 390px — *South Waziristan*, *Torghar*, *Lower Chitral*, *Upper
 Chitral*, *Hyderabad* and *Karachi East* — listed one by one in the suite, since a floor that said
 "most of them" would let the next variant quietly lose another, and each shown to return at desktop
 size.
@@ -372,20 +389,20 @@ proposed; the **card lists every unit** by name with its own population, and on 
 the sheet the reader is already holding; and a **tap on any district names its unit** in the
 tooltip's third line (#33), so no ground on the map is more than one press from the name of the
 proposal covering it. What is lost is the name set *on* the ground, and it comes back on zoom —
-asserted, for every one of them, at desktop size. Four want a wider desktop than the rest and are
-named with the width each wants rather than allowed to raise the frame for everybody: A3's
-*Gujranwala* returns at 1440px, and A1's, A2's and A3's *Lahore* at 1920px. That it is *Lahore* in
-three of the four is the engine's doing rather than a coincidence — the ceiling and the count rules
-each seat a capital there, and the unit around it is small because the population is not.
+asserted, for every one of them, at an ordinary 1200px desktop. **None now wants a wider frame
+than that**, which is a finding rather than a default: four did until A1 to A4 were retired — A3's
+*Gujranwala* at 1440px and A1's, A2's and A3's *Lahore* at 1920px, all of them rule-drawn units of
+two or three districts in central Punjab with rule-drawn units on every side competing for the same
+paper. The mechanism is kept even though the table is empty, because a name that wants a wider
+desktop must be named with the width it wants rather than allowed to raise the frame for everybody.
 
-**D1 was the variant that added none to that list, and it is now the only one on it** (#31). It cut
-each province in two and drew eleven units, each half a province, so its *Rahim Yar Khan* and
-*Karachi East* had room where A1's units of the same names did not. Under the band rule it draws
-**35**, and the arithmetic reverses with it: the same paper, three times the names, eleven of them
-a district wide. That the list is now one variant long rather than four is a straight consequence of
-the labelling work, and that the one variant on it is D1 is a straight consequence of the content
-change — the two happened in the same pass and are worth keeping apart, since neither caused the
-other.
+**D1 was the variant that added none to that list, and it is now the longer of the two entries on
+it** (#31). It cut each province in two and drew eleven units, each half a province, so its *Rahim
+Yar Khan* and *Karachi East* had room where the rule-drawn units of the same names did not. Under
+the band rule it draws **35**, and the arithmetic reverses with it: the same paper, three times the
+names, eleven of them a district wide. That the list is two variants long rather than nine is a
+consequence of the labelling work; which variants are on it is a consequence of content changes.
+The two are worth keeping apart, since neither caused the other.
 
 **District names are the one tier with a zoom threshold** (#34). 156 names over a 369px frame is a
 word search rather than a map, and the district is the building block every proposal is stated in

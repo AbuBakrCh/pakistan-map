@@ -2,8 +2,8 @@
 
 Interactive single-page explorer for proposals to redraw Pakistan's provinces.
 
-**Status:** design agreed, **scenario content complete — all 17 variants are in the typed
-module** (Language L1–L7, Administrative A1–A5, Historical H1–H4, Development D1;
+**Status:** design agreed, **scenario content complete — all 14 variants are in the typed
+module** (Language L1–L7, Administrative A6 and A5, Historical H1–H4, Development D1;
 `SCENARIOS-DRAFT.md` is deleted, which is #36). Pipeline and bundle built; the map built through
 its **three strata with the basis and variant selectors** (#18) over its **neighbour silhouettes
 and city dots** (#8), the **variant card** beside it (#19), the **adjacency graph** flagging each
@@ -12,14 +12,21 @@ the map (#22), a **deep link** per view (#23), the **About the data** panel (#21
 adaptation** (#33), the **Development basis** (#31) and the **Administrative fill** — **three of
 the four bases are drawable**, and only Historical is still short of a shading.
 
-Seven of the seventeen boundaries this build **derives rather than transcribes**, every one
-re-derived by the suite: L6 and L7 from census plurality, A1–A4 from the rule engine's population
-and distance, and D1 at a figure this project defines rather than one anybody published. Four
-variants are worth knowing by name before touching anything: **L3**, the one *transcribed*
-proposal whose province crosses an existing provincial boundary; **A5**, which redraws nothing —
-it promotes Gilgit-Baltistan and Azad Kashmir and moves not a single district; **H2**, the oldest
-map in the app and the only one carrying **no population figure at all**; and **D1**, whose
-thirty-five units are the one place the 390px bar goes unmet.
+Four of the fourteen boundaries this build **derives rather than transcribes**, every one
+re-derived by the suite: L6 and L7 from census plurality, **A6** from the rule engine's
+headquarters, population and distance, and D1 at a figure this project defines rather than one
+anybody published. Four variants are worth knowing by name before touching anything: **L3**, the
+one *transcribed* proposal whose province crosses an existing provincial boundary; **A5**, which
+redraws nothing — it promotes Gilgit-Baltistan and Azad Kashmir and moves not a single district;
+**H2**, the oldest map in the app and the only one carrying **no population figure at all**; and
+**D1**, whose thirty-five units are where the 390px bar goes most badly unmet.
+
+**A6 replaced the four rule-drawn Administrative maps A1 to A4**, which partitioned the whole
+country from a bare population ceiling, a stated unit count and a distance to a capital, and drew
+units across provincial boundaries to do it. The restated rule draws **inside the provinces that
+already exist** and one rule draws one map. Their ids are **retired, never reused**: a link to
+`#/administrative/a1` resolves to the baseline, because answering a stranger's link with a
+*different* proposal at the same address is the one substitution #23 refuses outright.
 
 ---
 
@@ -66,7 +73,7 @@ Basis (4)  →  Variant (17 total)  →  Units  →  Districts
 |---|---|---|
 | **Current** (default view) | Official administrative geography | `official` |
 | **Language / dialect** | PBS 2023 Census Table 11, mother tongue by district | `census` · `proxy` |
-| **Administrative** | 2023 census population + derived geometry — shaded by **district population**, in four fixed bands | `census` · `derived` |
+| **Administrative** | 2023 census population + derived geometry — shaded by **district population**, in four fixed bands. Its one rule-drawn variant gates its centres on the development composite, so **A6** carries `synthesized` too | `census` · `derived` |
 | **Historical** | Documented past demarcations, 1947 onward | `documented` |
 | **Development** | PBS 2023 Census Tables 12, 23, 24 — literacy (10+), improved drinking water, households with a flush toilet — shaded by **the unweighted mean of the three** | `census` · `synthesized` (#31) |
 
@@ -315,8 +322,9 @@ first — is in **`docs/political-rendering.md`**. Read it before changing any o
   and the dark end by the accent, which is where its fourth band's worth of room ran out.
 - **Responsive, and the phone is not the degraded case** (#33). Hard bar: **map legible and
   variant switching functional at 390px** — Pakistan's internet is overwhelmingly mobile-first.
-  Sixteen of the seventeen variants meet it outright; **D1 and only D1** does not, with six of its
-  thirty-five unit names unset at that size, each listed in the suite. The breakpoint is stated
+  Twelve of the fourteen variants meet it outright; **D1 and A6** do not. D1 leaves six of its
+  thirty-five unit names unset at that size and A6 leaves one — *Islamabad*, a unit of a single
+  district — each listed by name in the suite. The breakpoint is stated
   **once, in the stylesheet** (`--sheet`) and read from there by `sheet.ts`.
 
 The reasoning behind the last four — the boundary hierarchy, the palette gates, the two ramps'
@@ -380,8 +388,10 @@ Resolved and kept for reference: **1** (AJK district set and the #46 name invers
 (Balochistan's set), **4** (`SCENARIOS-DRAFT.md` deleted, audited afterwards in
 `docs/research/scenario-migration.md`).
 
-**Scenario content: 17 variants approved, 17 built** — Language 7, Administrative 5, Historical 4,
-Development 1. Nothing is outstanding. H2 omits Amb and Phulra (sub-district, cannot be drawn
+**Scenario content: 17 variants approved, 14 built** — Language 7, Administrative 2, Historical 4,
+Development 1. The three the count is short by are A2, A3 and A4, retired with A1 when the
+Administrative rule was restated to draw inside the existing provinces; the suite holds the
+approved set against the built one with the retirement named, so nothing can go missing quietly. Nothing is outstanding. H2 omits Amb and Phulra (sub-district, cannot be drawn
 without inventing a boundary) and names both on the card. Karachi and Pashtun Balochistan are
 attributed variants, not algorithmic by-products.
 

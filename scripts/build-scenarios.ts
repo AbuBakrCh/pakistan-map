@@ -73,7 +73,7 @@ import {
 } from './lib/scorecard.ts';
 import { CENSUS_DISTRICT_COUNT, ROSTER, ROSTER_DISTRICT_COUNT } from './lib/roster.ts';
 import { districtCentroids } from './lib/centroids.ts';
-import { dominantTongues, variantsFrom } from './lib/variants.ts';
+import { districtDivisions, dominantTongues, variantsFrom } from './lib/variants.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT_FILE = resolve(ROOT, 'data/bundle/scenarios.json');
@@ -388,6 +388,7 @@ function main(): void {
       {
         readonly population?: unknown;
         readonly areaSqKm?: unknown;
+        readonly division?: unknown;
         readonly motherTongue?: { readonly dominant?: unknown };
       }
     >;
@@ -398,6 +399,7 @@ function main(): void {
   // 136 the census reaches are in it at all, which is the distinction the rule engine's first
   // refusal turns on.
   const dominant = dominantTongues({ districts: statistics.districts ?? {} });
+  const divisions = districtDivisions({ districts: statistics.districts ?? {} });
   for (const [district, record] of Object.entries(statistics.districts ?? {})) {
     if (typeof record.population !== 'number') {
       fail(
@@ -488,9 +490,13 @@ function main(): void {
       graph,
       dominant,
       populations,
-      // Taken from the geometry read above rather than from a table of our own: A4's rule is a
-      // distance to a capital, and a centroid derived anywhere but from the drawn district would
-      // measure a map this build does not publish.
+      // The census's own division per district. The Administrative rule seats every unit at a
+      // divisional headquarters, so this field holds up a boundary and is read from the same
+      // artifact the populations are.
+      divisions,
+      // Taken from the geometry read above rather than from a table of our own: the
+      // Administrative rule's limit is a distance to a centre, and a centroid derived anywhere
+      // but from the drawn district would measure a map this build does not publish.
       centroids: districtCentroids(geography),
       // D1's rule is stated in the development composite, read above from the artifact that
       // defines it rather than recomputed here (#31).
@@ -498,11 +504,12 @@ function main(): void {
     });
   } catch (error) {
     fail(
-      `a variant could not be derived from the committed census and district borders. Six ` +
+      `a variant could not be derived from the committed census and district borders. Four ` +
         `variants have no published district list and are drawn here — two Language ones from ` +
-        `Table 11's dominant mother tongue (#26) and four Administrative ones from the rule ` +
-        `engine (#27) — so a change to the census or to the borders can leave one of them ` +
-        `undrawable:\n    ${error instanceof Error ? error.message : String(error)}`,
+        `Table 11's dominant mother tongue (#26), the Administrative one from the rule engine ` +
+        `(#27) and D1 from the development composite (#31) — so a change to the census, to the ` +
+        `borders or to the composite can leave one of them undrawable:\n    ` +
+        `${error instanceof Error ? error.message : String(error)}`,
     );
   }
 

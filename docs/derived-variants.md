@@ -1,6 +1,6 @@
-# The seven derived variants
+# The four derived variants
 
-Ten of the seventeen variants are literals transcribed from a document; seven are functions of
+Ten of the fourteen variants are literals transcribed from a document; four are functions of
 the census, drawn by a rule this build states. This file is the record of each rule, what it
 draws, and every cost stated on the card rather than smoothed away — plus H2, which is a literal
 but carries the app's only withholding and the second of open item 2b's two narrowings.
@@ -9,47 +9,105 @@ but carries the app's only withholding and the second of open item 2b's two narr
 ---
 
 **The Administrative basis draws its own boundaries, and the rule is what keeps them from being ours**
-(#27). No one publishes a district list for "no province above 25 million people", so
-`scripts/lib/partitioner.ts` computes one: units grow outward from a capital across the **shared
-district borders** of #16's graph — contiguous by construction, never by filtering — the unit with
-the fewest people taking the next district each time, ties broken on the district and capital names
-so nothing about the caller's ordering can move a boundary. Three rules, each of which determines a
-partition on its own: a stated **unit count**, a **population ceiling** in the fewest units that
-honour it, and a **distance to the capital** in the fewest units that honour that. For the last two
-the unit count is a *finding*, and the statement the card prints says so. Capitals are the one choice
-the engine makes, so it is made out loud and differently for the two questions — the most populous
-districts, no two of them sharing a border, for the population rules; as far as possible from the
-capitals already chosen for the distance rule, because seating every capital in Punjab would answer a
-question about Balochistan with a fact about Lahore. **A district the census does not reach is refused
-by name**, never counted as zero: a zero would let a unit take AJK's or GB's twenty districts of
-ground for free under a ceiling it never came near (D25), so the engine partitions the 136 and the
-variant carries the territories through as themselves. The engine is build-time only, and generates
-nothing on its own — the variants it draws are #28's.
+(#27). No one publishes a district list for "each province divided at its own divisional
+headquarters", so `scripts/lib/partitioner.ts` computes one. The rule runs in four steps and every
+one of them is printed on the card in words a reader can redraw the map from:
 
-**And what it draws is four maps whose disagreement is the finding** (#28). A1 states a ceiling of
-25 million and finds it costs **16 units**, spread 2.3:1; A2 and A3 state **12** and **14** and
-come out at 3.1:1 and 3.5:1; A4 states 300 km to a capital, finds **10 units**, and comes out at
-**68.8:1**. Read together they say three things no one of them says alone. A rule stated as a
-*ceiling* binds the largest unit directly and produces a more even map than one stated as a
-*count*, which only bounds the average — A1 is more even than A3 at more units. Fourteen provinces
-are **less** even than twelve, because the extra capitals are seated where the population is
-thinnest. And **contiguity is not what any of these rules trades away**: a unit is grown outward
-across shared district borders and cannot be in two pieces, so every one of the four scores zero
-non-contiguous units, and the quantity that actually moves between them is population parity — by
-a factor of thirty between A1 and A4. That is said on the cards rather than left to be inferred,
-because the obvious reading of "the scorecard shows the trade-off" is a trade-off against
-contiguity, and there is none to show.
+1. **The province is the frame.** Each of the four provinces and the capital territory is
+   partitioned on its own, and **no unit crosses a provincial boundary**. This is the rule's
+   central claim and the change from the engine it replaced.
+2. **A centre is a divisional headquarters the census finds well enough served** — the development
+   index at or above **50%**. Centres are seeded most populous first.
+3. **The unit grows outward across the shared district borders** of #16's graph — contiguous by
+   construction, never by filtering — taking the **nearest** unassigned district on its edge each
+   time, ties broken on the district name so nothing about the caller's ordering can move a
+   boundary. A district is admitted only while the unit stays at or below **25 million people**
+   *and* the district is within **300 km** of the centre.
+4. **When neither limit admits another district the unit is closed**, and the next centre is seeded
+   from what is left of the province.
 
-**The generated units are named for their capitals, and that is a decision rather than a
-placeholder.** #27 left the naming to "reviewed copy" here; #28 did not write one, deliberately. A
-unit is not the same unit from rule to rule — the one seated at Lahore is 2 districts under A1 and
-17 under A4 — so a reviewed name would be a conclusion drawn about a shape that changes with the
-rule, and inventing "Central Punjab" is exactly the editorial voice the engine exists to keep out.
-The card says the name is a description of an output and not a name anybody uses for a place,
-which is the answer L7 already gives its language regions. Two more costs are stated on the same
-cards: the rule partitions the 136, so **Islamabad is inside a generated unit** and nothing here
-preserves it as a federal territory, and **every census district counts as moved**, because not one
-of them stays inside a unit carrying the name of the province it is in today.
+The ceiling is a **limit and not a target**: a district that would carry a unit past 25 million is
+refused, so every unit lands at or below the figure rather than at or just above it. The number of
+units is a *finding* and never an input, and the statement the card prints says so. **A district
+the census does not reach is refused by name**, never counted as zero: a zero would let a unit take
+AJK's or GB's twenty districts of ground for free under a ceiling it never came near (D25), so the
+engine partitions the 136 and the variant carries the territories through as themselves. The
+development index is refused on the same terms and for a sharper reason — the floor is a
+*threshold*, so a missing score read as zero would not fail loudly, it would quietly disqualify a
+headquarters and move a boundary. The engine is build-time only, and generates nothing on its own.
+
+**Where the centres come from is the one choice the engine makes, so it is made by rule and not by
+transcription.** A division's headquarters is **the district carrying the division's own name**;
+where no district does, it is **the most populous district in the division**. PBS publishes the
+division each district belongs to and publishes no seat column, and typing one out of a provincial
+gazetteer would put the only unsourced table in this repo underneath every Administrative boundary.
+Twenty-seven of the thirty-one divisions resolve by name. Four do not — **Hazara, Karachi, Mekran
+and Rakhshan** — and the second clause seats them at **Mansehra, Karachi East, Kech and Washuk**.
+Two of those four are not the gazetted headquarters: Hazara is administered from Abbottabad and
+Rakhshan from Kharan. That is stated on the card rather than corrected, because correcting it means
+transcribing a seat table this app has no published source for; the rule is stated so a reader can
+see exactly which district it chose and disagree with it. The seats of the first-level units need
+no clause of their own — every provincial capital is already the headquarters of the division it
+names, and Islamabad is the whole of its own pseudo-division (#3).
+
+**What it draws is 19 units, and where they fall is the finding** (#28). Punjab comes to 7, Sindh
+to 3, Khyber Pakhtunkhwa to 3, Balochistan to 5, and Islamabad Capital Territory to 1. **The two
+limits bind in different provinces, which is why the rule needs both.** Punjab's units run up
+against the 25-million ceiling — six of them within a few per cent of it — and would run on for
+hundreds of kilometres without the distance limit. Balochistan's stop a long way short of the
+ceiling and are closed by the 300 km limit instead: the province holds 14,894,402 people in total,
+so a ceiling alone would make the whole of it one unit. **Contiguity is not what the rule trades
+away**: a unit is grown outward across shared district borders and cannot be in two pieces, so the
+variant scores zero non-contiguous units. What it trades is **population parity**, at 92.9:1
+between the largest unit and the smallest — worse than any other partition in the app — and the
+reason is the next paragraph.
+
+**Sequential seeding strands districts, and a stranded district becomes a unit of its own.** A unit
+closed by the distance limit can leave a pocket of a province with no qualifying centre left in it.
+The fallback then seeds on the **most populous remaining district**, whatever its development index
+and whether or not it is a headquarters, because the alternative is to leave part of a province in
+no unit and a partition with a hole in it is not a partition (D6). On this census it fires five
+times — **Bhakkar, Chagai, Ghotki, Lasbela and Sherani** — and three of those are units of one or
+two districts. Every one is named on the card rather than counted, because a one-district unit is a
+real output of this rule and also the output a reader is most likely to read as a defect.
+
+**The development floor moves no boundary at all on this census, and the card says so.** It turns
+away four of the thirty-one divisional headquarters — **Nasirabad, Washuk, Kalat and Zhob**, every
+one of them in Balochistan — and the map drawn with the floor is byte-identical to the map drawn
+without it, because each of those divisions falls inside a unit seated elsewhere before its own
+seat comes up. The suite asserts that identity rather than leaving it in prose. The variant still
+carries a **`synthesized`** badge beside its `derived` one, because the composite is a published
+input to a rule a reader is invited to re-derive, and a reader who did not apply the floor would be
+running a different rule that happens to agree. Reporting a constraint that binds nothing is the
+point: a rule gets credit for work it did not do otherwise.
+
+**The distance limit is a straight line and the card does not call it anything else.** There is no
+road network in this app's data and no routing source at its vintage, so 300 km is measured
+great-circle from one district centroid to another. That is shorter than any road between the same
+two places, which makes the limit the **more generous** of the two readings, and it is measured to
+a centroid, which is not where anybody lives. Calling it *travel distance* would put a figure with
+no source under every boundary on the map.
+
+**The generated units are named for their centres, and that is a decision rather than a
+placeholder.** #27 left the naming to "reviewed copy"; none was written, deliberately. Inventing
+"Central Punjab" is exactly the editorial voice the engine exists to keep out, and the card says
+the name is a description of an output and not a name anybody uses for a place — which is the
+answer L7 already gives its language regions. Two more costs are stated on the same card: the rule
+partitions the 136, so **Islamabad is a generated unit** and nothing here preserves it as a federal
+territory, and **every census district counts as moved**, because not one of them stays inside a
+unit carrying the name of the province it is in today — even though no unit leaves the province it
+was drawn in.
+
+**A6 replaced four earlier maps, and their ids are retired rather than reused.** A1 to A4 stated a
+25-million ceiling, twelve units, fourteen units and a 300 km distance to a capital, and each
+partitioned the *whole country* — drawing units across provincial boundaries and, under the
+population rules, seating capitals so heavily in Punjab that Balochistan's west was administered
+from hundreds of kilometres away. The restated rule answers the same administrative argument inside
+the frame every real proposal in this app argues within, and one rule draws one map. A link to
+`#/administrative/a1` now resolves to the **baseline**, never to A6: answering a stranger's link
+with a different proposal at the same address is the one substitution #23 refuses outright. The
+suite holds the draft-approved variant set against the built one with the retirement named, so a
+variant that went missing for any other reason still fails.
 
 **A5 is the variant that redraws nothing, and the one that settles open item 2b's near miss**
 (#28). Gilgit-Baltistan and Azad Jammu & Kashmir become provinces; every boundary stays where it
@@ -207,8 +265,10 @@ a citation rather than by a wider list. H3's second **Opposed by** entry says th
 H3's sources reached 2020 — the one piece of card copy where a variant could assert any year with
 nothing checking it. A5 already carries the sourced form of that same fact, so H3 now cites **the
 same line**: the announcement by Prime Minister Imran Khan of 1 November 2020 and the drafted
-amendment prepared for it. Five gaps remain and each is named with the year it asserts: A1 to A3 and
-**A5** assert 1970, H1 asserts 1961. A5's is the one the widening added — its note is titled
+amendment prepared for it. Three gaps remain and each is named with the year it asserts: **A6** and
+**A5** assert 1970, H1 asserts 1961. A6 inherited its 1970 from the retired rule-drawn maps, whose
+status line it carries; retiring them moved the gap rather than closing it. A5's is the one the
+widening added — its note is titled
 *Relationship to the 1970 restoration*, which is H3's own name, and A5 cites nothing dated 1970. It
 is the same class as the other four, a content edit on somebody else's variant, and is left named
 rather than tidied away by loosening the check.
@@ -281,7 +341,7 @@ surface, and the two places the card does use it are the sentences refusing it.
 Shared pure logic lives in `scripts/lib/` with tests beside it.
 
 **D1 is the variant that composite draws** (#31) — the districts the census serves alike, grouped
-where they touch, and the last of the seventeen. `scripts/lib/development-partition.ts` computes it
+where they touch, and the last of the fourteen. `scripts/lib/development-partition.ts` computes it
 from three conditions and nothing else: a unit is the **largest group of districts that share a
 development band, share a province, and reach each other across shared district borders**. Each of
 the three does work. The **bands** are the shading's own four at their fixed cuts — under 50%, 50 to
@@ -314,7 +374,7 @@ second rule with nothing published behind it and a threshold nobody sourced. The
 **spread**, at 456.4 : 1 — one 80%-and-above group runs from Attock to Vehari and holds 89 million
 people where Upper Chitral holds 195,528 — because the rule is stated in service access and says
 nothing whatever about population. 135 of 156 districts move, every census district but Islamabad's,
-for the reason A1 to A4 already give: not one of the thirty-two carries the name of the province it
+for the reason A6 already gives: not one of the thirty-two carries the name of the province it
 came out of. **Nought non-contiguous units**, by construction.
 
 **Punjab is the case the ticket was right about, and the card reports the rest as it ran.** The

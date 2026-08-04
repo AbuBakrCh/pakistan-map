@@ -41,10 +41,10 @@ Table 1 is the same census and there is one coverage rather than two lists.
 
 **Carried on every variant, printed only where the population lines are missing** — which is #49's
 open product call, settled here. Both halves are deliberate. The arithmetic is done for all
-seventeen because a figure derived for one card is a figure nothing else can check, and the suite
+every variant because a figure derived for one card is a figure nothing else can check, and the suite
 re-derives every unit's area over every variant; the printing is conditional because the scorecard
 is a fixed column a reader compares straight down between two proposals, and a sixth line on all
-seventeen would be a change to that comparison surface no ticket has asked for. Area earns its place
+every variant would be a change to that comparison surface no ticket has asked for. Area earns its place
 exactly where the lines above it are gone.
 
 **Two surfaces ask it, and they ask different questions rather than one question twice.** The

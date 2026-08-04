@@ -163,9 +163,9 @@ district falls in one of four **fixed bands of its 2023 census population** — 
 500,000–1,500,000; 1,500,000–3,000,000; 3,000,000 and above — or it is left at the unshaded
 baseline, the same twenty. Four things about it, each argued in `lib/administrative.ts`:
 
-- **Population and not density**, because population is what the basis is argued from: A1 to A3 are
-  partitions of exactly this figure, so those boundaries are drawn over the quantity they were cut
-  at. Density would be the tidier choropleth and the evidence for nothing on top of it. The cost —
+- **Population and not density**, because population is what the basis is argued from: A6's ceiling
+  is stated in exactly this figure, so that boundary is drawn over one of the two quantities it was
+  cut at — the other being a distance, which a choropleth cannot show. Density would be the tidier choropleth and the evidence for nothing on top of it. The cost —
   a count on a choropleth over-reads big empty districts — is answered by the legend's figures and
   by the tooltip, not hidden.
 - **Fixed cuts, never quantiles**, on the composite's reasoning: a quantile band makes a district's

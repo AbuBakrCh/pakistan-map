@@ -364,7 +364,7 @@ describe('the legend is derived from the map, never transcribed beside it', () =
     // both are four swatches in the same shape, so a band that reached for the wrong legend would
     // produce a picture that looks right and says the wrong figures under it.
     const legend = populationLegend(census);
-    const keyed = bandLegend(census, variantNamed('a1'), 'administrative', development).map(
+    const keyed = bandLegend(census, variantNamed('a6'), 'administrative', development).map(
       (entry) => entry.label,
     );
     for (const entry of [...legend.bands, ...legend.absences]) expect(keyed).toContain(entry.label);

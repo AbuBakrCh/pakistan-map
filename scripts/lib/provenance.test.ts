@@ -45,7 +45,7 @@ import {
 } from './scenarios.ts';
 import { ROSTER } from './roster.ts';
 import { districtCentroids } from './centroids.ts';
-import { dominantTongues, variantsFrom } from './variants.ts';
+import { districtDivisions, dominantTongues, variantsFrom } from './variants.ts';
 
 /**
  * The variants, derived the same way the build derives them (#26).
@@ -56,7 +56,12 @@ import { dominantTongues, variantsFrom } from './variants.ts';
  * follows: what ships is what is asserted against.
  */
 const districtStatistics = (
-  statistics as { districts: Record<string, { population: number; motherTongue?: { dominant?: string | null } }> }
+  statistics as {
+    districts: Record<
+      string,
+      { population: number; division?: string; motherTongue?: { dominant?: string | null } }
+    >;
+  }
 ).districts;
 
 const VARIANTS = variantsFrom({
@@ -65,6 +70,8 @@ const VARIANTS = variantsFrom({
   populations: new Map(
     Object.entries(districtStatistics).map(([district, record]) => [district, record.population]),
   ),
+  // The census's own division per district, which the Administrative rule seats every unit from.
+  divisions: districtDivisions({ districts: districtStatistics }),
   centroids: districtCentroids(geography as never),
   // D1's rule is stated in the development composite (#31), a committed artifact of its own.
   development: new Map(

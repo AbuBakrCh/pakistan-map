@@ -102,14 +102,20 @@ describe('readRoute', () => {
   it('reaches the administrative basis by link, and enters it on its first variant', () => {
     // The two URLs whose answer changed when the population fill landed: a reader sent either of
     // these before it did came out on the country instead.
-    expect(route('#/administrative/a1')).toEqual({
-      selection: { basis: 'administrative', variant: 'a1' },
+    expect(route('#/administrative/a6')).toEqual({
+      selection: { basis: 'administrative', variant: 'a6' },
       asWritten: true,
     });
     expect(route('#/administrative')).toEqual({
-      selection: { basis: 'administrative', variant: 'a1' },
+      selection: { basis: 'administrative', variant: 'a6' },
       asWritten: false,
     });
+    // And the four ids the restated rule retired resolve to the baseline, not to the map that
+    // replaced them. A link carries a claim; answering it with a different proposal under the
+    // same address is the substitution this parser refuses by design.
+    for (const dead of ['a1', 'a2', 'a3', 'a4']) {
+      expect(route(`#/administrative/${dead}`).selection, dead).toBeNull();
+    }
   });
 
   it('reaches the development basis by link, and enters it on its one variant', () => {
