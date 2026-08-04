@@ -9,8 +9,10 @@ its **three strata with the basis and variant selectors** (#18) over its **neigh
 and city dots** (#8), the **variant card** beside it (#19), the **adjacency graph** flagging each
 unit's contiguity (#16), the **scorecard** (#20), the **compare gesture** holding a proposal off
 the map (#22), a **deep link** per view (#23), the **About the data** panel (#21), the **phone
-adaptation** (#33), the **Development basis** (#31) and the **Administrative fill** — **three of
-the four bases are drawable**, and only Historical is still short of a shading.
+adaptation** (#33), the **Development basis** (#31), the **Administrative fill** and the **method
+note** saying in prose how the map on screen was built (#52) — **three of the four bases are drawable**,
+and Historical is short of both a shading and a method summary, which are now the same basis's two
+gaps.
 
 Four of the thirteen boundaries this build **derives rather than transcribes**, every one
 re-derived by the suite: L6 and L7 from census plurality, **A6** from the rule engine's
@@ -394,6 +396,13 @@ The full record — resolved items included, each with the history behind it —
   hypothetical: a unit that carries population figures *and* reaches into ground the census does
   not cover. Nothing in the app does that, and the build would refuse it by name.
 - **3. Deployment target** — deliberately undecided. Static bundle, builds to `dist/`.
+- **6. The method note is short in three places, all of them content** (#52). The on-paper summary of how
+  the map was built covers three bases: **Historical has none**, asserted as an absence rather than
+  left to be noticed. **Language's shared paragraph states census plurality, which is how L6 and L7
+  were derived and not how L1–L5 were got** — those five are transcribed, each says so in its own
+  paragraph, and the shared sentence above them wants rewording to the ground they are *argued on*;
+  the same question is smaller but live on Development. And it is **not drawn at 390px**, where —
+  unlike the two keys, whose rows the legend repeats — nothing else carries the prose.
 - **5. `GB` as Gilgit-Baltistan's short form is unconfirmed.** Every other entry in `SHORT_FORMS`
   names a publishing agency; this one rests on general usage by the territory's own government and
   assembly, and wants a published document recorded in `docs/research/`. Not a legibility gap —
@@ -444,7 +453,7 @@ attributed variants, not algorithmic by-products.
 | `docs/visual-design.md` | on demand | Boundary hierarchy, palette gates, the Development ramp, the phone bar |
 | `docs/open-items.md` | on demand | All open items, resolved ones included, with their history |
 | `docs/label-layout.md` | on demand | The whole labelling doctrine and the per-variant 390px record |
-| `docs/map-furniture.md` | on demand | Unit key, division toggle, the page's regions |
+| `docs/map-furniture.md` | on demand | Unit key, fill key, method note, division toggle, the page's regions |
 | `docs/phone-and-touch.md` | on demand | Sheet detents, the tap gesture, the docked tooltip |
 | `docs/accessibility.md` | on demand | Keyboard, focus, the regions list, the district walk |
 | `docs/panel-surfaces.md` | on demand | Card, scorecard and About panel, in full |

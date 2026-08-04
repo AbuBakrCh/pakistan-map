@@ -738,9 +738,27 @@ export function renderMap(
     return node === null ? [] : standingOn(node as HTMLElement);
   }
 
+  /**
+   * The ground the method note is standing on, on both keys' terms.
+   *
+   * The same kind of box in the frame's bottom-left corner — opaque, and as tall as the basis's
+   * summary runs — so it is measured and kept off for the same reason: a name left underneath it is a
+   * name a reader cannot read. Empty and off the paper at the baseline and under a basis with no
+   * summary written, and not drawn at all on a phone.
+   *
+   * The cost is that corner: on this projection it is the sea off Balochistan's coast and the ground
+   * west of it, which is the same quarter the unit key stands in at the top — so under a variant the
+   * whole left edge of the frame is spent, and a name in Pakistan's south-west gives way for as long
+   * as the proposal is on screen. It comes back on zoom.
+   */
+  function methodNote(): readonly Rect[] {
+    const node = container.querySelector('.method-note');
+    return node === null ? [] : standingOn(node as HTMLElement);
+  }
+
   /** Everything opaque on the paper, in the frame's own coordinates. */
   function obstacles(): readonly Rect[] {
-    return [...dockedTooltip(), ...unitKey(), ...fillKey()];
+    return [...dockedTooltip(), ...unitKey(), ...fillKey(), ...methodNote()];
   }
 
   /** One element's footprint, or nothing at all where it is not being drawn. */

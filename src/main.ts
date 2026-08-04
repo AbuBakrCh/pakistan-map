@@ -46,6 +46,7 @@ import type { DistrictFill, LegendEntry } from './lib/fill.ts';
 import { POPULATION_BANDS, populationFills, populationLegend } from './lib/administrative.ts';
 import { bandPaint, developmentFills, developmentLegend } from './lib/development.ts';
 import { motherTongueFills, motherTongueLegend } from './lib/mother-tongue.ts';
+import { methodNote } from './lib/method.ts';
 import {
   BASELINE,
   basisChoices,
@@ -403,6 +404,9 @@ function render(): void {
   // Written before the map for the same reason, and measured into the same `occupied` list: it is
   // a solid box in the frame's top right and a name left underneath it is a name nobody can read.
   renderFillKey(selection);
+  // And written before the map for the third time, for the third time because it is a solid box on
+  // the paper: it stands in the frame's bottom right and the label layout measures it.
+  renderMethodNote(selection);
   map.show(held ? comparedView(variant) : viewFor(selection));
   // The card is the argument the outlines are drawing, so it arrives and leaves with them: at the
   // baseline there is no proposal on screen and there is no card either (#19).
@@ -477,6 +481,19 @@ window.addEventListener('keydown', (event) => {
   }
   event.preventDefault();
   if (compare.hold()) render();
+});
+
+/*
+ * Where the method note fits is a question about the frame's height, so it is asked again whenever
+ * the frame changes height — a short window puts the note in the corner and dragging the window
+ * taller has to bring it back under the key.
+ *
+ * The map redraws on its own `ResizeObserver`, which is delivered after this event, so the label
+ * layout that follows measures the box where it has just been put rather than where it was.
+ */
+window.addEventListener('resize', () => {
+  const mount = document.getElementById('method-note');
+  if (mount !== null && mount.childElementCount > 0) placeMethodNote(mount);
 });
 
 window.addEventListener('keyup', (event) => {
@@ -669,6 +686,92 @@ function renderFillKey(active: Selection): void {
   mount.innerHTML = `
     <p class="fill-key-heading">${heading}</p>
     <div class="fill-key-list">${[...rows, ...legend.absences].map(item).join('')}</div>`;
+}
+
+/**
+ * How the map on screen was built (#52), under the unit key on the frame's left rail — or in the
+ * opposite corner where the key is too long to leave room for it.
+ *
+ * Built as elements rather than as markup, and the words are `lib/method.ts`'s: this composes no
+ * sentence of its own, exactly as the unit key takes its heading from `unitRoster` and the card
+ * takes every word from `lib/card.ts`.
+ *
+ * Emptied rather than hidden by a flag, so `:empty` takes the box off the paper — at the baseline,
+ * where there is no rule of ours to describe, and under a basis whose summary has not been written.
+ * It is given the *selection* and not the comparison, on the legend's and the two keys' own grounds.
+ */
+function renderMethodNote(active: Selection): void {
+  const mount = document.getElementById('method-note');
+  if (mount === null) return;
+  mount.replaceChildren();
+
+  const note = methodNote(active);
+  if (note === null) {
+    // Placed back on the rail while it is empty, so the next basis to draw one starts from the
+    // preferred position rather than from wherever the last one was pushed to.
+    onRail(mount);
+    return;
+  }
+
+  const heading = document.createElement('p');
+  heading.className = 'method-note-heading';
+  heading.textContent = note.heading;
+  mount.append(heading);
+  for (const paragraph of note.paragraphs) {
+    const line = document.createElement('p');
+    line.className = 'method-note-line';
+    line.textContent = paragraph;
+    mount.append(line);
+  }
+  placeMethodNote(mount);
+}
+
+/**
+ * Where the note goes: under the key if it fits there, and the opposite corner if it does not.
+ *
+ * The rail is the preferred position and this is the only thing that ever moves the box off it — the
+ * key names the units and the note says by what rule they were drawn, so under the key is where the
+ * two read as one thing. What the rail cannot do is bound itself: the key does not scroll, on purpose
+ * (`styles.css`), so a rule-drawn variant sets two columns of eighteen rows and there is no room left
+ * on that edge for a paragraph. A note that stayed would run out through the bottom of the frame, and
+ * a summary cut off mid-sentence is worse than a summary in the other corner.
+ *
+ * So the box is **measured, not predicted**: how tall the key came out is a property of the variant's
+ * roster and of the reader's font size, and a breakpoint or a unit count guessing at it would be
+ * wrong on one of the two. Measured on the rail first, and moved only if it does not fit, which means
+ * the fallback costs nothing on the eleven variants that never reach it.
+ *
+ * The corner it falls back to is the frame's bottom right, which is where this box started. That
+ * corner is the fill key's edge, and under a shaded basis with many categories the two can meet —
+ * a cost accepted rather than hidden, and it is bounded: the bases whose keys are long (Language,
+ * fifteen mother tongues) are the ones whose variants propose few enough units to fit on the rail,
+ * and the bases whose variants fill the rail (Administrative, Development) key four bands and no more.
+ */
+function placeMethodNote(mount: HTMLElement): void {
+  const well = document.getElementById('map');
+  const rail = document.querySelector('.map-left-rail');
+  if (well === null || rail === null) return;
+
+  // Measured from the rail, so the question asked is the real one: does *this* key, at this font
+  // size and this frame height, leave room for the paragraphs underneath it.
+  onRail(mount);
+  const frame = well.getBoundingClientRect();
+  const stacked = rail.getBoundingClientRect();
+  // The same inset the rail stands off the frame's edges by, kept clear at the foot as well: a box
+  // flush against the bottom rule reads as clipped whether or not it is.
+  const inset = stacked.top - frame.top;
+  if (stacked.bottom <= frame.bottom - inset) return;
+
+  mount.classList.add('is-cornered');
+  well.append(mount);
+}
+
+/** The preferred position: the second box on the left rail, under the key. */
+function onRail(mount: HTMLElement): void {
+  const rail = document.querySelector('.map-left-rail');
+  if (rail === null) return;
+  mount.classList.remove('is-cornered');
+  if (mount.parentElement !== rail) rail.append(mount);
 }
 
 function renderLegend(active: Selection, variant: VariantRecord | null): void {

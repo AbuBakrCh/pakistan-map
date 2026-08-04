@@ -1,4 +1,4 @@
-# Map furniture — the unit key, the fill key, the division toggle, the page regions
+# Map furniture — the unit key, the fill key, the method note, the division toggle, the page regions
 
 The things drawn around the map rather than on it. `src/CLAUDE.md` carries what each
 one is and the rules it follows; this file carries why each was decided that way.
@@ -172,6 +172,67 @@ is not the other one: the frame's top right is the Kashmir salient, so under a s
 where the four-step yielding order is most likely to end in *no name at all*. It ends there rather
 than under a box (D12), and the ceasefire line's own name concedes length before it concedes
 existence — which is the order it already follows.
+
+**And the map says how it was built — a few sentences under the unit key** (#52). Three surfaces already
+say what is on screen: the card says what a variant *claims* and who claims it, the legend says what
+a colour means, the scorecard says what the partition comes to. None of the three answers the
+question a reader asks first of a boundary they can see was not transcribed — *how did you get this
+line?* That answer existed, in `docs/derived-variants.md`, on no surface a reader of the map ever
+reaches. So it is on the paper, in prose, beside the key that names the units the rule produced.
+
+**It is basis-first and variant-second, and the order is the argument.** The shared paragraphs are
+the basis's — the ground every one of its boundaries is argued on — and a variant may add **one**
+paragraph saying what this particular map does with that ground: L1 follows the South Punjab
+Secretariat's existing boundary, L2 adds Mianwali and Bhakkar to it, L3 crosses a provincial edge to
+reach Dera Ismail Khan. A variant's line **adds and never replaces**, because a variant free to
+overwrite the shared rule is free to describe a method the map beside it was not drawn by, and the
+box would then be the one surface on this page arguing with the card next to it. Where a basis
+carries one variant — A6, D1 — the basis's rule *is* that map's, and nothing is added.
+
+**Three of the four bases have one, and Historical's absence is a decision that is asserted.** A
+basis with nothing written draws no box at all rather than a heading over a placeholder, on the unit
+key's own `:empty` rule: an invented summary would be this app's editorial voice on the one surface
+whose every other sentence is sourced. Historical is the basis still short of a fill (`src/CLAUDE.md`)
+and it is now the basis short of a summary too, and the suite names it — the four variants are on the
+map and none of them yet says how it was arrived at.
+
+**Nothing here composes a sentence.** The words are `src/lib/method.ts`'s, written and reviewed in
+that file exactly as the card's are written in `lib/card.ts`, and `main.ts` sets them with
+`textContent` and adds nothing. Every basis key and every variant key is held against the committed
+bundle by the suite, so a summary cannot describe a map nobody can select — and a **retired** id is
+refused by name, since a rule attached to a withdrawn proposal is worse than a missing one.
+
+**It sits under the unit key, and where it goes when it will not fit is measured rather than
+predicted.** The left rail is the preferred position because the two boxes are one thought — that box
+names the units, this says by what rule they were drawn — and reading order gives it for free. What
+the rail cannot do is bound itself: the unit key does not scroll, on purpose, so a rule-drawn variant
+sets two columns of eighteen rows and there is no room left on that edge for a paragraph. A note that
+stayed would run out through the bottom of the frame, and a summary cut off mid-sentence is worse
+than a summary in the other corner. So `placeMethodNote` measures the rail against the frame and
+moves the box to the **bottom right** only when it does not fit — a unit count or a breakpoint
+guessing at the height would be wrong about the reader's font size, and the fallback costs nothing on
+the variants that never reach it. It is re-asked on `resize`, since fitting is a question about the
+frame's height.
+
+The fallback corner is the fill key's edge, and the cost is stated rather than hidden: under a shaded
+basis with many categories the two could meet, which is exactly what drove the box off that corner in
+the first place — the language basis's fifteen mother tongues reach 60% of the frame. It happens to
+be bounded, because the bases fall the right way round: the basis with the long fill key (Language)
+has the variants that propose few enough units to leave rail space, and the bases whose variants fill
+the rail (Administrative, Development) key four bands and no more. Nothing enforces that, and if a
+basis ever has both, the note is what gives way.
+
+The rest it inherits from the two keys, because it is the same kind of object: it is **seeded into
+the label layout**, measured rather than assumed, so no place name is left under it; it takes **no
+pointer events**, refused on the rail as a whole so the empty ground between the boxes cannot catch a
+drag either; it **does not answer to compare**; and it is **not drawn at 390px**. That last one is a
+real loss rather than a repetition, and it is the one place this box differs from the keys: their rows
+are carried in full by the legend under the frame, and this prose is on no other surface, so a phone
+is short of it until the summary has a home in the column below the map.
+
+**It is the one box on the paper that is not `aria-hidden`**, for the same reason: the keys repeat
+rows a screen reader already has from the legend and from `lib/regions.ts`, and this is prose that
+appears nowhere else on the page.
 
 **The division tier is offered, not assumed — one toggle, top right of the map frame.** *Show all
 divisions* draws the ~39 divisions and their 37 names; off, which is how the page opens, the map is

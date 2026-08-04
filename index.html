@@ -59,7 +59,34 @@
             constitutional standing beside it; this is the same list with less in it, and reading
             it out again would give a reader the units twice and the standing once.
           -->
-          <div id="unit-key" class="unit-key" aria-hidden="true"></div>
+          <!--
+            The frame's left edge, as one column: the unit key, then the method note under it.
+
+            A rail rather than two boxes each anchored to a corner, because the note has to sit
+            *under* the key and the key's height is however many units the variant proposes — two
+            corners cannot agree on where that is without measuring, and stacking is what the flow
+            already does for free. Each box still empties itself independently, and `:empty` takes
+            either one off the paper without moving the other.
+          -->
+          <div class="map-left-rail">
+            <div id="unit-key" class="unit-key" aria-hidden="true"></div>
+
+            <!--
+              How the map on screen was built (#52), in a few sentences — directly under the unit
+              key, which is the key it belongs beside: that box names the units, and this says by
+              what rule they were arrived at. The card says what a variant claims and the legend says
+              what a colour means; neither says how the boundary was got, which for a rule-drawn
+              variant is the first thing a reader asks and until now was only in `docs/`.
+
+              Not `aria-hidden`, which is where it differs from both keys: they repeat rows a
+              screen reader already has from the legend and from `lib/regions.ts`, and this is
+              prose that appears nowhere else on the page.
+
+              Empty and gone at the baseline and under a basis with no summary written for it,
+              exactly as the keys are empty when there is nothing to key.
+            -->
+            <aside id="method-note" class="method-note" aria-label="How this map is built"></aside>
+          </div>
         </div>
         <figcaption class="legend" id="legend"></figcaption>
       </figure>

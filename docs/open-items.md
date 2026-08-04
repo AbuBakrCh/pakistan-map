@@ -141,6 +141,35 @@ because the resolutions are cited by number elsewhere.
    not this item either, and for the same reason twice over**: *Islamabad* is a rule-drawn unit with
    no advocates, and it is already the shortest true name that ground has.
 
+6. **The method note has three gaps, and all three are content rather than machinery** (#52). The box that
+   says how the map on screen was built is on the paper, under test, and written for three of the four
+   bases. What is outstanding:
+
+   **Historical has no summary.** All four of its variants are drawn and none of them says how it was
+   arrived at, which is the same basis that is still short of a fill. The suite asserts the absence by
+   name, so it cannot be forgotten and cannot be half-filled — but the box simply does not draw for
+   H1 to H4, and a reader looking at the map of 1947 gets no sentence saying where those lines came
+   from.
+
+   **The Language basis's shared paragraph describes a rule five of its seven variants were not drawn
+   by.** It states census plurality — neighbouring districts grouped where the same mother tongue is
+   the majority — which is exactly how **L6 and L7** were derived, and is *not* how L1 to L5 were got:
+   those five are transcribed, and follow the South Punjab Secretariat's existing boundary, the PPP's
+   own district list, Hazara Division and Karachi Division. Each of the five says so in its own
+   paragraph, so the box is not wrong on the variant — but the shared paragraph above it reads as a
+   claim that this app grouped the districts, on maps it copied from advocates. It wants rewording to
+   the ground these proposals are *argued on* rather than the method we drew them by, and the wording
+   is the owner's. The same question is smaller but live on **Development**: the shared paragraph says
+   districts of similar development levels are brought together, where D1's rule actually grows each
+   unit around its **most populous** district to a threshold this project defines.
+
+   **It is not drawn at 390px**, with the two keys — and unlike them, this is a loss. Their rows are
+   repeated in full by the legend under the frame; this prose is on no other surface, so a phone
+   reader gets no answer to *how was this line got* at all. What it wants is a home in the column
+   below the map rather than a box on the paper, which is what the card and the legend already do
+   there. Until it has one, the hard bar's readers are the ones short of it, which is the wrong way
+   round for a project whose bar is a phone.
+
 ---
 
 **Scenario content: 17 variants approved, 14 built** — Language 7, Administrative 2, Historical 4,

@@ -589,6 +589,121 @@ body {
 }
 
 /*
+ * The frame's left edge, as one column: the unit key, then the method note under it.
+ *
+ * The rail owns the position and the width; the two boxes in it own their own contents and nothing
+ * else. That is what lets either of them empty itself — the key at the baseline, the note under a
+ * basis with no summary — and have the other one simply move, rather than having two corners that
+ * each have to know how tall the other's box came out.
+ *
+ * The cap is the unit key's own arithmetic, moved up here because it is now the column's: two of the
+ * key's columns, their gap, and the box's padding and border. It is *not* a ceiling on the note's
+ * reading measure, which is narrower and set below.
+ *
+ * `pointer-events` are refused on the rail rather than on each box, so the empty ground between them
+ * cannot catch a drag either: the map pans and zooms straight through this edge.
+ */
+.map-left-rail {
+  --unit-key-column: 9rem;
+  --unit-key-gap: 0.9rem;
+  position: absolute;
+  left: 0.6rem;
+  top: 0.6rem;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  /* Shrink-to-fit, so an empty rail takes no ground at all and a one-column key is one column wide. */
+  align-items: start;
+  max-width: min(
+    90%,
+    calc(2 * var(--unit-key-column) + var(--unit-key-gap) + 1.2rem + 2px)
+  );
+  pointer-events: none;
+}
+
+/*
+ * How the map on screen was built (#52) — a few sentences, under the key on that rail.
+ *
+ * The third box on the paper and set from the same rules as the two keys, because it is the same kind
+ * of thing: a reader matching a boundary to the rule that drew it should not have to leave the map to
+ * do it.
+ *
+ * **Under the unit key on the left rail, and the two corners it is not in are why.** It began bottom
+ * right, on the reasoning that the corner is the Arabian Sea and the cheapest ground in the frame —
+ * but the right-hand edge is already stratum 1's: the fill key hangs from the top of it and under the
+ * language basis it is fifteen mother tongues deep, capped at 60% of the frame, so the two boxes met
+ * over the sea and neither could be read. Bottom *left* only postponed the same problem, since the
+ * unit key hangs down that edge and a variant with two columns of units reaches the floor. Nothing in
+ * any of these boxes is placed by measurement, so a collision between them is a collision and not a
+ * yield.
+ *
+ * So the left edge is a single column (`.map-left-rail`) and the note is the second thing in it: it
+ * sits *under* the key rather than across the frame from it, at whatever height the key actually came
+ * to, and the two can no longer overlap because neither is positioned against the other. Reading order
+ * follows — the key names the units, this says by what rule they were drawn.
+ *
+ * Prose, so it is set to a prose measure rather than to a column of rows, and it is the one box here
+ * that is not a list.
+ *
+ * Empty and gone by `:empty` at the baseline, where there is no rule of ours to describe, and under a
+ * basis whose summary has not been written — the keys' own rule, and the reason there is no
+ * placeholder sentence. `:empty` on either box moves the other without either one knowing.
+ */
+.method-note {
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--land-hatch);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  /* A reading measure, and never wider than the rail it stands in. */
+  width: 17rem;
+  max-width: 100%;
+  padding: 0.45rem 0.6rem;
+}
+
+.method-note:empty {
+  display: none;
+}
+
+/*
+ * The fallback position: the frame's bottom right, where this box began.
+ *
+ * Reached only when the unit key is too long to leave room on the rail — `placeMethodNote` measures
+ * it and moves the element out of the rail into the well, which is what makes `right` and `bottom`
+ * resolve against the frame rather than against the rail's own box. A rule-drawn variant sets two
+ * columns of eighteen rows and the key does not scroll, so on those maps this is the only corner left.
+ *
+ * `pointer-events` are refused here in the box's own right: on the rail they came from the rail, and
+ * out here there is nothing above it to inherit from — the map still has to pan and zoom straight
+ * through this corner.
+ */
+.method-note.is-cornered {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.method-note-heading {
+  color: var(--ink);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.3rem;
+}
+
+.method-note-line {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Paragraph spacing is the paragraph's own, so a one-paragraph summary carries no trailing gap. */
+.method-note-line + .method-note-line {
+  margin-top: 0.4rem;
+}
+
+/*
  * The map's own key to stratum 3 — the count, and which unit is which, in the frame's top-left.
  *
  * On the paper rather than under it, because it names lines that are on the paper: the legend below
@@ -616,16 +731,6 @@ body {
  * was a wheel to catch.
  */
 .unit-key {
-  /* One column's width, stated once: the list sets its columns at it and the box's ceiling below is
-   * two of them plus their gap and its own padding. Narrow on purpose — the widest name this build
-   * sets is *Kambar Shahdadkot* and the corner the box stands in is a deep, narrow strip of sea and
-   * of the ground west of Balochistan, so a name that wraps costs less than a box over the map. */
-  --unit-key-column: 9rem;
-  --unit-key-gap: 0.9rem;
-  position: absolute;
-  left: 0.6rem;
-  top: 0.6rem;
-  z-index: 1;
   background: color-mix(in srgb, var(--paper) 92%, transparent);
   backdrop-filter: blur(2px);
   border: 1px solid var(--land-hatch);
@@ -638,14 +743,10 @@ body {
    * less than the box's own chrome takes the second column's width away from it, and a multi-column
    * box too narrow for its second column silently draws one — every row in a single strip down the
    * map, which is the failure this whole arrangement exists to avoid. */
-  max-width: min(
-    90%,
-    calc(2 * var(--unit-key-column) + var(--unit-key-gap) + 1.2rem + 2px)
-  );
+  /* The share-of-the-frame half of the old cap is the rail's now, and it has to be: a percentage
+   * measured against a shrink-to-fit parent whose width is measured from this box is a circle. */
+  max-width: calc(2 * var(--unit-key-column) + var(--unit-key-gap) + 1.2rem + 2px);
   padding: 0.45rem 0.6rem;
-  /* Never in the way of reading the map: it explains the map, and there is nothing here to click,
-   * to drag or to scroll. */
-  pointer-events: none;
 }
 
 .unit-key:empty {
@@ -2083,6 +2184,20 @@ body {
    * room to hold it beside the map.
    */
   .fill-key {
+    display: none;
+  }
+
+  /*
+   * The method note goes with the two keys, and this one is a cost rather than a free decision.
+   *
+   * At 390px the bottom of the frame is the division toggle's and the two actions', the top is the
+   * docked tooltip's, and what is left is 369px of country. A paragraph of prose over it would cover
+   * more of Pakistan than any box on this map — and unlike the keys, whose rows are repeated in full
+   * by the legend under the frame, this prose is on no other surface, so hiding it here does lose a
+   * reader something. Stated rather than hidden: the summary wants a home in the column below the map
+   * on a phone, and until it has one the phone is short of it.
+   */
+  .method-note {
     display: none;
   }
 

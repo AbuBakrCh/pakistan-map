@@ -59,6 +59,27 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   under a basis that shades nothing and at the baseline. Everything else is the unit key's: it does
   not answer to compare, it takes the wheel, it is seeded into the same `occupied` set, it is
   `aria-hidden`, and it is not drawn at 390px.
+- **The map says how it was built, in prose, under the unit key** (#52) — a few sentences naming the rule
+  the boundary on screen came from, which the card, the legend and the scorecard all leave unsaid.
+  **Basis-first, variant-second:** the shared paragraphs are the basis's and a variant may add **one**
+  of its own, which **adds and never replaces** — a variant free to overwrite the rule is free to
+  describe a method its own map was not drawn by. Words in `src/lib/method.ts`, under test; `main.ts`
+  sets them with `textContent` and composes nothing, and every basis and variant key is held against
+  the committed bundle, **retired ids refused by name**.
+- **Three of the four bases have one and Historical does not** — the same basis still short of a
+  fill. A basis with nothing written draws **no box**, on the keys' own `:empty` rule, because an
+  invented summary would be this app's editorial voice on a sourced surface; the absence is asserted
+  rather than left to be noticed.
+- **Its position is measured, not predicted.** The left rail (`.map-left-rail`) holds the unit key and
+  the note in one column, so the note sits under the key at whatever height the key came to. The key
+  does not scroll, so a rule-drawn variant fills that edge — `placeMethodNote` measures the rail
+  against the frame and moves the box to the **bottom right** only where it will not fit, and re-asks
+  on `resize`. That corner is the fill key's edge, and the collision is bounded by which bases have
+  long keys rather than by a rule.
+- **Everything else is the two keys': measured into the same `occupied` set, no pointer events, no
+  answer to compare, not drawn at 390px.** The last is a **loss** here and not a repetition — the
+  keys' rows are repeated by the legend under the frame and this prose is on no other surface. It is
+  also the one box on the paper that is **not `aria-hidden`**, for that same reason.
 - **The division tier is offered, not assumed** — one toggle, top right. It goes **whole or not at
   all**, the **legend follows it**, and it is **not in the URL and not in history** (as the
   sheet's detent is not). It rescues **not one** of the unit names this build cannot set at
@@ -412,7 +433,7 @@ Full text in **`docs/panel-surfaces.md`**. The rules:
 | File | Carries |
 |---|---|
 | `docs/label-layout.md` | The whole labelling doctrine and the per-variant 390px record |
-| `docs/map-furniture.md` | Unit key, division toggle, the page's regions |
+| `docs/map-furniture.md` | Unit key, fill key, method note, division toggle, the page's regions |
 | `docs/phone-and-touch.md` | Sheet detents, the tap gesture, the docked tooltip |
 | `docs/accessibility.md` | Keyboard, focus, the regions list, the district walk |
 | `docs/panel-surfaces.md` | Card, scorecard, About panel — in full |
