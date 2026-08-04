@@ -101,7 +101,7 @@ describe('the six things D22 requires of the image', () => {
 
   it('names the scenario', () => {
     expect(exported.title).toBe('South Punjab Secretariat');
-    expect(exported.tagline).toBe('the version that partly exists');
+    expect(exported.tagline).toBe('the secretariat’s existing boundary, drawn as a province');
   });
 
   it('says the boundary is proposed and not official, in those words', () => {

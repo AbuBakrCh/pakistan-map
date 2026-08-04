@@ -258,7 +258,7 @@ export interface Variant {
   readonly id: string;
   readonly basis: BasisId;
   readonly name: string;
-  /** The one-line editorial gloss: "the version that partly exists". */
+  /** The one-line editorial gloss: "the secretariat’s existing boundary, drawn as a province". */
   readonly tagline?: string;
   /** Overrides the basis default, for a variant whose provenance differs (L7, D1). */
   readonly badges?: NonEmpty<ProvenanceBadge>;

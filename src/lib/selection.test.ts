@@ -54,7 +54,7 @@ describe('basisChoices', () => {
       'l6',
       'l7',
     ]);
-    expect(language?.variants[0]?.tagline).toBe('the version that partly exists');
+    expect(language?.variants[0]?.tagline).toBe('the secretariat’s existing boundary, drawn as a province');
   });
 
   it('makes the development basis selectable, on the one variant and the composite behind it', () => {

@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated": "2026-08-04T10:42:49.267Z",
+    "generated": "2026-08-04T18:10:35.528Z",
     "vintage": "2023 census (as on 01-03-2023) — geometry and statistics both, per ADR-0001",
     "unit": "district",
     "joinsTo": "data/bundle/geography.topojson.json, on the district `name` property",
@@ -88,7 +88,7 @@
       "id": "l1",
       "basis": "language",
       "name": "South Punjab Secretariat",
-      "tagline": "the version that partly exists",
+      "tagline": "the secretariat’s existing boundary, drawn as a province",
       "badges": [
         "documented"
       ],
@@ -784,7 +784,7 @@
       "id": "l2",
       "basis": "language",
       "name": "South Punjab, the PPP reading",
-      "tagline": "the same claim, two districts wider",
+      "tagline": "the same three divisions, plus Mianwali and Bhakkar",
       "badges": [
         "documented"
       ],
@@ -1486,7 +1486,7 @@
       "id": "l3",
       "basis": "language",
       "name": "Saraikistan",
-      "tagline": "the only line here that leaves its province",
+      "tagline": "the PPP’s reading, extended across a provincial boundary",
       "badges": [
         "documented"
       ],
@@ -2211,7 +2211,7 @@
       "id": "l4",
       "basis": "language",
       "name": "Hazara",
-      "tagline": "a division that has asked for forty years",
+      "tagline": "Hazara Division exactly as it is drawn today",
       "badges": [
         "documented"
       ],
@@ -2885,7 +2885,7 @@
       "id": "l5",
       "basis": "language",
       "name": "Karachi / urban Sindh",
-      "tagline": "the claim that is larger than the map can draw",
+      "tagline": "Karachi Division, the part of the claim with district lines",
       "badges": [
         "documented"
       ],
@@ -3550,7 +3550,7 @@
       "id": "l6",
       "basis": "language",
       "name": "Pashtun Balochistan separates",
-      "tagline": "the one line here with no document behind it",
+      "tagline": "the Pashto-plurality districts, found in the census",
       "badges": [
         "census",
         "proxy",
@@ -4235,7 +4235,7 @@
       "id": "l7",
       "basis": "language",
       "name": "Mother tongue applied everywhere",
-      "tagline": "the arithmetic nobody is arguing for",
+      "tagline": "the same census rule, applied to the whole country",
       "badges": [
         "census",
         "proxy",
@@ -5093,8 +5093,8 @@
     {
       "id": "a6",
       "basis": "administrative",
-      "name": "Provinces subdivided at their own headquarters",
-      "tagline": "a ceiling, a distance, and no unit that crosses a provincial line",
+      "name": "Administrative units built for practical governance",
+      "tagline": "administrative units centred on regional cities, balancing population and distance to improve day-to-day governance.",
       "badges": [
         "census",
         "derived",
@@ -9064,8 +9064,8 @@
     {
       "id": "d1",
       "basis": "development",
-      "name": "The districts the census serves alike, grouped where they touch",
-      "tagline": "the map service access draws, with nothing else in it",
+      "name": "Development where it matters.",
+      "tagline": "Groups districts with similar social and economic conditions into the same province.",
       "badges": [
         "census",
         "synthesized",

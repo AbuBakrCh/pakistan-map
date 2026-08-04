@@ -97,12 +97,12 @@ const SOUTH_PUNJAB: Unit = {
   ],
 };
 
-/** L1 — South Punjab Secretariat, the version that partly exists. */
+/** L1 — South Punjab Secretariat, drawn on the boundary that already exists. */
 const L1: Variant = {
   id: 'l1',
   basis: 'language',
   name: 'South Punjab Secretariat',
-  tagline: 'the version that partly exists',
+  tagline: 'the secretariat’s existing boundary, drawn as a province',
   rationale:
     'Punjab’s three southernmost divisions — Multan, Bahawalpur and Dera Ghazi Khan — leave the ' +
     'province as one unit. It is the closest any proposal in this app comes to already being ' +
@@ -230,7 +230,7 @@ const L2: Variant = {
   id: 'l2',
   basis: 'language',
   name: 'South Punjab, the PPP reading',
-  tagline: 'the same claim, two districts wider',
+  tagline: 'the same three divisions, plus Mianwali and Bhakkar',
   rationale:
     'The Pakistan Peoples Party states the southern province two districts wider than the ' +
     'secretariat does: the three southern divisions together with Mianwali and Bhakkar. Those two ' +
@@ -381,7 +381,7 @@ const L3: Variant = {
   id: 'l3',
   basis: 'language',
   name: 'Saraikistan',
-  tagline: 'the only line here that leaves its province',
+  tagline: 'the PPP’s reading, extended across a provincial boundary',
   rationale:
     'The Saraikistan Qaumi Council states the claim at its full extent: the Seraiki-speaking ' +
     'districts of southern Punjab, together with Dera Ismail Khan and Tank, which are districts ' +
@@ -578,7 +578,7 @@ const L4: Variant = {
   id: 'l4',
   basis: 'language',
   name: 'Hazara',
-  tagline: 'a division that has asked for forty years',
+  tagline: 'Hazara Division exactly as it is drawn today',
   rationale:
     'Hazara Division leaves Khyber Pakhtunkhwa as a province of its own. It is the one Language ' +
     'variant whose boundary needs no interpretation at all: the claim is an existing ' +
@@ -704,7 +704,7 @@ const L5: Variant = {
   id: 'l5',
   basis: 'language',
   name: 'Karachi / urban Sindh',
-  tagline: 'the claim that is larger than the map can draw',
+  tagline: 'Karachi Division, the part of the claim with district lines',
   rationale:
     'Karachi Division leaves Sindh as a province of its own. It is the only variant in this app ' +
     'whose drawn extent is smaller than the demand behind it: MQM-P frames the claim as urban ' +
@@ -1838,7 +1838,7 @@ function pashtunBalochistan(context: DerivationContext): Variant {
     id: 'l6',
     basis: 'language',
     name: 'Pashtun Balochistan separates',
-    tagline: 'the one line here with no document behind it',
+    tagline: 'the Pashto-plurality districts, found in the census',
     rationale:
       'The Pashto-plurality districts of northern Balochistan leave the province. It is the ' +
       'oldest live grievance on this map and the only Language variant whose boundary is not ' +
@@ -2003,7 +2003,7 @@ function motherTongueEverywhere(context: DerivationContext): Variant {
     id: 'l7',
     basis: 'language',
     name: 'Mother tongue applied everywhere',
-    tagline: 'the arithmetic nobody is arguing for',
+    tagline: 'the same census rule, applied to the whole country',
     rationale:
       'Every district in Pakistan assigned to the province of its plurality mother tongue, and ' +
       'each language then cut into the connected groups its districts actually form. It is the ' +
@@ -2470,8 +2470,10 @@ function withinProvinces(context: DerivationContext): Variant {
   return {
     id: 'a6',
     basis: 'administrative',
-    name: 'Provinces subdivided at their own headquarters',
-    tagline: 'a ceiling, a distance, and no unit that crosses a provincial line',
+    name: 'Administrative units built for practical governance',
+    tagline:
+      'administrative units centred on regional cities, balancing population and distance to ' +
+      'improve day-to-day governance.',
     rationale:
       'Each existing province is partitioned on its own, and no new unit crosses a provincial ' +
       `boundary — ${provinces} provinces come to ${partition.units.length} units. A unit is ` +
@@ -2675,8 +2677,9 @@ function developmentGradient(context: DerivationContext): Variant {
   return {
     id: 'd1',
     basis: 'development',
-    name: 'The districts the census serves alike, grouped where they touch',
-    tagline: 'the map service access draws, with nothing else in it',
+    name: 'Development where it matters.',
+    tagline:
+      'Groups districts with similar social and economic conditions into the same province.',
     // The basis shades `census · synthesized`; this variant's boundary adds `derived`, because the
     // composite is a figure this project defines and the *line* is arithmetic this build did over
     // it. Both claims are on the card, and the card says why the two disagree with the basis.

@@ -27,7 +27,7 @@ describe('variantCard — the header a reader meets first', () => {
 
   it('names the variant and keeps its editorial gloss', () => {
     expect(card.name).toBe('South Punjab Secretariat');
-    expect(card.tagline).toBe('the version that partly exists');
+    expect(card.tagline).toBe('the secretariat’s existing boundary, drawn as a province');
   });
 
   it('badges the basis and the provenance as two different claims', () => {
