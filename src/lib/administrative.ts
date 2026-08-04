@@ -135,6 +135,12 @@ export function populationFills(statistics: CensusStatistics): Map<string, Distr
 }
 
 export interface PopulationLegend {
+  /**
+   * What the on-paper key is headed with — the *fill*, not the basis. Every other surface names
+   * the basis, because the basis is what a reader selected; the key in the frame's corner is
+   * beside the colours themselves, where the useful thing to say is which figure they are.
+   */
+  readonly heading: string;
   /** What the shading is, in one line, above the swatches — and whose figure it is. */
   readonly lead: string;
   /** The four bands, lowest first — the order the scale is read in. */
@@ -166,6 +172,7 @@ export function populationLegend(statistics: CensusStatistics): PopulationLegend
   const [lowest, highest] = [ordered[0], ordered[ordered.length - 1]];
 
   return {
+    heading: 'Population distribution',
     lead:
       `District population — ${counted.length} districts, from ${lowest?.district ?? '—'} at ` +
       `${groupDigits(lowest?.population ?? 0)} to ${highest?.district ?? '—'} at ` +

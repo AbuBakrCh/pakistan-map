@@ -612,10 +612,14 @@ function renderFillKey(active: Selection): void {
 
   // The basis's own name, from the artifact — this composes no heading of its own, exactly as the
   // unit key takes its heading from `unitRoster` and the card takes every word from `lib/card.ts`.
+  // Where the legend states a heading of its own it wins, because it names the fill rather than the
+  // basis, and beside the swatches the fill is the more useful of the two: the Administrative basis
+  // shades by district population, and *Population distribution* is what those colours are.
   const basis = scenarioBundle.bases[active.basis];
+  const heading = 'heading' in legend ? legend.heading : (basis?.name ?? '');
   const rows = 'bands' in legend ? legend.bands : legend.onTheMap;
   mount.innerHTML = `
-    <p class="fill-key-heading">${basis === undefined ? '' : basis.name}</p>
+    <p class="fill-key-heading">${heading}</p>
     <div class="fill-key-list">${[...rows, ...legend.absences].map(item).join('')}</div>`;
 }
 
