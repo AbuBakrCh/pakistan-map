@@ -21,12 +21,18 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   here needing no source. The two absences stay apart as everywhere else (#17): AJK and GB hatch,
   Chitral stipples. Identity is never colour alone; the legend under the frame names every fill.
 - The unit **name** is set in its own outline colour, which is how the key says *whose boundary
-  that is* where the legend says only what a stroke means. It names **every** unit and not only
-  the proposed ones, for the reason the card lists them all.
+  that is* where the legend says only what a stroke means. It names **the proposed units** — the
+  ones a reader cannot name off the map they already know — and **counts what it names**, in the
+  word *proposed*, so the figure is never taken for the partition's. The whole partition, with each
+  unit's population, is the card's and the scorecard's.
+- **Nothing is below a fold.** The key does **not scroll**: the rows run into a second column
+  (`unitRoster.columns`, eighteen rows to a column and two columns at most — **down before
+  across**, since the corner it stands in is a deep, narrow strip of sea and of the ground west of
+  Balochistan), because a key a reader has to discover the rest of is one they take for the whole
+  proposal until they do.
 - Three things it does not do: **no populations and no printed district counts** (the scorecard's,
-  #20), **it does not answer to compare**, and it takes **no pointer events beyond the wheel** —
-  it scrolls when a variant keys more units than the frame holds, which costs panning and zooming
-  through that corner while a key is drawn.
+  #20), **it does not answer to compare**, and it takes **no pointer events at all** — there is
+  nothing to click, drag or scroll, so the map pans and zooms straight through that corner.
 - **The order is the card's** — one `unitsProposedFirst`, not two orders that agree today.
 - **It takes part in the label layout**, seeded into the same `occupied` set as the docked
   tooltip. **It is not drawn at 390px**, a decision rather than a fallback. **And it is

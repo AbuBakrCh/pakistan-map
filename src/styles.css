@@ -598,13 +598,30 @@ body {
  * zoom 1.
  *
  * Unlike that chip it *is* seeded into the label layout (`obstacles` in `map.ts`), and the
- * difference is opacity and size: this is a solid box of up to eighteen lines, and a division name
- * left underneath it is a name a reader cannot read.
+ * difference is opacity and size: this is a solid box of up to eighteen lines and up to two columns
+ * of them, and a division name left underneath it is a name a reader cannot read. Measured rather
+ * than assumed there, so a key that grew a column takes the ground it actually covers.
  *
  * Empty at the baseline, and `:empty` is what takes it away — there is no proposal on screen, so
  * there is nothing to key, exactly as there is no card (#19).
+ *
+ * **It does not scroll, and that is the decision here.** It keyed every unit of the partition and
+ * ran past a short frame, so it was capped and given a standing scrollbar; a key below a fold is
+ * one a reader takes for the whole proposal until they happen to find the rest, and a standing bar
+ * only advertises the problem. So the key names the units the variant *proposes* — the ones a
+ * reader cannot name off the map they already know, the rest being on the card — and sets them in
+ * as many columns as they need. Two things fall out of it. There is no `max-height` and no
+ * scroller, so nothing is ever out of sight; and the box is back to `pointer-events: none`, so the
+ * map can be panned and zoomed straight through this corner again, which it could not while there
+ * was a wheel to catch.
  */
 .unit-key {
+  /* One column's width, stated once: the list sets its columns at it and the box's ceiling below is
+   * two of them plus their gap and its own padding. Narrow on purpose — the widest name this build
+   * sets is *Kambar Shahdadkot* and the corner the box stands in is a deep, narrow strip of sea and
+   * of the ground west of Balochistan, so a name that wraps costs less than a box over the map. */
+  --unit-key-column: 9rem;
+  --unit-key-gap: 0.9rem;
   position: absolute;
   left: 0.6rem;
   top: 0.6rem;
@@ -614,60 +631,21 @@ body {
   border: 1px solid var(--land-hatch);
   font-size: 0.75rem;
   line-height: 1.35;
-  /* A rule-drawn variant has eighteen units and a phone-height frame has room for fewer: the box
-   * scrolls rather than growing down the map, on the same terms as the legend's own cap. */
-  max-height: min(60%, 22rem);
-  max-width: 13rem;
-  overflow-y: auto;
-  /* A wheel that runs out of key does not go on to zoom the map underneath: the reader was
-   * reading the key, and the country moving out from under them answers a different gesture. */
-  overscroll-behavior: contain;
+  /* Room for the widest key this build sets — two columns and their gap, plus the padding — and no
+   * more: how many columns a variant needs is the roster's arithmetic, and this is only the ceiling
+   * that arithmetic works under. */
+  /* The padding and the border are in the sum on purpose. A ceiling that clears the columns by
+   * less than the box's own chrome takes the second column's width away from it, and a multi-column
+   * box too narrow for its second column silently draws one — every row in a single strip down the
+   * map, which is the failure this whole arrangement exists to avoid. */
+  max-width: min(
+    90%,
+    calc(2 * var(--unit-key-column) + var(--unit-key-gap) + 1.2rem + 2px)
+  );
   padding: 0.45rem 0.6rem;
-  /* It explains the map and is never in the way of reading one — but a box that scrolls has to
-   * take the wheel, so the pointer stops here rather than reaching the paper underneath. The cost
-   * is that the map cannot be panned or zoomed through this corner while a key is drawn. */
-  pointer-events: auto;
-}
-
-/* The bar stands rather than fading in on the wheel. macOS hides an overlay scrollbar until it is
- * used, which asks the reader to discover by accident that the key continues below the fold — and a
- * key that looks complete and is not misreports the partition. The rules below opt out of the
- * overlay behaviour and cost 8px of the key's own width, which is the cheaper of the two. */
-
-/* The two properties are mutually exclusive in practice, not complementary: a Chromium that sees
- * `scrollbar-width` or `scrollbar-color` drops every `::-webkit-scrollbar` rule on the element and
- * goes back to the platform's overlay bar, which is the fading one. So the standard properties are
- * given only to engines with no pseudo-element to lose — Firefox — and Chromium and WebKit are
- * left with the rules that actually hold the bar open. */
-@supports not selector(::-webkit-scrollbar) {
-  .unit-key {
-    scrollbar-width: thin;
-    scrollbar-color: var(--land-hatch) transparent;
-  }
-}
-
-.unit-key::-webkit-scrollbar {
-  width: 8px;
-  /* An overlay bar is drawn over the content and is free to fade; one with a background is part of
-   * the box and stays. This declaration is the thing keeping it on screen. */
-  -webkit-appearance: none;
-  background: color-mix(in srgb, var(--land-hatch) 22%, transparent);
-}
-
-.unit-key::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.unit-key::-webkit-scrollbar-thumb {
-  background: var(--land-hatch);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  border-radius: 4px;
-}
-
-.unit-key::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-soft);
-  background-clip: padding-box;
+  /* Never in the way of reading the map: it explains the map, and there is nothing here to click,
+   * to drag or to scroll. */
+  pointer-events: none;
 }
 
 .unit-key:empty {
@@ -681,10 +659,17 @@ body {
   margin: 0 0 0.3rem;
 }
 
+/*
+ * The rows, in as many columns as it takes to show all of them at once.
+ *
+ * A block container rather than a flex one, because multi-column is what puts the thirteenth row
+ * beside the first instead of below the fold. The *count* is set inline by `renderUnitKey` from
+ * `unitRoster.columns`; only the column's own width is stated here, and the two together are what
+ * give a shrink-to-fit box a width wide enough to hold its own contents.
+ */
 .unit-key-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.22rem;
+  column-gap: var(--unit-key-gap);
+  column-width: var(--unit-key-column);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -695,6 +680,11 @@ body {
   color: var(--ink-soft);
   display: flex;
   gap: 0.4rem;
+  /* Row spacing is the item's own now that the list is not a flex container — and a row is never
+   * split across a column break, since half a unit's name at the foot of a column reads as a unit
+   * the key does not have. */
+  break-inside: avoid;
+  margin-bottom: 0.22rem;
 }
 
 /* The swatch is the stroke, so it must not shrink when a long name wraps beside it. */
@@ -2036,8 +2026,8 @@ body {
    *
    * The top of the frame is the docked tooltip's (#33) and the bottom left is the division toggle's
    * and the two actions' — what is left is the map, which at 390px is 369px of country and the one
-   * thing the hard bar is about. A box of up to eighteen names over it would cover more of Pakistan
-   * than it explained.
+   * thing the hard bar is about. A box of eighteen names — and two columns of them under a
+   * rule-drawn variant, since it does not scroll — would cover more of Pakistan than it explained.
    *
    * Nothing is lost that a reader cannot reach: the card is the sheet in their hand and it lists
    * every unit by name with its own population, and a tap on any district names its unit in the

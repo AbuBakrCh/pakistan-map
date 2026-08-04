@@ -21,6 +21,9 @@ import { readDistricts } from './geography.ts';
 import { labelAnchor } from './labels.ts';
 import { arcsOf } from './line-of-control.ts';
 import {
+  KEY_MAX_COLUMNS,
+  KEY_ROWS_PER_COLUMN,
+  keyColumns,
   readUnitOutlines,
   unitBoundaries,
   unitByDistrict,
@@ -282,32 +285,84 @@ describe('unitLegend', () => {
  * it in: a swatch that keys nothing is the failure the export band's own key refuses by name.
  */
 describe('unitRoster', () => {
-  it('leads with the count, in the number the variant has', () => {
-    expect(unitRoster(l1).heading).toBe(`${l1.counts.units} units`);
+  /**
+   * L1 with every unit proposed, for the checks that are about the *swatch* rather than the roster.
+   *
+   * A unit's ground is a property of its own districts and has nothing to do with whether the key
+   * prints it, so the arithmetic is asked of the whole partition — Punjab's four mother tongues,
+   * Khyber Pakhtunkhwa's stipple and the two territories' hatch included, none of which the shipped
+   * key lists, because none of them is proposed.
+   */
+  const everyUnitProposed = {
+    ...l1,
+    units: l1.units.map((u) => ({ ...u, kind: 'proposed' as const })),
+  };
 
-    // A one-unit variant is not in the shipped set — H1 comes closest, at one province and the two
-    // territories — and a key reading "1 units" is the first thing a reader would see.
-    const alone = { ...l1, units: l1.units.slice(0, 1) };
-    expect(unitRoster(alone).heading).toBe('1 unit');
+  it('counts what it names, and says the count is the proposal’s', () => {
+    // It leads with the number of units below it, not the partition's — a key of one row headed by
+    // l1's eight leads with a number none of its own rows accounts for. The whole partition is the
+    // card's and the scorecard's, and both print it in full.
+    expect(unitRoster(l1).heading).toBe('1 proposed unit');
+    expect(l1.counts.units).toBe(8);
+
+    // Held over the whole set, in the variant's own arithmetic rather than a literal, so the two
+    // cannot drift: D1's thirty-two are the longest, and A6 proposes nineteen of twenty-one.
+    for (const variant of variants) {
+      const proposed = variant.units.filter((u) => u.kind === 'proposed').length;
+      expect(unitRoster(variant).heading, variant.id).toBe(
+        `${proposed} proposed ${proposed === 1 ? 'unit' : 'units'}`,
+      );
+    }
+    expect(unitRoster(everyUnitProposed).heading).toBe(`${l1.units.length} proposed units`);
   });
 
-  it('names every unit of every variant exactly once, in its outline’s own stroke', () => {
+  it('names the proposed units of every variant exactly once, in the accent’s own stroke', () => {
+    // The proposal is what a reader cannot name off the map they already know. The provinces a
+    // variant leaves alone are on the card, in full, with the rest of the partition.
+    for (const variant of variants) {
+      const proposed = variant.units.filter((u) => u.kind === 'proposed');
+      const roster = unitRoster(variant);
+      expect(roster.entries.map((e) => e.name), variant.id).toEqual(proposed.map((u) => u.name));
+      expect(new Set(roster.entries.map((e) => e.swatch)), variant.id).toEqual(
+        new Set(proposed.length === 0 ? [] : ['unit-proposed']),
+      );
+    }
+  });
+
+  it('sets every row at once, in columns, rather than putting any of them below a fold', () => {
+    // A key that scrolls is one a reader takes for the whole proposal until they happen to find the
+    // rest, so the rows run sideways instead. Held over the whole set: no variant's key is ever
+    // deeper than a column holds, D1's thirty-two proposed units included, which is the longest.
     for (const variant of variants) {
       const roster = unitRoster(variant);
-      expect(roster.entries).toHaveLength(variant.units.length);
-      expect(new Set(roster.entries.map((e) => e.name)).size).toBe(variant.units.length);
-
-      // Keyed on the kind the bundle records, so a unit's swatch and its outline cannot come apart.
-      const swatchOf = new Map(roster.entries.map((e) => [e.name, e.swatch]));
-      for (const unit of variant.units) {
-        expect(swatchOf.get(unit.name)).toBe(`unit-${unit.kind}`);
-      }
+      expect(roster.columns, variant.id).toBeLessThanOrEqual(KEY_MAX_COLUMNS);
+      expect(roster.columns * KEY_ROWS_PER_COLUMN, variant.id).toBeGreaterThanOrEqual(
+        roster.entries.length,
+      );
+      // And no column is opened that the rows do not need: an empty second column is white space
+      // taken out of the map for nothing.
+      expect((roster.columns - 1) * KEY_ROWS_PER_COLUMN, variant.id).toBeLessThan(
+        roster.entries.length || 1,
+      );
     }
+
+    const longest = Math.max(
+      ...variants.map((v) => v.units.filter((u) => u.kind === 'proposed').length),
+    );
+    expect(longest).toBe(32);
+    expect(keyColumns(longest)).toBe(2);
+    // Down before across: the corner the box stands in is deep and narrow, so the second column is
+    // opened only once a column of eighteen is full, and there is never a third.
+    expect(keyColumns(KEY_ROWS_PER_COLUMN)).toBe(1);
+    expect(keyColumns(KEY_ROWS_PER_COLUMN + 1)).toBe(2);
   });
 
   it('shades each unit with the ground the map actually paints under it, in proportion', () => {
     const fills = motherTongueFills(censusStatistics);
-    const roster = unitRoster(l1, fills);
+    // Over l1 with every unit proposed, so the swatch arithmetic is asked of the whole partition
+    // and not only of the one unit l1 keys — the shading is a property of a unit's districts and
+    // has nothing to do with which of them the key prints.
+    const roster = unitRoster(everyUnitProposed, fills);
     const entry = (name: string): UnitRosterEntry => {
       const found = roster.entries.find((e) => e.name === name);
       if (found === undefined) throw new Error(`${name} is not a unit of l1`);
@@ -348,7 +403,7 @@ describe('unitRoster', () => {
   });
 
   it('keys the two absences apart, and neither of them as a colour', () => {
-    const roster = unitRoster(l1, motherTongueFills(censusStatistics));
+    const roster = unitRoster(everyUnitProposed, motherTongueFills(censusStatistics));
     const fillsOf = (name: string): readonly { swatch: { kind: string } }[] =>
       roster.entries.find((e) => e.name === name)?.fills ?? [];
 
@@ -368,13 +423,17 @@ describe('unitRoster', () => {
     // The Administrative and Historical bases draw boundaries over an unshaded country. There is no
     // ground colour to show, so the row falls back to the outline's own stroke — which is why the
     // stroke is carried on every entry and not only where the fills are missing.
-    for (const entry of unitRoster(l1).entries) expect(entry.fills).toEqual([]);
+    for (const entry of unitRoster(everyUnitProposed).entries) expect(entry.fills).toEqual([]);
   });
 
   it('reads in the card’s order, so the paper and the card agree which unit is the proposal', () => {
+    // The card lists the whole partition, proposed first; the key lists the proposal. So the key is
+    // the card's own opening rows, name for name — they are read one after the other, and a unit
+    // third on the paper and seventh in the card reads as two different units.
     for (const variant of variants) {
       const card = variantCard(scenarios as unknown as ScenarioBundle, variant);
-      expect(unitRoster(variant).entries.map((e) => e.name)).toEqual(card.units.map((u) => u.name));
+      const keyed = unitRoster(variant).entries.map((e) => e.name);
+      expect(keyed, variant.id).toEqual(card.units.slice(0, keyed.length).map((u) => u.name));
     }
   });
 

@@ -191,6 +191,39 @@ export interface UnitRoster {
   /** How many units the variant cuts the country into, in the words the map sets. */
   readonly heading: string;
   readonly entries: readonly UnitRosterEntry[];
+  /**
+   * How many columns the rows are set in, so the whole key is on the paper at once.
+   *
+   * Stated here rather than left to the stylesheet because it is arithmetic over the roster's own
+   * length, and the box that carries it is shrink-to-fit: a multi-column box with no column count
+   * is one column wide however many columns it draws, and the rows would fall outside their own
+   * background — and outside the rectangle the label layout keeps names off.
+   */
+  readonly columns: number;
+}
+
+/**
+ * The tallest a column of the key is allowed to get, and how many columns it may run to.
+ *
+ * The key is **not scrolled**: a rule-drawn variant's rows go beside the first column rather than
+ * below the fold, because a key a reader has to discover the rest of is a key that misreports the
+ * partition every time they do not.
+ *
+ * Which leaves *where* the extra rows go, and the two numbers are spent on the answer: **down
+ * before across**. The box stands in the frame's top-left corner, and at zoom 1 that corner is the
+ * sea and the ground west of Balochistan — deep and narrow. A column of eighteen is what the
+ * shortest desktop frame holds under the heading, and holding to two of them keeps the widest key
+ * this build sets narrower than that empty strip, where three columns of twelve reached across the
+ * country itself. Two columns of eighteen hold thirty-six rows and the longest key here is D1's
+ * thirty-two; the cap is what stops a hypothetical fortieth from marching over Pakistan to be read.
+ */
+export const KEY_ROWS_PER_COLUMN = 18;
+export const KEY_MAX_COLUMNS = 2;
+
+/** How many columns a key of `rows` rows is set in. Pure, so the box and the suite agree. */
+export function keyColumns(rows: number): number {
+  if (rows <= 0) return 1;
+  return Math.min(KEY_MAX_COLUMNS, Math.ceil(rows / KEY_ROWS_PER_COLUMN));
 }
 
 /**
@@ -240,10 +273,16 @@ function fillsUnder(
  * The roster the map frame carries in its own corner, beside the boundaries it names.
  *
  * `unitLegend` says what the three strokes *mean*; this says which unit is which, on the paper,
- * where the reader is looking. It names **every** unit and not only the proposed ones, for the
- * reason the card lists them all: a variant is a complete partition, and a key naming only what is
- * new would leave a reader unable to say what the rest of the country had become. The count leads
- * it because that is the first thing asked of a proposal — how many provinces would there be.
+ * where the reader is looking. It names **the proposed units**, which are the ones a reader cannot
+ * name from the map they already know, and it **counts what it names**: a key of three rows headed
+ * by the partition's eight leads with a number none of its own rows accounts for. The word
+ * `proposed` is in the heading rather than left to the accent, so the count is never read as the
+ * whole partition — which is the card's and the scorecard's, printed in full on both, along with
+ * the units the variant leaves alone.
+ *
+ * **Nothing is ever below a fold.** The rows run into a second and a third column rather than
+ * scrolling (`keyColumns`), because a key that continues out of sight is one a reader takes for the
+ * whole proposal until they happen to find the rest.
  *
  * No population and no district count, deliberately. Those are the scorecard's (#20) and they are
  * printed in full where they belong; a second set of figures on the paper is a second place for
@@ -258,14 +297,18 @@ export function unitRoster(
   variant: VariantRecord,
   fills: ReadonlyMap<string, DistrictFill> | null = null,
 ): UnitRoster {
-  const units = unitsProposedFirst(variant);
+  const units = unitsProposedFirst(variant).filter((unit) => unit.kind === 'proposed');
   return {
-    heading: `${units.length} ${units.length === 1 ? 'unit' : 'units'}`,
+    // The count of the *proposal*, which is what the rows below it are and what the word `proposed`
+    // in it says: the key would otherwise lead with a number none of its own rows accounts for.
+    // The partition's own count is the scorecard's and the card's, printed in full on both.
+    heading: `${units.length} proposed ${units.length === 1 ? 'unit' : 'units'}`,
     entries: units.map((unit) => ({
       name: unit.name,
       swatch: `unit-${unit.kind}` as UnitSwatch,
       fills: fillsUnder(unit, fills),
     })),
+    columns: keyColumns(units.length),
   };
 }
 

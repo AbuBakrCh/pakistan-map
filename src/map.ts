@@ -709,7 +709,8 @@ export function renderMap(
    * cannot read, which is the failure the four-step order ends in "no name at all" to avoid (D12).
    * Empty at the baseline, where the box has no contents and the stylesheet takes it off the paper;
    * empty on a phone, where it is not drawn at all. Measured rather than assumed, because its
-   * height is however many units the variant has.
+   * height is however many units the variant proposes — and its *width* is too, since the rows run
+   * into a second and a third column rather than below a fold.
    *
    * The cost is stated rather than hidden: under a variant this corner is spent, and a name that
    * would have sat in Pakistan's north-west gives way for as long as the proposal is on screen. It

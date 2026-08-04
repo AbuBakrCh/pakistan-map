@@ -520,6 +520,9 @@ function renderUnitKey(active: Selection, variant: VariantRecord | null): void {
   // The same fill map the map itself is drawing with — read from `FILLS` rather than recomputed, so
   // a swatch in the key and the ground under the outline cannot be two different answers.
   const roster = unitRoster(variant, active === null ? null : (FILLS[active.basis] ?? null));
+  // A variant proposing nothing has nothing to key, and a heading over an empty list is a caption
+  // with nothing to caption — the same reason the baseline empties the box rather than hiding it.
+  if (roster.entries.length === 0) return;
   const heading = document.createElement('p');
   heading.className = 'unit-key-heading';
   heading.textContent = roster.heading;
@@ -527,6 +530,11 @@ function renderUnitKey(active: Selection, variant: VariantRecord | null): void {
 
   const list = document.createElement('ul');
   list.className = 'unit-key-list';
+  // The one thing this file sets rather than the stylesheet, and it is `unitRoster`'s arithmetic
+  // and not this file's: the box is shrink-to-fit, so the column *count* is what gives it a width
+  // to be wide enough — the stylesheet states the column's width and can state nothing about how
+  // many of them a variant needs.
+  list.style.columnCount = `${roster.columns}`;
   for (const entry of roster.entries) {
     const row = document.createElement('li');
     // The unit's name is set in its own outline's colour, which is what the map does with unit

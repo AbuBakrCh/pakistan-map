@@ -7,10 +7,10 @@ one is and the rules it follows; this file carries why each was decided that way
 
 **The map keys its own units, top left of the frame.** Under a variant the paper carries a small
 box: the unit **count** — the first thing anybody asks of a proposal, *how many provinces would
-there be* — and every unit named, each beside a swatch of the ground the map is painting underneath
-it. It arrives and leaves with the outlines exactly as the card does (#19): the current map proposes
-nothing, so at the baseline the box is emptied and the stylesheet's `:empty` rule takes it off the
-paper altogether.
+there be* — and the **proposed** units named, each beside a swatch of the ground the map is painting
+underneath it. It arrives and leaves with the outlines exactly as the card does (#19): the current
+map proposes nothing, so at the baseline the box is emptied and the stylesheet's `:empty` rule takes
+it off the paper altogether.
 
 **A unit's swatch is not a unit colour, because there is no such thing** (D14). A unit is never
 filled — what is under it is stratum 1, which is the basis's data and belongs to no unit — and
@@ -39,30 +39,54 @@ only where the fills are missing.
 It is a different question from the legend under the frame, which is why both exist. That one says
 what a *stroke means* — proposed, unchanged, territory — and a reader matching a colour to a shape
 has to look away from the map to do it; this says *whose boundary that is*, on the paper, where they
-are already looking. It names **every** unit and not only the proposed ones, for the reason the card
-lists them all: a variant is a complete partition, and a key naming only what is new leaves a reader
-unable to say what the rest of the country has become.
+are already looking.
 
-Three things it does not do. **No populations and no printed district counts** — those are the scorecard's
-(#20), printed in full where a reader compares two proposals straight down a column, and a second
-set of figures on the paper is a second place for them to be wrong. **It does not answer to
-compare**, on the same grounds as the legend and the card: the reader is holding a key down over the
-map, the proposal is still selected, and rewriting the paper's own furniture underneath them would
-be the page changing rather than the map. And it takes **no pointer events beyond the wheel**: a
-rule-drawn variant keys more units than a short frame holds, so the box scrolls, and a box that
-scrolls has to receive the wheel that scrolls it. The cost is stated rather than hidden — while a
-key is drawn the map cannot be panned or zoomed through that corner — and `overscroll-behavior`
-keeps a wheel that has run out of key from going on to zoom the country underneath it, which would
-answer a reading gesture by moving the ground.
+**It names the proposal, and it counts what it names.** It listed every unit once, for the reason
+the card lists them all — a variant is a complete partition, and a key naming only what is new
+leaves a reader unable to say what the rest of the country has become. What was wrong with that was
+not the principle but where it put the answer: the unchanged units are exactly the ones a reader can
+already name off the map in front of them, and printing them cost D1's key thirty-five rows and put
+most of them out of sight. So the rows are the ones the reader could not have supplied, and the
+heading counts those rows and no others — `1 proposed unit`, `32 proposed units` — since a key of
+one row headed by l1's eight leads with a number none of its own rows accounts for. The word
+*proposed* is in the heading rather than left to the accent, so the count is never taken for the
+whole partition. That figure is the card's and the scorecard's, printed in full on both, along with
+the units the variant leaves alone and each one's population.
+
+**Nothing is below a fold, and this is the decision the shape of the box is built around.** The key
+does not scroll. It used to: it was capped at 60% of the frame with a standing scrollbar, on the
+argument that a bar which fades asks a reader to discover by accident that the key continues. But a
+standing bar only advertises the problem — a key a reader has to scroll is one they take for the
+whole proposal until they happen to scroll it, and a key that misreports the partition is the one
+thing this box exists to prevent. So the rows run **down before across**: eighteen to a column and
+never more than two columns (`unitRoster.columns`, arithmetic rather than a media query, and under
+test), which holds the longest key this build has — D1's thirty-two proposed units — whole. Down
+before across, because the corner the box stands in is the sea and the ground west of Balochistan:
+deep and narrow. Three columns of twelve fit the same rows and reached across the country itself. The count is set
+inline by the renderer because the box is shrink-to-fit: a multi-column box with no column count
+is one column wide however many columns it draws, and the rows would fall outside their own
+background and outside the rectangle the label layout keeps names off.
+
+Two things it does not do, and one it no longer has to. **No populations and no printed district
+counts** — those are the scorecard's (#20), printed in full where a reader compares two proposals
+straight down a column, and a second set of figures on the paper is a second place for them to be
+wrong. **It does not answer to compare**, on the same grounds as the legend and the card: the reader
+is holding a key down over the map, the proposal is still selected, and rewriting the paper's own
+furniture underneath them would be the page changing rather than the map. And it now takes **no
+pointer events at all**: it took the wheel only because it scrolled, so the cost that came with
+that — the map could not be panned or zoomed through this corner while a key was drawn — is paid
+back by the same change that put the rows in columns.
 
 **The order is the card's, and it is one order rather than two that agree today.** Both read
-`unitsProposedFirst` — proposed units first, and inside a kind the partition's own order, since
-nothing in the bundle ranks Sindh against Balochistan. The two lists are read one after the other,
-and a unit third on the paper and seventh in the card reads as two different units.
+`unitsProposedFirst`, so the key is the card's own opening rows name for name; inside a kind the
+partition's own order stands, since nothing in the bundle ranks Sindh against Balochistan. The two
+lists are read one after the other, and a unit third on the paper and seventh in the card reads as
+two different units.
 
 **It takes part in the label layout, unlike the division toggle beside it.** That chip is small and
-translucent in a corner the names rarely reach; this is a solid box of up to fifteen lines, and a
-name left underneath it is a name a reader cannot read — so it is seeded into the same `occupied`
+translucent in a corner the names rarely reach; this is a solid box of up to eighteen lines and up
+to two columns of them — **measured** rather than assumed, so a key that grew a column takes the
+ground it actually covers — and a name left underneath it is a name a reader cannot read — so it is seeded into the same `occupied`
 set the docked tooltip is (#33), and the four-step yielding order ends in *no name at all* rather
 than in a name behind a box (D12). The cost is stated rather than hidden: under a variant the
 north-west corner is spent, and a name that would have sat there gives way for as long as the
@@ -70,9 +94,9 @@ proposal is on screen. It comes back on zoom, and the box names the same units t
 
 **It is not drawn at 390px, and that is a decision rather than a fallback** (#33's bar). The top of
 the frame is the docked tooltip's and the bottom left is the division toggle's and the two actions';
-what is left is 369px of country, which is the one thing the hard bar is about, and a box of fifteen
-names over it would cover more of Pakistan than it explained. Nothing is lost that a reader cannot
-reach: the card is the sheet already in their hand and lists every unit with its own population, and
+what is left is 369px of country, which is the one thing the hard bar is about, and a box of eighteen
+names — two columns of them under a rule-drawn variant — would cover more of Pakistan than it
+explained. Nothing is lost that a reader cannot reach: the card is the sheet already in their hand and lists every unit with its own population, and
 a tap on any district names its unit in the tooltip's third line.
 
 **And it is `aria-hidden`.** The map already names every region in words for a screen reader (#35,
