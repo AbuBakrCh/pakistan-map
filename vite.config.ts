@@ -3,6 +3,11 @@ import { configDefaults } from 'vitest/config';
 
 export default defineConfig({
   root: '.',
+  // Relative, so the built page works wherever it is served from: the repo root on a dev
+  // server, and `/pakistan-map/` on GitHub Pages, without the base being spelled out in two
+  // places and drifting if the repo is ever renamed. Routing is the URL hash and nothing else
+  // (#23), so no route ever leaves the directory the assets are resolved against.
+  base: './',
   json: {
     // The geography bundle is ~2 MB and is imported, not fetched (D19). Emitted as a
     // `JSON.parse` of a string literal it parses several times faster than the equivalent
