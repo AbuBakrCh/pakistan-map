@@ -25,6 +25,7 @@ import {
 } from './lib/divisions.ts';
 import { EXPORT_LABEL, EXPORT_TITLE, EXPORT_WORKING } from './lib/export-band.ts';
 import { rovingTarget, tabStop } from './lib/radio-group.ts';
+import { overflowSides, stripPosition } from './lib/strip.ts';
 import {
   BASELINE,
   offeredBases,
@@ -50,6 +51,27 @@ export interface PanelHandle {
    * have an opinion about whether a download is running.
    */
   exportSettled(): void;
+}
+
+/**
+ * Publish which edges of a scrolling strip have chips beyond them, as `data-overflow`.
+ *
+ * The stylesheet draws the fade from it and draws it on a phone only, which is the only place the
+ * strips scroll — the decision about *whether* there is more to see is arithmetic and is
+ * `lib/strip.ts`'s, and the decision about whether this layout is the scrolling one is the
+ * stylesheet's, exactly as it is for the sheet.
+ *
+ * A fade that stood at the ends would be the page claiming chips it does not have, so it answers to
+ * the scroll as well as to the resize. `passive`, because nothing here cancels the gesture: the
+ * strip is scrolled by the same finger that taps it.
+ */
+function watchStrip(strip: HTMLElement): () => void {
+  const refresh = (): void => {
+    strip.dataset.overflow = overflowSides(strip);
+  };
+  strip.addEventListener('scroll', refresh, { passive: true });
+  window.addEventListener('resize', refresh);
+  return refresh;
 }
 
 /** What a basis button offers, with the baseline folded in as the first of them. */
@@ -101,11 +123,25 @@ export function renderControls(
     .attr('role', 'radiogroup')
     .attr('aria-label', 'Basis — the ground a proposal is argued from');
   bases.append('span').attr('class', 'control-label').text('Basis');
+  /*
+   * How many grounds there are and which one is on screen — `2/4`.
+   *
+   * On a phone the chips scroll along one line instead of wrapping, which spends less of the screen
+   * and shows less of the menu: a reader can be looking at a strip whose remaining options are all
+   * off the right edge. The alternatives *are* the product (#18), so the count is printed rather
+   * than left to the fade beside it to imply.
+   *
+   * `aria-hidden`, and not because it is decoration. A `radiogroup` already tells a screen reader
+   * how many radios it has and which of them this is; printing it again would give that reader the
+   * same fact twice and in worse words. The words are `lib/strip.ts`'s.
+   */
+  const basisCount = bases.append('span').attr('class', 'control-count').attr('aria-hidden', 'true');
   // The chips in a strip of their own, as the variants already are. It costs nothing on a wide
   // screen and is what lets a phone scroll the five bases along one line instead of wrapping them
   // into three rows of the map's height — the refusal lines still wrap underneath, where they can
   // be read rather than scrolled to.
   const basisList = bases.append('div').attr('class', 'control-options');
+  const basisOverflow = watchStrip(basisList.node() as HTMLElement);
 
   const basisButtons = basisList
     .selectAll<HTMLButtonElement, BasisOption>('button')
@@ -204,7 +240,17 @@ export function renderControls(
   // "Variant" and not "Proposal": the glossary reserves one word for this, and a control that
   // says one thing while its own accessible name says another gives a reader two terms for it.
   variants.append('span').attr('class', 'control-label').text('Variant');
+  /*
+   * The same count, and this is the group it was written for. A variant chip carries a name over a
+   * tagline and comes to close to the width of a phone on its own, so a reader meets *one* proposal
+   * — and Language has seven. Nothing else on the strip says the other six exist.
+   */
+  const variantCount = variants
+    .append('span')
+    .attr('class', 'control-count')
+    .attr('aria-hidden', 'true');
   const variantList = variants.append('div').attr('class', 'control-options');
+  const variantOverflow = watchStrip(variantList.node() as HTMLElement);
   steerGroup(variantList, (index) => {
     const list = active?.variants ?? [];
     const variant = list[index];
@@ -277,7 +323,9 @@ export function renderControls(
     );
     // One stop on the tab ring per group, at whatever is currently true (#35). Tabbing through
     // five bases and then eight variants to reach the map is a journey nobody finishes.
-    rove(basisButtons.nodes(), options.findIndex((o) => o.id === (selection?.basis ?? null)));
+    const atBasis = options.findIndex((o) => o.id === (selection?.basis ?? null));
+    rove(basisButtons.nodes(), atBasis);
+    basisCount.text(stripPosition(atBasis, options.length) ?? '');
 
     // The button shows the state the key can put it in as well, or a reader who held Space would
     // watch an unpressed button while the map beside it was plainly comparing.
@@ -311,10 +359,16 @@ export function renderControls(
         }
       });
 
-    rove(
-      [...variantList.selectAll<HTMLButtonElement, unknown>('button').nodes()],
-      (active?.variants ?? []).findIndex((variant) => variant.id === selection?.variant),
-    );
+    const shown = active?.variants ?? [];
+    const atVariant = shown.findIndex((variant) => variant.id === selection?.variant);
+    rove([...variantList.selectAll<HTMLButtonElement, unknown>('button').nodes()], atVariant);
+    variantCount.text(stripPosition(atVariant, shown.length) ?? '');
+
+    // The chips have just changed, so what lies beyond either edge has too — a basis of one variant
+    // has nothing to scroll to where the last one had six. Asked after the join and never before,
+    // for the reason the map's height is asked after the legend is written.
+    basisOverflow();
+    variantOverflow();
   }
 
   show(BASELINE, false);

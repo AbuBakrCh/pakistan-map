@@ -182,6 +182,15 @@ body {
   text-transform: uppercase;
 }
 
+/*
+ * How many options a group has, and which one is on screen. Rendered on every screen and drawn on
+ * one: above the breakpoint the chips wrap and every alternative is on the page at once, and a
+ * count of a menu a reader can see whole is furniture. The mobile block turns it on and says why.
+ */
+.control-count {
+  display: none;
+}
+
 .control-options {
   display: flex;
   flex-wrap: wrap;
@@ -2250,6 +2259,70 @@ body {
   }
 
   .control-options::-webkit-scrollbar {
+    display: none;
+  }
+
+  /*
+   * The strip fades out on the side there is more to scroll towards.
+   *
+   * A half-visible chip was the whole of the affordance, and it is not enough for the variants: at
+   * this width a variant chip carries a name over a tagline and comes to nearly the width of the
+   * screen, so what a reader meets is one proposal squared off against the edge of the page — which
+   * reads as the end of the menu rather than as the start of it.
+   *
+   * A **mask**, not an overlaid gradient. A mask applies to the element's own box and not to its
+   * scrolled contents, so it stays put while the chips travel under it; a pseudo-element inside a
+   * scroller would slide away with the first swipe, and one outside it would have to be positioned
+   * against a box that is not its own. It also costs no hit target — the strip goes on taking the
+   * finger over the faded strip of it, which matters when the fade sits over a chip's other half.
+   *
+   * `data-overflow` is `panel.ts`'s, off `lib/strip.ts` under test, and it answers to the scroll as
+   * well as to the resize: a fade left standing at the end of a strip is the page claiming chips it
+   * does not have, which is the one thing this cue must never do. There is no rule for `none`, so a
+   * group whose chips already fit — Administrative's single variant — is drawn as it always was.
+   */
+  .control-options[data-overflow='end'] {
+    mask-image: linear-gradient(to right, black calc(100% - 2.2rem), transparent);
+  }
+
+  .control-options[data-overflow='start'] {
+    mask-image: linear-gradient(to left, black calc(100% - 2.2rem), transparent);
+  }
+
+  .control-options[data-overflow='both'] {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 2.2rem calc(100% - 2.2rem),
+      transparent
+    );
+  }
+
+  /*
+   * How many there are, and which one is on screen — `2/4`, `1/7`.
+   *
+   * Only here, and that is the point: on a wide screen every chip in both groups is on the page at
+   * once, and a count of a menu a reader can see whole is furniture. It is the scrolling that hides
+   * the alternatives, so it is the scrolling layout that has to say they are there.
+   *
+   * Set beside the group's own name, in the same small caps: it is part of the label — *which
+   * variant, of how many* — and not a second thing to read. The figures are lining, so `2/4` and
+   * `1/7` occupy the same width and the strip beside them does not shift by a pixel as a reader
+   * moves along it.
+   */
+  .control-count {
+    color: var(--ink-faint);
+    display: inline;
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    margin-inline-start: -0.15rem;
+  }
+
+  /* Nothing to say — a group of one, or the baseline, which selects no variant at all. Taken off
+   * the page rather than left empty, or it would go on costing the strip the row's gap. */
+  .control-count:empty {
     display: none;
   }
 

@@ -437,6 +437,17 @@ Reasoning in **`docs/phone-and-touch.md`**. The rules:
 - **The sheet overlays the map; it never resizes it.** The room the page keeps is the room it
   takes when *down* (`--sheet-peek`), never its current height — a live height would re-project
   the country on every frame of the drag, and the country does not move under a gesture.
+- **The chip strips scroll, so they say how many they hold.** Below the breakpoint the two radio
+  groups run along one line instead of wrapping, and a variant chip is a name over a tagline at
+  nearly the width of the screen — so a reader meets **one** proposal and nothing says Language has
+  seven. The group's label carries the position (`VARIANT 1/7`) and the strip **fades on the side
+  there is more to scroll towards**. The count is withheld where printing it would report a state
+  the app has not got: a group of one, and the baseline, which selects no variant. The fade is a
+  `mask` rather than an overlay, so it neither scrolls with the chips nor takes the finger, and it
+  answers to the scroll as well as to the resize — one left standing at the end of a strip is the
+  page claiming chips it does not have. Both are `lib/strip.ts`'s, under test; `panel.ts` sets an
+  attribute and composes nothing. `aria-hidden`, because a `radiogroup` already tells a screen
+  reader how many radios it has and which of them this is.
 - **The map's height is measured, not stated** (`phone-frame.ts`): the room between the top of the
   frame and the top of the furniture fixed to the bottom of the screen, less the legend. A constant
   — it was `21rem` — cannot know whether the country it sizes ends above the division toggle and the

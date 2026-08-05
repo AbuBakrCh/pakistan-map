@@ -100,6 +100,31 @@ One floor is kept and it is the map's: below ~260px the 390px bar stops being me
 up being unscrolled rather than the map — the frame runs past the bottom of the screen and the
 reader scrolls a few dozen pixels, which they already do to reach the colophon.
 
+**The strips say how many chips they hold, because scrolling them hides it.** The two radio groups
+stop wrapping below the breakpoint and run along one line — wrapped, the bases and the variants cost
+330px of an 844px screen at the touch-target height, which is the map's own height spent on a menu.
+What that buys in room it takes back in information: a variant chip carries a name over a tagline
+and comes to nearly the width of the screen, so what a reader meets is *one* proposal squared off
+against the edge of the page, which reads as the end of the menu rather than as the start of it. The
+alternatives **are** the product (#18); a reader who cannot see that there are alternatives has been
+shown a different app.
+
+Two things are said and they are deliberately different in kind. The **position** is a fact and is
+printed beside the group's own name — `VARIANT 1/7` — because a fade can imply *more* and cannot say
+*six more*. The **fade** is an affordance and appears only on a side there is actually something to
+scroll towards. Neither is drawn above the breakpoint, where every chip is on the page at once and
+both would be furniture.
+
+The count is withheld in the two states where printing it would report something the app has not
+got: a group of one option — Administrative, whose single variant a reader is already looking at
+whole — and the baseline, which selects no variant at all and would otherwise be given a position of
+zero. The fade is a **mask** and not an overlaid gradient: a mask applies to the element's own box
+rather than to its scrolled contents, so it stays put while the chips travel under it, and it costs
+no hit target — which matters, because it sits over the half of a chip a finger is most likely to
+reach for. It answers to the scroll as well as to the resize, since a fade left standing at the end
+of a strip is the page claiming chips it does not have, which is the one thing a cue like this must
+never do.
+
 **The three chips stack on one edge.** The division toggle sits above Compare and the export rather
 than in the opposite corner: two rows anchored to opposite sides read as three buttons scattered
 along the bottom of the map, and stacked they read as one column of furniture. The pairing #32
