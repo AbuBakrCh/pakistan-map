@@ -2100,9 +2100,17 @@ body {
 @media (max-width: 560px) {
   :root {
     --sheet: 1;
-    /* The floor both platforms publish for a touch target, and the step the two stacked action
-     * buttons are offset by. Stated once so the stack cannot drift from the buttons. */
+    /*
+     * The floor both platforms publish for a touch target, and the fallback for the step the two
+     * stacked rows of furniture are offset by.
+     *
+     * A fallback rather than the figure: `phone-frame.ts` measures both rows and writes the real
+     * heights back over these, because 44px is what a chip may not go *below* and not what it comes
+     * to once its label has wrapped — and a stack offset by the floor rather than by the chip put
+     * the division toggle over the two actions.
+     */
     --action-h: 44px;
+    --toggle-h: 44px;
   }
 
   /*
@@ -2120,7 +2128,14 @@ body {
    */
   #app {
     gap: 0.5rem;
-    padding: 0.75rem 0.6rem calc(var(--sheet-peek) + 0.6rem);
+    /*
+     * The room kept under the page is the sheet at rest *and* the two rows of furniture that ride
+     * above it — the division toggle and the two actions. Kept for both because both are `fixed`:
+     * without the chips in this sum the last lines of the audit panel came to rest underneath
+     * them, which is the same complaint as a map drawn behind them and has the same answer.
+     */
+    padding: 0.75rem 0.6rem
+      calc(var(--sheet-peek) + var(--toggle-h) + var(--action-h) + 1.05rem);
   }
 
   /* Trimmed, not dropped. Every 10px here is 10px of visible map above the sheet, and the strip
@@ -2161,16 +2176,25 @@ body {
   }
 
   /*
-   * The map's floor, and on a phone it is the map that has one rather than the frame around it.
+   * The map's height, and on a phone it is the map that carries it rather than the frame around it.
    *
    * The colophon and the audit panel are long prose and are flex items of the same column, so a
    * frame left to `flex: 1 1 auto` is squeezed to its minimum by the small print underneath it —
-   * which on an 844px screen left the country 176px tall. Pakistan is very nearly square, so a
-   * floor here in the map's own box is what makes the frame square too; the page scrolls to reach
-   * the prose, which is what a page does.
+   * which on an 844px screen left the country 176px tall. Sizing the map's own box is what makes
+   * the frame the right shape too; the page scrolls to reach the prose, which is what a page does.
+   *
+   * The figure is `phone-frame.ts`'s, and it is arithmetic rather than a constant: the room between
+   * the top of the frame and the top of the fixed furniture, less the legend. A constant could not
+   * know whether the country it sized ended above the division toggle and the two actions or behind
+   * them, and at 21rem on the shorter phones it ended behind them. `21rem` survives as the fallback
+   * for the frame before the first fit runs, which is one paint.
    */
   .map-well {
-    min-height: 21rem;
+    /* Sized, so neither grown nor shrunk: a flex item left to shrink under a long legend is a map
+     * drawn shorter than the height it was just fitted to. */
+    flex: 0 0 auto;
+    height: var(--map-h, 21rem);
+    min-height: 0;
   }
 
   /*
@@ -2366,19 +2390,28 @@ body {
    * no pointer events, so the control would still answer a tap: an invisible live button, which is
    * worse than a moved one.
    *
-   * It goes to the bottom left instead, on its own line **above** the two actions rather than
-   * beside them: at this width the three chips measure 391px before their gaps, so a shared row
-   * either wraps or overlaps. Its own line is also the honest arrangement — Compare and the export
-   * are one pair because neither chooses what the map shows (#32, #33), and this one does.
+   * It goes to the bottom instead, on its own line **above** the two actions rather than beside
+   * them: at this width the three chips measure 391px before their gaps, so a shared row either
+   * wraps or overlaps. Its own line is also the honest arrangement — Compare and the export are one
+   * pair because neither chooses what the map shows (#32, #33), and this one does.
+   *
+   * It shares the actions' right edge rather than taking the opposite corner. Two rows anchored to
+   * opposite sides read as three chips scattered along the bottom of the map; stacked on one edge
+   * they read as what they are, one column of furniture — and the pairing is still said by the
+   * line they are on, which is what carries that distinction.
+   *
+   * The step between the rows is `--action-h`, which `phone-frame.ts` measures off the actions row
+   * itself. Written as the 44px touch floor it was a guess, and a wrapped label made it the wrong
+   * one: the toggle came down onto the chips it was meant to clear.
    *
    * Seated the same distance above the sheet, and given the same transition, so all three rise
    * together when the card is opened rather than the row moving out from under the chip.
    */
   .map-controls {
     bottom: calc(var(--sheet-h) + 0.35rem + var(--action-h) + 0.35rem);
-    left: 0.7rem;
+    left: auto;
     position: fixed;
-    right: auto;
+    right: 0.7rem;
     top: auto;
     transition: bottom var(--switch) ease;
     z-index: 6;

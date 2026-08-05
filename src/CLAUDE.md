@@ -84,7 +84,10 @@ Reasoning in **`docs/map-furniture.md`**. The rules:
   all**, the **legend follows it**, and it is **not in the URL and not in history** (as the
   sheet's detent is not). It rescues **not one** of the unit names this build cannot set at
   390px: `UNIT_FLOOR` outranks every division outright. A pressed-state `<button>`, not a
-  checkbox, since that is what `holdsCompare` relies on (#22); bottom left on a phone. **It wears a
+  checkbox, since that is what `holdsCompare` relies on (#22); on a phone it leaves the corner for
+  the bottom of the screen, stacked on the **same edge** as Compare and the export rather than the
+  opposite one — three chips on opposite sides read as scattered, and one column reads as furniture.
+  **It wears a
   sliding switch**, because a filled chip is how an active *basis* is drawn and *chosen* is not the
   same claim as *on* — a glyph, `aria-hidden`, taking no events of its own.
 - **Two regions on a wide screen, and a block underneath.** Above 1000px: controls left, map takes
@@ -416,7 +419,10 @@ Reasoning in **`docs/phone-and-touch.md`**. The rules:
 - The sheet **takes up no room at all when there is no card**, and rests at **three detents** —
   `peek`, `half`, `full`, the last stopping short of the top so a strip of map stays visible.
   **`peek` is the floor**: the card arrives and leaves with the outlines (#19), so there is no
-  state in which a proposal is drawn and nothing says whose boundaries those are.
+  state in which a proposal is drawn and nothing says whose boundaries those are. **It is also
+  where a proposal arrives**, against the ticket's `half`: 40% of the viewport is 40% of the map,
+  and a reader given a variant had to open the card and shut it again before they could see the
+  boundary it argues for. Every detent above it is untouched; only which one is *given* has changed.
 - Where a drag settles is `lib/sheet.ts`'s, under test: **velocity is asked before distance**, and
   **one detent per drag, never two**. The grip is a **`<button>`** as well as a drag target, so
   the map has no state only a touchscreen can enter.
@@ -431,6 +437,14 @@ Reasoning in **`docs/phone-and-touch.md`**. The rules:
 - **The sheet overlays the map; it never resizes it.** The room the page keeps is the room it
   takes when *down* (`--sheet-peek`), never its current height — a live height would re-project
   the country on every frame of the drag, and the country does not move under a gesture.
+- **The map's height is measured, not stated** (`phone-frame.ts`): the room between the top of the
+  frame and the top of the furniture fixed to the bottom of the screen, less the legend. A constant
+  — it was `21rem` — cannot know whether the country it sizes ends above the division toggle and the
+  two actions or behind them, and on the shorter phones it ended behind them. The chips' own heights
+  are measured and handed back to the stylesheet as `--action-h` and `--toggle-h`, which had been
+  written as the 44px touch floor and are not what a chip comes to once its label wraps. The sheet
+  is counted at its **peek** height here too, for the reason above. Below a **260px** floor the map
+  stops shrinking and the page scrolls instead.
 
 ### Without a mouse (#35)
 

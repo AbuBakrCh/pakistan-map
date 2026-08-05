@@ -17,7 +17,17 @@ The sheet **takes up no room at all when there is no card**: `panel.ts` hides th
 baseline, and a reserved height left standing behind it strands the compare and export buttons a
 third of the way up a map with no sheet under them. The sheet rests at **three detents** — `peek`, the ticket's ~40% `half`, and `full`, which stops
 short of the top so a strip of map stays visible and the reader is still on a map rather than on a
-page they navigated to. `peek` is the **floor**: the card arrives and leaves with the outlines (#19),
+page they navigated to.
+
+**A proposal arrives at `peek`, and that is a change from the ticket.** It opened at `half`, and
+40% of a viewport is 40% of the map: a reader following a link to a variant, or picking one on a
+phone, met the proposal's outlines with the southern third of the country already behind the card,
+and had to open the sheet and shut it again before they could see what had been drawn for them. The
+first thing a proposal has to say is its own boundary, so the card arrives at the floor — present,
+named on its grip, one tap or one drag from the whole of it — over a map with nothing on top of it.
+Every detent above it is exactly where it was; what changed is which of them a reader is *given*.
+
+`peek` is the **floor**: the card arrives and leaves with the outlines (#19),
 so while a proposal is drawn there is no state in which nothing on screen says whose boundaries
 those are, and the sheet can therefore be got out of the way but not got rid of. Where a drag
 settles is decided in `lib/sheet.ts` under test, because a sheet that settles somewhere the reader
@@ -67,4 +77,31 @@ the live height would re-project the country on every frame of the drag, and the
 shift under the very finger opening the card. The country does not move under a gesture, which is
 the rule compare is already held to. The accepted cost, stated rather than hidden: at `half` the
 sheet covers the lower part of the map **and the legend**, and both come back the moment the card
-comes down.
+comes down. Which is why the card no longer *arrives* there — a cost a reader chooses by dragging is
+a different thing from one the page hands them before they have seen the map at all.
+
+**The map's height is arithmetic, not a constant** (`src/phone-frame.ts`). On a wide screen the
+frame is a flex item and the browser settles it; on a phone it is sized to its contents, because the
+colophon and the audit panel are flex items of the same column and would otherwise squeeze the
+country to a thumbnail. So the height had to be stated — and it was stated as `21rem`, which is a
+number with no way of knowing whether the country it sized ended above the furniture fixed to the
+bottom of the screen or behind it. On the shorter phones it ended behind it, and a reader met a map
+with its south under three buttons.
+
+It is now the room actually left: the distance from the top of the frame to the top of that
+furniture, less the legend under the map. Every term is measured off the page — the sheet's peek,
+the two chip rows, the gaps between them — so nothing here restates a figure the stylesheet already
+owns, and the two chip heights are measured and given *back* to it as `--action-h` and `--toggle-h`,
+which had been written as the 44px touch-target floor and are not what a chip comes to once its
+label has wrapped. The sheet is counted at its peek height and never at `--sheet-h`, for the reason
+directly above: a height tied to the live sheet would re-fit on every frame of a drag.
+
+One floor is kept and it is the map's: below ~260px the 390px bar stops being met, so the page gives
+up being unscrolled rather than the map — the frame runs past the bottom of the screen and the
+reader scrolls a few dozen pixels, which they already do to reach the colophon.
+
+**The three chips stack on one edge.** The division toggle sits above Compare and the export rather
+than in the opposite corner: two rows anchored to opposite sides read as three buttons scattered
+along the bottom of the map, and stacked they read as one column of furniture. The pairing #32
+argues for is still said — by which of the two lines a chip is on, which is the distinction that
+carries it.

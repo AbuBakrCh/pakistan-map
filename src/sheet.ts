@@ -94,8 +94,21 @@ export interface SheetHandle {
   releaseCard(): void;
 }
 
-/** Where a proposal first presents itself: the ticket's own 40%. */
-const OPENS_AT: Detent = 'half';
+/**
+ * Where a proposal first presents itself: **down**, at the grip.
+ *
+ * It arrived at `half`, which is the ticket's own 40% — and 40% of the viewport is drawn over the
+ * bottom of the map. So a reader following a link to a variant, or picking one on a phone, met the
+ * proposal's boundaries with the southern third of the country already behind the card: they had to
+ * open the sheet and close it again before they could see what had been drawn for them.
+ *
+ * The map is what the page is for, and the first thing a proposal has to say is its own outline. So
+ * the card arrives at the floor `peek` already guarantees — present, named on the grip, one tap or
+ * one drag from the whole of it — over a map with nothing on top of it. Every detent above this one
+ * is still exactly where it was; what has changed is only which of them a reader is *given*, and
+ * they are given the one that shows the thing the card is about.
+ */
+const OPENS_AT: Detent = 'peek';
 
 export function attachSheet(container: HTMLElement): SheetHandle {
   /*

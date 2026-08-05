@@ -72,6 +72,7 @@ import { renderMap, type MapView } from './map.ts';
 import { renderAbout, renderControls, renderMapControls, renderVariantCard } from './panel.ts';
 import { DIVISIONS_SHOWN_BY_DEFAULT } from './lib/divisions.ts';
 import { attachSheet } from './sheet.ts';
+import { fitPhoneFrame } from './phone-frame.ts';
 
 const mount = document.getElementById('map');
 if (mount === null) throw new Error('#map is missing from index.html');
@@ -495,6 +496,13 @@ function render(): void {
   // surfaces that say what is selected go on saying it.
   renderLegend(selection, variant);
   renderColophon(selection, variant);
+  /*
+   * The map's height on a phone is the room left over, and the legend is one of the terms — its
+   * rows are the basis's, so a switch that changes how many colours are keyed changes how much of
+   * the screen is left for the country. Asked after the legend is written and never before, so the
+   * arithmetic measures the key that is on the page rather than the one that was.
+   */
+  fitPhoneFrame();
 }
 
 /**
@@ -565,6 +573,9 @@ window.addEventListener('keydown', (event) => {
  * layout that follows measures the box where it has just been put rather than where it was.
  */
 window.addEventListener('resize', () => {
+  // The map's height on a phone is a share of the viewport, so it is re-fitted before anything is
+  // measured against it — the note's own question is about the frame it has just been given.
+  fitPhoneFrame();
   const mount = document.getElementById('method-note');
   if (mount !== null && mount.childElementCount > 0) placeMethodNote(mount);
 });
@@ -1101,6 +1112,17 @@ function developmentProvenance(): string {
       ${(range.lowest.score * 100).toFixed(1)}% to ${range.highest.district} at
       ${(range.highest.score * 100).toFixed(1)}%. ${bandMethod}</p>`;
 }
+
+/*
+ * The map is given its height before it is first drawn, not after.
+ *
+ * `render` re-fits at its end anyway, but the map redraws off a `ResizeObserver` — so a first
+ * render into the stylesheet's fallback height would draw the country once at the wrong size and
+ * again a frame later at the right one, which is the country moving on the first frame a reader
+ * ever sees it. The controls and the two chips are on the page by now, which is all the arithmetic
+ * needs.
+ */
+fitPhoneFrame();
 
 render();
 
